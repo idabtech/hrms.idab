@@ -1,0 +1,2 @@
+employee,date,status,clock_in,clock_out,late,early_leaving,overtime,total_rest
+employee9,20230505,Present,06:42:11AM,09:40:11AM,12:00:37AM,12:00:08AM,12:00:11AM,12:00:11AM
