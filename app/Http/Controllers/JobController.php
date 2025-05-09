@@ -366,7 +366,7 @@ class JobController extends Controller
         $jobApplication->address = $request->address;
         $jobApplication->country = $request->country;
         $jobApplication->state = $request->state;
-        $jobApplication->stage = $stage->id;
+        $jobApplication->stage = $stage ? $stage->id : 1;
         $jobApplication->city = $request->city;
         $jobApplication->zip_code = $request->zip_code;
         $jobApplication->custom_question = json_encode($request->question);
