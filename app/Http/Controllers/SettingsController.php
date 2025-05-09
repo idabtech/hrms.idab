@@ -894,7 +894,7 @@ class SettingsController extends Controller
                     'mail.from.name' => $request->mail_from_name,
                 ]
             );
-            Mail::to($request->email)->send(new TestMail());
+            Mail::to($request->email)->queue(new TestMail());
         } catch (\Exception $e) {
             return response()->json(
                 [
