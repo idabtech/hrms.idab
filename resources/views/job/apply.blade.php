@@ -16,8 +16,8 @@
         href="{{ $logo . '/' . (isset($companySettings['company_favicon']) && !empty($companySettings['company_favicon']) ? $companySettings['company_favicon']->value : 'favicon.png') }}"
         type="image" sizes="16x16">
 
-    {{-- <link rel="stylesheet" href="{{ asset('libs/@fortawesome/fontawesome-free/css/all.min.css') }}"> --}}
-    {{-- <link rel="stylesheet" href="{{ asset('libs/bootstrap-daterangepicker/daterangepicker.css') }}"> --}}
+    <link rel="stylesheet" href="{{ asset('libs/@fortawesome/fontawesome-free/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('libs/bootstrap-daterangepicker/daterangepicker.css') }}">
     <link rel="stylesheet" href="{{ asset('css/site.css') }}" id="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
@@ -117,7 +117,11 @@
                             @if (!empty($job->applicant) && in_array('dob', explode(',', $job->applicant)))
                                 <div class="form-group col-md-6 ">
                                     {!! Form::label('dob', __('Date of Birth'), ['class' => 'form-label']) !!} <span class="text-danger pl-1">*</span>
-                                    {!! Form::text('dob', old('dob'), ['class' => 'form-control datepicker', 'required' => 'required']) !!}
+                                    {!! Form::text('dob', old('dob'), [
+                                        'class' => 'form-control datepicker',
+                                        'required' => 'required',
+                                        'autocomplete' => 'off',
+                                    ]) !!}
                                 </div>
                             @endif
                             @if (!empty($job->applicant) && in_array('gender', explode(',', $job->applicant)))
@@ -278,7 +282,7 @@
     <script src="{{ asset('js/autosize.min.js') }}"></script>
     <script src="{{ asset('js/bootstrap-notify/bootstrap-notify.min.js') }}"></script>
     <script src="{{ asset('js/moment.min.js') }}"></script>
-    {{-- <script src="{{ asset('js/bootstrap-daterangepicker/daterangepicker.js') }}"></script> --}}
+    <script src="{{ asset('js/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
     <script src="{{ asset('js/site.js') }}"></script>
     <script src="{{ asset('js/demo.js') }} "></script>
 
@@ -330,8 +334,22 @@
         if ($(".datepicker").length) {
             $('.datepicker').daterangepicker({
                 singleDatePicker: true,
-                format: 'yyyy-mm-dd',
+                autoUpdateInput: false,
+                maxDate: moment(),
+                locale: {
+                    format: 'YYYY-MM-DD',
+                    cancelLabel: 'Clear'
+                }
             });
+
+            $('.datepicker').on('apply.daterangepicker', function(ev, picker) {
+                $(this).val(picker.startDate.format('YYYY-MM-DD'));
+            });
+
+            $('.datepicker').on('cancel.daterangepicker', function(ev, picker) {
+                $(this).val('');
+            });
+
         }
     </script>
     @if ($message = Session::get('success'))
