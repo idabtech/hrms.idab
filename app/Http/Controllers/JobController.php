@@ -80,8 +80,8 @@ class JobController extends Controller
                     'applicant' => 'nullable|array',
                     'applicant.*' => 'in:gender,dob,address',
                     'visibility' => 'nullable|array',
-                    'custom_question' => 'required|array|min:1',
-                    'custom_question.*' => 'required|integer|exists:custom_questions,id',
+                    'custom_question' => 'nullable|array|min:1',
+                    'custom_question.*' => 'nullable|integer|exists:custom_questions,id',
                 ]
             );
 
