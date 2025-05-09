@@ -14,7 +14,7 @@
         </div>
         <div class="form-group col-md-6">
             {{ Form::label('date', __('Interview Date'), ['class' => 'col-form-label']) }}
-            {{ Form::text('date', null, ['class' => 'form-control d_week', 'autocomplete' => 'off']) }}
+            {{ Form::date('date', null, ['class' => 'form-control d_week', 'autocomplete' => 'off']) }}
         </div>
         <div class="form-group col-md-6">
             {{ Form::label('time', __('Interview Time'), ['class' => 'col-form-label']) }}
@@ -24,15 +24,15 @@
             {{ Form::label('comment', __('Comment'), ['class' => 'col-form-label']) }}
             {{ Form::textarea('comment', null, ['class' => 'form-control']) }}
         </div>
-        @if(isset($setting['is_enabled']) && $setting['is_enabled'] =='on')
-        <div class="form-group col-md-6">
-            {{ Form::label('synchronize_type', __('Synchroniz in Google Calendar ?'), ['class' => 'form-label']) }}
-            <div class=" form-switch">
-                <input type="checkbox" class="form-check-input mt-2" name="synchronize_type" id="switch-shadow"
-                    value="google_calender">
-                <label class="form-check-label" for="switch-shadow"></label>
+        @if (isset($setting['is_enabled']) && $setting['is_enabled'] == 'on')
+            <div class="form-group col-md-6">
+                {{ Form::label('synchronize_type', __('Synchroniz in Google Calendar ?'), ['class' => 'form-label']) }}
+                <div class=" form-switch">
+                    <input type="checkbox" class="form-check-input mt-2" name="synchronize_type" id="switch-shadow"
+                        value="google_calender">
+                    <label class="form-check-label" for="switch-shadow"></label>
+                </div>
             </div>
-        </div>
         @endif
     </div>
 </div>
@@ -43,8 +43,10 @@
 </div>
 {{ Form::close() }}
 
-@if ($candidate != 0)
-    <script>
-        $('select#candidate').val({{ $candidate }}).trigger('change');
-    </script>
-@endif
+@push('script-page')
+    @if ($candidate != 0)
+        <script>
+            $('select#candidate').val({{ $candidate }}).trigger('change');
+        </script>
+    @endif
+@endpush

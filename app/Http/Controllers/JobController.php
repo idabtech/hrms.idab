@@ -13,109 +13,114 @@ use Illuminate\Http\Request;
 use App\Models\GenerateOfferLetter;
 use App\Models\Utility;
 use App\Models\JobStage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\JobApplySend;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Validator;
 
 class JobController extends Controller
 {
 
-    public function index($lang='en')
+    public function index($lang = 'en')
     {
-        if(\Auth::user()->can('Manage Job Category'))
-        {
-            $jobs = Job::where('created_by', '=', \Auth::user()->creatorId())->get();
+        if (Auth::user()->can('Manage Job Category')) {
+            $jobs = Job::where('created_by', '=', Auth::user()->creatorId())->get();
 
-            $data['total']     = Job::where('created_by', '=', \Auth::user()->creatorId())->count();
-            $data['active']    = Job::where('status', 'active')->where('created_by', '=', \Auth::user()->creatorId())->count();
-            $data['in_active'] = Job::where('status', 'in_active')->where('created_by', '=', \Auth::user()->creatorId())->count();
-            $Offerletter=GenerateOfferLetter::all();
-            $currOfferletterTempLang = GenerateOfferLetter::where('created_by',  \Auth::user()->id)->where('lang', $lang)->first();
+            $data['total'] = Job::where('created_by', '=', Auth::user()->creatorId())->count();
+            $data['active'] = Job::where('status', 'active')->where('created_by', '=', Auth::user()->creatorId())->count();
+            $data['in_active'] = Job::where('status', 'in_active')->where('created_by', '=', Auth::user()->creatorId())->count();
+            $Offerletter = GenerateOfferLetter::all();
+            $currOfferletterTempLang = GenerateOfferLetter::where('created_by', Auth::user()->id)->where('lang', $lang)->first();
             // dd($currOfferletterTempLang);
 
             $langs = $lang;
 
 
-            return view('job.index', compact('jobs', 'data','currOfferletterTempLang','langs'));
-        }
-        else
-        {
+            return view('job.index', compact('jobs', 'data', 'currOfferletterTempLang', 'langs'));
+        } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
     }
 
     public function create()
     {
-        $categories = JobCategory::where('created_by', \Auth::user()->creatorId())->get()->pluck('title', 'id');
+        $categories = JobCategory::where('created_by', Auth::user()->creatorId())->get()->pluck('title', 'id');
         $categories->prepend('--', '');
 
-        $branches = Branch::where('created_by', \Auth::user()->creatorId())->get()->pluck('name', 'id');
+        $branches = Branch::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
         $branches->prepend('All', 0);
 
         $status = Job::$status;
 
-        $customQuestion = CustomQuestion::where('created_by', \Auth::user()->creatorId())->get();
+        $customQuestion = CustomQuestion::where('created_by', Auth::user()->creatorId())->get();
 
         return view('job.create', compact('categories', 'status', 'branches', 'customQuestion'));
     }
 
     public function store(Request $request)
     {
-        if(\Auth::user()->can('Create Job'))
-        {
-            $validator = \Validator::make(
-                $request->all(), [
-                                   'title' => 'required',
-                                   'branch' => 'required',
-                                   'category' => 'required',
-                                   'skill' => 'required',
-                                   'position' => 'required',
-                                   'start_date' => 'required',
-                                   'end_date' => 'required',
-                                   'description' => 'required',
-                                   'requirement' => 'required',
-                                   'custom_question.*'=>'required',
-                               ]
+        if (Auth::user()->can('Create Job')) {
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'title' => 'required|string|max:255',
+                    'branch' => 'required|integer|exists:branches,id',
+                    'category' => 'required|integer|exists:job_categories,id',
+                    'skill' => 'required|string|max:255',
+                    'position' => 'required|integer|min:1',
+                    'start_date' => 'required|date|before_or_equal:end_date',
+                    'end_date' => 'required|date|after_or_equal:start_date',
+                    'description' => 'required|string',
+                    'requirement' => 'required|string',
+                    'status' => 'nullable|in:active,inactive',
+                    'applicant' => 'nullable|array',
+                    'applicant.*' => 'in:gender,dob,address',
+                    'visibility' => 'nullable|array',
+                    'custom_question' => 'required|array|min:1',
+                    'custom_question.*' => 'required|integer|exists:custom_questions,id',
+                ]
             );
 
-            if($validator->fails())
-            {
+            if ($validator->fails()) {
                 $messages = $validator->getMessageBag();
 
                 return redirect()->back()->with('error', $messages->first());
             }
 
-            $job                  = new Job();
-            $job->title           = $request->title;
-            $job->branch          = $request->branch;
-            $job->category        = $request->category;
-            $job->skill           = $request->skill;
-            $job->position        = $request->position;
-            $job->status          = $request->status;
-            $job->start_date      = $request->start_date;
-            $job->end_date        = $request->end_date;
-            $job->description     = $request->description;
-            $job->requirement     = $request->requirement;
-            $job->code            = uniqid();
-            $job->applicant       = !empty($request->applicant) ? implode(',', $request->applicant) : '';
-            $job->visibility      = !empty($request->visibility) ? implode(',', $request->visibility) : '';
+            $job = new Job();
+            $job->title = $request->title;
+            $job->branch = $request->branch;
+            $job->category = $request->category;
+            $job->skill = $request->skill;
+            $job->position = $request->position;
+            $job->status = $request->status;
+            $job->start_date = $request->start_date;
+            $job->end_date = $request->end_date;
+            $job->description = $request->description;
+            $job->requirement = $request->requirement;
+            $job->code = uniqid();
+            $job->applicant = !empty($request->applicant) ? implode(',', $request->applicant) : '';
+            $job->visibility = !empty($request->visibility) ? implode(',', $request->visibility) : '';
             $job->custom_question = !empty($request->custom_question) ? implode(',', $request->custom_question) : '';
-            $job->created_by      = \Auth::user()->creatorId();
+            $job->created_by = Auth::user()->creatorId();
             $job->save();
 
             return redirect()->route('job.index')->with('success', __('Job  successfully created.'));
-        }
-        else
-        {
+        } else {
             return redirect()->route('job.index')->with('error', __('Permission denied.'));
         }
     }
 
     public function show(Job $job)
     {
-        $status          = Job::$status;
-        $job->applicant  = !empty($job->applicant) ? explode(',', $job->applicant) : '';
+        $status = Job::$status;
+        $job->applicant = !empty($job->applicant) ? explode(',', $job->applicant) : '';
         $job->visibility = !empty($job->visibility) ? explode(',', $job->visibility) : '';
-        $job->skill      = !empty($job->skill) ? explode(',', $job->skill) : '';
+        $job->skill = !empty($job->skill) ? explode(',', $job->skill) : '';
 
         return view('job.show', compact('status', 'job'));
     }
@@ -123,68 +128,65 @@ class JobController extends Controller
     public function edit(Job $job)
     {
 
-        $categories = JobCategory::where('created_by', \Auth::user()->creatorId())->get()->pluck('title', 'id');
+        $categories = JobCategory::where('created_by', Auth::user()->creatorId())->get()->pluck('title', 'id');
         $categories->prepend('--', '');
 
-        $branches = Branch::where('created_by', \Auth::user()->creatorId())->get()->pluck('name', 'id');
+        $branches = Branch::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
         $branches->prepend('All', 0);
 
         $status = Job::$status;
 
-        $job->applicant       = explode(',', $job->applicant);
-        $job->visibility      = explode(',', $job->visibility);
+        $job->applicant = explode(',', $job->applicant);
+        $job->visibility = explode(',', $job->visibility);
         $job->custom_question = explode(',', $job->custom_question);
 
-        $customQuestion = CustomQuestion::where('created_by', \Auth::user()->creatorId())->get();
+        $customQuestion = CustomQuestion::where('created_by', Auth::user()->creatorId())->get();
 
         return view('job.edit', compact('categories', 'status', 'branches', 'job', 'customQuestion'));
     }
 
     public function update(Request $request, Job $job)
     {
-        if(\Auth::user()->can('Edit Job'))
-        {
+        if (Auth::user()->can('Edit Job')) {
 
-            $validator = \Validator::make(
-                $request->all(), [
-                                   'title' => 'required',
-                                   'branch' => 'required',
-                                   'category' => 'required',
-                                   'skill' => 'required',
-                                   'position' => 'required',
-                                   'start_date' => 'required',
-                                   'end_date' => 'required',
-                                   'description' => 'required',
-                                   'requirement' => 'required',
-                               ]
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'title' => 'required',
+                    'branch' => 'required',
+                    'category' => 'required',
+                    'skill' => 'required',
+                    'position' => 'required',
+                    'start_date' => 'required',
+                    'end_date' => 'required',
+                    'description' => 'required',
+                    'requirement' => 'required',
+                ]
             );
 
-            if($validator->fails())
-            {
+            if ($validator->fails()) {
                 $messages = $validator->getMessageBag();
 
                 return redirect()->back()->with('error', $messages->first());
             }
 
-            $job->title           = $request->title;
-            $job->branch          = $request->branch;
-            $job->category        = $request->category;
-            $job->skill           = $request->skill;
-            $job->position        = $request->position;
-            $job->status          = $request->status;
-            $job->start_date      = $request->start_date;
-            $job->end_date        = $request->end_date;
-            $job->description     = $request->description;
-            $job->requirement     = $request->requirement;
-            $job->applicant       = !empty($request->applicant) ? implode(',', $request->applicant) : '';
-            $job->visibility      = !empty($request->visibility) ? implode(',', $request->visibility) : '';
+            $job->title = $request->title;
+            $job->branch = $request->branch;
+            $job->category = $request->category;
+            $job->skill = $request->skill;
+            $job->position = $request->position;
+            $job->status = $request->status;
+            $job->start_date = $request->start_date;
+            $job->end_date = $request->end_date;
+            $job->description = $request->description;
+            $job->requirement = $request->requirement;
+            $job->applicant = !empty($request->applicant) ? implode(',', $request->applicant) : '';
+            $job->visibility = !empty($request->visibility) ? implode(',', $request->visibility) : '';
             $job->custom_question = !empty($request->custom_question) ? implode(',', $request->custom_question) : '';
             $job->save();
 
             return redirect()->route('job.index')->with('success', __('Job  successfully updated.'));
-        }
-        else
-        {
+        } else {
             return redirect()->route('job.index')->with('error', __('Permission denied.'));
         }
     }
@@ -201,56 +203,53 @@ class JobController extends Controller
 
     public function career($id, $lang)
     {
-        $jobs= Job::where('created_by', $id)->get();
+        $jobs = Job::where('created_by', $id)->get();
 
-        \Session::put('lang', $lang);
+        Session::put('lang', $lang);
 
-        \App::setLocale($lang);
+        App::setLocale($lang);
 
 
 
-        $companySettings['title_text']      = \DB::table('settings')->where('created_by', $id)->where('name', 'title_text')->first();
-        $companySettings['footer_text']     = \DB::table('settings')->where('created_by', $id)->where('name', 'footer_text')->first();
-        $companySettings['company_favicon'] = \DB::table('settings')->where('created_by', $id)->where('name', 'company_favicon')->first();
-        $companySettings['company_logo']    = \DB::table('settings')->where('created_by', $id)->where('name', 'company_logo')->first();
-        $companySettings['metakeyword']     = \DB::table('settings')->where('created_by', $id)->where('name', 'metakeyword')->first();
-        $companySettings['metadesc']        = \DB::table('settings')->where('created_by', $id)->where('name', 'metadesc')->first();
-        $languages                          = Utility::languages();
+        $companySettings['title_text'] = DB::table('settings')->where('created_by', $id)->where('name', 'title_text')->first();
+        $companySettings['footer_text'] = DB::table('settings')->where('created_by', $id)->where('name', 'footer_text')->first();
+        $companySettings['company_favicon'] = DB::table('settings')->where('created_by', $id)->where('name', 'company_favicon')->first();
+        $companySettings['company_logo'] = DB::table('settings')->where('created_by', $id)->where('name', 'company_logo')->first();
+        $companySettings['metakeyword'] = DB::table('settings')->where('created_by', $id)->where('name', 'metakeyword')->first();
+        $companySettings['metadesc'] = DB::table('settings')->where('created_by', $id)->where('name', 'metadesc')->first();
+        $languages = Utility::languages();
 
-        $currantLang = \Session::get('lang');
-        if(empty($currantLang))
-        {
-            $user        = User::find($id);
+        $currantLang = Session::get('lang');
+        if (empty($currantLang)) {
+            $user = User::find($id);
             $currantLang = !empty($user) && !empty($user->lang) ? $user->lang : 'en';
         }
 
 
-        return view('job.career', compact('companySettings', 'jobs', 'languages', 'currantLang','id'));
+        return view('job.career', compact('companySettings', 'jobs', 'languages', 'currantLang', 'id'));
     }
 
     public function jobRequirement($code, $lang)
     {
         $job = Job::where('code', $code)->first();
-        if($job->status == 'in_active')
-        {
+        if ($job->status == 'in_active') {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
 
-        \Session::put('lang', $lang);
+        Session::put('lang', $lang);
 
-        \App::setLocale($lang);
+        App::setLocale($lang);
 
-        $companySettings['title_text']      = \DB::table('settings')->where('created_by', $job->created_by)->where('name', 'title_text')->first();
-        $companySettings['footer_text']     = \DB::table('settings')->where('created_by', $job->created_by)->where('name', 'footer_text')->first();
-        $companySettings['company_favicon'] = \DB::table('settings')->where('created_by', $job->created_by)->where('name', 'company_favicon')->first();
-        $companySettings['company_logo']    = \DB::table('settings')->where('created_by', $job->created_by)->where('name', 'company_logo')->first();
-        $companySettings['metakeyword']     = \DB::table('settings')->where('created_by', $job->created_by)->where('name', 'metakeyword')->first();
-        $companySettings['metadesc']        = \DB::table('settings')->where('created_by', $job->created_by)->where('name', 'metadesc')->first();
-        $languages                          = \Utility::languages();
+        $companySettings['title_text'] = DB::table('settings')->where('created_by', $job->created_by)->where('name', 'title_text')->first();
+        $companySettings['footer_text'] = DB::table('settings')->where('created_by', $job->created_by)->where('name', 'footer_text')->first();
+        $companySettings['company_favicon'] = DB::table('settings')->where('created_by', $job->created_by)->where('name', 'company_favicon')->first();
+        $companySettings['company_logo'] = DB::table('settings')->where('created_by', $job->created_by)->where('name', 'company_logo')->first();
+        $companySettings['metakeyword'] = DB::table('settings')->where('created_by', $job->created_by)->where('name', 'metakeyword')->first();
+        $companySettings['metadesc'] = DB::table('settings')->where('created_by', $job->created_by)->where('name', 'metadesc')->first();
+        $languages = Utility::languages();
 
-        $currantLang = \Session::get('lang');
-        if(empty($currantLang))
-        {
+        $currantLang = Session::get('lang');
+        if (empty($currantLang)) {
             $currantLang = !empty($job->createdBy) ? $job->createdBy->lang : 'en';
         }
 
@@ -260,26 +259,25 @@ class JobController extends Controller
 
     public function jobApply($code, $lang)
     {
-        \Session::put('lang', $lang);
+        Session::put('lang', $lang);
 
-        \App::setLocale($lang);
+        App::setLocale($lang);
 
-        $job                                   = Job::where('code', $code)->first();
-        if(!empty($job)){
-            $companySettings['title_text']      = \DB::table('settings')->where('created_by', $job->created_by)->where('name', 'title_text')->first();
-            $companySettings['footer_text']     = \DB::table('settings')->where('created_by', $job->created_by)->where('name', 'footer_text')->first();
-            $companySettings['company_favicon'] = \DB::table('settings')->where('created_by', $job->created_by)->where('name', 'company_favicon')->first();
-            $companySettings['company_logo']    = \DB::table('settings')->where('created_by', $job->created_by)->where('name', 'company_logo')->first();
+        $job = Job::where('code', $code)->first();
+        if (!empty($job)) {
+            $companySettings['title_text'] = DB::table('settings')->where('created_by', $job->created_by)->where('name', 'title_text')->first();
+            $companySettings['footer_text'] = DB::table('settings')->where('created_by', $job->created_by)->where('name', 'footer_text')->first();
+            $companySettings['company_favicon'] = DB::table('settings')->where('created_by', $job->created_by)->where('name', 'company_favicon')->first();
+            $companySettings['company_logo'] = DB::table('settings')->where('created_by', $job->created_by)->where('name', 'company_logo')->first();
         }
-        $que = !empty($job->custom_question) ? explode(",",$job->custom_question):[];
+        $que = !empty($job->custom_question) ? explode(",", $job->custom_question) : [];
 
-        $questions = CustomQuestion::wherein('id',$que)->get();
+        $questions = CustomQuestion::wherein('id', $que)->get();
 
-        $languages = \Utility::languages();
+        $languages = Utility::languages();
 
-        $currantLang = \Session::get('lang');
-        if(empty($currantLang))
-        {
+        $currantLang = Session::get('lang');
+        if (empty($currantLang)) {
             $currantLang = !empty($job->createdBy) ? $job->createdBy->lang : 'en';
         }
 
@@ -289,17 +287,17 @@ class JobController extends Controller
 
     public function jobApplyData(Request $request, $code)
     {
-        $validator = \Validator::make(
-            $request->all(), [
-                               'name' => 'required',
-                               'email' => 'required',
-                               'phone' => 'required',
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'name' => 'required',
+                'email' => 'required',
+                'phone' => 'required',
 
-                           ]
+            ]
         );
 
-        if($validator->fails())
-        {
+        if ($validator->fails()) {
             $messages = $validator->getMessageBag();
 
             return redirect()->back()->with('error', $messages->first());
@@ -307,84 +305,77 @@ class JobController extends Controller
 
         $job = Job::where('code', $code)->first();
 
-        if(!empty($request->profile))
-        {
+        if (!empty($request->profile)) {
 
 
             $filenameWithExt = $request->file('profile')->getClientOriginalName();
-            $filename        = pathinfo($filenameWithExt, PATHINFO_FILENAME);
-            $extension       = $request->file('profile')->getClientOriginalExtension();
+            $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
+            $extension = $request->file('profile')->getClientOriginalExtension();
             $fileNameToStore = $filename . '_' . time() . '.' . $extension;
 
-                $dir        = 'app/public/uploads/job/profile';
+            $dir = 'app/public/uploads/job/profile';
 
-                $image_path = $dir . '/' . $filenameWithExt;
+            $image_path = $dir . '/' . $filenameWithExt;
             if (File::exists(storage_path($image_path))) {
                 File::delete(storage_path($image_path));
             }
             $url = '';
-            $path = \Utility::upload_file($request,'profile',$fileNameToStore,$dir,[]);
-            if($path['flag'] == 1){
+            $path = Utility::upload_file($request, 'profile', $fileNameToStore, $dir, []);
+            if ($path['flag'] == 1) {
                 $url = $path['url'];
-            }else{
+            } else {
                 return redirect()->back()->with('error', __($path['msg']));
             }
         }
 
-        if(!empty($request->resume))
-        {
+        if (!empty($request->resume)) {
 
 
             $filenameWithExt1 = $request->file('resume')->getClientOriginalName();
-            $filename1        = pathinfo($filenameWithExt1, PATHINFO_FILENAME);
-            $extension1       = $request->file('resume')->getClientOriginalExtension();
+            $filename1 = pathinfo($filenameWithExt1, PATHINFO_FILENAME);
+            $extension1 = $request->file('resume')->getClientOriginalExtension();
             $fileNameToStore1 = $filename1 . '_' . time() . '.' . $extension1;
 
-            $dir        = 'app/public/uploads/job/resume';
+            $dir = 'app/public/uploads/job/resume';
 
             $image_path = $dir . '/' . $filenameWithExt1;
             if (File::exists(storage_path($image_path))) {
                 File::delete(storage_path($image_path));
             }
             $url = '';
-            $path = \Utility::upload_file($request,'resume',$fileNameToStore1,$dir,[]);
+            $path = Utility::upload_file($request, 'resume', $fileNameToStore1, $dir, []);
 
-            if($path['flag'] == 1){
+            if ($path['flag'] == 1) {
                 $url = $path['url'];
-            }else{
+            } else {
                 return redirect()->back()->with('error', __($path['msg']));
             }
         }
-        $stage = JobStage::where('created_by',\Auth::user()->creatorId())->first();
+        $stage = JobStage::where('created_by', Auth::user()->creatorId())->first();
 
-        $jobApplication                  = new JobApplication();
-        $jobApplication->job             = $job->id;
-        $jobApplication->name            = $request->name;
-        $jobApplication->email           = $request->email;
-        $jobApplication->phone           = $request->phone;
-        $jobApplication->profile         = !empty($request->profile) ? $fileNameToStore : '';
-        $jobApplication->resume          = !empty($request->resume) ? $fileNameToStore1 : '';
-        $jobApplication->cover_letter    = $request->cover_letter;
-        $jobApplication->dob             = $request->dob;
-        $jobApplication->gender          = $request->gender;
-        $jobApplication->address         = $request->address;
-        $jobApplication->country         = $request->country;
-        $jobApplication->state           = $request->state;
-        $jobApplication->stage           = $stage->id;
-        $jobApplication->city            = $request->city;
-        $jobApplication->zip_code        = $request->zip_code;
+        $jobApplication = new JobApplication();
+        $jobApplication->job = $job->id;
+        $jobApplication->name = $request->name;
+        $jobApplication->email = $request->email;
+        $jobApplication->phone = $request->phone;
+        $jobApplication->profile = !empty($request->profile) ? $fileNameToStore : '';
+        $jobApplication->resume = !empty($request->resume) ? $fileNameToStore1 : '';
+        $jobApplication->cover_letter = $request->cover_letter;
+        $jobApplication->dob = $request->dob;
+        $jobApplication->gender = $request->gender;
+        $jobApplication->address = $request->address;
+        $jobApplication->country = $request->country;
+        $jobApplication->state = $request->state;
+        $jobApplication->stage = $stage->id;
+        $jobApplication->city = $request->city;
+        $jobApplication->zip_code = $request->zip_code;
         $jobApplication->custom_question = json_encode($request->question);
-        $jobApplication->created_by      = $job->created_by;
+        $jobApplication->created_by = $job->created_by;
         $jobApplication->save();
 
-        // $data = array([
-        //     'name'  => $request->name,
-        // ]);
-
-        Mail::to($request->email)->send(new JobApplySend($request->name));
+        Mail::to($request->email)->queue(new JobApplySend($request->name));
 
         return redirect()->back()->with('success', __('Job application successfully send.'));
-        // return redirect()->route('job-application.index')->with('success', __('Job application successfully send.'));
     }
 
 }

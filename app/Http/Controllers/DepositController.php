@@ -10,13 +10,14 @@ use App\Models\Payer;
 use App\Models\PaymentType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 
 class DepositController extends Controller
 {
     public function index()
     {
-        if(\Auth::user()->can('Manage Deposit'))
+        if(Auth::user()->can('Manage Deposit'))
         {
             $deposits = Deposit::where('created_by', '=', Auth::user()->creatorId())->get();
 
@@ -30,13 +31,13 @@ class DepositController extends Controller
 
     public function create()
     {
-        if(\Auth::user()->can('Create Deposit'))
+        if(Auth::user()->can('Create Deposit'))
         {
-            $deposits       = Deposit::where('created_by', '=', \Auth::user()->creatorId())->get();
-            $accounts       = AccountList::where('created_by', '=', \Auth::user()->creatorId())->get()->pluck('account_name', 'id');
-            $incomeCategory = IncomeType::where('created_by', '=', \Auth::user()->creatorId())->get()->pluck('name', 'id');
-            $payers         = Payer::where('created_by', '=', \Auth::user()->creatorId())->get()->pluck('payer_name', 'id');
-            $paymentTypes   = PaymentType::where('created_by', '=', \Auth::user()->creatorId())->get()->pluck('name', 'id');
+            $deposits       = Deposit::where('created_by', '=', Auth::user()->creatorId())->get();
+            $accounts       = AccountList::where('created_by', '=', Auth::user()->creatorId())->get()->pluck('account_name', 'id');
+            $incomeCategory = IncomeType::where('created_by', '=', Auth::user()->creatorId())->get()->pluck('name', 'id');
+            $payers         = Payer::where('created_by', '=', Auth::user()->creatorId())->get()->pluck('payer_name', 'id');
+            $paymentTypes   = PaymentType::where('created_by', '=', Auth::user()->creatorId())->get()->pluck('name', 'id');
 
             return view('deposit.create', compact('deposits', 'accounts', 'incomeCategory', 'payers', 'paymentTypes'));
         }
@@ -48,10 +49,10 @@ class DepositController extends Controller
 
     public function store(Request $request)
     {
-        if(\Auth::user()->can('Create Deposit'))
+        if(Auth::user()->can('Create Deposit'))
         {
 
-            $validator = \Validator::make(
+            $validator = Validator::make(
                 $request->all(), [
                                    'account_id' => 'required',
                                    'amount' => 'required|numeric',
@@ -78,11 +79,10 @@ class DepositController extends Controller
             $deposit->payment_type_id    = $request->payment_type_id;
             $deposit->referal_id         = $request->referal_id;
             $deposit->description        = $request->description;
-            $deposit->created_by         = \Auth::user()->creatorId();
+            $deposit->created_by         = Auth::user()->creatorId();
             $deposit->save();
 
             AccountList::add_Balance($request->account_id, $request->amount);
-
 
             return redirect()->route('deposit.index')->with('success', __('Deposit  successfully created.'));
         }
@@ -99,15 +99,15 @@ class DepositController extends Controller
 
     public function edit(Deposit $deposit)
     {
-        if(\Auth::user()->can('Edit Deposit'))
+        if(Auth::user()->can('Edit Deposit'))
         {
-            if($deposit->created_by == \Auth::user()->creatorId())
+            if($deposit->created_by == Auth::user()->creatorId())
             {
-                $deposits       = Deposit::where('created_by', '=', \Auth::user()->creatorId())->get();
-                $accounts       = AccountList::where('created_by', '=', \Auth::user()->creatorId())->get()->pluck('account_name', 'id');
-                $incomeCategory = IncomeType::where('created_by', '=', \Auth::user()->creatorId())->get()->pluck('name', 'id');
-                $payers         = Payer::where('created_by', '=', \Auth::user()->creatorId())->get()->pluck('payer_name', 'id');
-                $paymentTypes   = PaymentType::where('created_by', '=', \Auth::user()->creatorId())->get()->pluck('name', 'id');
+                $deposits       = Deposit::where('created_by', '=', Auth::user()->creatorId())->get();
+                $accounts       = AccountList::where('created_by', '=', Auth::user()->creatorId())->get()->pluck('account_name', 'id');
+                $incomeCategory = IncomeType::where('created_by', '=', Auth::user()->creatorId())->get()->pluck('name', 'id');
+                $payers         = Payer::where('created_by', '=', Auth::user()->creatorId())->get()->pluck('payer_name', 'id');
+                $paymentTypes   = PaymentType::where('created_by', '=', Auth::user()->creatorId())->get()->pluck('name', 'id');
 
                 return view('deposit.edit', compact('deposit', 'accounts', 'incomeCategory', 'payers', 'paymentTypes'));
             }
@@ -124,11 +124,11 @@ class DepositController extends Controller
 
     public function update(Request $request, Deposit $deposit)
     {
-        if(\Auth::user()->can('Edit Deposit'))
+        if(Auth::user()->can('Edit Deposit'))
         {
-            if($deposit->created_by == \Auth::user()->creatorId())
+            if($deposit->created_by == Auth::user()->creatorId())
             {
-                $validator = \Validator::make(
+                $validator = Validator::make(
                     $request->all(), [
                                        'account_id' => 'required',
                                        'amount' => 'required|numeric',
@@ -170,9 +170,9 @@ class DepositController extends Controller
 
     public function destroy(Deposit $deposit)
     {
-        if(\Auth::user()->can('Delete Deposit'))
+        if(Auth::user()->can('Delete Deposit'))
         {
-            if($deposit->created_by == \Auth::user()->creatorId())
+            if($deposit->created_by == Auth::user()->creatorId())
             {
                 $deposit->delete();
 
@@ -191,7 +191,7 @@ class DepositController extends Controller
     public function export(Request $request)
     {
         $name = 'Deposite' . date('Y-m-d i:h:s');
-        $data = Excel::download(new DepositExport(), $name . '.xlsx'); 
+        $data = Excel::download(new DepositExport(), $name . '.xlsx');
 
         return $data;
     }
