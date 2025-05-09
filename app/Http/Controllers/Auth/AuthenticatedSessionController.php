@@ -11,9 +11,9 @@ use App\Models\Utility;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
-
-
+use Illuminate\Support\Facades\Password;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -75,15 +75,12 @@ class AuthenticatedSessionController extends Controller
             auth()->logout();
         }
 
-        // $user =\Auth::user();
-        // dd($user);
-        if($user->type == "employee" && $user->term_and_condition == 0){
-            // print_r($user->term_and_condition); exit;
-            $this->data['document'] = DucumentUpload::where('created_by', \Auth::user()->creatorId())->first();
-            if(!empty($this->data['document'])){
+        if ($user->type === 'employee' && !$user->term_and_condition == 0) {
+            $document = DucumentUpload::where('created_by', Auth::user()->creatorId())->first();
 
+            if ($document) {
                 return redirect()->route('show.popup');
-            }else{
+            } else {
                 return redirect()->route('home');
             }
         }
@@ -117,14 +114,13 @@ class AuthenticatedSessionController extends Controller
 
             if($user->plan != $free_plan->id)
             {
-                if(date('Y-m-d') > $user->plan_expire_date && $plan->duration != 'Unlimited')
-                {
+                if ($plan && date('Y-m-d') > $user->plan_expire_date && $plan->duration != 'Unlimited') {
                     $user->plan             = $free_plan->id;
                     $user->plan_expire_date = null;
                     $user->save();
 
-                    $users     = User::where('created_by', '=', \Auth::user()->creatorId())->get();
-                    $employees = Employee::where('created_by', '=', \Auth::user()->creatorId())->get();
+                    $users     = User::where('created_by', '=', Auth::user()->creatorId())->get();
+                    $employees = Employee::where('created_by', '=', Auth::user()->creatorId())->get();
 
                     if($free_plan->max_users == -1)
                     {
@@ -194,12 +190,12 @@ class AuthenticatedSessionController extends Controller
     }
 
     public function showPopup(){
-        $this->data['document'] = DucumentUpload::where('created_by', \Auth::user()->creatorId())->first();
-          return view('auth.popup',$this->data);
+        $document = DucumentUpload::where('created_by', Auth::user()->creatorId())->first();
+          return view('auth.popup',$document);
     }
     public function checkDocument(Request $request){
         if($request->term_and_condition == 1){
-            $user = User::where('id',\Auth::user()->id)->first();
+            $user = User::where('id',Auth::user()->id)->first();
             $user->term_and_condition = 1;
             $user->save();
             return redirect()->route('home');
@@ -213,9 +209,9 @@ class AuthenticatedSessionController extends Controller
     {
         if($lang == '')
         {
-            $lang = \App\Models\Utility::getValByName('default_language');
+            $lang = Utility::getValByName('default_language');
         }
-        \App::setLocale($lang);
+        App::setLocale($lang);
 
         return view('auth.login', compact('lang'));
     }
@@ -224,10 +220,10 @@ class AuthenticatedSessionController extends Controller
     {
         if($lang == '')
         {
-            $lang = \App\Models\Utility::getValByName('default_language');
+            $lang = Utility::getValByName('default_language');
         }
 
-        \App::setLocale($lang);
+        App::setLocale($lang);
 
         return view('auth.forgot-password', compact('lang'));
     }
