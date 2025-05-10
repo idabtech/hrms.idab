@@ -1,5 +1,5 @@
 @php
-    
+
     $logo = \App\Models\Utility::get_file('uploads/logo/');
     $company_logo = \App\Models\Utility::GetLogo();
     $users = \Auth::user();
@@ -242,7 +242,7 @@
                                     @can('Create Attendance')
                                         <li class="dash-item">
                                             <a class="dash-link"
-                                                href="{{ route('attendanceemployee.bulkattendance') }}">{{ __('Bulk Attendance') }}</a>
+                                                href="{{ route('attendanceemployee.bulkattendance.get') }}">{{ __('Bulk Attendance') }}</a>
                                         </li>
                                     @endcan
                                 </ul>

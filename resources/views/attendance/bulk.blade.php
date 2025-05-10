@@ -56,7 +56,7 @@
             <div class=" mt-2" id="" style="">
                 <div class="card">
                     <div class="card-body">
-                        {{ Form::open(['route' => ['attendanceemployee.bulkattendance'], 'method' => 'get', 'id' => 'bulkattendance_filter']) }}
+                        {{ Form::open(['route' => ['attendanceemployee.bulkattendance.get'], 'method' => 'get', 'id' => 'bulkattendance_filter']) }}
                         <div class="d-flex align-items-center justify-content-end">
                             <div class="col-xl-2 col-lg-3 col-md-6 col-sm-12 col-12 mx-2">
                                 <div class="btn-box">
@@ -85,7 +85,7 @@
                                     data-bs-toggle="tooltip" title="" data-bs-original-title="apply">
                                     <span class="btn-inner--icon"><i class="ti ti-search"></i></span>
                                 </a>
-                                <a href="{{ route('attendanceemployee.bulkattendance') }}" class="btn btn-sm btn-danger"
+                                <a href="{{ route('attendanceemployee.bulkattendance.get') }}" class="btn btn-sm btn-danger"
                                     data-bs-toggle="tooltip" title="" data-bs-original-title="Reset">
                                     <span class="btn-inner--icon"><i class="ti ti-trash-off text-white-off "></i></span>
                                 </a>

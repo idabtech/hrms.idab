@@ -882,7 +882,7 @@ Route::group(['middleware' => ['verified']], function () {
         ]
     );
 
-    Route::get('attendanceemployee/bulkattendance', [AttendanceEmployeeController::class, 'bulkAttendance'])->name('attendanceemployee.bulkattendance')->middleware(
+    Route::get('attendanceemployee/bulkattendance', [AttendanceEmployeeController::class, 'bulkAttendance'])->name('attendanceemployee.bulkattendance.get')->middleware(
         [
             'auth',
             'XSS',
