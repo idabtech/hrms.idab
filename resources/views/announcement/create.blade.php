@@ -15,7 +15,7 @@
         <div class="col-md-6">
             <div class="form-group">
                 {{ Form::label('branch_id', __('Branch'), ['class' => 'col-form-label']) }}
-                <a href="#" data-title="{{ __('Create New Branch') }}"
+                <a href="javascript:void(0)" data-title="{{ __('Create New Branch') }}"
                     onclick="modalShow([{'name' : ''}], 'create-branch', 'Create Branch','branch')"
                     data-bs-toggle="tooltip" title="{{ __('Create New Branch') }}" class="btn btn-sm btn-primary addBtn"
                     data-bs-original-title="{{ __('Create') }}">
@@ -37,7 +37,7 @@
         <div class="col-md-6">
             <div class="form-group">
                 {{ Form::label('department_id', __('Department'), ['class' => 'col-form-label']) }}
-                <a href="#" data-title="{{ __('Create New Department') }}"
+                <a href="javascript:void(0)" data-title="{{ __('Create New Department') }}"
                     onclick="modalShow([{'branch': '{{ $branch }}'}, {'name' : ''}], 'create-department','Create Department','department')"
                     data-bs-toggle="tooltip" title="{{ __('Create New Department') }}"
                     class="btn btn-sm btn-primary addBtn " data-bs-original-title="{{ __('Create') }}">

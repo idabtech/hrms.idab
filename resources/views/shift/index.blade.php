@@ -11,7 +11,7 @@
 
 @section('action-button')
     @can('Create Designation')
-        <a href="#" data-url="{{ route('shift.create') }}" data-ajax-popup="true"
+        <a href="javascript:void(0)" data-url="{{ route('shift.create') }}" data-ajax-popup="true"
             data-title="{{ __('Create New Shift') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
             data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -48,9 +48,9 @@
                                     <td>{{ $shift->company_end_time}}</td>
                                     <td class="Action">
                                         <span>
-                                         
+
                                                 <div class="action-btn bg-info ms-2">
-                                                    <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                    <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center"
                                                         data-url="{{  route('shift.edit', $shift->id) }}"
                                                         data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip" title=""
                                                         data-title="{{ __('Edit Shift') }}"
@@ -58,18 +58,18 @@
                                                         <i class="ti ti-pencil text-white"></i>
                                                     </a>
                                                 </div>
-                                          
 
-                                           
+
+
                                                 <div class="action-btn bg-danger ms-2">
                                                     {!! Form::open(['method' => 'DELETE', 'route' => ['shift.destroy', $shift->id], 'id' => 'delete-form-' . $shift->id]) !!}
-                                                    <a href="#" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                    <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
                                                         data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
                                                         aria-label="Delete"><i
                                                             class="ti ti-trash text-white text-white"></i></a>
                                                     </form>
                                                 </div>
-                                            
+
                                         </span>
                                     </td>
                                 </tr>

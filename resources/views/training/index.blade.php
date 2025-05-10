@@ -19,7 +19,7 @@
 
 
     @can('Create Training')
-        <a href="#" data-url="{{ route('training.create') }}" data-ajax-popup="true" data-size="lg"
+        <a href="javascript:void(0)" data-url="{{ route('training.create') }}" data-ajax-popup="true" data-size="lg"
             data-title="{{ __('Create New Training') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
             data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -29,7 +29,7 @@
 
 @section('content')
 <div class="row">
-    
+
     <div class="col-xl-12">
         <div class="card">
             <div class="card-header card-body table-border-style">
@@ -51,7 +51,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                           
+
 
                             @foreach ($trainings as $training)
                                 <tr>
@@ -93,7 +93,7 @@
 
                                                 @can('Edit Training')
                                                     <div class="action-btn bg-info ms-2">
-                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center" data-size="lg"
+                                                        <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center" data-size="lg"
                                                             data-url="{{ route('training.edit', $training->id) }}"
                                                             data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
                                                             title="" data-title="{{ __('Edit Training') }}"
@@ -106,7 +106,7 @@
                                                 @can('Delete Training')
                                                     <div class="action-btn bg-danger ms-2">
                                                         {!! Form::open(['method' => 'DELETE', 'route' => ['training.destroy', $training->id], 'id' => 'delete-form-' . $training->id]) !!}
-                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                        <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
                                                             data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
                                                             aria-label="Delete"><i
                                                                 class="ti ti-trash text-white text-white"></i></a>

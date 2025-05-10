@@ -10,7 +10,7 @@
 
 @section('action-button')
     @can('Create Plan')
-        <a href="#" data-url="{{ route('plans.create') }}" data-size="md" data-ajax-popup="true"
+        <a href="javascript:void(0)" data-url="{{ route('plans.create') }}" data-size="md" data-ajax-popup="true"
             data-title="{{ __('Create New Plan') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
             data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -32,7 +32,7 @@
                         <div class="d-flex flex-row-reverse m-0 p-0 ">
                             @can('Edit Plan')
                                 <div class="action-btn bg-primary ms-2">
-                                    <a href="#" class="mx-3 btn btn-sm d-inline-flex align-items-center"
+                                    <a href="javascript:void(0)" class="mx-3 btn btn-sm d-inline-flex align-items-center"
                                         data-ajax-popup="true" data-title="{{ __('Edit Plan') }}"
                                         data-url="{{ route('plans.edit', $plan->id) }}" data-size="lg" data-bs-toggle="tooltip"
                                         data-bs-original-title="{{ __('Edit') }}" data-bs-placement="top"><span

@@ -26,7 +26,7 @@
     </script>
 @endpush
 @section('action-button')
-   
+
     @can('Create Job')
         <a href="{{ route('job.create') }}"  data-ajax-popup="true" data-size="md"
             data-title="{{ __('Create New Job') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
@@ -129,7 +129,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            
+
                             @foreach ($jobs as $job)
                             <tr>
                                 <td>{{ !empty($job->branches) ? $job->branches->name : __('All') }}</td>
@@ -148,8 +148,8 @@
                                 <td>{{ \Auth::user()->dateFormat($job->created_at) }}</td>
                                 <td class="Action">
                                     @if (Gate::check('Edit Job') || Gate::check('Delete Job') || Gate::check('Show Job'))
-                                    <span>  
-                                         
+                                    <span>
+
                                         @can('Show Job')
                                         <div class="action-btn bg-warning ms-2">
                                             <a href="{{ route('job.show', $job->id) }}"
@@ -176,7 +176,7 @@
                                         @can('Delete Job')
                                             <div class="action-btn bg-danger ms-2">
                                                 {!! Form::open(['method' => 'DELETE', 'route' => ['job.destroy', $job->id], 'id' => 'delete-form-' . $job->id]) !!}
-                                                <a href="#!" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
                                                     data-bs-toggle="tooltip" data-bs-placement="bottom"
                                                     title="{{ __('Delete') }}">
                                                     <i class="ti ti-trash text-white"></i></a>

@@ -162,7 +162,7 @@
                                             name="document[{{ $document->id }}]" id="document[{{ $document->id }}]"
                                             data-filename="{{ $document->id . '_filename' }}">
                                     </label>
-                                    <a href="#">
+                                    <a href="javascript:void(0)">
                                         <p class="{{ $document->id . '_filename' }} "></p>
                                     </a>
                                 </div>

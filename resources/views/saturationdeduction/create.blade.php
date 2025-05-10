@@ -4,7 +4,7 @@
     <div class="row">
         <div class="form-group col-md-6">
             {{ Form::label('deduction_option', __('Deduction Options*'), ['class' => 'col-form-label']) }}
-            <a href="#" data-title="{{ __('Create New Deduction Options') }}" onclick="modalShow([{'name' : ''}], 'create-deduction-options', 'Create Deduction Options','deduction-options')" data-bs-toggle="tooltip"
+            <a href="javascript:void(0)" data-title="{{ __('Create New Deduction Options') }}" onclick="modalShow([{'name' : ''}], 'create-deduction-options', 'Create Deduction Options','deduction-options')" data-bs-toggle="tooltip"
                 title="{{ __('Create New Deduction Options') }}" style="float: right" class="btn btn-sm btn-primary addBtn"
                 data-bs-original-title="{{ __('Create') }}">
                 <i class="ti ti-plus"></i>
@@ -36,11 +36,11 @@
         <div class="modal-content">
             <div class="modal-header">
             <h5 class="modal-title" id="staticBackdropLabel"></h5>
-            
+
             </div>
             <form id="myForm">
                 <div class="modal-body" id="newModalBody">
-                    
+
                 </div>
             </form>
             <div class="modal-footer">
@@ -62,7 +62,7 @@
         $('#staticBackdropLabel').text(title);
 
         html += '<div class="row">';
-        $.each(data, function (key, value) { 
+        $.each(data, function (key, value) {
             $.each(value, function(key1, value1){
                 html += '<div class="col-lg-12 col-md-12 col-sm-12">\
                         <div class="form-group">\
@@ -78,7 +78,7 @@
                                 }
                                 $.each(value1, function(key2, value2){
                                     html += '<option value="'+key2+'">'+value2+'</option>';
-                                })    
+                                })
                     html += '</select>\
                         </div>';
                 }else{
@@ -99,15 +99,15 @@
     function submitForm(){
         var input = [];
         $("#myForm :input").each(function(){
-            var value = $(this).val(); 
-            var name = $(this).attr('name'); 
+            var value = $(this).val();
+            var name = $(this).attr('name');
             input.push({
                 'name' : name,
                 'value' : value
             });
         });
         var url = "<?= url('') ?>/" + globalRoute;
-        
+
         $.ajax({
             type: "post",
             url: url,

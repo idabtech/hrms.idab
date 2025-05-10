@@ -19,7 +19,7 @@
 
 @section('action-button')
     @can('Create Interview Schedule')
-        <a href="#" data-url="{{ route('interview-schedule.create') }}" data-ajax-popup="true"
+        <a href="javascript:void(0)" data-url="{{ route('interview-schedule.create') }}" data-ajax-popup="true"
             data-title="{{ __('Create New Interview Schedule') }}" data-bs-toggle="tooltip" title=""
             class="btn btn-sm btn-primary" data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -45,7 +45,7 @@
                                         <option value="google_calender">{{ __('Google Calender') }}</option>
                                         <option value="local_calender" selected="true">{{ __('Local Calender') }}</option>
                                     </select>
-                                @endif    
+                                @endif
                             </div>
                         </div>
                         <div class="card-body">
@@ -85,7 +85,7 @@
                                                         <div class="d-inline-flex mb-4">
                                                             @can('Edit Interview Schedule')
                                                                 <div class="action-btn bg-info ms-2">
-                                                                    <a href="#"
+                                                                    <a href="javascript:void(0)"
                                                                         class="mx-3 btn btn-sm  align-items-center"
                                                                         data-url="{{ route('interview-schedule.edit', $schedule->id) }}"
                                                                         data-ajax-popup="true" data-title="{{ __('Edit ') }}"
@@ -102,7 +102,7 @@
                                                                         'route' => ['interview-schedule.destroy', $schedule->id],
                                                                         'id' => 'delete-form-' . $schedule->id,
                                                                     ]) !!}
-                                                                    <a href="#!"
+                                                                    <a href="javascript:void(0)"
                                                                         class="mx-3 btn btn-sm  align-items-center bs-pass-para"
                                                                         data-bs-toggle="tooltip" data-bs-placement="bottom"
                                                                         title="{{ __('Delete') }}">
@@ -127,7 +127,7 @@
 @endsection
 
 @push('script-page')
-    <script src="{{ asset('assets/js/plugins/main.min.js') }}"></script> 
+    <script src="{{ asset('assets/js/plugins/main.min.js') }}"></script>
 
     <script type="text/javascript">
         $(document).ready(function() {
@@ -187,7 +187,7 @@
     </script>
 
     {{-- <script type="text/javascript">
-        $(document).ready(function () {  
+        $(document).ready(function () {
             get_data();
         });
         function get_data()
@@ -197,7 +197,7 @@
                 url: $("path_admin").val()+"/interview-schedule/get_interview-schedule_data",
                 method:"POST",
                 data: {"_token": "{{ csrf_token()}}",'calender_type':calender_type},
-                
+
                 success: (function(data) {
                     var etitle;
                     var etype;
@@ -214,7 +214,7 @@
                             dayGridMonth: "{{__('Month')}}"
                         },
                         themeSystem: 'bootstrap',
-        
+
                         slotDuration: '00:10:00',
                         navLinks: true,
                         droppable: true,
@@ -224,10 +224,10 @@
                         dayMaxEvents: true,
                         handleWindowResize: true,
                         events: data,
-        
-        
+
+
                     });
-        
+
                     calendar.render();
                 })();
             })

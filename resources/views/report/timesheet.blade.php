@@ -38,11 +38,11 @@
 @endpush
 
 @section('action-button')
-    <a href="#" class="btn btn-sm btn-primary" onclick="saveAsPDF()" data-bs-toggle="tooltip" title="{{ __('Download') }}"
+    <a href="javascript:void(0)" class="btn btn-sm btn-primary" onclick="saveAsPDF()" data-bs-toggle="tooltip" title="{{ __('Download') }}"
         data-original-title="{{ __('Download') }}" style="margin-right: 5px">
         <span class="btn-inner--icon"><i class="ti ti-download"></i></span>
     </a>
-    <a href="{{ route('timesheet.report.export', [isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m'), isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m'), isset($_GET['branch']) && 
+    <a href="{{ route('timesheet.report.export', [isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m'), isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m'), isset($_GET['branch']) &&
     !empty($_GET['branch']) ? $_GET['branch'] : 0, isset($_GET['department']) && !empty($_GET['department']) ? $_GET['department'] : 0] ) }}" class="btn btn-sm btn-primary float-end" data-bs-toggle="tooltip"
         data-bs-original-title="{{ __('Export') }}">
         <i class="ti ti-file-export"></i>
@@ -85,7 +85,7 @@
 
 
                             <div class="col-auto float-end ms-2 mt-4">
-                                <a href="#" class="btn btn-sm btn-primary"
+                                <a href="javascript:void(0)" class="btn btn-sm btn-primary"
                                     onclick="document.getElementById('report_timesheet').submit(); return false;"
                                     data-bs-toggle="tooltip" title="{{ __('Apply') }}"
                                     data-original-title="{{ __('apply') }}">

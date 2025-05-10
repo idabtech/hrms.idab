@@ -20,7 +20,7 @@
     </a>
 
     @can('Create Leave')
-        <a href="#" data-url="{{ route('leave.create') }}" data-ajax-popup="true" data-title="{{ __('Create New Leave') }}"
+        <a href="javascript:void(0)" data-url="{{ route('leave.create') }}" data-ajax-popup="true" data-title="{{ __('Create New Leave') }}"
             data-size="lg" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
             data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -72,7 +72,7 @@
                                             </div>
                                             <div class="ms-3">
                                                 <h5 class="  text-primary">
-                                                    <a href="#" data-size="lg"
+                                                    <a href="javascript:void(0)" data-size="lg"
                                                         data-url="{{ route('leave.action', $leave->id) }}"
                                                         data-ajax-popup="true" data-title="{{ __('Edit Event') }}"
                                                         class="text-primary">{{ !empty(\Auth::user()->getLeaveType($leave->leave_type_id)) ? \Auth::user()->getLeaveType($leave->leave_type_id)->title : '' }}

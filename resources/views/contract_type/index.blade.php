@@ -10,15 +10,15 @@
 @endsection
 
 @section('action-button')
-    
+
     <div class="row align-items-center m-1">
         @can('Create Contract Type')
             <div class="col-auto pe-0">
-                <a href="#" class="btn btn-sm btn-primary btn-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Create Contract')}}" data-ajax-popup="true" data-size="md" data-title="{{__('Create Contract Type')}}" data-url="{{route('contract_type.create')}}"><i class="ti ti-plus text-white"></i></a>
+                <a href="javascript:void(0)" class="btn btn-sm btn-primary btn-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Create Contract')}}" data-ajax-popup="true" data-size="md" data-title="{{__('Create Contract Type')}}" data-url="{{route('contract_type.create')}}"><i class="ti ti-plus text-white"></i></a>
             </div>
         @endcan
     </div>
- 
+
 @endsection
 
 @section('breadcrumb')
@@ -50,13 +50,13 @@
                                         <span>
                                         @can('Edit Contract Type')
                                                 <div class="action-btn btn-info ms-2">
-                                                    <a href="#" data-size="md" data-url="{{ URL::to('contract_type/'.$contractType->id.'/edit') }}" data-ajax-popup="true" data-title="{{__('Edit Contract Type')}}" class="mx-3 btn btn-sm d-inline-flex align-items-center" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Edit Contract Type')}}" ><i class="ti ti-pencil text-white"></i></a>
+                                                    <a href="javascript:void(0)" data-size="md" data-url="{{ URL::to('contract_type/'.$contractType->id.'/edit') }}" data-ajax-popup="true" data-title="{{__('Edit Contract Type')}}" class="mx-3 btn btn-sm d-inline-flex align-items-center" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Edit Contract Type')}}" ><i class="ti ti-pencil text-white"></i></a>
                                                 </div>
                                             @endcan
                                             @can('Delete Contract Type')
                                                 <div class="action-btn bg-danger ms-2">
                                                     {!! Form::open(['method' => 'DELETE', 'route' => ['contract_type.destroy', $contractType->id]]) !!}
-                                                        <a href="#!" class="mx-3 btn btn-sm d-inline-flex align-items-center bs-pass-para" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Delete')}}">
+                                                        <a href="javascript:void(0)" class="mx-3 btn btn-sm d-inline-flex align-items-center bs-pass-para" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Delete')}}">
                                                            <span class="text-white"> <i class="ti ti-trash"></i></span></a>
                                                     {!! Form::close() !!}
                                                 </div>

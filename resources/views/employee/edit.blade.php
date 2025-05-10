@@ -102,7 +102,7 @@
                                         <div class="form-group col-md-6">
                                             {{ Form::label('branch_id', __('Select Branch'), ['class' => 'form-label']) }}<span
                                                 class="text-danger pl-1">*</span>
-                                            <a href="#" data-title="{{ __('Create New Branch') }}"
+                                            <a href="javascript:void(0)" data-title="{{ __('Create New Branch') }}"
                                                 onclick="modalShow([{'name' : ''}], 'create-branch', 'Create Branch','branch')"
                                                 data-bs-toggle="tooltip" title="{{ __('Create New Branch') }}"
                                                 class="btn btn-sm btn-primary addBtn"
@@ -114,7 +114,7 @@
                                         <div class="form-group col-md-6">
                                             {{ Form::label('department_id', __('Select Department'), ['class' => 'form-label']) }}<span
                                                 class="text-danger pl-1">*</span>
-                                            <a href="#" data-title="{{ __('Create New Department') }}"
+                                            <a href="javascript:void(0)" data-title="{{ __('Create New Department') }}"
                                                 onclick="modalShow([{'branch': '{{ $branches }}'}, {'name' : ''}, {'slug' : ''}], 'create-department','Create Department','department')"
                                                 data-bs-toggle="tooltip" title="{{ __('Create New Department') }}"
                                                 class="btn btn-sm btn-primary addBtn "
@@ -126,7 +126,7 @@
                                         <div class="form-group col-md-6">
                                             {{ Form::label('subdepartment_id', __('Select Sub Department'), ['class' => 'form-label']) }}<span
                                                 class="text-danger pl-1">*</span>
-                                            <a href="#" data-title="{{ __('Create New Sub Department') }}"
+                                            <a href="javascript:void(0)" data-title="{{ __('Create New Sub Department') }}"
                                                 onclick="modalShow([{'department': '{{ $departments }}'}, {'name' : ''}], 'create-subDepartment','Create Sub Department','subdepartment')"
                                                 data-bs-toggle="tooltip" title="{{ __('Create New Sub Department') }}"
                                                 class="btn btn-sm btn-primary addBtn "
@@ -137,7 +137,7 @@
                                         </div>
                                         <div class="form-group col-md-6">
                                             {{ Form::label('designation_id', __('Select Designation'), ['class' => 'form-label']) }}
-                                            <a href="#" data-title="{{ __('Create New Designation') }}"
+                                            <a href="javascript:void(0)" data-title="{{ __('Create New Designation') }}"
                                                 onclick="modalShow([{'department': '{{ $departments }}'}, {'name' : ''}], 'create-designation','Create Designation','designation')"
                                                 data-bs-toggle="tooltip" title="{{ __('Create New Designation') }}"
                                                 class="btn btn-sm btn-primary addBtn"
@@ -157,7 +157,7 @@
                                         <div class="form-group col-md-6">
                                             {{ Form::label('shift_id', __('Select Shift'), ['class' => 'form-label']) }}<span
                                                 class="text-danger pl-1">*</span>
-                                            <a href="#" data-title="{{ __('Create New  Shift') }}"
+                                            <a href="javascript:void(0)" data-title="{{ __('Create New  Shift') }}"
                                                 onclick="modalShow([{'name' : ''}], 'create-shift', 'Create Shift','shift')"
                                                 data-bs-toggle="tooltip" title="{{ __('Create New  Shift') }}"
                                                 class="btn btn-sm btn-primary addBtn"
@@ -283,7 +283,7 @@
                                                             $logo = \App\Models\Utility::get_file('uploads/document/');
 
                                                         @endphp
-                                                        {{-- <a href="#"><p class="{{ $document->id . '_filename' }} "></p></a> --}}
+                                                        {{-- <a href="javascript:void(0)"><p class="{{ $document->id . '_filename' }} "></p></a> --}}
                                                         <img id="{{ 'blah' . $key }}"
                                                             src="{{ isset($employeedoc[$document->id]) && !empty($employeedoc[$document->id]) ? $logo . '/' . $employeedoc[$document->id] : '' }}"
                                                             width="50%" />

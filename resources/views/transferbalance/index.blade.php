@@ -16,7 +16,7 @@
     </a>
 
     @can('Create Transfer Balance')
-        <a href="#" data-url="{{ route('transferbalance.create') }}" data-ajax-popup="true" data-size="lg"
+        <a href="javascript:void(0)" data-url="{{ route('transferbalance.create') }}" data-ajax-popup="true" data-size="lg"
             data-title="{{ __('Create New Transfer Balance') }}" data-bs-toggle="tooltip" title=""
             class="btn btn-sm btn-primary" data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -61,7 +61,7 @@
                                             <span>
                                                 @can('Edit Transfer Balance')
                                                     <div class="action-btn bg-info ms-2">
-                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                        <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center"
                                                             data-size="lg"
                                                             data-url="{{ URL::to('transferbalance/' . $transferbalance->id . '/edit') }}"
                                                             data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
@@ -79,7 +79,7 @@
                                                             'route' => ['transferbalance.destroy', $transferbalance->id],
                                                             'id' => 'delete-form-' . $transferbalance->id,
                                                         ]) !!}
-                                                        <a href="#"
+                                                        <a href="javascript:void(0)"
                                                             class="mx-3 btn btn-sm  align-items-center bs-pass-para"
                                                             data-bs-toggle="tooltip" title=""
                                                             data-bs-original-title="Delete" aria-label="Delete"><i

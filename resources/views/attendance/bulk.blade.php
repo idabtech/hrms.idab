@@ -80,7 +80,7 @@
                             </div>
 
                             <div class="col-auto float-end ms-2 mt-4">
-                                <a href="#" class="btn btn-sm btn-primary"
+                                <a href="javascript:void(0)" class="btn btn-sm btn-primary"
                                     onclick="document.getElementById('bulkattendance_filter').submit(); return false;"
                                     data-bs-toggle="tooltip" title="" data-bs-original-title="apply">
                                     <span class="btn-inner--icon"><i class="ti ti-search"></i></span>

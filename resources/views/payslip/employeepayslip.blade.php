@@ -10,7 +10,7 @@
             <div class="section-header">
                 <h1>{{ __('Employee Salary') }}</h1>
                 <div class="section-header-breadcrumb">
-                    <div class="breadcrumb-item active"><a href="#">{{ __('Home') }}</a></div>
+                    <div class="breadcrumb-item active"><a href="javascript:void(0)">{{ __('Home') }}</a></div>
                     <div class="breadcrumb-item">{{ __('Employee Salary') }}</div>
                 </div>
             </div>
@@ -57,7 +57,7 @@
                                                         @endif
                                                     </td>
                                                     <td>
-                                                        <a href="#"
+                                                        <a href="javascript:void(0)"
                                                             data-url="{{ route('payslip.showemployee', $payslip->id) }}"
                                                             class="btn btn-sm btn-warning btn-round btn-icon"
                                                             data-ajax-popup="true"
@@ -66,7 +66,7 @@
                                                             title="{{ __('View Employee Detail') }}">
                                                             {{ __('View') }}
                                                         </a>
-                                                        <a href="#"
+                                                        <a href="javascript:void(0)"
                                                             data-url="{{ route('payslip.pdf', [$payslip->employee_id, $payslip->salary_month]) }}"
                                                             data-size="md-pdf"
                                                             class="btn btn-sm btn-info btn-round btn-icon"

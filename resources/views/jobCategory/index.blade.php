@@ -12,7 +12,7 @@
 
 @section('action-button')
 @can('Create Job Category')
-        <a href="#" data-url="{{ route('job-category.create') }}" data-ajax-popup="true"
+        <a href="javascript:void(0)" data-url="{{ route('job-category.create') }}" data-ajax-popup="true"
             data-title="{{ __('Create New Job Category') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
             data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -46,7 +46,7 @@
                                     <span>
                                         @can('Edit Job Category')
                                             <div class="action-btn bg-info ms-2">
-                                                <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center"
                                                     data-url="{{route('job-category.edit', $category->id) }}"
                                                     data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip" title=""
                                                     data-title="{{ __('Edit Job Category') }}"
@@ -59,7 +59,7 @@
                                         @can('Delete Job Category')
                                             <div class="action-btn bg-danger ms-2">
                                                 {!! Form::open(['method' => 'DELETE', 'route' => ['job-category.destroy', $category->id], 'id' => 'delete-form-' . $category->id]) !!}
-                                                <a href="#" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
                                                     data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
                                                     aria-label="Delete"><i
                                                         class="ti ti-trash text-white text-white"></i></a>

@@ -287,16 +287,16 @@
 
       templateContent = '<table>'+
          '<tr>'+
-           '<td><a href="#" data-action="incrementHour"><span class="'+ this.icons.up +'"></span></a></td>'+
+           '<td><a href="javascript:void(0)" data-action="incrementHour"><span class="'+ this.icons.up +'"></span></a></td>'+
            '<td class="separator">&nbsp;</td>'+
-           '<td><a href="#" data-action="incrementMinute"><span class="'+ this.icons.up +'"></span></a></td>'+
+           '<td><a href="javascript:void(0)" data-action="incrementMinute"><span class="'+ this.icons.up +'"></span></a></td>'+
            (this.showSeconds ?
              '<td class="separator">&nbsp;</td>'+
-             '<td><a href="#" data-action="incrementSecond"><span class="'+ this.icons.up +'"></span></a></td>'
+             '<td><a href="javascript:void(0)" data-action="incrementSecond"><span class="'+ this.icons.up +'"></span></a></td>'
            : '') +
            (this.showMeridian ?
              '<td class="separator">&nbsp;</td>'+
-             '<td class="meridian-column"><a href="#" data-action="toggleMeridian"><span class="'+ this.icons.up +'"></span></a></td>'
+             '<td class="meridian-column"><a href="javascript:void(0)" data-action="toggleMeridian"><span class="'+ this.icons.up +'"></span></a></td>'
            : '') +
          '</tr>'+
          '<tr>'+
@@ -313,16 +313,16 @@
            : '') +
          '</tr>'+
          '<tr>'+
-           '<td><a href="#" data-action="decrementHour"><span class="'+ this.icons.down +'"></span></a></td>'+
+           '<td><a href="javascript:void(0)" data-action="decrementHour"><span class="'+ this.icons.down +'"></span></a></td>'+
            '<td class="separator"></td>'+
-           '<td><a href="#" data-action="decrementMinute"><span class="'+ this.icons.down +'"></span></a></td>'+
+           '<td><a href="javascript:void(0)" data-action="decrementMinute"><span class="'+ this.icons.down +'"></span></a></td>'+
            (this.showSeconds ?
             '<td class="separator">&nbsp;</td>'+
-            '<td><a href="#" data-action="decrementSecond"><span class="'+ this.icons.down +'"></span></a></td>'
+            '<td><a href="javascript:void(0)" data-action="decrementSecond"><span class="'+ this.icons.down +'"></span></a></td>'
            : '') +
            (this.showMeridian ?
             '<td class="separator">&nbsp;</td>'+
-            '<td><a href="#" data-action="toggleMeridian"><span class="'+ this.icons.down +'"></span></a></td>'
+            '<td><a href="javascript:void(0)" data-action="toggleMeridian"><span class="'+ this.icons.down +'"></span></a></td>'
            : '') +
          '</tr>'+
        '</table>';
@@ -331,14 +331,14 @@
       case 'modal':
         template = '<div class="bootstrap-timepicker-widget modal hide fade in" data-backdrop="'+ (this.modalBackdrop ? 'true' : 'false') +'">'+
           '<div class="modal-header">'+
-            '<a href="#" class="close" data-dismiss="modal">&times;</a>'+
+            '<a href="javascript:void(0)" class="close" data-dismiss="modal">&times;</a>'+
             '<h3>Pick a Time</h3>'+
           '</div>'+
           '<div class="modal-content">'+
             templateContent +
           '</div>'+
           '<div class="modal-footer">'+
-            '<a href="#" class="btn btn-primary" data-dismiss="modal">OK</a>'+
+            '<a href="javascript:void(0)" class="btn btn-primary" data-dismiss="modal">OK</a>'+
           '</div>'+
         '</div>';
         break;

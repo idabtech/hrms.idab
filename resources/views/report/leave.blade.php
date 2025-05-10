@@ -54,7 +54,7 @@
     </script>
 @endpush
 @section('action-button')
-    <a href="#" class="btn btn-sm btn-primary" onclick="saveAsPDF()" data-bs-toggle="tooltip" title="{{ __('Download') }}"
+    <a href="javascript:void(0)" class="btn btn-sm btn-primary" onclick="saveAsPDF()" data-bs-toggle="tooltip" title="{{ __('Download') }}"
         data-original-title="{{ __('Download') }}" style="margin-right: 5px;">
         <span class="btn-inner--icon"><i class="ti ti-download"></i></span>
     </a>
@@ -130,7 +130,7 @@
                                 </div>
                             </div>
                             <div class="col-auto float-end ms-2 mt-4">
-                                <a href="#" class="btn btn-sm btn-primary"
+                                <a href="javascript:void(0)" class="btn btn-sm btn-primary"
                                     onclick="document.getElementById('report_leave').submit(); return false;"
                                     data-bs-toggle="tooltip" title="{{ __('Apply') }}"
                                     data-original-title="{{ __('apply') }}">
@@ -328,7 +328,7 @@
                                         <td>{{ $leave['employee'] }}</td>
                                         <td>
                                             <div class="btn btn-sm btn-info rounded">{{ $leave['approved'] }}
-                                                <a href="#" class="text-white"
+                                                <a href="javascript:void(0)" class="text-white"
                                                     data-url="{{ route('report.employee.leave', [$leave['id'], 'Approved', isset($_GET['type']) ? $_GET['type'] : 'no', isset($_GET['month']) ? $_GET['month'] : date('Y-m'), isset($_GET['year']) ? $_GET['year'] : date('Y')]) }}"
                                                     data-ajax-popup="true" data-size="lg"
                                                     data-title="{{ __('Approved Leave Detail') }}"
@@ -338,7 +338,7 @@
                                         </td>
                                         <td>
                                             <div class="btn btn-sm btn-danger rounded">{{ $leave['reject'] }}
-                                                <a href="#" class="text-white"
+                                                <a href="javascript:void(0)" class="text-white"
                                                     data-url="{{ route('report.employee.leave', [$leave['id'], 'Reject', isset($_GET['type']) ? $_GET['type'] : 'no', isset($_GET['month']) ? $_GET['month'] : date('Y-m'), isset($_GET['year']) ? $_GET['year'] : date('Y')]) }}"
                                                     class="table-action table-action-delete" data-size="lg"
                                                     data-ajax-popup="true" data-title="{{ __('Rejected Leave Detail') }}"
@@ -349,7 +349,7 @@
                                         <td>
                                             <div class="m-view-btn btn btn-sm btn-warning rounded">
                                                 {{ $leave['pending'] }}
-                                                <a href="#" class="text-white"
+                                                <a href="javascript:void(0)" class="text-white"
                                                     data-url="{{ route('report.employee.leave', [$leave['id'], 'Pending', isset($_GET['type']) ? $_GET['type'] : 'no', isset($_GET['month']) ? $_GET['month'] : date('Y-m'), isset($_GET['year']) ? $_GET['year'] : date('Y')]) }}"
                                                     class="table-action table-action-delete" data-size="lg"
                                                     data-ajax-popup="true" data-title="{{ __('Pending Leave Detail') }}"

@@ -12,7 +12,7 @@
 
         <div class="main-content">
             <div class="text-md-right mb-2">
-                <a href="#" class="btn btn-warning" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                <a href="javascript:void(0)" class="btn btn-warning" data-bs-toggle="tooltip" data-bs-placement="bottom"
                     title="{{ __('Download') }}" onclick="saveAsPDF()"><span class="fa fa-download"></span></a>
             </div>
 

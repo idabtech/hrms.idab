@@ -76,7 +76,7 @@
 @section('action-button')
     <div class="float-end">
 
-        <a href="#" class="btn btn-sm btn-primary" onclick="saveAsPDF()" data-bs-toggle="tooltip"
+        <a href="javascript:void(0)" class="btn btn-sm btn-primary" onclick="saveAsPDF()" data-bs-toggle="tooltip"
             title="{{ __('Download') }}" data-original-title="{{ __('Download') }}" style="margin-right: 5px;">
             <span class="btn-inner--icon"><i class="ti ti-download"></i></span>
         </a>
@@ -160,7 +160,7 @@
                                 <div class="row">
                                     <div class="col-auto">
 
-                                        <a href="#" class="btn btn-sm btn-primary"
+                                        <a href="javascript:void(0)" class="btn btn-sm btn-primary"
                                             onclick="document.getElementById('report_payroll').submit(); return false;"
                                             data-bs-toggle="tooltip" title="{{ __('Apply') }}"
                                             data-original-title="{{ __('apply') }}">
@@ -310,10 +310,10 @@
                                             <td>{{ $payslip->salary_month }}</td>
                                             <td>
                                                 @if ($payslip->status == 0)
-                                                    <div class="badge bg-danger p-2 px-3 rounded"><a href="#"
+                                                    <div class="badge bg-danger p-2 px-3 rounded"><a href="javascript:void(0)"
                                                             class="text-white">{{ __('UnPaid') }}</a></div>
                                                 @else
-                                                    <div class="badge bg-success p-2 px-3 rounded"><a href="#"
+                                                    <div class="badge bg-success p-2 px-3 rounded"><a href="javascript:void(0)"
                                                             class="text-white">{{ __('Paid') }}</a></div>
                                                 @endif
                                             </td>

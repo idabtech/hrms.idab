@@ -59,17 +59,17 @@
            @can('Create Contract')
            @if ((\Auth::user()->type == 'company')&&($contract->status=='accept'))
 
-                <a href="#" data-size="lg" data-url="{{route('contracts.copy',$contract->id)}}"data-ajax-popup="true" data-title="{{__('Duplicate')}}" class="btn btn-sm btn-primary btn-icon m-2" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Duplicate')}}" ><i class="ti ti-copy text-white"></i></a>
+                <a href="javascript:void(0)" data-size="lg" data-url="{{route('contracts.copy',$contract->id)}}"data-ajax-popup="true" data-title="{{__('Duplicate')}}" class="btn btn-sm btn-primary btn-icon m-2" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Duplicate')}}" ><i class="ti ti-copy text-white"></i></a>
             @endif
            @endcan
 
             @if (\Auth::user()->type == 'company'||\Auth::user()->type == 'employee')
-            
+
                 <a href="{{route('contract.download.pdf',\Crypt::encrypt($contract->id))}}" class="btn btn-sm btn-primary btn-icon m-2" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Download')}}" target="_blanks"><i class="ti ti-download text-white"></i></a>
             @endif
 
             @if (\Auth::user()->type == 'company'||\Auth::user()->type == 'employee')
-    
+
                 <a href="{{route('get.contract',$contract->id)}}" target="_blank" class="btn btn-sm btn-primary btn-iconn m-2" title="{{__('Preview')}}" data-bs-toggle="tooltip" data-bs-placement="top">
                     <i class="ti ti-eye"></i>
                 </a>
@@ -77,10 +77,10 @@
 
             @if ((\Auth::user()->type == 'company' && $contract->company_signature == '') ||(\Auth::user()->type == 'employee' &&        $contract->employee_signature == ''))
                 @if($contract->status == 'accept')
-                    <a href="#" class="btn btn-sm btn-primary btn-icon m-2" data-url="{{ route('signature',$contract->id) }}" data-ajax-popup="true" data-title="{{__('Signature')}}" data-size="md" title="{{__('Signature')}}" data-bs-toggle="tooltip" data-bs-placement="top">
+                    <a href="javascript:void(0)" class="btn btn-sm btn-primary btn-icon m-2" data-url="{{ route('signature',$contract->id) }}" data-ajax-popup="true" data-title="{{__('Signature')}}" data-size="md" title="{{__('Signature')}}" data-bs-toggle="tooltip" data-bs-placement="top">
                         <i class="ti ti-writing-sign"></i>
                     </a>
-                @endif 
+                @endif
            @endif
 
         @php
@@ -88,7 +88,7 @@
         @endphp
         <ul class="list-unstyled mb-0 m-1">
             <li class="dropdown dash-h-item drp-language">
-                <a class="dash-head-link dropdown-toggle arrow-none me-0" data-bs-toggle="dropdown" href="#"
+                <a class="dash-head-link dropdown-toggle arrow-none me-0" data-bs-toggle="dropdown" href="javascript:void(0)"
                     role="button" aria-haspopup="false" aria-expanded="false">
                     <span class="drp-text hide-mob text-primary">{{ ucfirst($contract->status) }}
                         <i class="ti ti-chevron-down drp-arrow nocolor hide-mob"></i>
@@ -97,8 +97,8 @@
                     @foreach ($status as $k => $status)
                         <a class="dropdown-item status" data-id="{{ $k }}"
                             data-url="{{ route('contract.status', $contract->id) }}"
-                            href="#">{{ ucfirst($status) }}</a>
-                    @endforeach 
+                            href="javascript:void(0)">{{ ucfirst($status) }}</a>
+                    @endforeach
                 </div>
             </li>
         </ul>
@@ -191,7 +191,7 @@
                                                 <div class="col-sm-4 h6 text-sm">{{__('End Date')}}</div>
                                                 <div class="col-sm-8 text-sm">{{ Auth::user()->dateFormat($contract->end_date) }}</div>
 
-                                                
+
                                             </div>
                                         </address>
                                     </div>
@@ -220,7 +220,7 @@
                                 @endif
                             @endcan
                             </div>
-                            
+
                         </div>
                     </div>
 
@@ -234,12 +234,12 @@
                                     <div class="card-body">
                                         <div class=" ">
                                             {{-- <div class="card-body bg-none"> --}}
-                                                
+
                                                 <div class="col-md-12 dropzone browse-file" id="my-dropzone"></div>
-                                                
+
                                             {{-- </div> --}}
                                         </div>
-                                
+
 
                                     @foreach($contract->files as $file)
                                     <div class=" py-3">
@@ -247,9 +247,9 @@
                                         <div class="row align-items-center">
                                                     <div class="col">
                                                         <h6 class="text-sm mb-0">
-                                                            <a href="#!">{{ $file->files }}</a>
+                                                            <a href="javascript:void(0)">{{ $file->files }}</a>
                                                         </h6>
-                                                        
+
                                                         <p class="card-text small text-muted">
                                                             {{ number_format(\File::size(storage_path('contract_attechment/' . $file->files)) / 1048576, 2) . ' ' . __('MB') }}
                                                         </p>
@@ -269,10 +269,10 @@
                                                         @if(((\Auth::user()->id == $file->user_id) || (\Auth::user()->type == 'company'))&&($contract->status == 'accept'))
 
                                                                 <div class="action-btn bg-danger ms-2">
-                                                          
+
                                                                     <form action=""></form>
                                                                     {!! Form::open(['method' => 'GET', 'route' => ['contracts.file.delete', [$contract->id, $file->id]]]) !!}
-                                                                    <a href="#!" class="mx-3 btn btn-sm  align-items-center bs-pass-para" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Delete')}}">
+                                                                    <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center bs-pass-para" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Delete')}}">
                                                                         <i class="ti ti-trash text-white"></i>
                                                                     </a>
                                                                     {!! Form::close() !!}
@@ -301,15 +301,15 @@
                                             <h5>{{__('Comments')}}</h5>
                                         </div>
                                         <div class="card-footer">
-                                           
+
                                             <div class="col-12 d-flex">
                                                 @if(($contract->status == 'accept'))
                                                 <div class="form-group mb-0 form-send w-100">
-                                            
-                                                    
+
+
                                                         <input type="hidden" id="commenturl" value="{{route('comment.store', $contract->id )}}">
                                                         <textarea rows="1" id="formComment" class="form-control" name="comment" data-toggle="autosize" placeholder="Add a comment..." spellcheck="false"></textarea><grammarly-extension data-grammarly-shadow-root="true" style="position: absolute; top: 0px; left: 0px; pointer-events: none; z-index: 1;" class="cGcvT"></grammarly-extension><grammarly-extension data-grammarly-shadow-root="true" style="mix-blend-mode: darken; position: absolute; top: 0px; left: 0px; pointer-events: none; z-index: 1;" class="cGcvT"></grammarly-extension>
-                                              
+
                                                 </div>
 
                                                 <button id="comment_submit" class="btn b tn-send"><i class="f-16 text-primary ti ti-brand-telegram">
@@ -328,8 +328,8 @@
                                                             <div class="list-group-item ">
                                                                 <div class="row align-items-center">
                                                                     <div class="col-auto">
-                                                                       
-                                                                        
+
+
                                                                         <a href="{{ !empty($user->avatar) ? $logo . '/' . $user->avatar : $logo . '/avatar.png' }}" target="_blank">
                                                                             <img class="rounded-circle"  width="25" height="25" src="{{ !empty($user->avatar) ? $logo . '/' . $user->avatar : $logo . '/avatar.png' }}">
                                                                         </a>
@@ -337,27 +337,27 @@
                                                                     <div class="col ml-n2">
                                                                         <p class="d-block h6 text-sm font-weight-light mb-0 text-break">{{ $comment->comment }}</p>
                                                                         <small class="d-block">{{$comment->created_at->diffForHumans()}}</small>
-                                                                    </div> 
+                                                                    </div>
 
                                                                 @can('Delete Comment')
                                                                     @if(((\Auth::user()->id == $comment->user_id) || (\Auth::user()->type == 'company')) &&($contract->status == 'accept'))
                                                                                 <div class="p-0 w-auto action-btn bg-danger">
                                                                                     <form action=""></form>
                                                                                     {!! Form::open(['method' => 'GET', 'route' => ['comment.destroy', $comment->id]]) !!}
-                                                                                        <a href="#!" class="btn btn-sm d-inline-flex align-items-center bs-pass-para" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Delete')}}">
+                                                                                        <a href="javascript:void(0)" class="btn btn-sm d-inline-flex align-items-center bs-pass-para" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Delete')}}">
                                                                                         <span class="text-white"> <i class="ti ti-trash"></i></span>
                                                                                     </a>
                                                                                     {!! Form::close() !!}
                                                                                 </div>
                                                                         @endif
                                                                 @endcan
-                                                                       
+
                                                                 </div>
                                                             </div>
                                                         @endforeach
                                                     </div>
                                                 </div>
-                                           
+
                                             {{-- {{ Form::close() }} --}}
                                         </div>
                                     </div>
@@ -365,7 +365,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div id="notes" role="tabpanel" aria-labelledby="pills-comments-tab">
                         <div class="row pt-2">
                             <div class="col-12">
@@ -379,7 +379,7 @@
                                             <form action=""></form>
                                             {{ Form::open(['route' => ['contracts.note.store', $contract->id]]) }}
                                             <div class="form-group">
-                                             
+
                                                 <textarea rows="3" id="summernote" class="form-control tox-target pc-tinymce summernotes" name="note" data-toggle="autosize" placeholder="Add a notes..." spellcheck="false" required></textarea><grammarly-extension data-grammarly-shadow-root="true" style="position: absolute; top: 0px; left: 0px; pointer-events: none; z-index: 1;" class="cGcvT"></grammarly-extension><grammarly-extension data-grammarly-shadow-root="true" style="mix-blend-mode: darken; position: absolute; top: 0px; left: 0px; pointer-events: none; z-index: 1;" class="cGcvT"></grammarly-extension>
                                             </div>
                                             <div class="col-md-12 text-end mb-0">
@@ -396,9 +396,9 @@
                                                 @endphp
                                                 <div class="list-group-item ">
                                                     <div class="row align-items-center">
-                                                       
+
                                                         <div class="col-auto">
-                                                         
+
                                                             <a href="{{ !empty($user->avatar) ? $logo . '/' . $user->avatar : $logo . '/avatar.png' }}" target="_blank">
                                                                 <img class="rounded-circle"  width="25" height="25" src="{{ !empty($user->avatar) ? $logo . '/' . $user->avatar : $logo . '/avatar.png' }}">
                                                             </a>
@@ -411,7 +411,7 @@
                                                             @if(((\Auth::user()->id == $note->user_id) || (\Auth::user()->type == 'company'))&&($contract->status == 'accept'))
                                                                         <div class="p-0 w-auto action-btn bg-danger">
                                                                         {!! Form::open(['method' => 'GET', 'route' => ['contracts.note.destroy', $note->id]]) !!}
-                                                                        <a href="#!" class=" btn btn-sm d-inline-flex align-items-center bs-pass-para " data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Delete')}}">
+                                                                        <a href="javascript:void(0)" class=" btn btn-sm d-inline-flex align-items-center bs-pass-para " data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Delete')}}">
                                                                         <span class="text-white"> <i class="ti ti-trash"></i></span>
                                                                     </a>
                                                                     {!! Form::close() !!}
@@ -427,9 +427,9 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>     
+                        </div>
                     </div>
-                    </div>    
+                    </div>
                 </div>
             </div>
         </div>
@@ -446,7 +446,7 @@
 
                 var comment = $('#formComment').val();
 
-        
+
 
                 if (comment != '') {
                     $.ajax({
@@ -454,7 +454,7 @@
                         data: {"comment": comment, "_token": "{{ csrf_token() }}",},
                         type: 'POST',
                         success: function (data) {
-                              
+
                             show_toastr('{{__("Success")}}', 'Comment Create Successfully!', 'success');
 
 
@@ -537,7 +537,7 @@ Dropzone.autoDiscover = true;
                     myDropzone.removeFile(file);
                     show_toastr('{{__("Error")}}', 'File type must be match with Storage setting.', 'error');
                 }
-                location.reload();   
+                location.reload();
 
             },
             error: function (file, response) {
@@ -605,34 +605,33 @@ Dropzone.autoDiscover = true;
 
         file.previewTemplate.appendChild(html);
     }
-    
-</script> 
+
+</script>
 
  <script>
      $(document).on("click", ".status", function() {
-           
+
            var status = $(this).attr('data-id');
            var url = $(this).attr('data-url');
            $.ajax({
                url: url,
                type: 'POST',
                data: {
-                   
+
                    "status": status,
                    "_token": "{{ csrf_token() }}",
                },
                success: function(data) {
-                   show_toastr('{{__("Success")}}', 'Status Update Successfully!', 'success'); 
-                   location.reload();   
+                   show_toastr('{{__("Success")}}', 'Status Update Successfully!', 'success');
+                   location.reload();
                }
-              
+
            });
        });
-</script>  
+</script>
 
-   
+
 
 
 @endpush
 
-    

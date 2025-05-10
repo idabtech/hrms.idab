@@ -25,7 +25,7 @@
 
 @section('action-button')
 <div class="row">
-               
+
     <div class="text-end mb-3">
         {{Form::model($currEmailTempLang, array('route' => array('email_template.update', $currEmailTempLang->parent_id), 'method' => 'PUT')) }}
         <div class="text-end">
@@ -33,7 +33,7 @@
                 <ul class="list-unstyled mb-0 m-2">
                     <li class="dropdown dash-h-item drp-language">
                         <a class="dash-head-link dropdown-toggle arrow-none me-0" data-bs-toggle="dropdown"
-                           href="#" role="button" aria-haspopup="false" aria-expanded="false"
+                           href="javascript:void(0)" role="button" aria-haspopup="false" aria-expanded="false"
                            id="dropdownLanguage">
                             {{-- <i class="ti ti-world nocolor"></i> --}}
                             <span
@@ -53,7 +53,7 @@
                 <ul class="list-unstyled mb-0 m-2">
                     <li class="dropdown dash-h-item drp-language">
                         <a class="dash-head-link dropdown-toggle arrow-none me-0" data-bs-toggle="dropdown"
-                           href="#" role="button" aria-haspopup="false" aria-expanded="false"
+                           href="javascript:void(0)" role="button" aria-haspopup="false" aria-expanded="false"
                            id="dropdownLanguage">
                             <span
                                 class="drp-text hide-mob text-primary">{{ __('Template: ') }}{{ $emailTemplate->name }}</span>
@@ -72,7 +72,7 @@
         </div>
     </div>
 </div>
-        
+
 @endsection
 
 
@@ -112,7 +112,7 @@
                                             </div>
                                         @elseif($emailTemplate->slug=='new_payroll')
                                             <div class="row">
-                                                
+
                                                 {{-- <h6 class="font-weight-bold pb-3">{{__('Payroll Create')}}</h6> --}}
                                                 <p class="col-4">{{__('App Name')}} : <span class="pull-end text-primary">{app_name}</span></p>
                                                 <p class="col-4">{{__('Company Name')}} : <span class="pull-right text-primary">{company_name}</span></p>
@@ -121,7 +121,7 @@
                                                 <p class="col-4">{{__('Employee Name')}} : <span class="pull-right text-primary">{name}</span></p>
                                                 <p class="col-4">{{__('Salary Month')}} : <span class="pull-right text-primary">{salary_month}</span></p>
                                                 <p class="col-4">{{__('URL')}} : <span class="pull-right text-primary">{url}</span></p>
-    
+
                                             </div>
                                         @elseif($emailTemplate->slug=='new_ticket')
                                             <div class="row">
@@ -141,7 +141,7 @@
                                                 <p class="col-4">{{__('Company Name')}} : <span class="pull-right text-primary">{company_name}</span></p>
                                                 <p class="col-4">{{__('App Url')}} : <span class="pull-right text-primary">{app_url}</span></p>
                                                 <p class="col-4">{{__('Employee Name')}} : <span class="pull-right text-primary">{award_name}</span></p>
-                                            
+
                                             </div>
                                         @elseif($emailTemplate->slug=='employee_transfer')
                                             <div class="row">
@@ -242,7 +242,7 @@
                                             </div>
                                             @endif
                                     </div>
-                                
+
                                 </div>
                             </div>
                     </div>

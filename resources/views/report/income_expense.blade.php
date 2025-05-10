@@ -14,7 +14,7 @@
         <i class="ti ti-filter"></i>
     </a> -->
 
-    <a href="#" onclick="saveAsPDF()" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title=""
+    <a href="javascript:void(0)" onclick="saveAsPDF()" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title=""
         data-bs-original-title="Download">
         <span class="btn-inner--icon"><i class="ti ti-download "></i></span>
     </a>
@@ -132,7 +132,7 @@
                         </div>
 
                         <div class="col-auto float-end ms-2 mt-4">
-                            <a href="#" class="btn btn-sm btn-primary"
+                            <a href="javascript:void(0)" class="btn btn-sm btn-primary"
                                 onclick="document.getElementById('report_income_expense').submit(); return false;"
                                 data-bs-toggle="tooltip" title="" data-bs-original-title="apply">
                                 <span class="btn-inner--icon"><i class="ti ti-search"></i></span>

@@ -11,12 +11,12 @@
 @endsection
 
 @section('action-button')
-    <a href="#" data-url="{{ route('employee.file.export') }}" data-ajax-popup="true" data-bs-toggle="tooltip" data-bs-placement="top"
+    <a href="javascript:void(0)" data-url="{{ route('employee.file.export') }}" data-ajax-popup="true" data-bs-toggle="tooltip" data-bs-placement="top"
         data-title="{{ __('Export Employee Excel File') }}" class="btn btn-sm btn-primary" data-bs-original-title="{{ __('Export') }}">
         <i class="ti ti-file-export"></i>
     </a>
 
-    <a href="#" data-url="{{ route('employee.file.import') }}" data-ajax-popup="true"
+    <a href="javascript:void(0)" data-url="{{ route('employee.file.import') }}" data-ajax-popup="true"
         data-title="{{ __('Import  Employee CSV File') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
         data-bs-original-title="{{ __('Import') }}">
         <i class="ti ti-file"></i>
@@ -60,7 +60,7 @@
                                             <a class="btn btn-outline-primary"
                                                 href="{{ route('employee.show', \Illuminate\Support\Facades\Crypt::encrypt($employee->id)) }}">{{ \Auth::user()->employeeIdFormat($employee->employee_id) }}</a>
                                         @else
-                                            <a href="#" class="btn btn-outline-primary">{{ \Auth::user()->employeeIdFormat($employee->employee_id) }}</a>
+                                            <a href="javascript:void(0)" class="btn btn-outline-primary">{{ \Auth::user()->employeeIdFormat($employee->employee_id) }}</a>
                                         @endcan
                                     </td>
                                     <td>{{ $employee->name }} {{ $employee->last_name }}</td>
@@ -95,14 +95,14 @@
                                                     @can('Delete Employee')
                                                         <div class="action-btn bg-danger ms-2">
                                                             {!! Form::open(['method' => 'DELETE', 'route' => ['employee.destroy', $employee->id], 'id' => 'delete-form-' . $employee->id]) !!}
-                                                            <a href="#" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                            <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
                                                                 data-bs-toggle="tooltip" title=""
                                                                 data-bs-original-title="Delete" aria-label="Delete"><i
                                                                     class="ti ti-trash text-white text-white"></i></a>
                                                             </form>
                                                         </div>
                                                     @endcan
-                                                   
+
                                                 </span>
                                             @else
                                                 <i class="ti ti-lock"></i>

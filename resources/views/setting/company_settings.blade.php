@@ -9,9 +9,9 @@
     $company_logo_light = \App\Models\Utility::getValByName('company_logo_light');
     $company_favicon = \App\Models\Utility::getValByName('company_favicon');
     $color = isset($settings['theme_color']) ? $settings['theme_color'] : 'theme-4';
-    
+
     $settings = App\Models\Utility::settings();
-    
+
     $currantLang = \App\Models\Utility::languages();
     $SITE_RTL = \App\Models\Utility::getValByName('SITE_RTL');
 @endphp
@@ -394,25 +394,25 @@
                                                                 </h6>
                                                                 <hr class="my-2" />
                                                                 <div class="theme-color themes-color">
-                                                                    <a href="#!"
+                                                                    <a href="javascript:void(0)"
                                                                         class="themes-color-change {{ $color == 'theme-1' ? 'active_color' : '' }}"
                                                                         data-value="theme-1"></a>
                                                                     <input type="radio" class="theme_color d-none"
                                                                         name="theme_color" value="theme-1"
                                                                         {{ $color == 'theme-1' ? 'checked' : '' }}>
-                                                                    <a href="#!"
+                                                                    <a href="javascript:void(0)"
                                                                         class="themes-color-change {{ $color == 'theme-2' ? 'active_color' : '' }}"
                                                                         data-value="theme-2"></a>
                                                                     <input type="radio" class="theme_color d-none"
                                                                         name="theme_color" value="theme-2"
                                                                         {{ $color == 'theme-2' ? 'checked' : '' }}>
-                                                                    <a href="#!"
+                                                                    <a href="javascript:void(0)"
                                                                         class="themes-color-change {{ $color == 'theme-3' ? 'active_color' : '' }}"
                                                                         data-value="theme-3"></a>
                                                                     <input type="radio" class="theme_color d-none"
                                                                         name="theme_color" value="theme-3"
                                                                         {{ $color == 'theme-3' ? 'checked' : '' }}>
-                                                                    <a href="#!"
+                                                                    <a href="javascript:void(0)"
                                                                         class="themes-color-change {{ $color == 'theme-4' ? 'active_color' : '' }}"
                                                                         data-value="theme-4"></a>
                                                                     <input type="radio" class="theme_color d-none"
@@ -421,6 +421,9 @@
                                                                 </div>
 
                                                             </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             @endif
                                             <div class="col-4">
                                                 <h6 class=" ">
@@ -778,111 +781,924 @@
                                                 <tr class="">
                                                     <td>{{ $EmailTemplate->name }}</td>
                                                     <td class="text-center">
-
                                                         <div class="form-group col-md-12">
                                                             <label class="form-check form-switch d-inline-block">
+                                                                @php
+                                                                    $isActive =
+                                                                        optional($EmailTemplate->template)->is_active ==
+                                                                        1;
+                                                                @endphp
                                                                 <input type="checkbox"
                                                                     class="email-template-checkbox form-check-input"
                                                                     name="{{ $EmailTemplate->id }}"
-                                                                    @if ($EmailTemplate->template->is_active == 1) checked="checked" @endcan
-                                                                value="{{ $EmailTemplate->template->is_active == 1 ? '1' : '0' }}"
-                                                                data-url="{{ route('company.email.setting', $EmailTemplate->id) }}">
-                                                            <span class="slider1 round"></span>
-                                                        </label>
+                                                                    {{ $isActive ? 'checked' : '' }}
+                                                                    value="{{ $isActive ? '1' : '0' }}"
+                                                                    data-url="{{ route('company.email.setting', $EmailTemplate->id) }}">
+                                                                <span class="slider1 round"></span>
+                                                            </label>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="" id="ip-restriction-settings">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between">
+
+                                <h5>{{ __('IP Restriction Settings') }}</h5>
+                                <a data-url="{{ route('create.ip') }}" class="btn btn-sm btn-primary"
+                                    data-bs-toggle="tooltip" data-bs-original-title="{{ __('Create New IP') }}"
+                                    data-bs-placement="top" data-size="md" data-ajax-popup="true"
+                                    data-title="{{ __('Create New IP') }}">
+                                    <i class="ti ti-plus"></i>
+                                </a>
+
+                            </div>
+                            <div class="card-body table-border-style ">
+                                <div class="table-responsive">
+                                    <table class="table" id="pc-dt-simple">
+                                        <thead>
+                                            <tr>
+                                                <th class="w-75"> {{ __('IP') }}</th>
+                                                <th width="200px"> {{ 'Action' }}</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @foreach ($ips as $ip)
+                                                <tr class="Action">
+                                                    <td class="sorting_1">{{ $ip->ip }}</td>
+                                                    <td class="">
+                                                        @can('Manage Company Settings')
+                                                            <div class="action-btn bg-info ms-2">
+                                                                <a class="mx-3 btn btn-sm  align-items-center"
+                                                                    data-url="{{ route('edit.ip', $ip->id) }}"
+                                                                    data-size="md" data-ajax-popup="true"
+                                                                    data-title="{{ __('Edit IP') }}"
+                                                                    data-bs-toggle="tooltip"
+                                                                    data-bs-original-title="{{ __('Edit') }}"
+                                                                    data-bs-placement="top" class="edit-icon"
+                                                                    data-original-title="{{ __('Edit') }}"><i
+                                                                        class="ti ti-pencil text-white"></i></a>
+                                                            </div>
+                                                        @endcan
+                                                        @can('Manage Company Settings')
+                                                            <div class="action-btn bg-danger ms-2">
+                                                                {!! Form::open(['method' => 'DELETE', 'route' => ['destroy.ip', $ip->id], 'id' => 'delete-form-' . $ip->id]) !!}
+                                                                <a href="javascript:void(0)" data-bs-toggle="tooltip"
+                                                                    data-bs-original-title="{{ __('Delete') }}"
+                                                                    data-bs-placement="top"
+                                                                    class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                                    data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                                                    title="{{ __('Delete') }}">
+                                                                    <i class="ti ti-trash text-white"></i></a>
+                                                                {!! Form::close() !!}
+                                                            </div>
+                                                        @endcan
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+
+                                        </tbody>
+                                    </table>
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+
+
+                    @if (Auth::user()->type == 'company')
+                        <div class="" id="zoom-meeting-settings">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>{{ __('Zoom Meeting Settings') }}</h5>
+                                </div>
+                                {{ Form::open(['route' => 'zoom.settings', 'method' => 'post']) }}
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-lg-6 col-md-6 col-sm-12 form-group">
+                                            {{ Form::label('zoom_apikey', __('Zoom API Key'), ['class' => 'col-form-label']) }}
+                                            {{ Form::text('zoom_apikey', isset($settings['zoom_apikey']) ? $settings['zoom_apikey'] : '', ['class' => 'form-control ', 'placeholder' => 'Zoom API Key']) }}
+                                        </div>
+
+                                        <div class="col-lg-6 col-md-6 col-sm-12 form-group">
+                                            {{ Form::label('Zoom Secret Key', __('Zoom Secret Key'), ['class' => 'col-form-label']) }}
+                                            {{ Form::text('zoom_secret_key', !empty($settings['zoom_secret_key']) ? $settings['zoom_secret_key'] : '', ['class' => 'form-control', 'placeholder' => 'Zoom Secret Key']) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer text-end">
+                                    <button class="btn-submit btn btn-primary" type="submit">
+                                        {{ __('Save Changes') }}
+                                    </button>
+                                </div>
+                                {{ Form::close() }}
+                            </div>
+                        </div>
+                        <div class="" id="slack-settings">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>{{ __('Slack Settings') }}</h5>
+                                    <small
+                                        class="text-secondary font-weight-bold">{{ __('Slack Notification Settings') }}</small>
+                                </div>
+                                {{ Form::open(['route' => 'slack.setting', 'id' => 'slack-setting', 'method' => 'post', 'class' => 'd-contents']) }}
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-lg-12 col-md-12 col-sm-12 form-group">
+                                            {{ Form::label('Slack Webhook URL', __('Slack Webhook URL'), ['class' => 'col-form-label']) }}
+                                            {{ Form::text('slack_webhook', isset($settings['slack_webhook']) ? $settings['slack_webhook'] : '', ['class' => 'form-control w-100', 'placeholder' => __('Enter Slack Webhook URL'), 'required' => 'required']) }}
+                                        </div>
+                                        <div class="col-lg-12 col-md-12 col-sm-12 form-group mb-3">
+                                            {{-- {{ Form::label('Module Setting', __('Module Setting'), ['class' => 'col-form-label']) }} --}}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <ul class="list-group">
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Monthly payslip create', __('New Monthly Payslip'), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('monthly_payslip_notification', '1', isset($settings['monthly_payslip_notification']) && $settings['monthly_payslip_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'monthly_payslip_notification']) }}
+                                                        <label class="col-form-label" for="lead_notificaation"></label>
                                                     </div>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                                                </li>
+
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Award create', __('New Award'), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('award_notificaation', '1', isset($settings['award_notificaation']) && $settings['award_notificaation'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'award_notificaation']) }}
+                                                        <label class="col-form-label" for="award_notificaation"></label>
+                                                    </div>
+                                                </li>
+
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Ticket create', __('New Ticket'), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('ticket_notification', '1', isset($settings['ticket_notification']) && $settings['ticket_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'ticket_notification']) }}
+                                                        <label class="col-form-label" for="ticket_notification"></label>
+                                                    </div>
+                                                </li>
+
+
+                                            </ul>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <ul class="list-group">
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Announcement create', __('New Announcement'), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+
+                                                        {{ Form::checkbox('Announcement_notification', '1', isset($settings['Announcement_notification']) && $settings['Announcement_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'Announcement_notification']) }}
+                                                        <label class="col-form-label"
+                                                            for="Announcement_notification"></label>
+                                                    </div>
+                                                </li>
+
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Holidays create', __('New Holidays'), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('Holiday_notification', '1', isset($settings['Holiday_notification']) && $settings['Holiday_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'Holiday_notification']) }}
+                                                        <label class="col-form-label" for="Holiday_notification"></label>
+                                                    </div>
+                                                </li>
+
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Event create', __('New Event'), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('event_notification', '1', isset($settings['event_notification']) && $settings['event_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'event_notification']) }}
+                                                        <label class="col-form-label" for="event_notification"></label>
+                                                    </div>
+                                                </li>
+
+
+                                            </ul>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <ul class="list-group">
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Meeting create', __('New Meeting'), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('meeting_notification', '1', isset($settings['meeting_notification']) && $settings['meeting_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'meeting_notification']) }}
+                                                        <label class="col-form-label" for="meeting_notification"></label>
+                                                    </div>
+                                                </li>
+
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Company policy create', __('New Company Policy'), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('company_policy_notification', '1', isset($settings['company_policy_notification']) && $settings['company_policy_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'company_policy_notification']) }}
+                                                        <label class="col-form-label"
+                                                            for="company_policy_notification"></label>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer text-end">
+                                    <button class="btn-submit btn btn-primary" type="submit">
+                                        {{ __('Save Changes') }}
+                                    </button>
+                                </div>
+                                {{ Form::close() }}
                             </div>
                         </div>
-                    </div>
-                </div>
-                <div class="" id="ip-restriction-settings">
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between">
 
-                            <h5>{{ __('IP Restriction Settings') }}</h5>
-                            <a  data-url="{{ route('create.ip') }}" class="btn btn-sm btn-primary"
-                                data-bs-toggle="tooltip" data-bs-original-title="{{ __('Create New IP') }}"
-                                data-bs-placement="top" data-size="md" data-ajax-popup="true"
-                                data-title="{{ __('Create New IP') }}">
-                                <i class="ti ti-plus"></i>
-                            </a>
 
-                        </div>
-                        <div class="card-body table-border-style ">
-                            <div class="table-responsive">
-                                <table class="table" id="pc-dt-simple">
-                                    <thead>
-                                        <tr>
-                                            <th class="w-75"> {{ __('IP') }}</th>
-                                            <th width="200px"> {{ 'Action' }}</th>
-                                        </tr>
-                                    </thead>
 
-                                    <tbody>
-                                        @foreach ($ips as $ip)
-                                            <tr class="Action">
-                                                <td class="sorting_1">{{ $ip->ip }}</td>
-                                                <td class="">
-                                                    @can('Manage Company Settings')
-                                                        <div class="action-btn bg-info ms-2">
-                                                            <a  class="mx-3 btn btn-sm  align-items-center"
-                                                                data-url="{{ route('edit.ip', $ip->id) }}" data-size="md"
-                                                                data-ajax-popup="true" data-title="{{ __('Edit IP') }}"
-                                                                data-bs-toggle="tooltip"
-                                                                data-bs-original-title="{{ __('Edit') }}"
-                                                                data-bs-placement="top" class="edit-icon"
-                                                                data-original-title="{{ __('Edit') }}"><i
-                                                                    class="ti ti-pencil text-white"></i></a>
-                                                        </div>
-                                                    @endcan
-                                                    @can('Manage Company Settings')
-                                                        <div class="action-btn bg-danger ms-2">
-                                                            {!! Form::open(['method' => 'DELETE', 'route' => ['destroy.ip', $ip->id], 'id' => 'delete-form-' . $ip->id]) !!}
-                                                            <a href="#!" data-bs-toggle="tooltip"
-                                                                data-bs-original-title="{{ __('Delete') }}"
-                                                                data-bs-placement="top"
-                                                                class="mx-3 btn btn-sm  align-items-center bs-pass-para"
-                                                                data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                                                title="{{ __('Delete') }}">
-                                                                <i class="ti ti-trash text-white"></i></a>
-                                                            {!! Form::close() !!}
-                                                        </div>
-                                                    @endcan     
-                                                </td>
-                                            </tr>
-                                        @endforeach
+                        <div class="" id="telegram-settings">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>{{ __('Telegram Settings') }}</h5>
+                                    <small
+                                        class="text-secondary font-weight-bold">{{ __('Telegram Notification Settings') }}</small>
+                                </div>
+                                {{ Form::open(['route' => 'telegram.setting', 'id' => 'telegram-setting', 'method' => 'post', 'class' => 'd-contents']) }}
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-lg-6 col-md-6 col-sm-6 form-group">
+                                            {{ Form::label('Telegram Access Token', __('Telegram Access Token'), ['class' => 'col-form-label']) }}
+                                            {{ Form::text('telegram_accestoken', isset($settings['telegram_accestoken']) ? $settings['telegram_accestoken'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Telegram AccessToken')]) }}
+                                        </div>
+                                        <div class="col-lg-6 col-md-6 col-sm-6 form-group">
+                                            {{ Form::label('Telegram ChatID', __('Telegram ChatID'), ['class' => 'col-form-label']) }}
+                                            {{ Form::text('telegram_chatid', isset($settings['telegram_chatid']) ? $settings['telegram_chatid'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Telegram ChatID')]) }}
+                                        </div>
+                                        <div class="col-lg-12 col-md-12 col-sm-12 form-group mb-3">
+                                            {{-- {{ Form::label('Module Setting', __('Module Setting'), ['class' => 'col-form-label']) }} --}}
+                                        </div>
 
-                                    </tbody>
-                                </table>
+
+                                        <div class="col-md-4">
+                                            <ul class="list-group">
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Monthly payslip create', __('New Monthly Payslip'), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('telegram_monthly_payslip_notification', '1', isset($settings['telegram_monthly_payslip_notification']) && $settings['telegram_monthly_payslip_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'telegram_monthly_payslip_notification']) }}
+                                                        <label class="col-form-label"
+                                                            for="telegram_monthly_payslip_notification"></label>
+                                                    </div>
+                                                </li>
+
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Award create', __('New Award'), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('telegram_award_notification', '1', isset($settings['telegram_award_notification']) && $settings['telegram_award_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'telegram_award_notification']) }}
+                                                        <label class="col-form-label"
+                                                            for="telegram_award_notification"></label>
+                                                    </div>
+                                                </li>
+
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Ticket create', __('New Ticket '), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('telegram_ticket_notification', '1', isset($settings['telegram_ticket_notification']) && $settings['telegram_ticket_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'telegram_ticket_notification']) }}
+                                                        <label class="col-form-label"
+                                                            for="telegram_ticket_notification"></label>
+                                                    </div>
+                                                </li>
+
+
+                                            </ul>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <ul class="list-group">
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Announcement create', __('New Announcement'), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('telegram_Announcement_notification', '1', isset($settings['telegram_Announcement_notification']) && $settings['telegram_Announcement_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'telegram_Announcement_notification']) }}
+                                                        <label class="col-form-label"
+                                                            for="telegram_Announcement_notification"></label>
+                                                    </div>
+                                                </li>
+
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Holidays create', __('New Holidays '), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('telegram_Holiday_notification', '1', isset($settings['telegram_Holiday_notification']) && $settings['telegram_Holiday_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'telegram_Holiday_notification']) }}
+                                                        <label class="col-form-label"
+                                                            for="telegram_Holiday_notification"></label>
+                                                    </div>
+                                                </li>
+
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Event create', __('New Event'), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('telegram_event_notification', '1', isset($settings['telegram_event_notification']) && $settings['telegram_event_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'telegram_event_notification']) }}
+                                                        <label class="col-form-label"
+                                                            for="telegram_event_notification"></label>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <ul class="list-group">
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Meeting create', __('New Meeting'), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('telegram_meeting_notification', '1', isset($settings['telegram_meeting_notification']) && $settings['telegram_meeting_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'telegram_meeting_notification']) }}
+                                                        <label class="col-form-label"
+                                                            for="telegram_meeting_notification"></label>
+                                                    </div>
+                                                </li>
+
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Company policy create', __('New Company Policy '), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('telegram_company_policy_notification', '1', isset($settings['telegram_company_policy_notification']) && $settings['telegram_company_policy_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'telegram_company_policy_notification']) }}
+                                                        <label class="col-form-label"
+                                                            for="telegram_company_policy_notification"></label>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer text-end">
+                                    <button class="btn-submit btn btn-primary" type="submit">
+                                        {{ __('Save Changes') }}
+                                    </button>
+                                </div>
+                                {{ Form::close() }}
                             </div>
-
-
                         </div>
-                    </div>
-                </div>
+
+                        <div class="" id="twilio-settings">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>{{ __('Twilio Settings') }}</h5>
+                                    <small
+                                        class="text-secondary font-weight-bold">{{ __('Twilio Notification Settings') }}</small>
+                                </div>
+                                {{ Form::open(['route' => 'twilio.setting', 'id' => 'twilio-setting', 'method' => 'post', 'class' => 'd-contents']) }}
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-lg-6 col-md-6 col-sm-6 form-group">
+                                            {{ Form::label('Twilio SID', __('Twilio SID'), ['class' => 'col-form-label']) }}
+                                            {{ Form::text('twilio_sid', isset($settings['twilio_sid']) ? $settings['twilio_sid'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Twilio Sid')]) }}
+                                        </div>
+                                        <div class="col-lg-6 col-md-6 col-sm-6 form-group">
+                                            {{ Form::label('Twilio Token', __('Twilio Token'), ['class' => 'col-form-label']) }}
+                                            {{ Form::text('twilio_token', isset($settings['twilio_token']) ? $settings['twilio_token'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Twilio Token')]) }}
+                                        </div>
+                                        <div class="col-lg-6 col-md-6 col-sm-6 form-group">
+                                            {{ Form::label('Twilio From', __('Twilio From'), ['class' => 'col-form-label']) }}
+                                            {{ Form::text('twilio_from', isset($settings['twilio_from']) ? $settings['twilio_from'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Twilio From')]) }}
+                                        </div>
+                                        <div class="col-lg-12 col-md-12 col-sm-12 form-group mb-3">
+                                            {{-- {{ Form::label('Module Setting', __('Module Setting'), ['class' => 'col-form-label']) }} --}}
+                                        </div>
 
 
-                @if (Auth::user()->type == 'company')
-                    <div class="" id="zoom-meeting-settings">
+                                        <div class="col-md-4">
+                                            <ul class="list-group">
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Payslip create', __('New Monthly Payslip'), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('twilio_payslip_notification', '1', isset($settings['twilio_payslip_notification']) && $settings['twilio_payslip_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'twilio_payslip_notification']) }}
+                                                        <label class="col-form-label"
+                                                            for="twilio_payslip_notification"></label>
+                                                    </div>
+                                                </li>
+
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Leave Approve/Reject', __('Leave Approve/Reject'), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('twilio_leave_approve_notification', '1', isset($settings['twilio_leave_approve_notification']) && $settings['twilio_leave_approve_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'twilio_leave_approve_notification']) }}
+                                                        <label class="col-form-label"
+                                                            for="twilio_leave_approve_notification"></label>
+                                                    </div>
+                                                </li>
+
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Ticket create', __('New Ticket '), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('twilio_ticket_notification', '1', isset($settings['twilio_ticket_notification']) && $settings['twilio_ticket_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'twilio_ticket_notification']) }}
+                                                        <label class="col-form-label"
+                                                            for="twilio_ticket_notification"></label>
+                                                    </div>
+                                                </li>
+
+
+                                            </ul>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <ul class="list-group">
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Award create', __('New Award'), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('twilio_award_notification', '1', isset($settings['twilio_award_notification']) && $settings['twilio_award_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'twilio_award_notification']) }}
+                                                        <label class="col-form-label"
+                                                            for="twilio_award_notification"></label>
+                                                    </div>
+                                                </li>
+
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Trip create', __('New Trip '), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('twilio_trip_notification', '1', isset($settings['twilio_trip_notification']) && $settings['twilio_trip_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'twilio_trip_notification']) }}
+                                                        <label class="col-form-label"
+                                                            for="twilio_trip_notification"></label>
+                                                    </div>
+                                                </li>
+
+                                            </ul>
+                                        </div>
+
+                                        <div class="col-md-4">
+                                            <ul class="list-group">
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Event create', __('New Event'), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('twilio_event_notification', '1', isset($settings['twilio_event_notification']) && $settings['twilio_event_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'twilio_event_notification']) }}
+                                                        <label class="col-form-label"
+                                                            for="twilio_event_notification"></label>
+                                                    </div>
+                                                </li>
+
+                                                <li
+                                                    class="list-group-item d-flex align-items-center justify-content-between">
+                                                    {{ Form::label('Announcement create', __('New Announcement '), ['class' => 'col-form-label']) }}
+                                                    <div class="form-check form-switch d-inline-block float-right">
+                                                        {{ Form::checkbox('twilio_announcement_notification', '1', isset($settings['twilio_announcement_notification']) && $settings['twilio_announcement_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'twilio_announcement_notification']) }}
+                                                        <label class="col-form-label"
+                                                            for="twilio_announcement_notification"></label>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer text-end">
+                                    <button class="btn-submit btn btn-primary" type="submit">
+                                        {{ __('Save Changes') }}
+                                    </button>
+                                </div>
+                                {{ Form::close() }}
+                            </div>
+                        </div>
+                    @endif
+                    <div class="" id="offer-letter-settings">
                         <div class="card">
-                            <div class="card-header">
-                                <h5>{{ __('Zoom Meeting Settings') }}</h5>
+                            <div class="card-header d-flex justify-content-between">
+                                <h5>{{ __('Offer Letter Settings') }}</h5>
+                                <div class="d-flex justify-content-end drp-languages">
+                                    <ul class="list-unstyled mb-0 m-2">
+                                        <li class="dropdown dash-h-item drp-language" style="margin-top: -19px;">
+                                            <a class="dash-head-link dropdown-toggle arrow-none me-0"
+                                                data-bs-toggle="dropdown" href="javascript:void(0)" role="button"
+                                                aria-haspopup="false" aria-expanded="false" id="dropdownLanguage">
+                                                <span class="drp-text hide-mob text-primary">
+                                                    {{ Str::upper($offerlang) }}
+                                                </span>
+                                                <i class="ti ti-chevron-down drp-arrow nocolor"></i>
+                                            </a>
+                                            <div class="dropdown-menu dash-h-dropdown dropdown-menu-end"
+                                                aria-labelledby="dropdownLanguage">
+                                                @foreach ($currantLang as $offerlangs)
+                                                    <a href="{{ route('get.offerlatter.language', ['noclangs' => $noclang, 'explangs' => $explang, 'offerlangs' => $offerlangs, 'joininglangs' => $joininglang]) }}"
+                                                        class="dropdown-item ms-1 {{ $offerlangs == $offerlang ? 'text-primary' : '' }}">{{ Str::upper($offerlangs) }}</a>
+                                                @endforeach
+                                            </div>
+                                        </li>
+                                    </ul>
+
+                                </div>
                             </div>
-                            {{ Form::open(['route' => 'zoom.settings', 'method' => 'post']) }}
+                            <div class="card-body ">
+                                <h5 class="font-weight-bold pb-3">
+                                    {{ __('Placeholders') }}</h5>
+
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <div class="card">
+                                        <div class="card-header card-body">
+                                            <div class="row text-xs">
+                                                <div class="row">
+                                                    <p class="col-4">
+                                                        {{ __('Applicant Name') }}
+                                                        : <span class="pull-end text-primary">{applicant_name}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Company Name') }} :
+                                                        <span class="pull-right text-primary">{app_name}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Job title') }} :
+                                                        <span class="pull-right text-primary">{job_title}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Job type') }} :
+                                                        <span class="pull-right text-primary">{job_type}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Proposed Start Date') }}
+                                                        : <span class="pull-right text-primary">{start_date}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Working Location') }}
+                                                        : <span class="pull-right text-primary">{workplace_location}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Days Of Week') }} :
+                                                        <span class="pull-right text-primary">{days_of_week}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Salary') }} :
+                                                        <span class="pull-right text-primary">{salary}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Salary Type') }} :
+                                                        <span class="pull-right text-primary">{salary_type}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Salary Duration') }}
+                                                        : <span class="pull-end text-primary">{salary_duration}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Offer Expiration Date') }}
+                                                        : <span
+                                                            class="pull-right text-primary">{offer_expiration_date}</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body table-border-style ">
+
+                                {{ Form::open(['route' => ['offerlatter.update', $offerlang], 'method' => 'post']) }}
+                                <div class="form-group col-12">
+                                    {{ Form::label('content', __(' Format'), ['class' => 'form-label text-dark']) }}
+                                    <textarea name="content" class="pc-tinymce-2">{!! isset($currOfferletterLang->content) ? $currOfferletterLang->content : '' !!}</textarea>
+                                </div>
+                                <div class="card-footer text-end">
+
+                                    {{ Form::submit(__('Save Changes'), ['class' => 'btn  btn-primary']) }}
+                                </div>
+
+                                {{ Form::close() }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="" id="joining-letter-settings">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between">
+                                <h5>{{ __('Joining Letter Settings') }}</h5>
+                                <div class="d-flex justify-content-end drp-languages">
+                                    <ul class="list-unstyled mb-0 m-2">
+                                        <li class="dropdown dash-h-item drp-language" style="margin-top: -19px;">
+                                            <a class="dash-head-link dropdown-toggle arrow-none me-0"
+                                                data-bs-toggle="dropdown" href="javascript:void(0)" role="button"
+                                                aria-haspopup="false" aria-expanded="false" id="dropdownLanguage1">
+                                                <span class="drp-text hide-mob text-primary">
+
+                                                    {{ Str::upper($joininglang) }}
+                                                </span>
+                                                <i class="ti ti-chevron-down drp-arrow nocolor"></i>
+                                            </a>
+                                            <div class="dropdown-menu dash-h-dropdown dropdown-menu-end"
+                                                aria-labelledby="dropdownLanguage1">
+                                                @foreach ($currantLang as $joininglangs)
+                                                    <a href="{{ route('get.joiningletter.language', ['noclangs' => $noclang, 'explangs' => $explang, 'offerlangs' => $offerlang, 'joininglangs' => $joininglangs]) }}"
+                                                        class="dropdown-item {{ $joininglangs == $joininglang ? 'text-primary' : '' }}">{{ Str::upper($joininglangs) }}</a>
+                                                @endforeach
+                                            </div>
+                                        </li>
+
+                                    </ul>
+                                </div>
+
+                            </div>
+                            <div class="card-body ">
+                                <h5 class="font-weight-bold pb-3">
+                                    {{ __('Placeholders') }}</h5>
+
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <div class="card">
+                                        <div class="card-header card-body">
+                                            <div class="row text-xs">
+                                                <div class="row">
+                                                    <p class="col-4">
+                                                        {{ __('Date') }} :
+                                                        <span class="pull-end text-primary">{date}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Company Name') }} :
+                                                        <span class="pull-right text-primary">{app_name}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Employee Name') }} :
+                                                        <span class="pull-right text-primary">{employee_name}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Address') }} : <span
+                                                            class="pull-right text-primary">{address}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Designation') }} :
+                                                        <span class="pull-right text-primary">{designation}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Start Date') }} : <span
+                                                            class="pull-right text-primary">{start_date}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Branch') }} : <span
+                                                            class="pull-right text-primary">{branch}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Start Time') }} : <span
+                                                            class="pull-end text-primary">{start_time}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('End Time') }} : <span
+                                                            class="pull-right text-primary">{end_time}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Number of Hours') }} :
+                                                        <span class="pull-right text-primary">{total_hours}</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body table-border-style ">
+
+                                {{ Form::open(['route' => ['joiningletter.update', $joininglang], 'method' => 'post']) }}
+                                <div class="form-group col-12">
+                                    {{ Form::label('content', __(' Format'), ['class' => 'form-label text-dark']) }}
+                                    <textarea name="content" class="pc-tinymce-3">{!! isset($currjoiningletterLang->content) ? $currjoiningletterLang->content : '' !!}</textarea>
+
+
+
+                                </div>
+
+                                <div class="card-footer text-end">
+
+                                    {{ Form::submit(__('Save Changes'), ['class' => 'btn  btn-primary']) }}
+                                </div>
+
+                                {{ Form::close() }}
+                            </div>
+
+
+
+                        </div>
+                    </div>
+
+                    <div class="" id="experience-certificate-settings">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between">
+                                <h5>{{ __('Certificate of Experience Settings') }}
+                                </h5>
+                                <div class="d-flex justify-content-end drp-languages">
+                                    <ul class="list-unstyled mb-0 m-2">
+                                        <li class="dropdown dash-h-item drp-language" style="margin-top: -19px;">
+                                            <a class="dash-head-link dropdown-toggle arrow-none me-0"
+                                                data-bs-toggle="dropdown" href="javascript:void(0)" role="button"
+                                                aria-haspopup="false" aria-expanded="false" id="dropdownLanguage1">
+                                                <span class="drp-text hide-mob text-primary">
+
+                                                    {{ Str::upper($explang) }}
+                                                </span>
+                                                <i class="ti ti-chevron-down drp-arrow nocolor"></i>
+                                            </a>
+                                            <div class="dropdown-menu dash-h-dropdown dropdown-menu-end"
+                                                aria-labelledby="dropdownLanguage1">
+                                                @foreach ($currantLang as $explangs)
+                                                    <a href="{{ route('get.experiencecertificate.language', ['noclangs' => $noclang, 'explangs' => $explangs, 'offerlangs' => $offerlang, 'joininglangs' => $joininglang]) }}"
+                                                        class="dropdown-item {{ $explangs == $explang ? 'text-primary' : '' }}">{{ Str::upper($explangs) }}</a>
+                                                @endforeach
+                                            </div>
+                                        </li>
+
+                                    </ul>
+                                </div>
+
+                            </div>
+                            <div class="card-body ">
+                                <h5 class="font-weight-bold pb-3">
+                                    {{ __('Placeholders') }}</h5>
+
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <div class="card">
+                                        <div class="card-header card-body">
+                                            <div class="row text-xs">
+                                                <div class="row">
+                                                    <p class="col-4">
+                                                        {{ __('Company Name') }} :
+                                                        <span class="pull-right text-primary">{app_name}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Employee Name') }} :
+                                                        <span class="pull-right text-primary">{employee_name}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Date of Issuance') }} :
+                                                        <span class="pull-right text-primary">{date}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Designation') }} :
+                                                        <span class="pull-right text-primary">{designation}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Start Date') }} : <span
+                                                            class="pull-right text-primary">{start_date}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Branch') }} : <span
+                                                            class="pull-right text-primary">{branch}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Start Time') }} : <span
+                                                            class="pull-end text-primary">{start_time}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('End Time') }} : <span
+                                                            class="pull-right text-primary">{end_time}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Number of Hours') }} :
+                                                        <span class="pull-right text-primary">{total_hours}</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body table-border-style ">
+
+                                {{ Form::open(['route' => ['experiencecertificate.update', $explang], 'method' => 'post']) }}
+                                <div class="form-group col-12">
+                                    {{ Form::label('content', __(' Format'), ['class' => 'form-label text-dark']) }}
+                                    <textarea name="content" class="pc-tinymce-4">{!! isset($curr_exp_cetificate_Lang->content) ? $curr_exp_cetificate_Lang->content : '' !!}</textarea>
+
+
+
+                                </div>
+
+                                <div class="card-footer text-end">
+
+                                    {{ Form::submit(__('Save Changes'), ['class' => 'btn  btn-primary']) }}
+                                </div>
+
+                                {{ Form::close() }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="" id="noc-settings">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between">
+                                <h5>{{ __('No Objection Certificate Settings') }}</h5>
+                                <div class="d-flex justify-content-end drp-languages">
+                                    <ul class="list-unstyled mb-0 m-2">
+                                        <li class="dropdown dash-h-item drp-language" style="margin-top: -19px;">
+                                            <a class="dash-head-link dropdown-toggle arrow-none me-0"
+                                                data-bs-toggle="dropdown" href="javascript:void(0)" role="button"
+                                                aria-haspopup="false" aria-expanded="false" id="dropdownLanguage1">
+                                                <span class="drp-text hide-mob text-primary">
+
+                                                    {{ Str::upper($noclang) }}
+                                                </span>
+                                                <i class="ti ti-chevron-down drp-arrow nocolor"></i>
+                                            </a>
+                                            <div class="dropdown-menu dash-h-dropdown dropdown-menu-end"
+                                                aria-labelledby="dropdownLanguage1">
+                                                @foreach ($currantLang as $noclangs)
+                                                    <a href="{{ route('get.noc.language', ['noclangs' => $noclangs, 'explangs' => $explang, 'offerlangs' => $offerlang, 'joininglangs' => $joininglang]) }}"
+                                                        class="dropdown-item {{ $noclangs == $noclang ? 'text-primary' : '' }}">{{ Str::upper($noclangs) }}</a>
+                                                @endforeach
+                                            </div>
+                                        </li>
+
+                                    </ul>
+                                </div>
+
+                            </div>
+                            <div class="card-body ">
+                                <h5 class="font-weight-bold pb-3">
+                                    {{ __('Placeholders') }}</h5>
+
+                                <div class="col-lg-12 col-md-12 col-sm-12">
+                                    <div class="card">
+                                        <div class="card-header card-body">
+                                            <div class="row text-xs">
+                                                <div class="row">
+                                                    <p class="col-4">
+                                                        {{ __('Date') }} : <span
+                                                            class="pull-end text-primary">{date}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Company Name') }} :
+                                                        <span class="pull-right text-primary">{app_name}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Employee Name') }} :
+                                                        <span class="pull-right text-primary">{employee_name}</span>
+                                                    </p>
+                                                    <p class="col-4">
+                                                        {{ __('Designation') }} :
+                                                        <span class="pull-right text-primary">{designation}</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body table-border-style">
+                                {{ Form::open(['route' => ['noc.update', $noclang], 'method' => 'post']) }}
+                                <div class="form-group col-12">
+                                    {{ Form::label('content', __(' Format'), ['class' => 'form-label text-dark']) }}
+                                    <textarea name="content" class="pc-tinymce-5">{!! isset($currnocLang->content) ? $currnocLang->content : '' !!}</textarea>
+
+                                </div>
+
+                                <div class="card-footer text-end">
+
+                                    {{ Form::submit(__('Save Changes'), ['class' => 'btn  btn-primary']) }}
+                                </div>
+
+                                {{ Form::close() }}
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Google calendar --}}
+                    <div class="card" id="google-calender">
+                        <div class="col-md-12">
+                            {{ Form::open(['url' => route('google.calender.settings'), 'enctype' => 'multipart/form-data']) }}
+                            <div class="card-header">
+                                <div class="row">
+                                    <div class="col-lg-8 col-md-8 col-sm-8">
+                                        <h5 class="">
+                                            {{ __('Google Calendar') }}
+                                        </h5>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-4 col-sm-4 text-end">
+                                        <div class="col switch-width">
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="form-check-input" name="is_enabled"
+                                                    data-toggle="switchbutton" data-onstyle="primary" id="is_enabled"
+                                                    {{ isset($settings['is_enabled']) && $settings['is_enabled'] == 'on' ? 'checked="checked"' : '' }}>
+                                                <label class="custom-control-label form-label" for="is_enabled"></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-lg-6 col-md-6 col-sm-12 form-group">
-                                        {{ Form::label('zoom_apikey', __('Zoom API Key'), ['class' => 'col-form-label']) }}
-                                        {{ Form::text('zoom_apikey', isset($settings['zoom_apikey']) ? $settings['zoom_apikey'] : '', ['class' => 'form-control ', 'placeholder' => 'Zoom API Key']) }}
+                                        {{ Form::label('Google calendar id', __('Google Calendar Id'), ['class' => 'col-form-label']) }}
+                                        {{ Form::text('google_clender_id', !empty($settings['google_clender_id']) ? $settings['google_clender_id'] : '', ['class' => 'form-control ', 'placeholder' => 'Google Calendar Id']) }}
                                     </div>
-
                                     <div class="col-lg-6 col-md-6 col-sm-12 form-group">
-                                        {{ Form::label('Zoom Secret Key', __('Zoom Secret Key'), ['class' => 'col-form-label']) }}
-                                        {{ Form::text('zoom_secret_key', !empty($settings['zoom_secret_key']) ? $settings['zoom_secret_key'] : '', ['class' => 'form-control', 'placeholder' => 'Zoom Secret Key']) }}
+                                        {{ Form::label('Google calendar json file', __('Google Calendar JSON File'), ['class' => 'col-form-label']) }}
+                                        <input type="file" class="form-control" name="google_calender_json_file"
+                                            id="file">
                                     </div>
                                 </div>
                             </div>
@@ -894,859 +1710,20 @@
                             {{ Form::close() }}
                         </div>
                     </div>
-                    <div class="" id="slack-settings">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>{{ __('Slack Settings') }}</h5>
-                                <small
-                                    class="text-secondary font-weight-bold">{{ __('Slack Notification Settings') }}</small>
-                            </div>
-                            {{ Form::open(['route' => 'slack.setting', 'id' => 'slack-setting', 'method' => 'post', 'class' => 'd-contents']) }}
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-lg-12 col-md-12 col-sm-12 form-group">
-                                        {{ Form::label('Slack Webhook URL', __('Slack Webhook URL'), ['class' => 'col-form-label']) }}
-                                        {{ Form::text('slack_webhook', isset($settings['slack_webhook']) ? $settings['slack_webhook'] : '', ['class' => 'form-control w-100', 'placeholder' => __('Enter Slack Webhook URL'), 'required' => 'required']) }}
-                                    </div>
-                                    <div class="col-lg-12 col-md-12 col-sm-12 form-group mb-3">
-                                        {{-- {{ Form::label('Module Setting', __('Module Setting'), ['class' => 'col-form-label']) }} --}}
-                                    </div>
-                                    <div class="col-md-4">
-                                        <ul class="list-group">
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Monthly payslip create', __('New Monthly Payslip'), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('monthly_payslip_notification', '1', isset($settings['monthly_payslip_notification']) && $settings['monthly_payslip_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'monthly_payslip_notification']) }}
-                                                    <label class="col-form-label" for="lead_notificaation"></label>
-                                                </div>
-                                            </li>
-
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Award create', __('New Award'), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('award_notificaation', '1', isset($settings['award_notificaation']) && $settings['award_notificaation'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'award_notificaation']) }}
-                                                    <label class="col-form-label" for="award_notificaation"></label>
-                                                </div>
-                                            </li>
-
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Ticket create', __('New Ticket'), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('ticket_notification', '1', isset($settings['ticket_notification']) && $settings['ticket_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'ticket_notification']) }}
-                                                    <label class="col-form-label" for="ticket_notification"></label>
-                                                </div>
-                                            </li>
-
-
-                                        </ul>
-                                    </div>
-
-                                    <div class="col-md-4">
-                                        <ul class="list-group">
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Announcement create', __('New Announcement'), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-
-                                                    {{ Form::checkbox('Announcement_notification', '1', isset($settings['Announcement_notification']) && $settings['Announcement_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'Announcement_notification']) }}
-                                                    <label class="col-form-label" for="Announcement_notification"></label>
-                                                </div>
-                                            </li>
-
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Holidays create', __('New Holidays'), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('Holiday_notification', '1', isset($settings['Holiday_notification']) && $settings['Holiday_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'Holiday_notification']) }}
-                                                    <label class="col-form-label" for="Holiday_notification"></label>
-                                                </div>
-                                            </li>
-
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Event create', __('New Event'), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('event_notification', '1', isset($settings['event_notification']) && $settings['event_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'event_notification']) }}
-                                                    <label class="col-form-label" for="event_notification"></label>
-                                                </div>
-                                            </li>
-
-
-                                        </ul>
-                                    </div>
-
-                                    <div class="col-md-4">
-                                        <ul class="list-group">
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Meeting create', __('New Meeting'), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('meeting_notification', '1', isset($settings['meeting_notification']) && $settings['meeting_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'meeting_notification']) }}
-                                                    <label class="col-form-label" for="meeting_notification"></label>
-                                                </div>
-                                            </li>
-
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Company policy create', __('New Company Policy'), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('company_policy_notification', '1', isset($settings['company_policy_notification']) && $settings['company_policy_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'company_policy_notification']) }}
-                                                    <label class="col-form-label"
-                                                        for="company_policy_notification"></label>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-footer text-end">
-                                <button class="btn-submit btn btn-primary" type="submit">
-                                    {{ __('Save Changes') }}
-                                </button>
-                            </div>
-                            {{ Form::close() }}
-                        </div>
-                    </div>
-
-
-
-                    <div class="" id="telegram-settings">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>{{ __('Telegram Settings') }}</h5>
-                                <small
-                                    class="text-secondary font-weight-bold">{{ __('Telegram Notification Settings') }}</small>
-                            </div>
-                            {{ Form::open(['route' => 'telegram.setting', 'id' => 'telegram-setting', 'method' => 'post', 'class' => 'd-contents']) }}
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-lg-6 col-md-6 col-sm-6 form-group">
-                                        {{ Form::label('Telegram Access Token', __('Telegram Access Token'), ['class' => 'col-form-label']) }}
-                                        {{ Form::text('telegram_accestoken', isset($settings['telegram_accestoken']) ? $settings['telegram_accestoken'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Telegram AccessToken')]) }}
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 col-sm-6 form-group">
-                                        {{ Form::label('Telegram ChatID', __('Telegram ChatID'), ['class' => 'col-form-label']) }}
-                                        {{ Form::text('telegram_chatid', isset($settings['telegram_chatid']) ? $settings['telegram_chatid'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Telegram ChatID')]) }}
-                                    </div>
-                                    <div class="col-lg-12 col-md-12 col-sm-12 form-group mb-3">
-                                        {{-- {{ Form::label('Module Setting', __('Module Setting'), ['class' => 'col-form-label']) }} --}}
-                                    </div>
-
-
-                                    <div class="col-md-4">
-                                        <ul class="list-group">
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Monthly payslip create', __('New Monthly Payslip'), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('telegram_monthly_payslip_notification', '1', isset($settings['telegram_monthly_payslip_notification']) && $settings['telegram_monthly_payslip_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'telegram_monthly_payslip_notification']) }}
-                                                    <label class="col-form-label"
-                                                        for="telegram_monthly_payslip_notification"></label>
-                                                </div>
-                                            </li>
-
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Award create', __('New Award'), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('telegram_award_notification', '1', isset($settings['telegram_award_notification']) && $settings['telegram_award_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'telegram_award_notification']) }}
-                                                    <label class="col-form-label"
-                                                        for="telegram_award_notification"></label>
-                                                </div>
-                                            </li>
-
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Ticket create', __('New Ticket '), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('telegram_ticket_notification', '1', isset($settings['telegram_ticket_notification']) && $settings['telegram_ticket_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'telegram_ticket_notification']) }}
-                                                    <label class="col-form-label"
-                                                        for="telegram_ticket_notification"></label>
-                                                </div>
-                                            </li>
-
-
-                                        </ul>
-                                    </div>
-
-                                    <div class="col-md-4">
-                                        <ul class="list-group">
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Announcement create', __('New Announcement'), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('telegram_Announcement_notification', '1', isset($settings['telegram_Announcement_notification']) && $settings['telegram_Announcement_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'telegram_Announcement_notification']) }}
-                                                    <label class="col-form-label"
-                                                        for="telegram_Announcement_notification"></label>
-                                                </div>
-                                            </li>
-
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Holidays create', __('New Holidays '), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('telegram_Holiday_notification', '1', isset($settings['telegram_Holiday_notification']) && $settings['telegram_Holiday_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'telegram_Holiday_notification']) }}
-                                                    <label class="col-form-label"
-                                                        for="telegram_Holiday_notification"></label>
-                                                </div>
-                                            </li>
-
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Event create', __('New Event'), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('telegram_event_notification', '1', isset($settings['telegram_event_notification']) && $settings['telegram_event_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'telegram_event_notification']) }}
-                                                    <label class="col-form-label"
-                                                        for="telegram_event_notification"></label>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </div>
-
-                                    <div class="col-md-4">
-                                        <ul class="list-group">
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Meeting create', __('New Meeting'), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('telegram_meeting_notification', '1', isset($settings['telegram_meeting_notification']) && $settings['telegram_meeting_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'telegram_meeting_notification']) }}
-                                                    <label class="col-form-label"
-                                                        for="telegram_meeting_notification"></label>
-                                                </div>
-                                            </li>
-
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Company policy create', __('New Company Policy '), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('telegram_company_policy_notification', '1', isset($settings['telegram_company_policy_notification']) && $settings['telegram_company_policy_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'telegram_company_policy_notification']) }}
-                                                    <label class="col-form-label"
-                                                        for="telegram_company_policy_notification"></label>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-footer text-end">
-                                <button class="btn-submit btn btn-primary" type="submit">
-                                    {{ __('Save Changes') }}
-                                </button>
-                            </div>
-                            {{ Form::close() }}
-                        </div>
-                    </div>
-
-                    <div class="" id="twilio-settings">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>{{ __('Twilio Settings') }}</h5>
-                                <small
-                                    class="text-secondary font-weight-bold">{{ __('Twilio Notification Settings') }}</small>
-                            </div>
-                            {{ Form::open(['route' => 'twilio.setting', 'id' => 'twilio-setting', 'method' => 'post', 'class' => 'd-contents']) }}
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-lg-6 col-md-6 col-sm-6 form-group">
-                                        {{ Form::label('Twilio SID', __('Twilio SID'), ['class' => 'col-form-label']) }}
-                                        {{ Form::text('twilio_sid', isset($settings['twilio_sid']) ? $settings['twilio_sid'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Twilio Sid')]) }}
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 col-sm-6 form-group">
-                                        {{ Form::label('Twilio Token', __('Twilio Token'), ['class' => 'col-form-label']) }}
-                                        {{ Form::text('twilio_token', isset($settings['twilio_token']) ? $settings['twilio_token'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Twilio Token')]) }}
-                                    </div>
-                                    <div class="col-lg-6 col-md-6 col-sm-6 form-group">
-                                        {{ Form::label('Twilio From', __('Twilio From'), ['class' => 'col-form-label']) }}
-                                        {{ Form::text('twilio_from', isset($settings['twilio_from']) ? $settings['twilio_from'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Twilio From')]) }}
-                                    </div>
-                                    <div class="col-lg-12 col-md-12 col-sm-12 form-group mb-3">
-                                        {{-- {{ Form::label('Module Setting', __('Module Setting'), ['class' => 'col-form-label']) }} --}}
-                                    </div>
-
-
-                                    <div class="col-md-4">
-                                        <ul class="list-group">
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Payslip create', __('New Monthly Payslip'), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('twilio_payslip_notification', '1', isset($settings['twilio_payslip_notification']) && $settings['twilio_payslip_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'twilio_payslip_notification']) }}
-                                                    <label class="col-form-label"
-                                                        for="twilio_payslip_notification"></label>
-                                                </div>
-                                            </li>
-
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Leave Approve/Reject', __('Leave Approve/Reject'), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('twilio_leave_approve_notification', '1', isset($settings['twilio_leave_approve_notification']) && $settings['twilio_leave_approve_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'twilio_leave_approve_notification']) }}
-                                                    <label class="col-form-label"
-                                                        for="twilio_leave_approve_notification"></label>
-                                                </div>
-                                            </li>
-
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Ticket create', __('New Ticket '), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('twilio_ticket_notification', '1', isset($settings['twilio_ticket_notification']) && $settings['twilio_ticket_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'twilio_ticket_notification']) }}
-                                                    <label class="col-form-label"
-                                                        for="twilio_ticket_notification"></label>
-                                                </div>
-                                            </li>
-
-
-                                        </ul>
-                                    </div>
-
-                                    <div class="col-md-4">
-                                        <ul class="list-group">
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Award create', __('New Award'), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('twilio_award_notification', '1', isset($settings['twilio_award_notification']) && $settings['twilio_award_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'twilio_award_notification']) }}
-                                                    <label class="col-form-label" for="twilio_award_notification"></label>
-                                                </div>
-                                            </li>
-
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Trip create', __('New Trip '), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('twilio_trip_notification', '1', isset($settings['twilio_trip_notification']) && $settings['twilio_trip_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'twilio_trip_notification']) }}
-                                                    <label class="col-form-label" for="twilio_trip_notification"></label>
-                                                </div>
-                                            </li>
-
-                                        </ul>
-                                    </div>
-
-                                    <div class="col-md-4">
-                                        <ul class="list-group">
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Event create', __('New Event'), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('twilio_event_notification', '1', isset($settings['twilio_event_notification']) && $settings['twilio_event_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'twilio_event_notification']) }}
-                                                    <label class="col-form-label" for="twilio_event_notification"></label>
-                                                </div>
-                                            </li>
-
-                                            <li class="list-group-item d-flex align-items-center justify-content-between">
-                                                {{ Form::label('Announcement create', __('New Announcement '), ['class' => 'col-form-label']) }}
-                                                <div class="form-check form-switch d-inline-block float-right">
-                                                    {{ Form::checkbox('twilio_announcement_notification', '1', isset($settings['twilio_announcement_notification']) && $settings['twilio_announcement_notification'] == '1' ? 'checked' : '', ['class' => 'form-check-input', 'id' => 'twilio_announcement_notification']) }}
-                                                    <label class="col-form-label"
-                                                        for="twilio_announcement_notification"></label>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-footer text-end">
-                                <button class="btn-submit btn btn-primary" type="submit">
-                                    {{ __('Save Changes') }}
-                                </button>
-                            </div>
-                            {{ Form::close() }}
-                        </div>
-                    </div> @endif
-                                                                    <div class="" id="offer-letter-settings">
-                                                                <div class="card">
-                                                                    <div
-                                                                        class="card-header d-flex justify-content-between">
-                                                                        <h5>{{ __('Offer Letter Settings') }}</h5>
-                                                                        <div
-                                                                            class="d-flex justify-content-end drp-languages">
-                                                                            <ul class="list-unstyled mb-0 m-2">
-                                                                                <li class="dropdown dash-h-item drp-language"
-                                                                                    style="margin-top: -19px;">
-                                                                                    <a class="dash-head-link dropdown-toggle arrow-none me-0"
-                                                                                        data-bs-toggle="dropdown"
-                                                                                        href="#" role="button"
-                                                                                        aria-haspopup="false"
-                                                                                        aria-expanded="false"
-                                                                                        id="dropdownLanguage">
-                                                                                        <span
-                                                                                            class="drp-text hide-mob text-primary">
-                                                                                            {{ Str::upper($offerlang) }}
-                                                                                        </span>
-                                                                                        <i
-                                                                                            class="ti ti-chevron-down drp-arrow nocolor"></i>
-                                                                                    </a>
-                                                                                    <div class="dropdown-menu dash-h-dropdown dropdown-menu-end"
-                                                                                        aria-labelledby="dropdownLanguage">
-                                                                                        @foreach ($currantLang as $offerlangs)
-                                                                                            <a href="{{ route('get.offerlatter.language', ['noclangs' => $noclang, 'explangs' => $explang, 'offerlangs' => $offerlangs, 'joininglangs' => $joininglang]) }}"
-                                                                                                class="dropdown-item ms-1 {{ $offerlangs == $offerlang ? 'text-primary' : '' }}">{{ Str::upper($offerlangs) }}</a>
-
-                                                                                        @endforeach
-                                                                                    </div>
-                                                                                </li>
-                                                                            </ul>
-
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="card-body ">
-                                                                        <h5 class="font-weight-bold pb-3">
-                                                                            {{ __('Placeholders') }}</h5>
-
-                                                                        <div class="col-lg-12 col-md-12 col-sm-12">
-                                                                            <div class="card">
-                                                                                <div class="card-header card-body">
-                                                                                    <div class="row text-xs">
-                                                                                        <div class="row">
-                                                                                            <p class="col-4">
-                                                                                                {{ __('Applicant Name') }}
-                                                                                                : <span
-                                                                                                    class="pull-end text-primary">{applicant_name}</span>
-                                                                                            </p>
-                                                                                            <p class="col-4">
-                                                                                                {{ __('Company Name') }} :
-                                                                                                <span
-                                                                                                    class="pull-right text-primary">{app_name}</span>
-                                                                                            </p>
-                                                                                            <p class="col-4">
-                                                                                                {{ __('Job title') }} :
-                                                                                                <span
-                                                                                                    class="pull-right text-primary">{job_title}</span>
-                                                                                            </p>
-                                                                                            <p class="col-4">
-                                                                                                {{ __('Job type') }} :
-                                                                                                <span
-                                                                                                    class="pull-right text-primary">{job_type}</span>
-                                                                                            </p>
-                                                                                            <p class="col-4">
-                                                                                                {{ __('Proposed Start Date') }}
-                                                                                                : <span
-                                                                                                    class="pull-right text-primary">{start_date}</span>
-                                                                                            </p>
-                                                                                            <p class="col-4">
-                                                                                                {{ __('Working Location') }}
-                                                                                                : <span
-                                                                                                    class="pull-right text-primary">{workplace_location}</span>
-                                                                                            </p>
-                                                                                            <p class="col-4">
-                                                                                                {{ __('Days Of Week') }} :
-                                                                                                <span
-                                                                                                    class="pull-right text-primary">{days_of_week}</span>
-                                                                                            </p>
-                                                                                            <p class="col-4">
-                                                                                                {{ __('Salary') }} :
-                                                                                                <span
-                                                                                                    class="pull-right text-primary">{salary}</span>
-                                                                                            </p>
-                                                                                            <p class="col-4">
-                                                                                                {{ __('Salary Type') }} :
-                                                                                                <span
-                                                                                                    class="pull-right text-primary">{salary_type}</span>
-                                                                                            </p>
-                                                                                            <p class="col-4">
-                                                                                                {{ __('Salary Duration') }}
-                                                                                                : <span
-                                                                                                    class="pull-end text-primary">{salary_duration}</span>
-                                                                                            </p>
-                                                                                            <p class="col-4">
-                                                                                                {{ __('Offer Expiration Date') }}
-                                                                                                : <span
-                                                                                                    class="pull-right text-primary">{offer_expiration_date}</span>
-                                                                                            </p>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="card-body table-border-style ">
-
-                                                                        {{ Form::open(['route' => ['offerlatter.update', $offerlang], 'method' => 'post']) }}
-                                                                        <div class="form-group col-12">
-                                                                            {{ Form::label('content', __(' Format'), ['class' => 'form-label text-dark']) }}
-                                                                            <textarea name="content" class="pc-tinymce-2">{!! isset($currOfferletterLang->content) ? $currOfferletterLang->content : '' !!}</textarea>
-                                                                        </div>
-                                                                        <div class="card-footer text-end">
-
-                                                                            {{ Form::submit(__('Save Changes'), ['class' => 'btn  btn-primary']) }}
-                                                                        </div>
-
-                                                                        {{ Form::close() }}
-                                                                    </div>
-                                                                </div>
-                                                        </div>
-
-                                                        <div class="" id="joining-letter-settings">
-                                                            <div class="card">
-                                                                <div class="card-header d-flex justify-content-between">
-                                                                    <h5>{{ __('Joining Letter Settings') }}</h5>
-                                                                    <div class="d-flex justify-content-end drp-languages">
-                                                                        <ul class="list-unstyled mb-0 m-2">
-                                                                            <li class="dropdown dash-h-item drp-language"
-                                                                                style="margin-top: -19px;">
-                                                                                <a class="dash-head-link dropdown-toggle arrow-none me-0"
-                                                                                    data-bs-toggle="dropdown"
-                                                                                    href="#" role="button"
-                                                                                    aria-haspopup="false"
-                                                                                    aria-expanded="false"
-                                                                                    id="dropdownLanguage1">
-                                                                                    <span
-                                                                                        class="drp-text hide-mob text-primary">
-
-                                                                                        {{ Str::upper($joininglang) }}
-                                                                                    </span>
-                                                                                    <i
-                                                                                        class="ti ti-chevron-down drp-arrow nocolor"></i>
-                                                                                </a>
-                                                                                <div class="dropdown-menu dash-h-dropdown dropdown-menu-end"
-                                                                                    aria-labelledby="dropdownLanguage1">
-                                                                                    @foreach ($currantLang as $joininglangs)
-                                                                                        <a href="{{ route('get.joiningletter.language', ['noclangs' => $noclang, 'explangs' => $explang, 'offerlangs' => $offerlang, 'joininglangs' => $joininglangs]) }}"
-                                                                                            class="dropdown-item {{ $joininglangs == $joininglang ? 'text-primary' : '' }}">{{ Str::upper($joininglangs) }}</a>
-                                                                                    @endforeach
-                                                                                </div>
-                                                                            </li>
-
-                                                                        </ul>
-                                                                    </div>
-
-                                                                </div>
-                                                                <div class="card-body ">
-                                                                    <h5 class="font-weight-bold pb-3">
-                                                                        {{ __('Placeholders') }}</h5>
-
-                                                                    <div class="col-lg-12 col-md-12 col-sm-12">
-                                                                        <div class="card">
-                                                                            <div class="card-header card-body">
-                                                                                <div class="row text-xs">
-                                                                                    <div class="row">
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Date') }} :
-                                                                                            <span
-                                                                                                class="pull-end text-primary">{date}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Company Name') }} :
-                                                                                            <span
-                                                                                                class="pull-right text-primary">{app_name}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Employee Name') }} :
-                                                                                            <span
-                                                                                                class="pull-right text-primary">{employee_name}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Address') }} : <span
-                                                                                                class="pull-right text-primary">{address}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Designation') }} :
-                                                                                            <span
-                                                                                                class="pull-right text-primary">{designation}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Start Date') }} : <span
-                                                                                                class="pull-right text-primary">{start_date}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Branch') }} : <span
-                                                                                                class="pull-right text-primary">{branch}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Start Time') }} : <span
-                                                                                                class="pull-end text-primary">{start_time}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('End Time') }} : <span
-                                                                                                class="pull-right text-primary">{end_time}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Number of Hours') }} :
-                                                                                            <span
-                                                                                                class="pull-right text-primary">{total_hours}</span>
-                                                                                        </p>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="card-body table-border-style ">
-
-                                                                    {{ Form::open(['route' => ['joiningletter.update', $joininglang], 'method' => 'post']) }}
-                                                                    <div class="form-group col-12">
-                                                                        {{ Form::label('content', __(' Format'), ['class' => 'form-label text-dark']) }}
-                                                                        <textarea name="content" class="pc-tinymce-3">{!! isset($currjoiningletterLang->content) ? $currjoiningletterLang->content : '' !!}</textarea>
-
-
-
-                                                                    </div>
-
-                                                                    <div class="card-footer text-end">
-
-                                                                        {{ Form::submit(__('Save Changes'), ['class' => 'btn  btn-primary']) }}
-                                                                    </div>
-
-                                                                    {{ Form::close() }}
-                                                                </div>
-
-
-
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="" id="experience-certificate-settings">
-                                                            <div class="card">
-                                                                <div class="card-header d-flex justify-content-between">
-                                                                    <h5>{{ __('Certificate of Experience Settings') }}
-                                                                    </h5>
-                                                                    <div class="d-flex justify-content-end drp-languages">
-                                                                        <ul class="list-unstyled mb-0 m-2">
-                                                                            <li class="dropdown dash-h-item drp-language"
-                                                                                style="margin-top: -19px;">
-                                                                                <a class="dash-head-link dropdown-toggle arrow-none me-0"
-                                                                                    data-bs-toggle="dropdown"
-                                                                                    href="#" role="button"
-                                                                                    aria-haspopup="false"
-                                                                                    aria-expanded="false"
-                                                                                    id="dropdownLanguage1">
-                                                                                    <span
-                                                                                        class="drp-text hide-mob text-primary">
-
-                                                                                        {{ Str::upper($explang) }}
-                                                                                    </span>
-                                                                                    <i
-                                                                                        class="ti ti-chevron-down drp-arrow nocolor"></i>
-                                                                                </a>
-                                                                                <div class="dropdown-menu dash-h-dropdown dropdown-menu-end"
-                                                                                    aria-labelledby="dropdownLanguage1">
-                                                                                    @foreach ($currantLang as $explangs)
-                                                                                        <a href="{{ route('get.experiencecertificate.language', ['noclangs' => $noclang, 'explangs' => $explangs, 'offerlangs' => $offerlang, 'joininglangs' => $joininglang]) }}"
-                                                                                            class="dropdown-item {{ $explangs == $explang ? 'text-primary' : '' }}">{{ Str::upper($explangs) }}</a>
-                                                                                    @endforeach
-                                                                                </div>
-                                                                            </li>
-
-                                                                        </ul>
-                                                                    </div>
-
-                                                                </div>
-                                                                <div class="card-body ">
-                                                                    <h5 class="font-weight-bold pb-3">
-                                                                        {{ __('Placeholders') }}</h5>
-
-                                                                    <div class="col-lg-12 col-md-12 col-sm-12">
-                                                                        <div class="card">
-                                                                            <div class="card-header card-body">
-                                                                                <div class="row text-xs">
-                                                                                    <div class="row">
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Company Name') }} :
-                                                                                            <span
-                                                                                                class="pull-right text-primary">{app_name}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Employee Name') }} :
-                                                                                            <span
-                                                                                                class="pull-right text-primary">{employee_name}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Date of Issuance') }} :
-                                                                                            <span
-                                                                                                class="pull-right text-primary">{date}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Designation') }} :
-                                                                                            <span
-                                                                                                class="pull-right text-primary">{designation}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Start Date') }} : <span
-                                                                                                class="pull-right text-primary">{start_date}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Branch') }} : <span
-                                                                                                class="pull-right text-primary">{branch}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Start Time') }} : <span
-                                                                                                class="pull-end text-primary">{start_time}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('End Time') }} : <span
-                                                                                                class="pull-right text-primary">{end_time}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Number of Hours') }} :
-                                                                                            <span
-                                                                                                class="pull-right text-primary">{total_hours}</span>
-                                                                                        </p>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="card-body table-border-style ">
-
-                                                                    {{ Form::open(['route' => ['experiencecertificate.update', $explang], 'method' => 'post']) }}
-                                                                    <div class="form-group col-12">
-                                                                        {{ Form::label('content', __(' Format'), ['class' => 'form-label text-dark']) }}
-                                                                        <textarea name="content" class="pc-tinymce-4">{!! isset($curr_exp_cetificate_Lang->content) ? $curr_exp_cetificate_Lang->content : '' !!}</textarea>
-
-
-
-                                                                    </div>
-
-                                                                    <div class="card-footer text-end">
-
-                                                                        {{ Form::submit(__('Save Changes'), ['class' => 'btn  btn-primary']) }}
-                                                                    </div>
-
-                                                                    {{ Form::close() }}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="" id="noc-settings">
-                                                            <div class="card">
-                                                                <div class="card-header d-flex justify-content-between">
-                                                                    <h5>{{ __('No Objection Certificate Settings') }}</h5>
-                                                                    <div class="d-flex justify-content-end drp-languages">
-                                                                        <ul class="list-unstyled mb-0 m-2">
-                                                                            <li class="dropdown dash-h-item drp-language"
-                                                                                style="margin-top: -19px;">
-                                                                                <a class="dash-head-link dropdown-toggle arrow-none me-0"
-                                                                                    data-bs-toggle="dropdown"
-                                                                                    href="#" role="button"
-                                                                                    aria-haspopup="false"
-                                                                                    aria-expanded="false"
-                                                                                    id="dropdownLanguage1">
-                                                                                    <span
-                                                                                        class="drp-text hide-mob text-primary">
-
-                                                                                        {{ Str::upper($noclang) }}
-                                                                                    </span>
-                                                                                    <i
-                                                                                        class="ti ti-chevron-down drp-arrow nocolor"></i>
-                                                                                </a>
-                                                                                <div class="dropdown-menu dash-h-dropdown dropdown-menu-end"
-                                                                                    aria-labelledby="dropdownLanguage1">
-                                                                                    @foreach ($currantLang as $noclangs)
-                                                                                        <a href="{{ route('get.noc.language', ['noclangs' => $noclangs, 'explangs' => $explang, 'offerlangs' => $offerlang, 'joininglangs' => $joininglang]) }}"
-                                                                                            class="dropdown-item {{ $noclangs == $noclang ? 'text-primary' : '' }}">{{ Str::upper($noclangs) }}</a>
-                                                                                    @endforeach
-                                                                                </div>
-                                                                            </li>
-
-                                                                        </ul>
-                                                                    </div>
-
-                                                                </div>
-                                                                <div class="card-body ">
-                                                                    <h5 class="font-weight-bold pb-3">
-                                                                        {{ __('Placeholders') }}</h5>
-
-                                                                    <div class="col-lg-12 col-md-12 col-sm-12">
-                                                                        <div class="card">
-                                                                            <div class="card-header card-body">
-                                                                                <div class="row text-xs">
-                                                                                    <div class="row">
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Date') }} : <span
-                                                                                                class="pull-end text-primary">{date}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Company Name') }} :
-                                                                                            <span
-                                                                                                class="pull-right text-primary">{app_name}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Employee Name') }} :
-                                                                                            <span
-                                                                                                class="pull-right text-primary">{employee_name}</span>
-                                                                                        </p>
-                                                                                        <p class="col-4">
-                                                                                            {{ __('Designation') }} :
-                                                                                            <span
-                                                                                                class="pull-right text-primary">{designation}</span>
-                                                                                        </p>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="card-body table-border-style">
-                                                                    {{ Form::open(['route' => ['noc.update', $noclang], 'method' => 'post']) }}
-                                                                    <div class="form-group col-12">
-                                                                        {{ Form::label('content', __(' Format'), ['class' => 'form-label text-dark']) }}
-                                                                        <textarea name="content" class="pc-tinymce-5">{!! isset($currnocLang->content) ? $currnocLang->content : '' !!}</textarea>
-
-                                                                    </div>
-
-                                                                    <div class="card-footer text-end">
-
-                                                                        {{ Form::submit(__('Save Changes'), ['class' => 'btn  btn-primary']) }}
-                                                                    </div>
-
-                                                                    {{ Form::close() }}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        {{-- Google calendar --}}
-                                                        <div class="card" id="google-calender">
-                                                            <div class="col-md-12">
-                                                                {{ Form::open(['url' => route('google.calender.settings'), 'enctype' => 'multipart/form-data']) }}
-                                                                <div class="card-header">
-                                                                    <div class="row">
-                                                                        <div class="col-lg-8 col-md-8 col-sm-8">
-                                                                            <h5 class="">
-                                                                                {{ __('Google Calendar') }}
-                                                                            </h5>
-                                                                        </div>
-
-                                                                        <div class="col-lg-4 col-md-4 col-sm-4 text-end">
-                                                                            <div class="col switch-width">
-                                                                                <div class="custom-control custom-switch">
-                                                                                    <input type="checkbox"
-                                                                                        class="form-check-input"
-                                                                                        name="is_enabled"
-                                                                                        data-toggle="switchbutton"
-                                                                                        data-onstyle="primary"
-                                                                                        id="is_enabled"
-                                                                                        {{ isset($settings['is_enabled']) && $settings['is_enabled'] == 'on' ? 'checked="checked"' : '' }}>
-                                                                                    <label
-                                                                                        class="custom-control-label form-label"
-                                                                                        for="is_enabled"></label>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-
-                                                                <div class="card-body">
-                                                                    <div class="row">
-                                                                        <div
-                                                                            class="col-lg-6 col-md-6 col-sm-12 form-group">
-                                                                            {{ Form::label('Google calendar id', __('Google Calendar Id'), ['class' => 'col-form-label']) }}
-                                                                            {{ Form::text('google_clender_id', !empty($settings['google_clender_id']) ? $settings['google_clender_id'] : '', ['class' => 'form-control ', 'placeholder' => 'Google Calendar Id']) }}
-                                                                        </div>
-                                                                        <div
-                                                                            class="col-lg-6 col-md-6 col-sm-12 form-group">
-                                                                            {{ Form::label('Google calendar json file', __('Google Calendar JSON File'), ['class' => 'col-form-label']) }}
-                                                                            <input type="file" class="form-control"
-                                                                                name="google_calender_json_file"
-                                                                                id="file">
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="card-footer text-end">
-                                                                    <button class="btn-submit btn btn-primary"
-                                                                        type="submit">
-                                                                        {{ __('Save Changes') }}
-                                                                    </button>
-                                                                </div>
-                                                                {{ Form::close() }}
-                                                            </div>
-                                                        </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <script>
-                        var shift_change = document.getElementById("shift_change");
-                        var shift_turner = document.getElementById("shift_turner");
-                        shift_change.addEventListener("change", function() {
-
-                            if (this.checked) {
-                                shift_turner.style.display = "block";
-                            } else {
-                                shift_turner.style.display = "none";
-                            }
-                        });
-                    </script>
-                @endsection
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        var shift_change = document.getElementById("shift_change");
+        var shift_turner = document.getElementById("shift_turner");
+        shift_change.addEventListener("change", function() {
+
+            if (this.checked) {
+                shift_turner.style.display = "block";
+            } else {
+                shift_turner.style.display = "none";
+            }
+        });
+    </script>
+@endsection

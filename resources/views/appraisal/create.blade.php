@@ -5,38 +5,38 @@
         <div class="col-md-12">
             <div class="form-group">
                 {{ Form::label('branch', __('Branch*'), ['class' => 'col-form-label']) }}
-                <a href="#" data-title="{{ __('Create New Branch') }}" onclick="modalShow([{'name' : ''}], 'create-branch','Create Branch','branch')" data-bs-toggle="tooltip"
+                <a href="javascript:void(0)" data-title="{{ __('Create New Branch') }}" onclick="modalShow([{'name' : ''}], 'create-branch','Create Branch','branch')" data-bs-toggle="tooltip"
                     title="{{ __('Create New Branch') }}" style="float: right" class="btn btn-sm btn-primary createBranchBtn"
                     data-bs-original-title="{{ __('Create') }}">
                     <i class="ti ti-plus"></i>
                 </a>
                 <select name="brances" id="brances" required class="form-control branch_id">
                     <option selected disabled value="0">Select Category</option>
-        
+
                     @foreach ($brances as $value)
-        
+
                         <option value="{{ $value->id }}">{{ $value->name }}</option>
                     @endforeach
                 </select>
-                
+
                 {{-- {{ Form::select('branch', $brances, null, ['class' => 'form-control select2 branch_id', 'required' => 'required', 'placeholder' => 'Select Branch']) }} --}}
             </div>
         </div>
 
-        
+
         <div class="col-md-6 mt-2">
             <div class="form-group">
                 {{ Form::label('employee', __('Employee*'), ['class' => 'form-label']) }}
-              
+
                 <div class="employee_div">
-                   
+
                     <select name="employee" id="employee" class="form-control " required>
                     </select>
                 </div>
             </div>
         </div>
-        
-        
+
+
 
         <div class="col-md-6">
             <div class="form-group">
@@ -72,7 +72,7 @@
             </div>
             <form id="myForm">
                 <div class="modal-body" id="newModalBody">
-                    
+
                 </div>
             </form>
             <div class="modal-footer">
@@ -86,7 +86,7 @@
 
 
 <script>
-    
+
     $('#employee').change(function(){
 
         var emp_id = $('#employee').val();
@@ -97,7 +97,7 @@
                 "employee": emp_id,
                 "_token": "{{ csrf_token() }}",
             },
-            
+
             cache: false,
             success: function(data) {
                 $('#stares').html(data.html);
@@ -105,7 +105,7 @@
         })
     });
 </script>
-    
+
 <script>
     $('#brances').on('change', function() {
         var branch_id = this.value;
@@ -145,7 +145,7 @@
         $('#staticBackdropLabel').text(title);
 
         html += '<div class="row">';
-        $.each(data, function (key, value) { 
+        $.each(data, function (key, value) {
             $.each(value, function(key1, value1){
                 html += '<div class="col-lg-12 col-md-12 col-sm-12">\
                         <div class="form-group">\
@@ -161,7 +161,7 @@
                                 }
                                 $.each(value1, function(key2, value2){
                                     html += '<option value="'+key2+'">'+value2+'</option>';
-                                })    
+                                })
                     html += '</select>\
                         </div>';
                 }else{
@@ -182,15 +182,15 @@
     function submitForm(){
         var input = [];
         $("#myForm :input").each(function(){
-            var value = $(this).val(); 
-            var name = $(this).attr('name'); 
+            var value = $(this).val();
+            var name = $(this).attr('name');
             input.push({
                 'name' : name,
                 'value' : value
             });
         });
         var url = "<?= url('') ?>/" + globalRoute;
-        
+
         $.ajax({
             type: "post",
             url: url,
@@ -213,8 +213,8 @@
     }
 
 </script>
-  
-   
+
+
 
 
 

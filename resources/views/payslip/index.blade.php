@@ -27,7 +27,7 @@
                         </div>
                     </div>
                     <div class="col-auto float-end ms-2 mt-4">
-                        <a href="#" class="btn  btn-primary"
+                        <a href="javascript:void(0)" class="btn  btn-primary"
                             onclick="document.getElementById('payslip_form').submit(); return false;"
                             data-bs-toggle="tooltip" title="{{ __('payslip') }}"
                             data-original-title="{{ __('payslip') }}">{{ __('Generate Payslip') }}
@@ -166,10 +166,10 @@
 
                         function renderstatus(data, cell, row) {
                             if (data == 'Paid')
-                                return '<div class="badge bg-success p-2 px-3 rounded"><a href="#" class="text-white">' +
+                                return '<div class="badge bg-success p-2 px-3 rounded"><a href="javascript:void(0)" class="text-white">' +
                                     data + '</a></div>';
                             else
-                                return '<div class="badge bg-danger p-2 px-3 rounded"><a href="#" class="text-white">' +
+                                return '<div class="badge bg-danger p-2 px-3 rounded"><a href="javascript:void(0)" class="text-white">' +
                                     data + '</a></div>';
                         }
 
@@ -194,7 +194,7 @@
 
                             if (data != 0) {
                                 var payslip =
-                                    '<a href="#" data-url="{{ url('payslip/pdf/') }}/' + id +
+                                    '<a href="javascript:void(0)" data-url="{{ url('payslip/pdf/') }}/' + id +
                                     '/' + datePicker +
                                     '" data-size="md-pdf"  data-ajax-popup="true" class="btn btn-primary" data-title="{{ __('Employee Payslip') }}">' +
                                     '{{ __('Payslip') }}' + '</a> ';
@@ -208,7 +208,7 @@
 
                             if (data != 0) {
                                 view =
-                                    '<a href="#" data-url="{{ url('payslip/showemployee/') }}/' +
+                                    '<a href="javascript:void(0)" data-url="{{ url('payslip/showemployee/') }}/' +
                                     payslip_id +
                                     '"  data-ajax-popup="true" class="view-btn gray-bg" data-title="{{ __('View Employee Detail') }}">' +
                                     '{{ __('View') }}' + '</a>';
@@ -216,7 +216,7 @@
 
                             if (data != 0 && status == "UnPaid") {
                                 edit =
-                                    '<a href="#" data-url="{{ url('payslip/editemployee/') }}/' +
+                                    '<a href="javascript:void(0)" data-url="{{ url('payslip/editemployee/') }}/' +
                                     payslip_id +
                                     '"  data-ajax-popup="true" class="view-btn blue-bg" data-title="{{ __('Edit Employee salary') }}">' +
                                     '{{ __('Edit') }}' + '</a>';
@@ -227,7 +227,7 @@
 
                             @if (\Auth::user()->type != 'employee')
                                 if (data != 0) {
-                                    deleted = '<a href="#"  data-url="' + url +
+                                    deleted = '<a href="javascript:void(0)"  data-url="' + url +
                                         '" class="payslip_delete view-btn red-bg" >' +
                                         '{{ __('Delete') }}' + '</a>';
                                 }
@@ -242,11 +242,11 @@
                         if (data.length > 0) {
                             $.each(data, function(indexInArray, valueOfElement) {
                                 var status =
-                                    '<div class="badge bg-danger p-2 px-3 rounded"><a href="#" class="text-white">' +
+                                    '<div class="badge bg-danger p-2 px-3 rounded"><a href="javascript:void(0)" class="text-white">' +
                                     valueOfElement[6] + '</a></div>';
                                 if (valueOfElement[6] == 'Paid') {
                                     var status =
-                                        '<div class="badge bg-success p-2 px-3 rounded"><a href="#" class="text-white">' +
+                                        '<div class="badge bg-success p-2 px-3 rounded"><a href="javascript:void(0)" class="text-white">' +
                                         valueOfElement[6] + '</a></div>';
                                 }
 
@@ -256,7 +256,7 @@
 
                                 if (valueOfElement[7] != 0) {
                                     var payslip =
-                                        '<a href="#" data-url="{{ url('payslip/pdf/') }}/' +
+                                        '<a href="javascript:void(0)" data-url="{{ url('payslip/pdf/') }}/' +
                                         id +
                                         '/' + datePicker +
                                         '" data-size="lg"  data-ajax-popup="true" class=" btn-sm btn btn-warning" data-title="{{ __('Employee Payslip') }}">' +
@@ -274,7 +274,7 @@
 
                                 if (valueOfElement[7] != 0 && valueOfElement[6] == "UnPaid") {
                                     var edit =
-                                        '<a href="#" data-url="{{ url('payslip/editemployee/') }}/' +
+                                        '<a href="javascript:void(0)" data-url="{{ url('payslip/editemployee/') }}/' +
                                         payslip_id +
                                         '"  data-ajax-popup="true" class="btn-sm btn btn-info" data-title="{{ __('Edit Employee salary') }}">' +
                                         '{{ __('Edit') }}' + '</a>';
@@ -290,7 +290,7 @@
 
                                 @if (\Auth::user()->type != 'employee')
                                     if (valueOfElement[7] != 0) {
-                                        var deleted = '<a href="#"  data-url="' + url +
+                                        var deleted = '<a href="javascript:void(0)"  data-url="' + url +
                                             '" class="payslip_delete view-btn btn btn-danger ms-1 btn-sm"  >' +
                                             '{{ __('Delete') }}' + '</a>';
                                     } else {

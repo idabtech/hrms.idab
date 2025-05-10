@@ -20,7 +20,7 @@
     </a>
 
     @can('Create Leave')
-        <a href="#" data-url="{{ route('meeting.create') }}" data-ajax-popup="true"
+        <a href="javascript:void(0)" data-url="{{ route('meeting.create') }}" data-ajax-popup="true"
             data-title="{{ __('Create New Meeting') }}" data-size="lg" data-bs-toggle="tooltip" title=""
             class="btn btn-sm btn-primary" data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>

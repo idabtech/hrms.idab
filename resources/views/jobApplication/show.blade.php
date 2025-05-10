@@ -122,7 +122,7 @@
                                 <li class="list-inline-item">
 
                                     {!! Form::open(['method' => 'DELETE', 'route' => ['job.application.archive', $jobApplication->id]]) !!}
-                                    <a href="#" class="bs-pass-para" data-bs-toggle="tooltip" title=""
+                                    <a href="javascript:void(0)" class="bs-pass-para" data-bs-toggle="tooltip" title=""
                                         data-bs-original-title="Archive" aria-label="Delete">
                                         @if ($jobApplication->is_archive == 0)
                                             <span class="badge bg-info p-2 px-3 rounded">{{ __('Archive') }}</span>
@@ -136,7 +136,7 @@
                                 @if ($jobApplication->is_archive == 0)
                                     <li class="list-inline-item">
                                         {!! Form::open(['method' => 'DELETE', 'route' => ['job-application.destroy', $jobApplication->id], 'id' => 'delete-form-' . $jobApplication->id]) !!}
-                                        <a href="#" class="bs-pass-para" data-bs-toggle="tooltip" title=""
+                                        <a href="javascript:void(0)" class="bs-pass-para" data-bs-toggle="tooltip" title=""
                                             data-bs-original-title="Delete" aria-label="Delete"><span
                                                 class="badge bg-danger p-2 px-3 rounded">{{ __('Delete') }}</span></a>
                                         {!! Form::close() !!}
@@ -199,7 +199,7 @@
                     </div>
                         <div class="col text-end">
                         <div class="col-12 text-end">
-                            <a href="#" data-url="{{ route('job.on.board.create', $jobApplication->id) }}"
+                            <a href="javascript:void(0)" data-url="{{ route('job.on.board.create', $jobApplication->id) }}"
                             data-ajax-popup="true" class="btn-sm btn btn-primary" data-title="{{ __('Add to Job OnBoard') }}"
                              data-bs-original-title="{{ __('Add to Job OnBoard') }}">
                              <i class="ti ti-plus "></i>{{ __('Add to Job OnBoard') }}</a>
@@ -330,7 +330,7 @@
                                 <div class="list-group-item px-0">
                                     <div class="row align-items-center">
                                         <div class="col">
-                                            <a href="#!" class="d-block h6 text-sm mb-0">{{ $que }}</a>
+                                            <a href="javascript:void(0)" class="d-block h6 text-sm mb-0">{{ $que }}</a>
                                             <p class="card-text text-sm text-muted mb-0">
                                                 {{ $ans }}
                                             </p>
@@ -372,21 +372,21 @@
                         <div class="list-group-item px-0">
                             <div class="row align-items-center">
                                 <div class="col">
-                                    <a href="#!"
+                                    <a href="javascript:void(0)"
                                         class="d-block h6 text-sm mb-0">{{ !empty($note->noteCreated) ? $note->noteCreated->name : '-' }}</a>
                                     <p class="card-text text-sm text-muted mb-0">
                                         {{ $note->note }}
                                     </p>
                                 </div>
                                 <div class="col-auto">
-                                    <a href="#" class="">
+                                    <a href="javascript:void(0)" class="">
                                         {{ \Auth::user()->dateFormat($note->created_at) }}</a>
                                 </div>
                                 @can('Delete Job Application Note')
                                     @if ($note->note_created == \Auth::user()->id)
                                         <div class="col-auto text-end">
                                             {!! Form::open(['method' => 'DELETE', 'route' => ['job.application.note.destroy', $note->id], 'id' => 'delete-form-' . $note->id]) !!}
-                                            <a href="#" class="mx-3 btn btn-sm btn btn-danger  align-items-center bs-pass-para"
+                                            <a href="javascript:void(0)" class="mx-3 btn btn-sm btn btn-danger  align-items-center bs-pass-para"
                                                 data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
                                                 aria-label="Delete"><i class="ti ti-trash text-white"></i></a>
                                             </form>

@@ -2,7 +2,7 @@
 @section('page-title')
    {{ __('Manage Assets') }}
 @endsection
-@php 
+@php
 $profile=\App\Models\Utility::get_file('uploads/avatar/');
 @endphp
 @section('breadcrumb')
@@ -16,13 +16,13 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
         <i class="ti ti-file-export"></i>
     </a>
 
-    <a href="#" data-url="{{ route('assets.file.import') }}" data-ajax-popup="true"
+    <a href="javascript:void(0)" data-url="{{ route('assets.file.import') }}" data-ajax-popup="true"
         data-title="{{ __('Import  Asset CSV file') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
         data-bs-original-title="{{ __('Import') }}">
         <i class="ti ti-file"></i>
     </a>
     @can('Create Assets')
-        <a href="#" data-url="{{ route('account-assets.create') }}" data-ajax-popup="true"
+        <a href="javascript:void(0)" data-url="{{ route('account-assets.create') }}" data-ajax-popup="true"
             data-title="{{ __('Create Assets') }}" data-size="lg" data-bs-toggle="tooltip" title=""
             class="btn btn-sm btn-primary" data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -59,12 +59,12 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
                                     <td>
                                         <div class="avatar-group">
                                             @foreach($asset->users($asset->employee_id) as $user)
-                                                <a href="#" class="avatar rounded-circle avatar-sm avatar-group">
+                                                <a href="javascript:void(0)" class="avatar rounded-circle avatar-sm avatar-group">
                                                     <img alt="" @if(!empty($user->avatar)) src="{{$profile.'/'.$user->avatar}}" @else src="{{asset('/storage/uploads/avatar/avatar.png')}}" @endif data-original-title="{{(!empty($user)?$user->name:'')}}" data-bs-toggle="tooltip" height="30px" width="30px" style="border-radius:50%                " data-original-title="{{(!empty($user)?$user->name:'')}}" class="">
                                                 </a>
                                             @endforeach
                                         </div>
-                                    
+
                                     </td>
                                     {{--  <td><img src="{{ $profile .'avatar.png' }}" alt="" height="30px" width="30px"></td>  --}}
                                     <td>{{ \Auth::user()->dateFormat($asset->purchase_date) }}
@@ -77,7 +77,7 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
                                         <span>
                                             @can('Edit Assets')
                                                 <div class="action-btn bg-info ms-2">
-                                                    <a href="#" data-size="lg" class="mx-3 btn btn-sm  align-items-center"
+                                                    <a href="javascript:void(0)" data-size="lg" class="mx-3 btn btn-sm  align-items-center"
                                                         data-url="{{ route('account-assets.edit', $asset->id) }}"
                                                         data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip" title=""
                                                         data-title="{{ __('Edit Assets') }}"
@@ -90,7 +90,7 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
                                             @can('Delete Assets')
                                                 <div class="action-btn bg-danger ms-2">
                                                     {!! Form::open(['method' => 'DELETE', 'route' => ['account-assets.destroy', $asset->id], 'id' => 'delete-form-' . $asset->id]) !!}
-                                                    <a href="#" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                    <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
                                                         data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
                                                         aria-label="Delete"><i class="ti ti-trash text-white "></i></a>
                                                     </form>

@@ -549,7 +549,7 @@ class EmployeeController extends Controller
             Session::put('import_errors', $importErrors);
 
             $errorSummary = "{$successCount} records imported, {$errorCount} failed. ";
-            $errorSummary .= '<br><a href="#" '
+            $errorSummary .= '<br><a href="javascript:void(0)" '
                 . 'onclick="var el=document.getElementById(\'importErrorDetails\'); '
                 . 'el.style.display = (el.style.display===\'none\'?\'block\':\'none\'); '
                 . 'return false;" '

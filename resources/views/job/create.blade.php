@@ -54,7 +54,7 @@
                             </div>
                             <div class="form-group col-md-6">
                                 {!! Form::label('branch', __('Branch'), ['class' => 'col-form-label']) !!}<span class="text-danger pl-1">*</span>
-                                <a href="#" data-title="{{ __('Create New Branch') }}"
+                                <a href="javascript:void(0)" data-title="{{ __('Create New Branch') }}"
                                     onclick="modalShow([{'name' : ''}], 'create-branch', 'Create Branch','branch')"
                                     data-bs-toggle="tooltip" title="{{ __('Create New Branch') }}"
                                     class="btn btn-sm btn-primary addBtn" data-bs-original-title="{{ __('Create') }}">
@@ -64,7 +64,7 @@
                             </div>
                             <div class="form-group col-md-6">
                                 {!! Form::label('category', __('Job Category'), ['class' => 'col-form-label']) !!}<span class="text-danger pl-1">*</span>
-                                <a href="#" data-title="{{ __('Create New Job Category') }}"
+                                <a href="javascript:void(0)" data-title="{{ __('Create New Job Category') }}"
                                     onclick="modalShow([{'name' : ''}], 'create-job-category', 'Create Job Category','job-category')"
                                     data-bs-toggle="tooltip" title="{{ __('Create New Job Category') }}"
                                     class="btn btn-sm btn-primary addBtn" data-bs-original-title="{{ __('Create') }}">

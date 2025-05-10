@@ -23,7 +23,7 @@
 
     <nav class="navbar navbar-main navbar-expand-lg navbar-transparent navbar-light bg-white" id="navbar-main">
         <div class="container px-lg-0">
-            <a class="navbar-brand mr-lg-5" href="#">
+            <a class="navbar-brand mr-lg-5" href="{{ route('home') }}">
                 <img class="hweb" alt="Image placeholder" src="{{$logo.'/'.(isset($companySettings['company_logo']) && !empty($companySettings['company_logo'])?$companySettings['company_logo']->value:'logo-dark.png')}}" id="navbar-logo" style="height: 50px;">
             </a>
             <button class="navbar-toggler pr-0" type="button" data-toggle="collapse" data-target="#navbar-main-collapse" aria-controls="navbar-main-collapse" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,7 +34,7 @@
                 <ul class="navbar-nav align-items-lg-center ml-lg-auto">
                     <li class="nav-item">
                         <div class="dropdown global-icon" data-toggle="tooltip" data-original-titla="{{__('Choose Language')}}">
-                            <a class="nav-link px-0" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-offset="0,10">
+                            <a class="nav-link px-0" href="javascript:void(0)" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-offset="0,10">
                                 <i class="ti ti-globe-europe"></i>
                                 <span class="d-none d-lg-inline-block">{{\Str::upper($currantLang)}}</span>
                             </a>
@@ -119,22 +119,22 @@
                 <div class="col-md-6">
                     <ul class="nav justify-content-center justify-content-md-end mt-3 mt-md-0">
                         <li class="nav-item">
-                            <a class="nav-link" href="#" target="_blank">
+                            <a class="nav-link" href="javascript:void(0)" target="_blank">
                                 <i class="fab fa-dribbble"></i>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#" target="_blank">
+                            <a class="nav-link" href="javascript:void(0)" target="_blank">
                                 <i class="fab fa-instagram"></i>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#" target="_blank">
+                            <a class="nav-link" href="javascript:void(0)" target="_blank">
                                 <i class="fab fa-github"></i>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#" target="_blank">
+                            <a class="nav-link" href="javascript:void(0)" target="_blank">
                                 <i class="fab fa-facebook"></i>
                             </a>
                         </li>

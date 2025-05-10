@@ -12,7 +12,7 @@
 
 @section('action-button')
     {{-- @can('Create Subdepartment') --}}
-        <a href="#" data-url="{{ route('subdepartment.create') }}" data-ajax-popup="true"
+        <a href="javascript:void(0)" data-url="{{ route('subdepartment.create') }}" data-ajax-popup="true"
             data-title="{{ __('Create New Subdepartment') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
             data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -48,7 +48,7 @@
                                         <span>
                                             {{-- @can('Edit SubDepartment') --}}
                                                 <div class="action-btn bg-info ms-2">
-                                                    <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                    <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center"
                                                         data-url="{{  URL::to('edit-subdepartment/' . $sub->id) }}"
                                                         data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip" title=""
                                                         data-title="{{ __('Edit SubDepartment') }}"
@@ -57,12 +57,12 @@
                                                     </a>
                                                 </div>
                                             {{-- @endcan --}}
-                                        
+
 
                                             {{-- @can('Delete SubDepartment') --}}
                                                 <div class="action-btn bg-danger ms-2">
                                                     {!! Form::open(['method' => 'GET', 'route' => ['subdepartment.delete', $sub->id], 'id' => 'delete-form-' . $sub->id]) !!}
-                                                    <a href="#" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                    <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
 
                                                         data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
                                                         aria-label="Delete"><i

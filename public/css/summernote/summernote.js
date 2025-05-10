@@ -94,7 +94,7 @@ var dropdown = renderer.create('<div class="dropdown-menu">', function ($node, o
         var option = (typeof item === 'object') ? item.option : undefined;
         var dataValue = 'data-value="' + value + '"';
         var dataOption = (option !== undefined) ? ' data-option="' + option + '"' : '';
-        return '<li><a href="#" ' + (dataValue + dataOption) + '>' + content + '</a></li>';
+        return '<li><a href="javascript:void(0)" ' + (dataValue + dataOption) + '>' + content + '</a></li>';
     }).join('') : options.items;
     $node.html(markup);
 });
@@ -105,7 +105,7 @@ var dropdownCheck = renderer.create('<div class="dropdown-menu note-check">', fu
     var markup = $$1.isArray(options.items) ? options.items.map(function (item) {
         var value = (typeof item === 'string') ? item : (item.value || '');
         var content = options.template ? options.template(item) : item;
-        return '<li><a href="#" data-value="' + value + '">' + icon(options.checkClassName) + ' ' + content + '</a></li>';
+        return '<li><a href="javascript:void(0)" data-value="' + value + '">' + icon(options.checkClassName) + ' ' + content + '</a></li>';
     }).join('') : options.items;
     $node.html(markup);
 });

@@ -439,7 +439,7 @@ $dir_payment = asset(Storage::url('uploads/payments'));
                                                         </div>
                                                         <div class="col-md-1">
                                                             <div class="form-group apply-stripe-btn-coupon">
-                                                                <a href="#" data-from="stripe"
+                                                                <a href="javascript:void(0)" data-from="stripe"
                                                                     class="btn btn-sm btn-primary apply-coupon"
                                                                     data-bs-toggle="tooltip" data-bs-placement="top"
                                                                     title="{{ __('Apply') }}"><i
@@ -520,7 +520,7 @@ $dir_payment = asset(Storage::url('uploads/payments'));
                                                         </div>
                                                         <div class="col-md-1">
                                                             <div class="form-group apply-paypal-btn-coupon">
-                                                                <a href="#" data-from="paypal"
+                                                                <a href="javascript:void(0)" data-from="paypal"
                                                                     class="btn btn-sm btn-primary apply-coupon"
                                                                     data-bs-toggle="tooltip" data-bs-placement="top"
                                                                     title="{{ __('Apply') }}"><i
@@ -582,7 +582,7 @@ $dir_payment = asset(Storage::url('uploads/payments'));
                                                         </div>
                                                         <div class="col-md-1">
                                                             <div class="form-group">
-                                                                <a href="#" data-from="paystack"
+                                                                <a href="javascript:void(0)" data-from="paystack"
                                                                     class="btn btn-sm btn-primary apply-coupon"
                                                                     data-bs-toggle="tooltip" data-bs-placement="top"
                                                                     title="{{ __('Apply') }}"><i
@@ -643,7 +643,7 @@ $dir_payment = asset(Storage::url('uploads/payments'));
                                                     </div>
                                                     <div class="col-md-1">
                                                         <div class="form-group">
-                                                            <a href="#" data-from="flaterwave"
+                                                            <a href="javascript:void(0)" data-from="flaterwave"
                                                                 class="btn btn-sm btn-primary apply-coupon"
                                                                 data-bs-toggle="tooltip" data-bs-placement="top"
                                                                 title="{{ __('Apply') }}"><i
@@ -711,7 +711,7 @@ $dir_payment = asset(Storage::url('uploads/payments'));
                                                         </div>
                                                         <div class="col-md-1">
                                                             <div class="form-group">
-                                                                <a href="#" data-from="razorpay"
+                                                                <a href="javascript:void(0)" data-from="razorpay"
                                                                     class="btn btn-sm btn-primary apply-coupon"
                                                                     data-bs-toggle="tooltip" data-bs-placement="top"
                                                                     title="{{ __('Apply') }}"><i
@@ -789,7 +789,7 @@ $dir_payment = asset(Storage::url('uploads/payments'));
                                                         </div>
                                                         <div class="col-md-1 mt-5">
                                                             <div class="form-group">
-                                                                <a href="#" data-from="paytm"
+                                                                <a href="javascript:void(0)" data-from="paytm"
                                                                     class="btn btn-sm btn-primary apply-coupon"
                                                                     data-bs-toggle="tooltip" data-bs-placement="top"
                                                                     title="{{ __('Apply') }}"><i
@@ -857,7 +857,7 @@ $dir_payment = asset(Storage::url('uploads/payments'));
                                                         </div>
                                                         <div class="col-md-1">
                                                             <div class="form-group">
-                                                                <a href="#" data-from="mercado"
+                                                                <a href="javascript:void(0)" data-from="mercado"
                                                                     class="btn btn-sm btn-primary apply-coupon"
                                                                     data-bs-toggle="tooltip" data-bs-placement="top"
                                                                     title="{{ __('Apply') }}"><i
@@ -926,7 +926,7 @@ $dir_payment = asset(Storage::url('uploads/payments'));
                                                         </div>
                                                         <div class="col-md-1">
                                                             <div class="form-group">
-                                                                <a href="#" data-from="mollie"
+                                                                <a href="javascript:void(0)" data-from="mollie"
                                                                     class="btn btn-sm btn-primary apply-coupon"
                                                                     data-bs-toggle="tooltip" data-bs-placement="top"
                                                                     title="{{ __('Apply') }}"><i
@@ -993,7 +993,7 @@ $dir_payment = asset(Storage::url('uploads/payments'));
                                                         </div>
                                                         <div class="col-md-1">
                                                             <div class="form-group">
-                                                                <a href="#" data-from="skrill"
+                                                                <a href="javascript:void(0)" data-from="skrill"
                                                                     class="btn btn-sm btn-primary apply-coupon"
                                                                     data-bs-toggle="tooltip" data-bs-placement="top"
                                                                     title="{{ __('Apply') }}"><i
@@ -1070,7 +1070,7 @@ $dir_payment = asset(Storage::url('uploads/payments'));
                                                         </div>
                                                         <div class="col-md-1">
                                                             <div class="form-group">
-                                                                <a href="#" data-from="coingate"
+                                                                <a href="javascript:void(0)" data-from="coingate"
                                                                     class="btn btn-sm btn-primary apply-coupon"
                                                                     data-bs-toggle="tooltip" data-bs-placement="top"
                                                                     title="{{ __('Apply') }}"><i
@@ -1140,7 +1140,7 @@ $dir_payment = asset(Storage::url('uploads/payments'));
                                                         </div>
                                                         <div class="col-md-1">
                                                             <div class="form-group">
-                                                                <a href="#" data-from="paymentwall" data-from="coingate"
+                                                                <a href="javascript:void(0)" data-from="paymentwall" data-from="coingate"
                                                                     class="btn btn-sm btn-primary apply-coupon"
                                                                     data-bs-toggle="tooltip" data-bs-placement="top"
                                                                     title="{{ __('Apply') }}"><i

@@ -22,7 +22,7 @@
     </a>
 
     @can('Create Leave')
-        <a href="#" data-url="{{ route('leave.create') }}" data-ajax-popup="true"
+        <a href="javascript:void(0)" data-url="{{ route('leave.create') }}" data-ajax-popup="true"
             data-title="{{ __('Create New Leave') }}" data-size="lg" data-bs-toggle="tooltip" title=""
             class="btn btn-sm btn-primary" data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -90,7 +90,7 @@
                                                         @if ($leave->status == 'Pending')
                                                             @can('Edit Leave')
                                                                 <div class="action-btn bg-info ms-2">
-                                                                    <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                                    <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center"
                                                                         data-size="lg"
                                                                         data-url="{{ URL::to('leave/' . $leave->id . '/edit') }}"
                                                                         data-ajax-popup="true" data-size="md"
@@ -104,7 +104,7 @@
                                                         @endif
                                                     @else
                                                         <div class="action-btn bg-success ms-2">
-                                                            <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                            <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center"
                                                                 data-size="lg"
                                                                 data-url="{{ URL::to('leave/' . $leave->id . '/action') }}"
                                                                 data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
@@ -115,7 +115,7 @@
                                                         </div>
                                                         @can('Edit Leave')
                                                             <div class="action-btn bg-info ms-2">
-                                                                <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                                <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center"
                                                                     data-size="lg"
                                                                     data-url="{{ URL::to('leave/' . $leave->id . '/edit') }}"
                                                                     data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
@@ -134,7 +134,7 @@
                                                                 'route' => ['leave.destroy', $leave->id],
                                                                 'id' => 'delete-form-' . $leave->id,
                                                             ]) !!}
-                                                            <a href="#"
+                                                            <a href="javascript:void(0)"
                                                                 class="mx-3 btn btn-sm  align-items-center bs-pass-para"
                                                                 data-bs-toggle="tooltip" title=""
                                                                 data-bs-original-title="Delete" aria-label="Delete"><i

@@ -283,7 +283,7 @@ var dropdown = renderer.create('<div class="note-dropdown-menu">', function ($no
     var markup = $.isArray(options.items) ? options.items.map(function (item) {
         var value = (typeof item === 'string') ? item : (item.value || '');
         var content = options.template ? options.template(item) : item;
-        var $temp = $('<a class="note-dropdown-item" href="#" data-value="' + value + '"></a>');
+        var $temp = $('<a class="note-dropdown-item" href="javascript:void(0)" data-value="' + value + '"></a>');
         $temp.html(content).data('item', item);
         return $temp;
     }) : options.items;
@@ -304,7 +304,7 @@ var dropdownCheck = renderer.create('<div class="note-dropdown-menu note-check">
     var markup = $.isArray(options.items) ? options.items.map(function (item) {
         var value = (typeof item === 'string') ? item : (item.value || '');
         var content = options.template ? options.template(item) : item;
-        var $temp = $('<a class="note-dropdown-item" href="#" data-value="' + value + '"></a>');
+        var $temp = $('<a class="note-dropdown-item" href="javascript:void(0)" data-value="' + value + '"></a>');
         $temp.html([icon(options.checkClassName), ' ', content]).data('item', item);
         return $temp;
     }) : options.items;
@@ -599,7 +599,7 @@ var videoDialog = function (opt) {
         '<input class="note-video-url note-input" type="text" />' +
         '</div>';
     var footer = [
-        '<button type="button" href="#" class="note-btn note-btn-primary note-video-btn disabled" disabled>',
+        '<button type="button" href="javascript:void(0)" class="note-btn note-btn-primary note-video-btn disabled" disabled>',
         opt.lang.video.insert,
         '</button>'
     ].join('');
@@ -621,7 +621,7 @@ var imageDialog = function (opt) {
         '<input class="note-image-url note-input" type="text" />' +
         '</div>';
     var footer = [
-        '<button href="#" type="button" class="note-btn note-btn-primary note-btn-large note-image-btn disabled" disabled>',
+        '<button href="javascript:void(0)" type="button" class="note-btn note-btn-primary note-btn-large note-image-btn disabled" disabled>',
         opt.lang.image.insert,
         '</button>'
     ].join('');
@@ -646,7 +646,7 @@ var linkDialog = function (opt) {
                 '<label>' + '<input type="checkbox" checked> ' + opt.lang.link.openInNewWindow + '</label>' +
                 '</div>' : '');
     var footer = [
-        '<button href="#" type="button" class="note-btn note-btn-primary note-link-btn disabled" disabled>',
+        '<button href="javascript:void(0)" type="button" class="note-btn note-btn-primary note-link-btn disabled" disabled>',
         opt.lang.link.insert,
         '</button>'
     ].join('');
@@ -4268,7 +4268,7 @@ var Editor = /** @class */ (function () {
             })(idx);
             this.context.memo('help.formatH' + idx, this.lang.help['formatH' + idx]);
         }
-        
+
         this.insertParagraph = this.wrapCommand(function () {
             _this.typing.insertParagraph(_this.editable);
         });

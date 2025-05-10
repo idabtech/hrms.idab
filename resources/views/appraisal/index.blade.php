@@ -10,7 +10,7 @@
 @endpush
 @push('script-page')
     <script src="{{ asset('js/bootstrap-toggle.js') }}"></script>
-    
+
 @endpush
 
 @section('breadcrumb')
@@ -20,7 +20,7 @@
 
 @section('action-button')
     @can('Create Appraisal')
-        <a href="#" data-url="{{ route('appraisal.create') }}" data-ajax-popup="true" data-size="lg"
+        <a href="javascript:void(0)" data-url="{{ route('appraisal.create') }}" data-ajax-popup="true" data-size="lg"
             data-title="{{ __('Create New Appraisal') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
             data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -51,9 +51,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            
+
                             @foreach ($appraisals as $appraisal)
-                           
+
                             @php
                             $designation=!empty($appraisal->employees) ?  $appraisal->employees->designation->id : '-';
                             $targetRating =  \App\Models\Utility::getTargetrating($designation,$competencyCount);
@@ -128,7 +128,7 @@
 
 
                                                     <div class="action-btn bg-warning ms-2">
-                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center" data-size="lg"
+                                                        <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center" data-size="lg"
                                                             data-url="{{ route('appraisal.show', $appraisal->id) }}"
                                                             data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
                                                             title="" data-title="{{ __('Appraisal Detail') }}"
@@ -141,7 +141,7 @@
 
                                                 @can('Edit Appraisal')
                                                     <div class="action-btn bg-info ms-2">
-                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center" data-size="lg"
+                                                        <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center" data-size="lg"
                                                             data-url="{{ route('appraisal.edit', $appraisal->id) }}"
                                                             data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
                                                             title="" data-title="{{ __('Edit Appraisal') }}"
@@ -154,7 +154,7 @@
                                                 @can('Delete Appraisal')
                                                     <div class="action-btn bg-danger ms-2">
                                                         {!! Form::open(['method' => 'DELETE', 'route' => ['appraisal.destroy', $appraisal->id], 'id' => 'delete-form-' . $appraisal->id]) !!}
-                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                        <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
                                                             data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
                                                             aria-label="Delete"><i
                                                                 class="ti ti-trash text-white text-white"></i></a>

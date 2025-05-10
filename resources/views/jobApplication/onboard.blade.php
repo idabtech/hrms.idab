@@ -6,7 +6,7 @@
 
 
     @can('Create Interview Schedule')
-        <a href="#" data-url="{{ route('job.on.board.create', 0) }}" data-ajax-popup="true"
+        <a href="javascript:void(0)" data-url="{{ route('job.on.board.create', 0) }}" data-ajax-popup="true"
             data-title="{{ __('Create New Job On-Boarding') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
             data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -92,7 +92,7 @@
 
 
                                             <div class="action-btn bg-info ms-2">
-                                                <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center"
                                                     data-url="{{ route('job.on.board.edit', $job->id) }}"
                                                     data-ajax-popup="true" data-title="{{ __('Edit Job On-Boarding') }}"
                                                     data-bs-toggle="tooltip" data-bs-placement="top"
@@ -103,7 +103,7 @@
 
                                             <div class="action-btn bg-danger ms-2">
                                                 {!! Form::open(['method' => 'DELETE', 'route' => ['job.on.board.delete', $job->id], 'id' => 'delete-form-' . $job->id]) !!}
-                                                <a href="#!" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
                                                     data-bs-toggle="tooltip" data-bs-placement="top"
                                                     title="{{ __('Delete') }}">
                                                     <i class="ti ti-trash text-white"></i></a>

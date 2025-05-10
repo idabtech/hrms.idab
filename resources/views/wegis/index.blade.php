@@ -12,7 +12,7 @@
 
 @section('action-button')
     {{-- @can('Create Wegis') --}}
-        <a href="#" data-url="{{ route('wegis.create') }}" data-ajax-popup="true"
+        <a href="javascript:void(0)" data-url="{{ route('wegis.create') }}" data-ajax-popup="true"
             data-title="{{ __('Create New Wegis') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
             data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -48,7 +48,7 @@
                                     <td class="Action">
                                         <span>
                                             <div class="action-btn bg-info ms-2">
-                                                <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center"
                                                     data-url="{{  URL::to('edit-wegis/' . $item->id) }}"
                                                     data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip" title=""
                                                     data-title="{{ __('Edit Wegis') }}"
@@ -56,10 +56,10 @@
                                                     <i class="ti ti-pencil text-white"></i>
                                                 </a>
                                             </div>
-                                        
+
                                             <div class="action-btn bg-danger ms-2">
                                                 {!! Form::open(['method' => 'GET', 'route' => ['wegis.delete', $item->id], 'id' => 'delete-form-' . $item->id]) !!}
-                                                <a href="#" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
 
                                                     data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
                                                     aria-label="Delete"><i
@@ -71,7 +71,7 @@
                                 </tr>
                             @endforeach
                         </tbody>
-                        
+
                     </table>
                     </div>
                 </div>

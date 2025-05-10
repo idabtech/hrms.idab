@@ -32,7 +32,7 @@
 @endpush
  @if (\Auth::user()->type != 'employee')
 @section('action-button')
-    <a href="#" data-url="{{ route('attendence.file.import') }}" data-ajax-popup="true"
+    <a href="javascript:void(0)" data-url="{{ route('attendence.file.import') }}" data-ajax-popup="true"
     data-title="{{ __('Import Attendance CSV file') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
     data-bs-original-title="{{ __('Import') }}">
     <i class="ti ti-file-import"></i>
@@ -44,7 +44,7 @@
         <div class="col-sm-12">
             <div class=" mt-2 " id="multiCollapseExample1">
                 <div class="card">
-                    <div class="card-body"> 
+                    <div class="card-body">
                         {{ Form::open(['route' => ['attendanceemployee.index'], 'method' => 'get', 'id' => 'attendanceemployee_filter']) }}
                         <div class="row align-items-center justify-content-end">
                             <div class="col-xl-10">
@@ -101,7 +101,7 @@
                                 <div class="row">
                                     <div class="col-auto">
 
-                                        <a href="#" class="btn btn-sm btn-primary"
+                                        <a href="javascript:void(0)" class="btn btn-sm btn-primary"
                                             onclick="document.getElementById('attendanceemployee_filter').submit(); return false;"
                                             data-bs-toggle="tooltip" title="{{ __('Apply') }}"
                                             data-original-title="{{ __('apply') }}">
@@ -172,7 +172,7 @@
                                                 <span>
                                                     @can('Edit Attendance')
                                                         <div class="action-btn bg-info ms-2">
-                                                            <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                            <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center"
                                                                 data-size="lg"
                                                                 data-url="{{ URL::to('attendanceemployee/' . $attendance->id . '/edit') }}"
                                                                 data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
@@ -190,7 +190,7 @@
                                                                 'route' => ['attendanceemployee.destroy', $attendance->id],
                                                                 'id' => 'delete-form-' . $attendance->id,
                                                             ]) !!}
-                                                            <a href="#"
+                                                            <a href="javascript:void(0)"
                                                                 class="mx-3 btn btn-sm  align-items-center bs-pass-para"
                                                                 data-bs-toggle="tooltip" title=""
                                                                 data-bs-original-title="Delete" aria-label="Delete"><i

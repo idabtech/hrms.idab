@@ -15,7 +15,7 @@
 
 @section('action-button')
     @can('Create Event')
-        <a href="#" data-url="{{ route('event.create') }}" data-ajax-popup="true" data-size="lg"
+        <a href="javascript:void(0)" data-url="{{ route('event.create') }}" data-ajax-popup="true" data-size="lg"
             data-title="{{ __('Create New Event') }}" data-bs-toggle="tooltip" title="{{ __('Create') }}"
             class="btn btn-sm btn-primary">
             <i class="ti ti-plus"></i>
@@ -52,7 +52,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-lg-4">
             <div class="card">
                 <div class="card-body">
@@ -69,7 +69,7 @@
                                                     <div class="row align-items-center">
                                                         <div class="col ml-n2">
                                                             <h5 class="text-sm mb-0 fc-event-title-container">
-                                                                <a href="#" data-size="lg"
+                                                                <a href="javascript:void(0)" data-size="lg"
                                                                     data-url="{{ route('event.edit', $event->id) }}"
                                                                     data-ajax-popup="true"
                                                                     data-title="{{ __('Edit Event') }}"
@@ -118,7 +118,7 @@
 
         function get_data() {
             var calender_type = $('#calender_type :selected').val();
-           
+
             $('#calendar').removeClass('local_calender');
             $('#calendar').removeClass('google_calender');
             if(calender_type==undefined){

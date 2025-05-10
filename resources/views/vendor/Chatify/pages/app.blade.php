@@ -33,12 +33,12 @@
     </style>
 @endpush
 @php
-    
+
     // $profile=\App\Models\Utility::get_file('/'.config('chatify.user_avatar.folder'));
     $profile = \App\Models\Utility::get_file('uploads/avatar/');
     $setting = App\Models\Utility::colorset();
     $color = !empty($setting['theme_color']) ? $setting['theme_color'] : 'theme-3';
-    
+
 @endphp
 @section('page-title')
     {{ __('Messenger') }}
@@ -59,17 +59,17 @@
                     <div class="m-header">
                         <nav>
                             <nav class="m-header-right">
-                                <a href="#" class="listView-x"><i class="fas fa-times"></i></a>
+                                <a href="javascript:void(0)" class="listView-x"><i class="fas fa-times"></i></a>
                             </nav>
                         </nav>
                         {{-- Search input --}}
                         <input type="text" class="messenger-search" placeholder="{{ __('Search') }}" />
                         {{-- Tabs --}}
                         <div class="messenger-listView-tabs">
-                            <a href="#" @if ($route == 'user') class="active-tab" @endif data-view="users">
+                            <a href="javascript:void(0)" @if ($route == 'user') class="active-tab" @endif data-view="users">
                                 <span class="fas fa-clock" title="{{ __('Recent') }}"></span>
                             </a>
-                            <a href="#" @if ($route == 'group') class="active-tab" @endif
+                            <a href="javascript:void(0)" @if ($route == 'group') class="active-tab" @endif
                                 data-view="groups">
                                 <span class="fas fa-users" title="{{ __('Members') }}"></span></a>
                         </div>
@@ -118,7 +118,7 @@
                         <nav class="d-flex a;align-items-center justify-content-between">
                             {{-- header back button, avatar and user name --}}
                             <div style="display: flex;">
-                                <a href="#" class="show-listView"><i class="fas fa-arrow-left"></i> </a>
+                                <a href="javascript:void(0)" class="show-listView"><i class="fas fa-arrow-left"></i> </a>
                                 @if (!empty($user->avatar))
                                     <div class="avatar av-s header-avatar"
                                         style="margin: 0px 10px; margin-top: -5px; margin-bottom: -5px;background-image: url('{{ asset('/storage/avatars/' . $user->avatar) }}');">
@@ -128,13 +128,13 @@
                                         style="margin: 0px 10px; margin-top: -5px; margin-bottom: -5px;background-image: url('{{ asset('/storage/avatars/avatar.png') }}');">
                                     </div>
                                 @endif
-                                <a href="#" class="user-name">{{ config('chatify.name') }}</a>
+                                <a href="javascript:void(0)" class="user-name">{{ config('chatify.name') }}</a>
                             </div>
                             {{-- header buttons --}}
                             <nav class="m-header-right">
-                                <a href="#" class="add-to-favorite my-lg-1 my-xl-1 mx-lg-1 mx-xl-1"><i
+                                <a href="javascript:void(0)" class="add-to-favorite my-lg-1 my-xl-1 mx-lg-1 mx-xl-1"><i
                                         class="fas fa-star"></i></a>
-                                <a href="#" class="show-infoSide my-lg-1 my-xl-1 mx-lg-1 mx-xl-2"><i
+                                <a href="javascript:void(0)" class="show-infoSide my-lg-1 my-xl-1 mx-lg-1 mx-xl-2"><i
                                         class="fas fa-info-circle"></i></a>
                             </nav>
                         </nav>
@@ -172,7 +172,7 @@
                 <div class="messenger-infoView app-scroll text-center">
                     {{-- nav actions --}}
                     <nav class="text-center">
-                        <a href="#"><i class="fas fa-times"></i></a>
+                        <a href="javascript:void(0)"><i class="fas fa-times"></i></a>
                     </nav>
                     {!! view('Chatify::layouts.info')->render() !!}
                 </div>

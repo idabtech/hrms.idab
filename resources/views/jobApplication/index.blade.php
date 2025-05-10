@@ -152,7 +152,7 @@
 
 
     @can('Create Job Application')
-        <a href="#" data-url="{{ route('job-application.create') }}" data-ajax-popup="true" data-size="lg"
+        <a href="javascript:void(0)" data-url="{{ route('job-application.create') }}" data-ajax-popup="true" data-size="lg"
             data-title="{{ __('Create New Job Application') }}" data-bs-toggle="tooltip" title=""
             class="btn btn-sm btn-primary" data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -187,7 +187,7 @@
                             </div>
                         </div>
                         <div class="col-auto float-end ms-2 mt-4">
-                            <a href="#" class="btn btn-sm btn-primary"
+                            <a href="javascript:void(0)" class="btn btn-sm btn-primary"
                                 onclick="document.getElementById('applicarion_filter').submit(); return false;"
                                 data-bs-toggle="tooltip" title="" data-bs-original-title="apply">
                                 <span class="btn-inner--icon"><i class="ti ti-search"></i></span>
@@ -260,7 +260,7 @@
 
                                                         @can('Delete Job Application')
                                                             {!! Form::open(['method' => 'DELETE', 'route' => ['job-application.destroy', $application->id], 'id' => 'delete-form-' . $application->id]) !!}
-                                                            <a href="#" class="bs-pass-para dropdown-item"
+                                                            <a href="javascript:void(0)" class="bs-pass-para dropdown-item"
                                                                 data-bs-toggle="tooltip" data-bs-placement="top"><i
                                                                     class="ti ti-trash"></i><span
                                                                     class="ms-2">{{ __('Delete') }}</span></a>
@@ -301,7 +301,7 @@
 
                                                 </ul>
                                                 <div class="avatar-group hover-avatar-ungroup">
-                                                    <a href="#" class="user-group">
+                                                    <a href="javascript:void(0)" class="user-group">
                                                         <img src="{{ !empty($application->profile) ?$profile . ($application->profile) : $logo."avatar.png" }}"
                                                         class="hweb " style="width: 28px">
                                                     </a>

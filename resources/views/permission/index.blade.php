@@ -19,7 +19,7 @@
                                 <div class="d-flex justify-content-between w-100">
                                     <h4> {{ __('Manage Permission') }}</h4>
 
-                                    <a href="#" data-url="{{ route('permissions.create') }}"
+                                    <a href="javascript:void(0)" data-url="{{ route('permissions.create') }}"
                                         class="action-btn btn-primary me-1 btn btn-sm d-inline-flex align-items-center btn-round btn-icon"
                                         data-ajax-popup="true"   data-title="{{ __('Add Permission') }}"
                                         data-bs-toggle="tooltip" data-bs-placement="bottom"
@@ -56,7 +56,7 @@
                                                                 <tr role="row">
                                                                     <td>{{ $permission->name }}</td>
                                                                     <td>
-                                                                        <a href="#"
+                                                                        <a href="javascript:void(0)"
                                                                             data-url="{{ route('permissions.edit', $permission->id) }}"
                                                                             data-size="lg" data-ajax-popup="true"
                                                                             data-title="{{ __('Update permission') }}"  data-bs-toggle="tooltip" data-bs-placement="bottom"
@@ -64,7 +64,7 @@
                                                                             class="btn btn-outline btn-sm blue-madison">
                                                                             <i class="far fa-edit"></i>
                                                                         </a>
-                                                                        <a href="#" class="btn btn-outline btn-sm red"
+                                                                        <a href="javascript:void(0)" class="btn btn-outline btn-sm red"
                                                                         data-bs-toggle="tooltip" data-bs-placement="bottom"
                                                                         title="{{ __('Delete') }}"
                                                                             data-confirm="{{ __('Are You Sure?') . '|' . __('This action can not be undone. Do you want to continue?') }}"

@@ -8,7 +8,7 @@
             <div class="section-header">
                 <h1>{{ __('Employee Salary Pay Slip') }}</h1>
                 <div class="section-header-breadcrumb">
-                    <div class="breadcrumb-item active"><a href="#">Home</a></div>
+                    <div class="breadcrumb-item active"><a href="javascript:void(0)">Home</a></div>
                     <div class="breadcrumb-item">{{ __('Employee Salary Pay Slip') }}</div>
                 </div>
             </div>
@@ -57,7 +57,7 @@
 
                                 {{-- <ul class="nav nav-pills mb-3" id="myTab3" role="tablist">
                                     <li class="nav-item">
-                                    
+
                                         <a class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" href="#pills-home" role="tab" aria-controls="pills-home" aria-selected="true">Home</a>
                                     </li>
                                     <li class="nav-item">
@@ -158,7 +158,7 @@
                                                                 <td>{{ $allowance->amount }}</td>
                                                                 <td class="d-flex">
                                                                     @can('Edit Allowance')
-                                                                        <a href="#"
+                                                                        <a href="javascript:void(0)"
                                                                             data-url="{{ URL::to('allowance/' . $allowance->id . '/edit') }}"
                                                                             data-size="lg" data-ajax-popup="true"
                                                                             data-title="{{ __('Edit Allowance') }}"
@@ -170,7 +170,7 @@
                                                                     @endcan
                                                                     @can('Delete Allowance')
                                                                     {!! Form::open(['method' => 'DELETE', 'route' => ['allowance.destroy', $allowance->id], 'id' => 'delete-form-' . $allowance->id]) !!}
-                                                                    <a href="#!"
+                                                                    <a href="javascript:void(0)"
                                                                         class="action-btn btn-danger me-1 btn btn-sm d-inline-flex align-items-center show_confirm"
                                                                         data-bs-toggle="tooltip" data-bs-placement="bottom"
                                                                         title="{{ __('Delete') }}">
@@ -235,7 +235,7 @@
                                                                 <td>{{ $commission->amount }}</td>
                                                                 <td class="d-flex">
                                                                     @can('Edit Allowance')
-                                                                        <a href="#"
+                                                                        <a href="javascript:void(0)"
                                                                             data-url="{{ URL::to('commission/' . $commission->id . '/edit') }}"
                                                                             data-size="lg" data-ajax-popup="true"
                                                                             data-title="{{ __('Edit Allowance') }}"
@@ -247,7 +247,7 @@
                                                                     @endcan
                                                                     @can('Delete Allowance')
                                                                     {!! Form::open(['method' => 'DELETE', 'route' => ['commission.destroy', $commission->id], 'id' => 'delete-form-' . $commission->id]) !!}
-                                                                    <a href="#!"
+                                                                    <a href="javascript:void(0)"
                                                                         class="action-btn btn-danger me-1 btn btn-sm d-inline-flex align-items-center show_confirm"
                                                                         data-bs-toggle="tooltip" data-bs-placement="bottom"
                                                                         title="{{ __('Delete') }}">
@@ -347,7 +347,7 @@
                                                                 <td>{{ $loan->end_date }}</td>
                                                                 <td class="d-flex">
                                                                     @can('Edit Loan')
-                                                                        <a href="#"
+                                                                        <a href="javascript:void(0)"
                                                                             data-url="{{ URL::to('loan/' . $loan->id . '/edit') }}"
                                                                             data-size="lg" data-ajax-popup="true"
                                                                             data-title="{{ __('Edit Allowance') }}"
@@ -359,7 +359,7 @@
                                                                     @endcan
                                                                     @can('Delete Loan')
                                                                     {!! Form::open(['method' => 'DELETE', 'route' => ['loan.destroy', $loan->id], 'id' => 'delete-form-' . $loan->id]) !!}
-                                                                    <a href="#!"
+                                                                    <a href="javascript:void(0)"
                                                                         class="action-btn btn-danger me-1 btn btn-sm d-inline-flex align-items-center show_confirm"
                                                                         data-bs-toggle="tooltip" data-bs-placement="bottom"
                                                                         title="{{ __('Delete') }}">
@@ -438,7 +438,7 @@
                                                                 <td class="d-flex">
 
                                                                     @can('Edit Saturation Deduction')
-                                                                        <a href="#"
+                                                                        <a href="javascript:void(0)"
                                                                             data-url="{{ URL::to('saturationdeduction/' . $saturationdeduction->id . '/edit') }}"
                                                                             data-size="lg" data-ajax-popup="true"
                                                                             data-title="{{ __('Edit Allowance') }}"
@@ -450,7 +450,7 @@
                                                                     @endcan
                                                                     @can('Delete Saturation Deduction')
                                                                     {!! Form::open(['method' => 'DELETE', 'route' => ['saturationdeduction.destroy', $saturationdeduction->id], 'id' => 'delete-form-' . $saturationdeduction->id]) !!}
-                                                                    <a href="#!"
+                                                                    <a href="javascript:void(0)"
                                                                         class="action-btn btn-danger me-1 btn btn-sm d-inline-flex align-items-center show_confirm"
                                                                         data-bs-toggle="tooltip" data-bs-placement="bottom"
                                                                         title="{{ __('Delete') }}">
@@ -515,7 +515,7 @@
                                                                 <td>{{ $otherpayment->amount }}</td>
                                                                 <td class="d-flex">
                                                                     @can('Edit Other Payment')
-                                                                        <a href="#"
+                                                                        <a href="javascript:void(0)"
                                                                             data-url="{{ URL::to('otherpayment/' . $otherpayment->id . '/edit') }}"
                                                                             data-size="lg" data-ajax-popup="true"
                                                                             data-title="{{ __('Edit Allowance') }}"
@@ -527,7 +527,7 @@
                                                                     @endcan
                                                                     @can('Delete Other Payment')
                                                                     {!! Form::open(['method' => 'DELETE', 'route' => ['otherpayment.destroy', $otherpayment->id], 'id' => 'delete-form-' . $otherpayment->id]) !!}
-                                                                    <a href="#!"
+                                                                    <a href="javascript:void(0)"
                                                                         class="action-btn btn-danger me-1 btn btn-sm d-inline-flex align-items-center show_confirm"
                                                                         data-bs-toggle="tooltip" data-bs-placement="bottom"
                                                                         title="{{ __('Delete') }}">
@@ -612,7 +612,7 @@
 
                                                                 <td class="d-flex">
                                                                     @can('Edit Allowance')
-                                                                        <a href="#"
+                                                                        <a href="javascript:void(0)"
                                                                             data-url="{{ URL::to('overtime/' . $overtime->id . '/edit') }}"
                                                                             data-size="lg" data-ajax-popup="true"
                                                                             data-title="{{ __('Edit Allowance') }}"
@@ -624,7 +624,7 @@
                                                                     @endcan
                                                                     @can('Delete Allowance')
                                                                     {!! Form::open(['method' => 'DELETE', 'route' => ['overtime.destroy', $overtime->id], 'id' => 'delete-form-' . $overtime->id]) !!}
-                                                                    <a href="#!"
+                                                                    <a href="javascript:void(0)"
                                                                         class="action-btn btn-danger me-1 btn btn-sm d-inline-flex align-items-center show_confirm"
                                                                         data-bs-toggle="tooltip" data-bs-placement="bottom"
                                                                         title="{{ __('Delete') }}">

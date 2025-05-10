@@ -15,7 +15,7 @@
         <i class="ti ti-calendar"></i>
     </a>
     @if (\Auth::user()->type == 'company')
-        <a href="#" data-url="{{ route('zoom-meeting.create') }}" data-ajax-popup="true"
+        <a href="javascript:void(0)" data-url="{{ route('zoom-meeting.create') }}" data-ajax-popup="true"
             data-title="{{ __('Create New Zoom Meeting') }}" data-size="lg" data-bs-toggle="tooltip" title=""
             class="btn btn-sm btn-primary" data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -58,7 +58,7 @@
                                                     <img alt="image" data-bs-toggle="tooltip" data-bs-placement="top" title="{{$projectUser->name}}" @if($projectUser->avatar) src="{{$logo.'/'.$projectUser->avatar}}" @else src="{{$logo."avatar.png"}}" @endif class="rounded-circle " width="25" height="25">
                                             @endforeach
                                         </div>
-                                       
+
                                     </td>
                                     <td>
                                         @if ($ZoomMeeting->created_by == \Auth::user()->id && $ZoomMeeting->checkDateTime())
@@ -93,7 +93,7 @@
                                         <span>
                                             <div class="action-btn bg-danger ms-2">
                                                 {!! Form::open(['method' => 'DELETE', 'route' => ['zoom-meeting.destroy', $ZoomMeeting->id], 'id' => 'delete-form-' . $ZoomMeeting->id]) !!}
-                                                <a href="#" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
                                                     data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
                                                     aria-label="Delete"><i
                                                         class="ti ti-trash text-white text-white"></i></a>

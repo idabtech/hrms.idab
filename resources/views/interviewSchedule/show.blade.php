@@ -34,6 +34,6 @@
         @endforeach
     </div>
     <div class="card-footer">
-        <a href="#" data-url="{{route('job.on.board.create', $interviewSchedule->candidate)}}"  data-ajax-popup="true"  class="btn btn-primary" >  {{__('Add to Job OnBoard')}}</a>
+        <a href="javascript:void(0)" data-url="{{route('job.on.board.create', $interviewSchedule->candidate)}}"  data-ajax-popup="true"  class="btn btn-primary" >  {{__('Add to Job OnBoard')}}</a>
     </div>
 </div>

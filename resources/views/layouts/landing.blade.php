@@ -63,7 +63,7 @@ $color = !empty($setting['theme_color']) ? $setting['theme_color'] : 'theme-3';
     <!-- [ Nav ] start -->
     <nav class="navbar navbar-expand-md navbar-dark default top-nav-collapse">
         <div class="container">
-            <a class="navbar-brand bg-transparent" href="#">
+            <a class="navbar-brand bg-transparent" href="javascript:void(0)">
                 {{-- <img src="{{$logo}}" alt="logo" /> --}}
                 <img src="{{ $logos . '/' . '2_light_logo.png' }}"
                     alt="{{ config('app.name', 'iDAB TECH') }}" alt="logo">
@@ -210,7 +210,7 @@ $color = !empty($setting['theme_color']) ? $setting['theme_color'] : 'theme-3';
                         project for free.
                     </p>
                     <div class="my-4 wow animate__fadeInLeft" data-wow-delay="0.8s">
-                        <a href="#" class="btn btn-primary" target="_blank"><i
+                        <a href="javascript:void(0)" class="btn btn-primary" target="_blank"><i
                                 class="fas fa-shopping-cart me-2"></i>Buy
                             now</a>
                     </div>
@@ -237,7 +237,7 @@ $color = !empty($setting['theme_color']) ? $setting['theme_color'] : 'theme-3';
                         project for free.
                     </p>
                     <div class="my-4 wow animate__fadeInRight" data-wow-delay="0.8s">
-                        <a href="#" class="btn btn-primary" target="_blank"><i
+                        <a href="javascript:void(0)" class="btn btn-primary" target="_blank"><i
                                 class="fas fa-shopping-cart me-2"></i>Buy
                             now</a>
                     </div>
@@ -368,7 +368,7 @@ $color = !empty($setting['theme_color']) ? $setting['theme_color'] : 'theme-3';
                         project for free.
                     </p>
                     <div class="my-4 wow animate__fadeInLeft" data-wow-delay="0.8s">
-                        <a href="#" class="btn btn-primary" target="_blank"><i
+                        <a href="javascript:void(0)" class="btn btn-primary" target="_blank"><i
                                 class="fas fa-shopping-cart me-2"></i>Buy now</a>
                     </div>
                 </div>
@@ -396,7 +396,7 @@ $color = !empty($setting['theme_color']) ? $setting['theme_color'] : 'theme-3';
                         project for free.
                     </p>
                     <div class="my-4 wow animate__fadeInRight" data-wow-delay="0.8s">
-                        <a href="#" class="btn btn-primary" target="_blank"><i
+                        <a href="javascript:void(0)" class="btn btn-primary" target="_blank"><i
                                 class="fas fa-shopping-cart me-2"></i>Buy now</a>
                     </div>
                 </div>
@@ -680,7 +680,7 @@ $color = !empty($setting['theme_color']) ? $setting['theme_color'] : 'theme-3';
                         project for free.
                     </p>
                     <div class="my-4 wow animate__fadeInLeft" data-wow-delay="0.8s">
-                        <a href="#" class="btn btn-primary" target="_blank"><i
+                        <a href="javascript:void(0)" class="btn btn-primary" target="_blank"><i
                                 class="fas fa-shopping-cart me-2"></i>Buy now</a>
                     </div>
                 </div>

@@ -20,13 +20,13 @@
 @section('action-button')
     @can('Create User')
         @if (\Auth::user()->type == 'super admin')
-            <a href="#" data-url="{{ route('user.create') }}" data-ajax-popup="true"
+            <a href="javascript:void(0)" data-url="{{ route('user.create') }}" data-ajax-popup="true"
                 data-title="{{ __('Create New Company') }}" data-size="md" data-bs-toggle="tooltip" title=""
                 class="btn btn-sm btn-primary" data-bs-original-title="{{ __('Create') }}">
                 <i class="ti ti-plus"></i>
             </a>
         @else
-            <a href="#" data-url="{{ route('user.create') }}" data-ajax-popup="true"
+            <a href="javascript:void(0)" data-url="{{ route('user.create') }}" data-ajax-popup="true"
                 data-title="{{ __('Create New User') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
                 data-bs-original-title="{{ __('Create') }}">
                 <i class="ti ti-plus"></i>
@@ -64,12 +64,12 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
                                     <i class="feather icon-more-vertical"></i>
                                 </button>
                                 <div class="dropdown-menu dropdown-menu-end">
-                                    <a href="#" class="dropdown-item" data-url="{{ route('user.edit', $user->id) }}"
+                                    <a href="javascript:void(0)" class="dropdown-item" data-url="{{ route('user.edit', $user->id) }}"
                                         data-size="md" data-ajax-popup="true" data-title="{{ __('Update User') }}"><i
                                             class="ti ti-edit "></i><span
                                             class="ms-2">{{ __('Edit') }}</span></a>
 
-                                    <a href="#" class="dropdown-item" data-ajax-popup="true" data-size="md"
+                                    <a href="javascript:void(0)" class="dropdown-item" data-ajax-popup="true" data-size="md"
                                         data-title="{{ __('Change Password') }}"
                                         data-url="{{ route('user.reset', \Crypt::encrypt($user->id)) }}"><i
                                             class="ti ti-key"></i>
@@ -77,7 +77,7 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
 
 
                                     {!! Form::open(['method' => 'DELETE', 'route' => ['user.destroy', $user->id], 'id' => 'delete-form-' . $user->id]) !!}
-                                    <a href="#!" class="dropdown-item bs-pass-para">
+                                    <a href="javascript:void(0)" class="dropdown-item bs-pass-para">
                                         <i class="ti ti-trash"></i><span class="ms-1">@if($user->delete_status == 0){{__('Delete')}} @else {{__('Restore')}}@endif</span>
                                      </a>
                                     {!! Form::close() !!}
@@ -108,7 +108,7 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
                                                 {{ !empty($user->currentPlan) ? $user->currentPlan->name : '' }}</h6>
                                         </div>
                                         <div class="col-7 text-end">
-                                            <a href="#" data-url="{{ route('plan.upgrade', $user->id) }}"
+                                            <a href="javascript:void(0)" data-url="{{ route('plan.upgrade', $user->id) }}"
                                                 class="btn btn-sm btn-primary btn-icon" data-size="lg"
                                                 data-ajax-popup="true"
                                                 data-title="{{ __('Upgrade Plan') }}">{{ __('Upgrade Plan') }}
@@ -140,7 +140,7 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
             </div>
         @endforeach
         <div class="col-xl-3 col-lg-4 col-sm-6">
-            <a href="#" class="btn-addnew-project my-4 " data-ajax-popup="true" data-url="{{ route('user.create') }}"
+            <a href="javascript:void(0)" class="btn-addnew-project my-4 " data-ajax-popup="true" data-url="{{ route('user.create') }}"
                 data-title="{{ __('Create New Company') }}" data-bs-toggle="tooltip" title=""
                 class="btn btn-sm btn-primary" data-bs-original-title="{{ __('Create') }}">
                 <div class="bg-primary proj-add-icon my-4">
@@ -170,7 +170,7 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
                                     </button>
                                     <div class="dropdown-menu dropdown-menu-end">
                                         @can('Edit User')
-                                            <a href="#" class="dropdown-item" data-url="{{ route('user.edit', $user->id) }}"
+                                            <a href="javascript:void(0)" class="dropdown-item" data-url="{{ route('user.edit', $user->id) }}"
                                                 data-size="md" data-ajax-popup="true" data-title="{{ __('Update User') }}"><i
                                                     class="ti ti-edit "></i><span
                                                     class="ms-2">{{ __('Edit') }}</span></a>
@@ -179,7 +179,7 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
 
 
                                         @can('Reset Password User')
-                                            <a href="#" class="dropdown-item" data-ajax-popup="true" data-size="md"
+                                            <a href="javascript:void(0)" class="dropdown-item" data-ajax-popup="true" data-size="md"
                                                 data-title="{{ __('Change Password') }}"
                                                 data-url="{{ route('user.reset', \Crypt::encrypt($user->id)) }}"><i
                                                     class="ti ti-key"></i>
@@ -188,7 +188,7 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
 
                                         @can('Delete User')
                                             {!! Form::open(['method' => 'DELETE', 'route' => ['user.destroy', $user->id], 'id' => 'delete-form-' . $user->id]) !!}
-                                            <a href="#" class="bs-pass-para dropdown-item"
+                                            <a href="javascript:void(0)" class="bs-pass-para dropdown-item"
                                                 data-confirm="{{ __('Are You Sure?') }}"
                                                 data-text="{{ __('This action can not be undone. Do you want to continue?') }}"
                                                 data-confirm-yes="delete-form-{{ $user->id }}"
@@ -219,7 +219,7 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
             </div>
         @endforeach
         <div class="col-xl-3 col-lg-4 col-sm-6">
-            <a href="#" class="btn-addnew-project " data-ajax-popup="true" data-url="{{ route('user.create') }}"
+            <a href="javascript:void(0)" class="btn-addnew-project " data-ajax-popup="true" data-url="{{ route('user.create') }}"
                 data-title="{{ __('Create New User') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
                 data-bs-original-title="{{ __('Create') }}">
                 <div class="bg-primary proj-add-icon">

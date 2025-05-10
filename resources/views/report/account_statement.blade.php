@@ -36,7 +36,7 @@
     </script>
 @endpush
 @section('action-button')
-    <a href="#" class="btn btn-sm btn-primary" onclick="saveAsPDF()" data-bs-toggle="tooltip" title="{{ __('Download') }}"
+    <a href="javascript:void(0)" class="btn btn-sm btn-primary" onclick="saveAsPDF()" data-bs-toggle="tooltip" title="{{ __('Download') }}"
         data-original-title="{{ __('Download') }}" style="margin-right: 5px;">
         <span class="btn-inner--icon"><i class="ti ti-download"></i></span>
     </a>
@@ -100,7 +100,7 @@
 
 
                             <div class="col-auto float-end ms-2 mt-4">
-                                <a href="#" class="btn btn-sm btn-primary"
+                                <a href="javascript:void(0)" class="btn btn-sm btn-primary"
                                     onclick="document.getElementById('report_acc_filter').submit(); return false;"
                                     data-bs-toggle="tooltip" title="{{ __('Apply') }}"
                                     data-original-title="{{ __('apply') }}">

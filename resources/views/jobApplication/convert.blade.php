@@ -46,7 +46,7 @@
                     <div class="col-md-6 ">
                         <div class="form-group ">
                             {!! Form::label('gender', __('Gender'), ['class' => 'col-form-label']) !!}<span class="text-danger pl-1">*</span>
-                            
+
 
                             <div class="d-flex radio-check">
                                 <div class="custom-control custom-radio custom-control-inline">
@@ -96,7 +96,7 @@
                     <div class="form-group col-md-6">
                         {{ Form::label('branch_id', __('Branch'), ['class' => 'col-form-label']) }}
                         {{ Form::select('branch_id', $branches, !empty($jobOnBoard->applications) ? (!empty($jobOnBoard->applications->jobs) ? $jobOnBoard->applications->jobs->branch : '') : '', ['class' => 'form-control ', 'required' => 'required']) }}
-                    </div>  
+                    </div>
 
                     <div class="form-group col-md-6">
                         {{ Form::label('department_id', __('Department'), ['class' => 'col-form-label']) }}
@@ -113,8 +113,8 @@
                     <div class="form-group ">
                         {!! Form::label('company_doj', __('Company Date Of Joining'), ['class' => 'col-form-label']) !!}
                         {!! Form::date('company_doj', $jobOnBoard->joining_date, ['class' => 'form-control ', 'required' => 'required']) !!}
-                    </div>                   
-                   
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -128,7 +128,7 @@
             </div>
             <div class="card-body employee-detail-create-body">
                 @foreach ($documents as $key => $document)
-                    
+
                     <div class="row">
                         <div class="form-group col-12 d-flex">
                             <div class="float-left col-4">
@@ -153,7 +153,7 @@
                                             name="document[{{ $document->id }}]" id="document[{{ $document->id }}]"
                                             data-filename="{{ $document->id . '_filename' }}">
                                     </label>
-                                    <a href="#">
+                                    <a href="javascript:void(0)">
                                         <p class="{{ $document->id . '_filename' }} "></p>
                                     </a>
                                 </div>

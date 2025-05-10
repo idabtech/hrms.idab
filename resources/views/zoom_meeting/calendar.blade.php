@@ -19,7 +19,7 @@
         <i class="ti ti-list"></i>
     </a>
     @if (\Auth::user()->type == 'company')
-        <a href="#" data-url="{{ route('zoom-meeting.create') }}" data-ajax-popup="true"
+        <a href="javascript:void(0)" data-url="{{ route('zoom-meeting.create') }}" data-ajax-popup="true"
             data-title="{{ __('Create New Zoom Meeting') }}" data-size="lg" data-bs-toggle="tooltip" title=""
             class="btn btn-sm btn-primary" data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -72,7 +72,7 @@
                                             </div>
                                             <div class="ms-3">
                                                 <h5 class="  text-primary">
-                                                    <a href="#" data-size="lg"
+                                                    <a href="javascript:void(0)" data-size="lg"
                                                         data-url="{{ route('zoom-meeting.show', $event->id) }}"
                                                         data-ajax-popup="true" data-title="{{ __('Edit Event') }}"
                                                         class="text-primary">{{ $event->title }}</a>

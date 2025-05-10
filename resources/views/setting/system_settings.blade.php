@@ -530,25 +530,25 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
                                                         <hr class="my-2" />
 
                                                         <div class="theme-color themes-color">
-                                                            <a href="#!"
+                                                            <a href="javascript:void(0)"
                                                                 class="themes-color-change {{ $color == 'theme-1' ? 'active_color' : '' }}"
                                                                 data-value="theme-1"></a>
                                                             <input type="radio" class="theme_color d-none"
                                                                 name="theme_color" value="theme-1"
                                                                 {{ $color == 'theme-1' ? 'checked' : '' }}>
-                                                            <a href="#!"
+                                                            <a href="javascript:void(0)"
                                                                 class="themes-color-change {{ $color == 'theme-2' ? 'active_color' : '' }}"
                                                                 data-value="theme-2"></a>
                                                             <input type="radio" class="theme_color d-none"
                                                                 name="theme_color" value="theme-2"
                                                                 {{ $color == 'theme-2' ? 'checked' : '' }}>
-                                                            <a href="#!"
+                                                            <a href="javascript:void(0)"
                                                                 class="themes-color-change {{ $color == 'theme-3' ? 'active_color' : '' }}"
                                                                 data-value="theme-3"></a>
                                                             <input type="radio" class="theme_color d-none"
                                                                 name="theme_color" value="theme-3"
                                                                 {{ $color == 'theme-3' ? 'checked' : '' }}>
-                                                            <a href="#!"
+                                                            <a href="javascript:void(0)"
                                                                 class="themes-color-change {{ $color == 'theme-4' ? 'active_color' : '' }}"
                                                                 data-value="theme-4"></a>
                                                             <input type="radio" class="theme_color d-none"
@@ -682,12 +682,12 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
                                 <div class="card-footer">
                                     <div class="row">
                                         <div class="col-md-6">
-                                            {{-- <a href="#" class="btn btn-xs btn-primary send_email"  data-ajax-popup="true"
+                                            {{-- <a href="javascript:void(0)" class="btn btn-xs btn-primary send_email"  data-ajax-popup="true"
                                                 data-title="{{ __('Send Test Mail') }}"
                                                 data-url="{{ route('test.mail') }}">
                                                 {{ __('Send Test Mail') }}
                                             </a> --}}
-                                            <a href="#" class="btn btn-print-invoice  btn-primary m-r-10 send_email" data-ajax-popup="true" data-title="{{__('Send Test Mail')}}" data-url="{{route('test.mail.get')}}">
+                                            <a href="javascript:void(0)" class="btn btn-print-invoice  btn-primary m-r-10 send_email" data-ajax-popup="true" data-title="{{__('Send Test Mail')}}" data-url="{{route('test.mail.get')}}">
                                                 {{__('Send Test Mail')}}
                                             </a>
 

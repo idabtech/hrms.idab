@@ -3,7 +3,7 @@
     <div class="row">
         <div class="form-group col-md-12">
             {{ Form::label('job', __('Job'), ['class' => 'form-label']) }}
-            <a href="#" data-title="{{ __('Create New Job') }}" onclick="modalShow([{'job_title' : ''},{'branch' : '{{$branches}}'},{'job_category' : '{{$job_category}}'},{'no_of_positions' : ''},{'status' : ''},{'skill_box' : ''}], 'create-job', 'Create Job', 'job')" data-bs-toggle="tooltip"
+            <a href="javascript:void(0)" data-title="{{ __('Create New Job') }}" onclick="modalShow([{'job_title' : ''},{'branch' : '{{$branches}}'},{'job_category' : '{{$job_category}}'},{'no_of_positions' : ''},{'status' : ''},{'skill_box' : ''}], 'create-job', 'Create Job', 'job')" data-bs-toggle="tooltip"
                 title="{{ __('Create New Job') }}" style="float: right" class="btn btn-sm btn-primary addBtn"
                 data-bs-original-title="{{ __('Create') }}">
                 <i class="ti ti-plus"></i>
@@ -118,7 +118,7 @@
             </div>
             <form id="myForm">
                 <div class="modal-body" id="newModalBody">
-                    
+
                 </div>
             </form>
             <div class="modal-footer">
@@ -140,7 +140,7 @@
         $('#staticBackdropLabel').text(title);
 
         html += '<div class="row">';
-        $.each(data, function (key, value) { 
+        $.each(data, function (key, value) {
             $.each(value, function(key1, value1){
                 html += '<div class="col-lg-12 col-md-12 col-sm-12">\
                         <div class="form-group">\
@@ -156,7 +156,7 @@
                                 }
                                 $.each(value1, function(key2, value2){
                                     html += '<option value="'+key2+'">'+value2+'</option>';
-                                })    
+                                })
                     html += '</select>\
                         </div>';
                 }else{
@@ -177,15 +177,15 @@
     function submitForm(){
         var input = [];
         $("#myForm :input").each(function(){
-            var value = $(this).val(); 
-            var name = $(this).attr('name'); 
+            var value = $(this).val();
+            var name = $(this).attr('name');
             input.push({
                 'name' : name,
                 'value' : value
             });
         });
         var url = "<?= url('') ?>/" + globalRoute;
-        
+
         $.ajax({
             type: "post",
             url: url,

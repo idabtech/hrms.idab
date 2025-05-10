@@ -18,7 +18,7 @@
 @section('action-button')
 <div class="row align-items-center m-1">
     <div class="col-auto pe-0">
-    <a href="#" class="btn btn-sm btn-primary btn-icon" data-size="md" data-url="{{ route('create.language') }}"
+    <a href="javascript:void(0)" class="btn btn-sm btn-primary btn-icon" data-size="md" data-url="{{ route('create.language') }}"
     data-ajax-popup="true" data-title="{{ __('Create New Language') }}"
     data-bs-toggle="tooltip"
     data-bs-original-title="{{__('Create ')}}">
@@ -28,7 +28,7 @@
         @if($currantLang != \App\Models\Utility::settings()['default_language'])
         <div class="col-auto pe-0">
         {!! Form::open(['method' => 'DELETE', 'route' => ['lang.destroy', $currantLang], 'id' => 'delete-form-' . $currantLang]) !!}
-        <a href="#" class="btn btn-sm btn-danger btn-icon bs-pass-para"
+        <a href="javascript:void(0)" class="btn btn-sm btn-danger btn-icon bs-pass-para"
             data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
             aria-label="Delete"><i class="ti ti-trash text-white "></i></a>
         </form>

@@ -19,7 +19,7 @@
     <div class="me-auto dash-mob-drp">
         <ul class="list-unstyled">
             <li class="dash-h-item mob-hamburger">
-                <a href="#!" class="dash-head-link" id="mobile-collapse">
+                <a href="javascript:void(0)" class="dash-head-link" id="mobile-collapse">
                     <div class="hamburger hamburger--arrowturn">
                         <div class="hamburger-box">
                             <div class="hamburger-inner"></div>
@@ -29,7 +29,7 @@
             </li>
 
             <li class="dropdown dash-h-item drp-company">
-                <a class="dash-head-link dropdown-toggle arrow-none me-0" data-bs-toggle="dropdown" href="#"
+                <a class="dash-head-link dropdown-toggle arrow-none me-0" data-bs-toggle="dropdown" href="javascript:void(0)"
                     role="button" aria-haspopup="false" aria-expanded="false">
                     <span class="theme-avtar">
                         <img alt="#"
@@ -89,7 +89,7 @@
 
             @if (\Auth::user()->type != 'super admin')
                 <li class="dropdown dash-h-item drp-notification">
-                    <a class="dash-head-link dropdown-toggle arrow-none me-0 " data-bs-toggle="dropdown" href="#"
+                    <a class="dash-head-link dropdown-toggle arrow-none me-0 " data-bs-toggle="dropdown" href="javascript:void(0)"
                         role="button" aria-haspopup="false" aria-expanded="false" id="msg-btn">
                         <i class="ti ti-message-2"></i>
                         <span
@@ -100,12 +100,12 @@
                     <div class="dropdown-menu dash-h-dropdown dropdown-menu-end">
                         <div class="noti-header">
                             <h5 class="m-0">{{ __('Messages') }}</h5>
-                            <a href="#" class="dash-head-link mark_all_as_read_message">{{ __('Clear All') }}</a>
+                            <a href="javascript:void(0)" class="dash-head-link mark_all_as_read_message">{{ __('Clear All') }}</a>
                         </div>
 
                         <div class="noti-body dropdown-list-message-msg">
                             <div style="display: flex;">
-                                <a href="#" class="show-listView"><i class="fas fa-arrow-left"></i></a>
+                                <a href="javascript:void(0)" class="show-listView"><i class="fas fa-arrow-left"></i></a>
                                 {{-- unread messages --}}
                                 <div class="count-listOfContacts">
                                 </div>
@@ -126,7 +126,7 @@
             @endphp
 
             <li class="dropdown dash-h-item drp-language">
-                <a class="dash-head-link dropdown-toggle arrow-none me-0 " data-bs-toggle="dropdown" href="#"
+                <a class="dash-head-link dropdown-toggle arrow-none me-0 " data-bs-toggle="dropdown" href="javascript:void(0)"
                     role="button" aria-haspopup="false" aria-expanded="false" id="dropdownLanguage">
                     <i class="ti ti-world nocolor"></i>
                     <span class="drp-text hide-mob">{{ Str::upper($currantLang) }}</span>

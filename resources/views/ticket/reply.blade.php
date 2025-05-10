@@ -12,7 +12,7 @@
 
 @section('action-button')
 @if (\Auth::user()->type == 'company' || $ticket->ticket_created == \Auth::user()->id)
-        <a href="#" data-url="{{ URL::to('ticket/' . $ticket->id . '/edit') }}" data-ajax-popup="true"
+        <a href="javascript:void(0)" data-url="{{ URL::to('ticket/' . $ticket->id . '/edit') }}" data-ajax-popup="true"
             data-title="{{ __('Edit Ticket') }}" data-size="lg" data-bs-toggle="tooltip" title=""
             class="btn btn-sm btn-info" data-bs-original-title="{{ __('Edit') }}">
             <i class="ti ti-pencil"></i>

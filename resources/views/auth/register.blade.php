@@ -78,7 +78,7 @@
                             {{ Form::password('password_confirmation', ['class' => 'form-control', 'id' => 'confirm-input-password', 'placeholder' => __('Confirm Password'), 'required' => true]) }}
                             {{-- <div class="input-group-append">
                                         <span class="input-group-text">
-                                          <a href="#" data-toggle="password-text" data-target="#confirm-input-password">
+                                          <a href="javascript:void(0)" data-toggle="password-text" data-target="#confirm-input-password">
                                             <i class="fas fa-eye"></i>
                                           </a>
                                         </span>

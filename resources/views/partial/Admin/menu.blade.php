@@ -35,7 +35,7 @@
             @endif
             @if (\Auth::user()->type == 'company')
                 <li class="dash-item dash-hasmenu  {{ Request::segment(1) == 'null' ? 'active dash-trigger' : '' }}">
-                    <a href="#" class="dash-link"><span class="dash-micon"><i class="ti ti-home"></i></span><span
+                    <a href="javascript:void(0)" class="dash-link"><span class="dash-micon"><i class="ti ti-home"></i></span><span
                             class="dash-mtext">{{ __('Dashboard') }}</span><span class="dash-arrow"><i
                                 data-feather="chevron-right"></i></span></a>
                     <ul class="dash-submenu ">
@@ -46,7 +46,7 @@
 
                         @if (Gate::check('Manage Report'))
                             <li class="dash-item dash-hasmenu">
-                                <a href="#!" class="dash-link"><span class=""><i
+                                <a href="javascript:void(0)" class="dash-link"><span class=""><i
                                             class=""></i></span><span
                                         class="dash-mtext">{{ __('Report') }}</span><span class="dash-arrow"><i
                                             data-feather="chevron-right"></i></span></a>
@@ -109,7 +109,7 @@
                         Gate::check('Manage Employee Profile') ||
                         Gate::check('Manage Employee Last Login'))
                     <li class="dash-item dash-hasmenu">
-                        <a href="#!" class="dash-link"><span class="dash-micon"><i
+                        <a href="javascript:void(0)" class="dash-link"><span class="dash-micon"><i
                                     class="ti ti-users"></i></span><span
                                 class="dash-mtext">{{ __('Staff') }}</span><span class="dash-arrow"><i
                                     data-feather="chevron-right"></i></span></a>
@@ -167,7 +167,7 @@
             @if (Gate::check('Manage Set Salary') || Gate::check('Manage Pay Slip'))
                 <li
                     class="dash-item dash-hasmenu  {{ Request::segment(1) == 'setsalary' ? 'dash-trigger active' : '' }}">
-                    <a href="#!" class="dash-link">
+                    <a href="javascript:void(0)" class="dash-link">
                         <span class="dash-micon">
                             <i class="ti ti-receipt">
                             </i>
@@ -195,7 +195,7 @@
             @if (\Auth::user()->type == 'employee')
                 <li
                     class="dash-item dash-hasmenu {{ Request::segment(1) == 'setsalary' ? 'dash-trigger active' : '' }}">
-                    <a href="#!" class="dash-link"><span class="dash-micon"><i
+                    <a href="javascript:void(0)" class="dash-link"><span class="dash-micon"><i
                                 class="ti ti-receipt"></i></span><span
                             class="dash-mtext">{{ __('Payroll') }}</span><span class="dash-arrow"><i
                                 data-feather="chevron-right"></i></span></a>
@@ -214,7 +214,7 @@
             <!-- timesheet-->
             @if (Gate::check('Manage Attendance') || Gate::check('Manage Leave') || Gate::check('Manage TimeSheet'))
                 <li class="dash-item dash-hasmenu">
-                    <a href="#!" class="dash-link"><span class="dash-micon"><i
+                    <a href="javascript:void(0)" class="dash-link"><span class="dash-micon"><i
                                 class="ti ti-clock"></i></span><span
                             class="dash-mtext">{{ __('Timesheet') }}</span><span class="dash-arrow"><i
                                 data-feather="chevron-right"></i></span></a>
@@ -231,7 +231,7 @@
                         @endcan
                         @can('Manage Attendance')
                             <li class="dash-item dash-hasmenu">
-                                <a href="#!" class="dash-link"><span
+                                <a href="javascript:void(0)" class="dash-link"><span
                                         class="dash-mtext">{{ __('Attendance') }}</span><span class="dash-arrow"><i
                                             data-feather="chevron-right"></i></span></a>
                                 <ul class="dash-submenu">
@@ -249,12 +249,12 @@
                             </li>
                         @endcan
                         @if (\Auth::user()->type == 'company')
-                        @if($setting['shift_change'] == 'on')
-                            <li class="dash-item">
-                                <a class="dash-link"
-                                    href="{{ route('shiftturner.index') }}">{{ __('Shift Turner') }}</a>
-                            </li>
-                        @endif
+                            @if ($setting['shift_change'] == 'on')
+                                <li class="dash-item">
+                                    <a class="dash-link"
+                                        href="{{ route('shiftturner.index') }}">{{ __('Shift Turner') }}</a>
+                                </li>
+                            @endif
                         @endif
                     </ul>
                 </li>
@@ -264,7 +264,7 @@
             <!-- performance-->
             @if (Gate::check('Manage Indicator') || Gate::check('Manage Appraisal') || Gate::check('Manage Goal Tracking'))
                 <li class="dash-item dash-hasmenu">
-                    <a href="#!" class="dash-link"><span class="dash-micon"><i
+                    <a href="javascript:void(0)" class="dash-link"><span class="dash-micon"><i
                                 class="ti ti-3d-cube-sphere"></i></span><span
                             class="dash-mtext">{{ __('Performance') }}</span><span class="dash-arrow"><i
                                 data-feather="chevron-right"></i></span></a>
@@ -300,7 +300,7 @@
                     Gate::check('Manage Expense') ||
                     Gate::check('Manage Transfer Balance'))
                 <li class="dash-item dash-hasmenu">
-                    <a href="#!" class="dash-link"><span class="dash-micon"><i
+                    <a href="javascript:void(0)" class="dash-link"><span class="dash-micon"><i
                                 class="ti ti-wallet"></i></span><span
                             class="dash-mtext">{{ __('Finance') }}</span><span class="dash-arrow"><i
                                 data-feather="chevron-right"></i></span></a>
@@ -356,7 +356,7 @@
             @if (Gate::check('Manage Trainer') || Gate::check('Manage Training'))
                 <li
                     class="dash-item dash-hasmenu {{ Request::segment(1) == 'training' ? 'dash-trigger active' : '' }}">
-                    <a href="#!" class="dash-link "><span class="dash-micon"><i
+                    <a href="javascript:void(0)" class="dash-link "><span class="dash-micon"><i
                                 class="ti ti-school"></i></span><span
                             class="dash-mtext">{{ __('Training') }}</span><span class="dash-arrow"><i
                                 data-feather="chevron-right"></i></span></a>
@@ -390,46 +390,66 @@
                     Gate::check('Manage Termination') ||
                     Gate::check('Manage Announcement') ||
                     Gate::check('Manage Holiday'))
-                <li
-                    class="dash-item dash-hasmenu {{ Request::segment(1) == 'holiday' ? 'dash-trigger active' : '' }}">
-                    <a href="#!" class="dash-link"><span class="dash-micon"><i
+                <li class="dash-item dash-hasmenu {{ in_array(Request::segment(1), ['award.*', 'transfer.*', 'resignation.*', 'travel.*', 'promotion.*', 'complaint.*', 'warning.*', 'termination.*', 'announcement.*', 'holiday.*']) ? 'dash-trigger active' : '' }}">
+
+                    <a href="javascript:void(0)" class="dash-link"><span class="dash-micon"><i
                                 class="ti ti-user-plus"></i></span><span
                             class="dash-mtext">{{ __('HR Admin Setup') }}</span><span class="dash-arrow"><i
                                 data-feather="chevron-right"></i></span></a>
                     <ul class="dash-submenu">
-                        <li class="dash-item {{ Request::segment(1) == 'award' ? 'active' : '' }}">
-                            <a class="dash-link" href="{{ route('award.index') }}">{{ __('Award') }}</a>
-                        </li>
-                        <li class="dash-item">
-                            <a class="dash-link" href="{{ route('transfer.index') }}">{{ __('Transfer') }}</a>
-                        </li>
-                        <li class="dash-item">
-                            <a class="dash-link"
-                                href="{{ route('resignation.index') }}">{{ __('Resignation') }}</a>
-                        </li>
-                        <li class="dash-item">
-                            <a class="dash-link" href="{{ route('travel.index') }}">{{ __('Trip') }}</a>
-                        </li>
-                        <li class="dash-item">
-                            <a class="dash-link" href="{{ route('promotion.index') }}">{{ __('Promotion') }}</a>
-                        </li>
-                        <li class="dash-item">
-                            <a class="dash-link" href="{{ route('complaint.index') }}">{{ __('Complaints') }}</a>
-                        </li>
-                        <li class="dash-item">
-                            <a class="dash-link" href="{{ route('warning.index') }}">{{ __('Warning') }}</a>
-                        </li>
-                        <li class="dash-item">
-                            <a class="dash-link"
-                                href="{{ route('termination.index') }}">{{ __('Termination') }}</a>
-                        </li>
-                        <li class="dash-item">
-                            <a class="dash-link"
-                                href="{{ route('announcement.index') }}">{{ __('Announcement') }}</a>
-                        </li>
-                        <li class="dash-item {{ Request::segment(1) == 'holiday' ? ' active' : '' }}">
-                            <a class="dash-link" href="{{ route('holiday.index') }}">{{ __('Holidays') }}</a>
-                        </li>
+                        @can('Manage Award')
+                            <li class="dash-item {{ Request::segment(1) == 'award.*' ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('award.index') }}">{{ __('Award') }}</a>
+                            </li>
+                        @endcan
+                        @can('Manage Transfer')
+                            <li class="dash-item {{ Request::segment(1) == 'transfer.*' ? ' active' : '' }}">
+                                <a class="dash-link" href="{{ route('transfer.index') }}">{{ __('Transfer') }}</a>
+                            </li>
+                        @endcan
+                        @can('Manage Resignation')
+                            <li class="dash-item {{ Request::segment(1) == 'resignation.*' ? ' active' : '' }}">
+                                <a class="dash-link"
+                                    href="{{ route('resignation.index') }}">{{ __('Resignation') }}</a>
+                            </li>
+                        @endcan
+                        @can('Manage Travels')
+                            <li class="dash-item {{ Request::segment(1) == 'travel.*' ? ' active' : '' }}">
+                                <a class="dash-link" href="{{ route('travel.index') }}">{{ __('Trip') }}</a>
+                            </li>
+                        @endcan
+                        @can('Manage Promotion')
+                            <li class="dash-item {{ Request::segment(1) == 'promotion.*' ? ' active' : '' }}">
+                                <a class="dash-link" href="{{ route('promotion.index') }}">{{ __('Promotion') }}</a>
+                            </li>
+                        @endcan
+                        @can('Manage Complaint')
+                            <li class="dash-item {{ Request::segment(1) == 'complaint.*' ? ' active' : '' }}">
+                                <a class="dash-link" href="{{ route('complaint.index') }}">{{ __('Complaints') }}</a>
+                            </li>
+                        @endcan
+                        @can('Manage Warning')
+                            <li class="dash-item {{ Request::segment(1) == 'warning.*' ? ' active' : '' }}">
+                                <a class="dash-link" href="{{ route('warning.index') }}">{{ __('Warning') }}</a>
+                            </li>
+                        @endcan
+                        @can('Manage Termination')
+                            <li class="dash-item {{ Request::segment(1) == 'termination.*' ? ' active' : '' }}">
+                                <a class="dash-link"
+                                    href="{{ route('termination.index') }}">{{ __('Termination') }}</a>
+                            </li>
+                        @endcan
+                        @can('Manage Announcement')
+                            <li class="dash-item {{ Request::segment(1) == 'announcement.*' ? ' active' : '' }}">
+                                <a class="dash-link"
+                                    href="{{ route('announcement.index') }}">{{ __('Announcement') }}</a>
+                            </li>
+                        @endcan
+                        @can('Manage Holiday')
+                            <li class="dash-item {{ Request::segment(1) == 'holiday.*' ? ' active' : '' }}">
+                                <a class="dash-link" href="{{ route('holiday.index') }}">{{ __('Holidays') }}</a>
+                            </li>
+                        @endcan
                     </ul>
                 </li>
             @endif
@@ -444,7 +464,7 @@
                     Gate::check('Manage Career'))
                 <li
                     class="dash-item dash-hasmenu  {{ Request::segment(1) == 'job' || Request::segment(1) == 'job-application' ? 'dash-trigger active' : '' }} ">
-                    <a href="#!" class="dash-link"><span class="dash-micon"><i
+                    <a href="javascript:void(0)" class="dash-link"><span class="dash-micon"><i
                                 class="ti ti-license"></i></span><span
                             class="dash-mtext">{{ __('Recruitment') }}</span><span class="dash-arrow"><i
                                 data-feather="chevron-right"></i></span></a>
@@ -454,8 +474,8 @@
                                 <a class="dash-link" href="{{ route('job.index') }}">{{ __('Jobs') }}</a>
                             </li>
                         @endcan
-                        @can('Manage Job')
-                            <li class="dash-item {{ Request::segment(1) == 'job' ? 'active' : '-' }}">
+                        @can('Create Job')
+                            <li class="dash-item {{ Request::segment(1) == 'job/create' ? 'active' : '-' }}">
                                 <a class="dash-link" href="{{ route('job.create') }}">{{ __('Job Create ') }}</a>
                             </li>
                         @endcan
@@ -646,7 +666,7 @@
             <!--report-->
             <!-- @if (Gate::check('Manage Report'))
 <li class="dash-item dash-hasmenu">
-<a href="#!" class="dash-link"><span class="dash-micon"><i
+<a href="javascript:void(0)" class="dash-link"><span class="dash-micon"><i
 class="ti ti-list"></i></span><span
 class="dash-mtext">{{ __('Report') }}</span><span
 class="dash-arrow"><i data-feather="chevron-right"></i></span></a>
@@ -831,7 +851,7 @@ href="{{ route('trainingtype.index') }}">{{ __('Training Type') }}</a>
 <li
 class="dash-item {{ request()->is('job-category*') ? 'active' : '' }}">
 <a class="dash-link"
-    href="{{ route('job-category.index') }}">{{ __('Job Category') }}</a>
+href="{{ route('job-category.index') }}">{{ __('Job Category') }}</a>
 </li>
 @endcan
 @endif
@@ -841,7 +861,7 @@ class="dash-item {{ request()->is('job-category*') ? 'active' : '' }}">
 <li
 class="dash-item {{ request()->is('job-stage*') ? 'active' : '' }}">
 <a class="dash-link"
-    href="{{ route('job-stage.index') }}">{{ __('Job Stage') }}</a>
+href="{{ route('job-stage.index') }}">{{ __('Job Stage') }}</a>
 </li>
 @endcan
 @endif
@@ -878,7 +898,7 @@ href="{{ route('competencies.index') }}">{{ __('Competencies') }}</a>
 
                 @if (Gate::check('Manage Plan') || Gate::check('Manage Order') || Gate::check('Manage Company Settings'))
                     <li class="dash-item dash-hasmenu">
-                        <a href="#!" class="dash-link ">
+                        <a href="javascript:void(0)" class="dash-link ">
                             <span class="dash-micon"><i class="ti ti-settings"></i></span><span
                                 class="dash-mtext">{{ __('System Setup') }}</span><span
                                 class="dash-arrow">
@@ -887,7 +907,7 @@ href="{{ route('competencies.index') }}">{{ __('Competencies') }}</a>
                         <ul class="dash-submenu">
                             @if (Gate::check('Manage Company Settings'))
                                 <li
-                                    class="dash-item dash-hasmenu {{ Request::segment(1) == 'company-setting' ? ' active' : '' }}">
+                                    class="dash-item dash-hasmenu {{ Request::segment(1) == 'company-setting.*' ? ' active' : '' }}">
                                     <a href="{{ route('settings.index') }}"
                                         class="dash-link">{{ __('System Settings') }}</a>
                                 </li>
@@ -901,7 +921,7 @@ href="{{ route('competencies.index') }}">{{ __('Competencies') }}</a>
                             @endif
                             @if (\Auth::user()->type == 'super admin' || \Auth::user()->type == 'company')
                                 <li
-                                    class="dash-item {{ Request::segment(1) == 'order' ? 'active' : '' }}">
+                                    class="dash-item {{ Request::segment(1) == 'order.*' ? 'active' : '' }}">
                                     <a href="{{ route('order.index') }}"
                                         class="dash-link">{{ __('Order') }}</a>
                                 </li>

@@ -60,7 +60,7 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
                         </div>
 
                         <div class="col-auto float-end ms-2 mt-4">
-                            <a href="#" class="btn btn-sm btn-primary"
+                            <a href="javascript:void(0)" class="btn btn-sm btn-primary"
                                 onclick="document.getElementById('employee_profile_filter').submit(); return false;"
                                 data-bs-toggle="tooltip" title="" data-bs-original-title="Apply">
                                 <span class="btn-inner--icon"><i class="ti ti-search"></i></span>
@@ -84,7 +84,7 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
                 <div class="card-header border-0 pb-0">
                     <div class="d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">
-                            
+
                         </h6>
                     </div>
                     <div class="card-header-right">
@@ -103,7 +103,7 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
 
                                 @can('Delete Employee')
                                     {!! Form::open(['method' => 'DELETE', 'route' => ['employee.destroy', $employee->id], 'id' => 'delete-form-' . $employee->id]) !!}
-                                    <a href="#" class="bs-pass-para dropdown-item" data-confirm="{{ __('Are You Sure?') }}"
+                                    <a href="javascript:void(0)" class="bs-pass-para dropdown-item" data-confirm="{{ __('Are You Sure?') }}"
                                         data-text="{{ __('This action can not be undone. Do you want to continue?') }}"
                                         data-confirm-yes="delete-form-{{ $employee->id }}" title="{{ __('Delete') }}"><i
                                             class="ti ti-trash"></i><span

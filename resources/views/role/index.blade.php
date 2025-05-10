@@ -11,7 +11,7 @@
 
 @section('action-button')
     @can('Create Role')
-        <a href="#" data-url="{{ route('roles.create') }}" data-ajax-popup="true" data-title="{{ __('Create New Role') }}"
+        <a href="javascript:void(0)" data-url="{{ route('roles.create') }}" data-ajax-popup="true" data-title="{{ __('Create New Role') }}"
             data-bs-toggle="tooltip" title="" data-size="lg" class="btn btn-sm btn-primary"
             data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -49,7 +49,7 @@
                                             {{-- Show first 3 permissions --}}
                                             @foreach ($visiblePermissions as $permission)
                                                 <span class="badge rounded p-2 m-1 px-3 bg-primary">
-                                                    <a href="#" class="text-white">{{ $permission }}</a>
+                                                    <a href="javascript:void(0)" class="text-white">{{ $permission }}</a>
                                                 </span>
                                             @endforeach
 
@@ -58,13 +58,13 @@
                                                 <span id="more-permissions-{{ $role->id }}" class="d-none">
                                                     @foreach ($remainingPermissions as $permission)
                                                         <span class="badge rounded p-2 m-1 px-3 bg-primary">
-                                                            <a href="#" class="text-white">{{ $permission }}</a>
+                                                            <a href="javascript:void(0)" class="text-white">{{ $permission }}</a>
                                                         </span>
                                                     @endforeach
                                                 </span>
 
                                                 {{-- Toggle link --}}
-                                                <a href="javascript:void(0);"
+                                                <a href="javascript:void(0)"
                                                     onclick="togglePermissions({{ $role->id }})"
                                                     class="text-decoration-underline text-primary ms-2"
                                                     id="toggle-link-{{ $role->id }}">
@@ -94,7 +94,7 @@
                                                             'route' => ['roles.destroy', $role->id],
                                                             'id' => 'delete-form-' . $role->id,
                                                         ]) !!}
-                                                        <a href="#"
+                                                        <a href="javascript:void(0)"
                                                             class="mx-3 btn btn-sm  align-items-center bs-pass-para"
                                                             data-bs-toggle="tooltip" title=""
                                                             data-bs-original-title="Delete" aria-label="Delete"><i

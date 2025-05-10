@@ -15,12 +15,12 @@
         @can('Create Contract')
             @if (\Auth::user()->type =='company')
                 <div class="btn btn-sm btn-primary btn-icon">
-                    <a href="#" class="" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Create Contract')}}" data-ajax-popup="true" data-size="lg" data-title="{{__('Create Contract')}}" data-url="{{route('contract.create')}}"><i class="ti ti-plus text-white"></i></a>
+                    <a href="javascript:void(0)" class="" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Create Contract')}}" data-ajax-popup="true" data-size="lg" data-title="{{__('Create Contract')}}" data-url="{{route('contract.create')}}"><i class="ti ti-plus text-white"></i></a>
                 </div>
             @endif
         @endcan
     </div>
-        
+
 @endsection
 
 @section('content')
@@ -131,7 +131,7 @@
                                                         <span class="status_badge badge bg-primary  p-2 px-3 rounded">{{__('Accept')}}</span>
                                                     @elseif($contract->status == 'decline')
                                                         <span class="status_badge badge bg-danger p-2 px-3 rounded">{{ __('Decline') }}</span>
-                                                    @elseif($contract->status == 'pending')  
+                                                    @elseif($contract->status == 'pending')
                                                          <span class="status_badge badge bg-warning p-2 px-3 rounded">{{ __('Pending') }}</span>
                                                     @endif
                                                 </td>
@@ -139,29 +139,29 @@
                                                     <span>
                                                         @can('Create Contract')
                                                             @if ((\Auth::user()->type == 'company')&&($contract->status=='accept'))
-                                                            
+
                                                                 <div class="action-btn btn-primary ms-2">
-                                                                    <a href="#" data-size="lg" data-url="{{ route('contracts.copy',$contract->id) }}" data-ajax-popup="true" data-title="{{__('Copy Contract')}}" class="mx-3 btn btn-sm d-inline-flex align-items-center" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Duplicate')}}" ><i class="ti ti-copy text-white"></i></a>
+                                                                    <a href="javascript:void(0)" data-size="lg" data-url="{{ route('contracts.copy',$contract->id) }}" data-ajax-popup="true" data-title="{{__('Copy Contract')}}" class="mx-3 btn btn-sm d-inline-flex align-items-center" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Duplicate')}}" ><i class="ti ti-copy text-white"></i></a>
                                                                 </div>
-                                                        
+
                                                             @endif
                                                         @endcan
 
-                                                    
+
                                                             @if (\Auth::user()->type == 'company'||\Auth::user()->type == 'employee')
-                                                        
+
                                                                 <div class="action-btn btn-warning ms-2">
                                                                     <a href="{{route('contract.show',$contract->id)}}" class="mx-3 btn btn-sm d-inline-flex align-items-center" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('View Contract')}}" ><i class="ti ti-eye text-white"></i></a>
                                                                 </div>
-                                                        
+
                                                             @endif
-                                                    
+
 
 
                                                         @can('Edit Contract')
                                                             @if (\Auth::user()->type == 'company')
                                                                 <div class="action-btn btn-info ms-2">
-                                                                    <a href="#" data-size="lg" data-url="{{ URL::to('contract/'.$contract->id.'/edit') }}" data-ajax-popup="true" data-title="{{__('Edit Contract')}}" class="mx-3 btn btn-sm d-inline-flex align-items-center" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Edit Contract')}}" ><i class="ti ti-pencil text-white"></i></a>
+                                                                    <a href="javascript:void(0)" data-size="lg" data-url="{{ URL::to('contract/'.$contract->id.'/edit') }}" data-ajax-popup="true" data-title="{{__('Edit Contract')}}" class="mx-3 btn btn-sm d-inline-flex align-items-center" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Edit Contract')}}" ><i class="ti ti-pencil text-white"></i></a>
                                                                 </div>
                                                             @endif
                                                         @endcan
@@ -171,7 +171,7 @@
                                                             @if (\Auth::user()->type == 'company')
                                                                 <div class="action-btn bg-danger ms-2">
                                                                     {!! Form::open(['method' => 'DELETE', 'route' => ['contract.destroy', $contract->id]]) !!}
-                                                                        <a href="#!" class="mx-3 btn btn-sm d-inline-flex align-items-center bs-pass-para" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Delete Contract')}}">
+                                                                        <a href="javascript:void(0)" class="mx-3 btn btn-sm d-inline-flex align-items-center bs-pass-para" data-bs-toggle="tooltip" data-bs-placement="top" title="{{__('Delete Contract')}}">
                                                                         <span class="text-white"> <i class="ti ti-trash"></i></span>
                                                                         </a>
                                                                     {!! Form::close() !!}
@@ -187,7 +187,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                        </div>            
+                        </div>
                     </div>
             </div>
         </div>

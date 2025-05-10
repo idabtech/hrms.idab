@@ -20,7 +20,7 @@
         <i class="ti ti-file-export"></i>
     </a>
 
-    <a href="#" data-url="{{ route('holidays.file.import') }}" data-ajax-popup="true"
+    <a href="javascript:void(0)" data-url="{{ route('holidays.file.import') }}" data-ajax-popup="true"
         data-title="{{ __('Import Holiday CSV file') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
         data-bs-original-title="{{ __('Import') }}">
         <i class="ti ti-file-import"></i>
@@ -32,7 +32,7 @@
     </a>
 
     @can('Create Holiday')
-        <a href="#" data-url="{{ route('holiday.create') }}" data-ajax-popup="true"
+        <a href="javascript:void(0)" data-url="{{ route('holiday.create') }}" data-ajax-popup="true"
             data-title="{{ __('Create New Holiday') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
             data-bs-original-title="{{ __('Create') }}">
             <i class="ti ti-plus"></i>
@@ -67,7 +67,7 @@
                         </div>
 
                         <div class="col-auto float-end ms-2 mt-4">
-                            <a href="#" class="btn btn-sm btn-primary"
+                            <a href="javascript:void(0)" class="btn btn-sm btn-primary"
                                 onclick="document.getElementById('holiday_filter').submit(); return false;"
                                 data-bs-toggle="tooltip" title="" data-bs-original-title="apply">
                                 <span class="btn-inner--icon"><i class="ti ti-search"></i></span>
@@ -107,13 +107,13 @@
                                 <tr>
                                 <td>{{ $holiday->occasion }}</td>
                                     <td>{{ \Auth::user()->dateFormat($holiday->start_date) }}</td>
-                                    <td>{{ \Auth::user()->dateFormat($holiday->end_date) }}</td>    
+                                    <td>{{ \Auth::user()->dateFormat($holiday->end_date) }}</td>
                                     @if (Gate::check('Edit Holiday') || Gate::check('Delete Holiday'))
                                         <td class="Action">
                                             <span>
                                                 @can('Edit Holiday')
                                                     <div class="action-btn bg-info ms-2">
-                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center"
+                                                        <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center"
                                                             data-url="{{ route('holiday.edit', $holiday->id) }}"
                                                             data-ajax-popup="true" data-size="md" data-bs-toggle="tooltip"
                                                             title="" data-title="{{ __('Edit Holiday') }}"
@@ -126,7 +126,7 @@
                                                 @can('Delete Holiday')
                                                     <div class="action-btn bg-danger ms-2">
                                                         {!! Form::open(['method' => 'DELETE', 'route' => ['holiday.destroy', $holiday->id], 'id' => 'delete-form-' . $holiday->id]) !!}
-                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
+                                                        <a href="javascript:void(0)" class="mx-3 btn btn-sm  align-items-center bs-pass-para"
                                                             data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
                                                             aria-label="Delete"><i
                                                                 class="ti ti-trash text-white text-white"></i></a>
