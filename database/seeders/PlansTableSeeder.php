@@ -14,9 +14,9 @@ class PlansTableSeeder extends Seeder
      */
     public function run()
     {
-        Plan::create(
+        Plan::firstOrCreate(
+            ['name' => 'Free Plan'],
             [
-                'name' => 'Free Plan',
                 'price' => 0,
                 'duration' => 'Unlimited',
                 'max_users' => 1,
@@ -24,5 +24,6 @@ class PlansTableSeeder extends Seeder
                 'image' => 'free_plan.png',
             ]
         );
+
     }
 }

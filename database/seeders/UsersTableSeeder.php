@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Models\Utility;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
@@ -12,7 +13,6 @@ use App\Models\GenerateOfferLetter;
 use App\Models\JoiningLetter;
 use App\Models\ExperienceCertificate;
 use App\Models\NOC;
-use DB;
 
 
 class UsersTableSeeder extends Seeder
@@ -28,6 +28,12 @@ class UsersTableSeeder extends Seeder
             ],
             [
                 "name" => "Create User",
+                "guard_name" => "web",
+                "created_at" => date('Y-m-d H:i:s'),
+                "updated_at" => date('Y-m-d H:i:s'),
+            ],
+            [
+                "name" => "Reset Password User",
                 "guard_name" => "web",
                 "created_at" => date('Y-m-d H:i:s'),
                 "updated_at" => date('Y-m-d H:i:s'),
@@ -1825,21 +1831,30 @@ class UsersTableSeeder extends Seeder
                 "guard_name" => "web",
                 "created_at" => date('Y-m-d H:i:s'),
                 "updated_at" => date('Y-m-d H:i:s'),
-            ],  
-            
+            ],
+
         ];
-        Permission::insert($arrPermissions);
+        $existingNames = Permission::whereIn('name', array_column($arrPermissions, 'name'))->pluck('name')->toArray();
+
+        $newPermissions = array_filter($arrPermissions, function ($permission) use ($existingNames) {
+            return !in_array($permission['name'], $existingNames);
+        });
+
+        if (!empty($newPermissions)) {
+            Permission::insert($newPermissions);
+        }
+
 
         // Super admin
-        $superAdminRole        = Role::create(
-            [
-                'name' => 'super admin',
-                'created_by' => 0,
-            ]
+        $superAdminRole = Role::firstOrCreate(
+            ['name' => 'super admin'],
+            ['created_by' => 0]
         );
+
         $superAdminPermissions = [
             ["name" => "Manage User"],
             ["name" => "Create User"],
+            ["name" => "Reset Password User"],
             ["name" => "Edit User"],
             ["name" => "Delete User"],
             ["name" => "Manage Role"],
@@ -1861,30 +1876,31 @@ class UsersTableSeeder extends Seeder
 
         $superAdminRole->givePermissionTo($superAdminPermissions);
 
-        $superAdmin = User::create(
+        $superAdmin = User::firstOrCreate(
+            ['email' => 'superadmin@example.com'],
             [
                 'name' => 'Super Admin',
-                'email' => 'superadmin@example.com',
                 'password' => Hash::make('1234'),
                 'type' => 'super admin',
                 'lang' => 'en',
                 'avatar' => '',
-                'email_verified_at' => date("Y-m-d H:i:s"),
+                'email_verified_at' => now(),
                 'created_by' => 0,
             ]
         );
+
         $superAdmin->assignRole($superAdminRole);
 
         // company
-        $companyRole        = Role::create(
-            [
-                'name' => 'company',
-                'created_by' => $superAdmin->id,
-            ]
+        $companyRole = Role::firstOrCreate(
+            ['name' => 'company'],
+            ['created_by' => $superAdmin->id]
         );
+
         $companyPermissions = [
             ["name" => "Manage User"],
             ["name" => "Create User"],
+            ["name" => "Reset Password User"],
             ["name" => "Edit User"],
             ["name" => "Delete User"],
             ["name" => "Manage Role"],
@@ -2174,20 +2190,15 @@ class UsersTableSeeder extends Seeder
             ["name"=>"Store Comment"],
             ["name"=>"Delete Comment"],
             ["name"=>"Delete Attachment"],
-
-            
-            
-
-
         ];
 
         $companyRole->givePermissionTo($companyPermissions);
-        $company = User::create(
+        $company = User::firstOrCreate(
+            ['email' => 'company@example.com'],
             [
                 'name' => 'company',
-                'email' => 'company@example.com',
                 'password' => Hash::make('1234'),
-                'email_verified_at' => date("Y-m-d H:i:s"),
+                'email_verified_at' => now(),
                 'type' => 'company',
                 'lang' => 'en',
                 'avatar' => '',
@@ -2195,16 +2206,16 @@ class UsersTableSeeder extends Seeder
                 'created_by' => $superAdmin->id,
             ]
         );
+
         $company->assignRole($companyRole);
 
 
         // HR
-        $hrRole       = Role::create(
-            [
-                'name' => 'hr',
-                'created_by' => $company->id,
-            ]
+        $hrRole = Role::firstOrCreate(
+            ['name' => 'hr'],
+            ['created_by' => $company->id]
         );
+
         $hrPermission = [
             ["name" => "Manage Language"],
             ["name" => "Manage User"],
@@ -2431,35 +2442,34 @@ class UsersTableSeeder extends Seeder
             ["name" => "Create Contract Type"],
             ["name" => "Edit Contract Type"],
             ["name" => "Delete Contract Type"],
-           
-           
-            
+
+
+
         ];
 
         $hrRole->givePermissionTo($hrPermission);
 
-
-        $hr = User::create(
+        $hr = User::firstOrCreate(
+            ['email' => 'hr@example.com'],
             [
                 'name' => 'hr',
-                'email' => 'hr@example.com',
                 'password' => Hash::make('1234'),
-                'email_verified_at' => date("Y-m-d H:i:s"),
+                'email_verified_at' => now(),
                 'type' => 'hr',
                 'lang' => 'en',
                 'avatar' => '',
                 'created_by' => $company->id,
             ]
         );
+
         $hr->assignRole($hrRole);
 
         //Employee
-        $employeeRole       = Role::create(
-            [
-                'name' => 'employee',
-                'created_by' => $company->id,
-            ]
+        $employeeRole = Role::firstOrCreate(
+            ['name' => 'employee'],
+            ['created_by' => $company->id]
         );
+
         $employeePermission = [
             ["name" => "Manage Award"],
             ["name" => "Manage Transfer"],
@@ -2510,7 +2520,7 @@ class UsersTableSeeder extends Seeder
             ["name"=>"Delete Comment"],
             ["name"=>"Delete Attachment"],
 
-            
+
         ];
 
         $employeeRole->givePermissionTo($employeePermission);
@@ -2533,10 +2543,6 @@ class UsersTableSeeder extends Seeder
             ['name'=>'s3_max_upload_size', 'value'=> 2048000, 'created_by'=> 1, 'created_at'=> now(), 'updated_at'=> now()],
             ['name'=>'storage_setting', 'value'=> 'local', 'created_by'=> 1, 'created_at'=> now(), 'updated_at'=> now()]
         ];
-        DB::table('settings')->insert($data);
-        
+        DB::table('settings')->upsert($data, ['name'], ['value', 'updated_at']);
     }
 }
-
-
-

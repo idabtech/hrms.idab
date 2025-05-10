@@ -75,15 +75,15 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
                                             class="ti ti-key"></i>
                                         <span class="ms-1">{{ __('Reset Password') }}</span></a>
 
-                                    
+
                                     {!! Form::open(['method' => 'DELETE', 'route' => ['user.destroy', $user->id], 'id' => 'delete-form-' . $user->id]) !!}
                                     <a href="#!" class="dropdown-item bs-pass-para">
                                         <i class="ti ti-trash"></i><span class="ms-1">@if($user->delete_status == 0){{__('Delete')}} @else {{__('Restore')}}@endif</span>
                                      </a>
                                     {!! Form::close() !!}
-                                    
 
-                                                  
+
+
                                 </div>
                             </div>
                         </div>
@@ -92,9 +92,9 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
                         <div class="avatar">
                             <a href="{{ !empty($user->avatar) ? ($profile . $user->avatar) :  $logo."avatar.png" }}" target="_blank">
                             <img src="{{ !empty($user->avatar) ? ($profile . $user->avatar) :  $logo."avatar.png" }}"
-                            
+
                                 class="rounded-circle" style="width: 10%">
-                            </a>    
+                            </a>
                         </div>
                         <h4 class="mt-2">{{ $user->name }}</h4>
                         <small>{{ $user->email }}</small><br>
@@ -161,7 +161,7 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
                             </h6>
                         </div>
 
-                        @if (Gate::check('Edit User') || Gate::check('Delete User'))
+                        @if (Gate::check('Edit User') || Gate::check('Delete User') || Gate::check('Reset Password User'))
                             <div class="card-header-right">
                                 <div class="btn-group card-option">
                                     <button type="button" class="btn dropdown-toggle" data-bs-toggle="dropdown"
@@ -178,11 +178,13 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
 
 
 
-                                        <a href="#" class="dropdown-item" data-ajax-popup="true" data-size="md"
-                                            data-title="{{ __('Change Password') }}"
-                                            data-url="{{ route('user.reset', \Crypt::encrypt($user->id)) }}"><i
-                                                class="ti ti-key"></i>
-                                            <span class="ms-1">{{ __('Reset Password') }}</span></a>
+                                        @can('Reset Password User')
+                                            <a href="#" class="dropdown-item" data-ajax-popup="true" data-size="md"
+                                                data-title="{{ __('Change Password') }}"
+                                                data-url="{{ route('user.reset', \Crypt::encrypt($user->id)) }}"><i
+                                                    class="ti ti-key"></i>
+                                                <span class="ms-1">{{ __('Reset Password') }}</span></a>
+                                        @endcan
 
                                         @can('Delete User')
                                             {!! Form::open(['method' => 'DELETE', 'route' => ['user.destroy', $user->id], 'id' => 'delete-form-' . $user->id]) !!}
@@ -207,11 +209,11 @@ $profile=\App\Models\Utility::get_file('uploads/avatar/');
                             <img src="{{ !empty($user->avatar) ? ($profile . $user->avatar) :  $logo."avatar.png" }}"
                                 class="rounded-circle" style="width: 30%">
                             </a>
-                           
+
                         </div>
                         <h4 class="mt-2 text-primary">{{ $user->name }}</h4>
                         <small class="">{{ $user->email }}</small>
-                       
+
                     </div>
                 </div>
             </div>
