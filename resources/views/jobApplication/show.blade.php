@@ -313,7 +313,7 @@
                     </div>
                     <div class="col text-end">
                         @can('Create Interview Schedule')
-                            <a  data-url="{{ route('interview-schedule.create', $jobApplication->id) }}"
+                            <a  data-url="{{ route('interview-schedule.create.id', $jobApplication->id) }}"
                                 data-size="lg" class="btn-sm btn btn-primary" data-ajax-popup="true"
                                 data-title="{{ __('Create New Interview Schedule') }}">
                                 <i class="ti ti-plus "></i> {{ __('Create New Interview Schedule') }}

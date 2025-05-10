@@ -1421,7 +1421,7 @@ Route::group(['middleware' => ['verified']], function () {
         ]
     );
 
-    Route::get('interview-schedule/create/{id?}', [InterviewScheduleController::class, 'create'])->name('interview-schedule.create')->middleware(
+    Route::get('interview-schedule/create/{id?}', [InterviewScheduleController::class, 'create'])->name('interview-schedule.create.id')->middleware(
         [
             'auth',
             'XSS',
