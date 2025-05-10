@@ -177,7 +177,7 @@ Route::group(['middleware' => ['verified']], function () {
 
             Route::post('zoom-settings', [SettingsController::class, 'zoomSetting'])->name('zoom.settings');
 
-            Route::get('test-mail', [SettingsController::class, 'testMail'])->name('test.mail');
+            Route::get('test-mail', [SettingsController::class, 'testMail'])->name('test.mail.get');
             Route::post('test-mail', [SettingsController::class, 'testMail'])->name('test.mail');
             Route::post('test-mail/send', [SettingsController::class, 'testSendMail'])->name('test.send.mail');
 

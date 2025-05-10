@@ -42,7 +42,7 @@
 
         });
 
-       
+
     </script>
     <script>
         document.getElementById('logo').onchange = function () {
@@ -61,12 +61,12 @@
             var src = URL.createObjectURL(this.files[0])
             document.getElementById('image2').src = src
         }
-    </script> 
+    </script>
     <script>
         $(document).on("click", '.send_email', function(e) {
             e.preventDefault();
             var title = $(this).attr('data-title');
-            
+
             var size = 'md';
             var url = $(this).attr('data-url');
             if (typeof url != 'undefined') {
@@ -84,12 +84,12 @@
                     mail_from_address: $("#mail_from_address").val(),
                     mail_from_name: $("#mail_from_name").val(),
                 }, function(data) {
-                    $('#commonModal .body').html(data); 
+                    $('#commonModal .body').html(data);
                 });
             }
         });
 
-        
+
         $(document).on('submit', '#test_email', function(e) {
             e.preventDefault();
             $("#email_sending").show();
@@ -117,7 +117,7 @@
                 },
             });
         });
-    </script> 
+    </script>
     <script>
         var scrollSpy = new bootstrap.ScrollSpy(document.body, {
             target: '#useradd-sidenav',
@@ -128,12 +128,12 @@
                 return this.href == id;
             }).parent().removeClass('text-primary');
         });
-    
+
         function check_theme(color_val) {
             $('#theme_color').prop('checked', false);
             $('input[value="' + color_val + '"]').prop('checked', true);
         }
-    
+
         $(document).on('change','[name=storage_setting]',function(){
         if($(this).val() == 's3'){
             $('.s3-setting').removeClass('d-none');
@@ -186,13 +186,13 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
 @endphp
 @if($color == 'theme-1')
     <style>
-   
+
    .btn-check:checked + .btn-outline-success, .btn-check:active + .btn-outline-success, .btn-outline-success:active, .btn-outline-success.active, .btn-outline-success.dropdown-toggle.show {
         color: #ffffff;
         background: linear-gradient(141.55deg, rgba(81, 69, 157, 0) 3.46%, rgba(255, 58, 110, 0.6) 99.86%), #51459d !important;
         border-color: #51459d !important;
     }
-   
+
 
     .btn-outline-success:hover
     {
@@ -308,7 +308,7 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
                                                             <a href="{{$logo.'logo-dark.png'}}" target="_blank">
                                                                         <img id="image" alt="your image" src="{{$logo.'logo-dark.png'}}" width="150px" class="big-logo">
                                                             </a>
-                                                           
+
                                                         </div>
                                                         <div class="choose-files mt-5">
                                                             <label for="logo">
@@ -319,7 +319,7 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
                                                                     id="logo" data-filename="logo_update"
                                                                     accept=".jpeg,.jpg,.png" accept=".jpeg,.jpg,.png">
                                                             </label>
-                                                        </div>  
+                                                        </div>
 
 
                                                         @error('logo')
@@ -354,7 +354,7 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
                                                                 <input type="file" class="form-control file"
                                                                     name="logo_light" id="logo_light"
                                                                     data-filename="logo_light_update">
-                                                            </label>                                                          
+                                                            </label>
                                                         </div>
                                                          @error('logo_light')
                                                             <div class="row">
@@ -555,7 +555,7 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
                                                                 name="theme_color" value="theme-4"
                                                                 {{ $color == 'theme-4' ? 'checked' : '' }}>
                                                         </div>
-                                                        
+
                                                     </div>
                                                     <div class="col-4">
                                                         <h6 class=" ">
@@ -602,7 +602,7 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
                     </div>
                     {{ Form::close() }}
                 </div>
-                
+
                 <div class="" id="email-settings">
                     {{ Form::open(['route' => 'email.settings', 'method' => 'post']) }}
                     <div class="row">
@@ -687,7 +687,7 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
                                                 data-url="{{ route('test.mail') }}">
                                                 {{ __('Send Test Mail') }}
                                             </a> --}}
-                                            <a href="#" class="btn btn-print-invoice  btn-primary m-r-10 send_email" data-ajax-popup="true" data-title="{{__('Send Test Mail')}}" data-url="{{route('test.mail')}}">
+                                            <a href="#" class="btn btn-print-invoice  btn-primary m-r-10 send_email" data-ajax-popup="true" data-title="{{__('Send Test Mail')}}" data-url="{{route('test.mail.get')}}">
                                                 {{__('Send Test Mail')}}
                                             </a>
 
@@ -717,7 +717,7 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
                                 <div class="row">
                                     <div class="col-md-6 form-group">
                                         <label class="col-form-label">{{ __('Currency') }} *</label>
-                                       
+
                                         {{ Form::text('currency', env('CURRENCY'), ['class' => 'form-control font-style', 'id' => 'currency', 'required', 'placeholder' => __('Enter Currency')]) }}
                                         <small class="text-xs">
                                             {{ __('Note: Add currency code as per three-letter ISO code') }}.
@@ -1656,7 +1656,7 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
                                             placeholder="{{ __('Enter Google Recaptcha Key') }}"
                                             name="google_recaptcha_key" type="text"
                                             value="{{ env('NOCAPTCHA_SITEKEY') }}" id="google_recaptcha_key">
-                                       
+
                                     </div>
                                     <div class="col-lg-6 col-md-6 col-sm-6 form-group">
                                         <label for="google_recaptcha_secret"
@@ -1665,7 +1665,7 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
                                             placeholder="{{ __('Enter Google Recaptcha Secret') }}"
                                             name="google_recaptcha_secret" type="text"
                                             value="{{ env('NOCAPTCHA_SECRET') }}" id="google_recaptcha_secret">
-                                     
+
                                     </div>
                                 </div>
                             </div>
@@ -1698,7 +1698,7 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
                                     <input type="radio" class="btn-check" name="storage_setting" id="s3-outlined" autocomplete="off" {{  $setting['storage_setting']=='s3'?'checked':'' }}  value="s3">
                                     <label class="btn btn-outline-success" for="s3-outlined"> {{ __('AWS S3') }}</label>
                                 </div>
-    
+
                                 <div  class="pe-2">
                                     <input type="radio" class="btn-check" name="storage_setting" id="wasabi-outlined" autocomplete="off" {{  $setting['storage_setting']=='wasabi'?'checked':'' }} value="wasabi">
                                     <label class="btn btn-outline-success" for="wasabi-outlined">{{ __('Wasabi') }}</label>
@@ -1722,9 +1722,9 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
                                         </div>
                                     </div>
                                 </div>
-                            
+
                                 <div class="s3-setting row {{  $setting['storage_setting']=='s3'?' ':'d-none' }}">
-                                    
+
                                     <div class=" row ">
                                         <div class="col-lg-6">
                                             <div class="form-group">
@@ -1777,9 +1777,9 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
                                             </div>
                                         </div>
                                     </div>
-                                
+
                                 </div>
-    
+
                                 <div class="wasabi-setting row {{  $setting['storage_setting']=='wasabi'?' ':'d-none' }}">
                                     <div class=" row ">
                                         <div class="col-lg-6">
@@ -1820,7 +1820,7 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
                                         </div>
                                         <div class="form-group col-8 switch-width">
                                             {{Form::label('wasabi_storage_validation',__('Only Upload Files'),array('class'=>'form-label')) }}
-        
+
                                             <select name="wasabi_storage_validation[]" class="select2" id="wasabi_storage_validation" multiple>
                                                 @foreach($file_type as $f)
                                                     <option @if (in_array($f, $wasabi_storage_validations)) selected @endif>{{$f}}</option>
@@ -1833,7 +1833,7 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
                                                 <input type="number" name="wasabi_max_upload_size" class="form-control" value="{{(!isset($setting['wasabi_max_upload_size']) || is_null($setting['wasabi_max_upload_size'])) ? '' : $setting['wasabi_max_upload_size']}}" placeholder="{{ __('Max upload size') }}">
                                             </div>
                                         </div>
-                                        
+
                                     </div>
                                 </div>
                                 <div class="card-footer text-end">
