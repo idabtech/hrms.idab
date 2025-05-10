@@ -145,12 +145,7 @@ Route::group(['middleware' => ['verified']], function () {
 
 
     Route::get('/dashboard', [HomeController::class, 'index'])->middleware(['auth','XSS'])->name('dashboard');
-    Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware(
-        [
-            'auth',
-            'XSS',
-        ]
-    );
+
     Route::get('/home/getlanguvage', [HomeController::class, 'getlanguvage'])->name('home.getlanguvage');
 
     Route::group(
