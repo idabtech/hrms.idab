@@ -1385,7 +1385,7 @@ Route::group(['middleware' => ['verified']], function () {
             'XSS',
         ]
     );
-    Route::get('job-onboard/convert/{id}', [JobApplicationController::class, 'jobBoardConvert'])->name('job.on.board.convert')->middleware(
+    Route::get('job-onboard/convert/{id}', [JobApplicationController::class, 'jobBoardConvert'])->name('job.on.board.convert.get')->middleware(
         [
             'auth',
             'XSS',

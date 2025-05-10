@@ -66,10 +66,10 @@
 
                                     <td class="Action">
                                         <span>
-                                            
+
                                             @if ($job->status == 'confirm' && $job->convert_to_employee == 0)
                                                 <div class="action-btn bg-dark ms-2">
-                                                    <a href="{{ route('job.on.board.convert', $job->id) }}"
+                                                    <a href="{{ route('job.on.board.convert.get', $job->id) }}"
                                                         class="mx-3 btn btn-sm  align-items-center" data-ajax-popup="true"
                                                         data-title="{{ __('Convert to Employee ') }}"
                                                         data-bs-toggle="tooltip" data-bs-placement="top"
