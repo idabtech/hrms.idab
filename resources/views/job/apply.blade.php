@@ -16,8 +16,8 @@
         href="{{ $logo . '/' . (isset($companySettings['company_favicon']) && !empty($companySettings['company_favicon']) ? $companySettings['company_favicon']->value : 'favicon.png') }}"
         type="image" sizes="16x16">
 
-    <link rel="stylesheet" href="{{ asset('libs/@fortawesome/fontawesome-free/css/all.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('libs/bootstrap-daterangepicker/daterangepicker.css') }}">
+    <link rel="stylesheet" href="{{ asset('public/libs/@fortawesome/fontawesome-free/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('public/libs/bootstrap-daterangepicker/daterangepicker.css') }}">
     <link rel="stylesheet" href="{{ asset('css/site.css') }}" id="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
@@ -331,26 +331,28 @@
                 template: '<div class="alert alert-{0} alert-icon alert-group alert-notify" data-notify="container" role="alert"><div class="alert-group-prepend alert-content"><span class="alert-group-icon"><i data-notify="icon"></i></span></div><div class="alert-content"><strong data-notify="title">{1}</strong><div data-notify="message">{2}</div></div><button type="button" class="close" data-notify="dismiss" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>'
             });
         }
-        if ($(".datepicker").length) {
-            $('.datepicker').daterangepicker({
-                singleDatePicker: true,
-                autoUpdateInput: false,
-                maxDate: moment(),
-                locale: {
-                    format: 'YYYY-MM-DD',
-                    cancelLabel: 'Clear'
-                }
-            });
+        $(document).ready(function() {
+            if ($(".datepicker").length) {
+                $('.datepicker').daterangepicker({
+                    singleDatePicker: true,
+                    autoUpdateInput: false,
+                    maxDate: moment(),
+                    locale: {
+                        format: 'YYYY-MM-DD',
+                        cancelLabel: 'Clear'
+                    }
+                });
 
-            $('.datepicker').on('apply.daterangepicker', function(ev, picker) {
-                $(this).val(picker.startDate.format('YYYY-MM-DD'));
-            });
+                $('.datepicker').on('apply.daterangepicker', function(ev, picker) {
+                    $(this).val(picker.startDate.format('YYYY-MM-DD'));
+                });
 
-            $('.datepicker').on('cancel.daterangepicker', function(ev, picker) {
-                $(this).val('');
-            });
+                $('.datepicker').on('cancel.daterangepicker', function(ev, picker) {
+                    $(this).val('');
+                });
 
-        }
+            }
+        });
     </script>
     @if ($message = Session::get('success'))
         <script>
