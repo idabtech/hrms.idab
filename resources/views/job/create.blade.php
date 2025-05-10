@@ -1,18 +1,21 @@
-<style>
-    .addBtn {
-        float: right;
-    }
-</style>
+@php
+    $prefix = app()->environment('local') ? '' : 'public/';
+@endphp
 @extends('layouts.admin')
 @section('page-title')
-    {{ __('Create Job') }}
+{{ __('Create Job') }}
 @endsection
 @push('css-page')
-    <link href="{{ asset('public/libs/bootstrap-tagsinput/dist/bootstrap-tagsinput.css') }}" rel="stylesheet" />
+    <style>
+        .addBtn {
+            float: right;
+        }
+    </style>
+    <link href="{{ asset($prefix . 'libs/bootstrap-tagsinput/dist/bootstrap-tagsinput.css') }}" rel="stylesheet" />
 @endpush
 @push('script-page')
     <script src='{{ asset('assets/js/plugins/tinymce/tinymce.min.js') }}'></script>
-    <script src="{{ asset('public/libs/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js') }}"></script>
+    <script src="{{ asset($prefix . 'libs/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js') }}"></script>
 
     <script>
         var e = $('[data-toggle="tags"]');

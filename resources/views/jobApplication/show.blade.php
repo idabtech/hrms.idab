@@ -1,9 +1,12 @@
+@php
+    $prefix = app()->environment('local') ? '' : 'public/';
+@endphp
 @extends('layouts.admin')
 @section('page-title')
     {{ __('Job Application Details') }}
 @endsection
 @push('css-page')
-    <link href="{{ asset('public/libs/bootstrap-tagsinput/dist/bootstrap-tagsinput.css') }}" rel="stylesheet" />
+    <link href="{{ asset($prefix . 'libs/bootstrap-tagsinput/dist/bootstrap-tagsinput.css') }}" rel="stylesheet" />
 @endpush
 
 @section('breadcrumb')
@@ -13,7 +16,7 @@
 @endsection
 
 @push('script-page')
-    <script src="{{ asset('public/libs/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js') }}"></script>
+    <script src="{{ asset($prefix . 'libs/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js') }}"></script>
 
     <script>
         var e = $('[data-toggle="tags"]');

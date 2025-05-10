@@ -1,5 +1,6 @@
 @php
     $logo = \App\Models\Utility::get_file('uploads/logo/');
+    $prefix = app()->environment('local') ? '' : 'public/';
 @endphp
 <!DOCTYPE html>
 
@@ -16,8 +17,8 @@
         href="{{ $logo . '/' . (isset($companySettings['company_favicon']) && !empty($companySettings['company_favicon']) ? $companySettings['company_favicon']->value : 'favicon.png') }}"
         type="image" sizes="16x16">
 
-    <link rel="stylesheet" href="{{ asset('public/libs/@fortawesome/fontawesome-free/css/all.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/libs/bootstrap-daterangepicker/daterangepicker.css') }}">
+    <link rel="stylesheet" href="{{ asset($prefix . 'libs/@fortawesome/fontawesome-free/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ asset($prefix . '/libs/bootstrap-daterangepicker/daterangepicker.css') }}">
     <link rel="stylesheet" href="{{ asset('css/site.css') }}" id="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>

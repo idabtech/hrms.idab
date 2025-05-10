@@ -1,6 +1,7 @@
 
 @php
-$logo=\App\Models\Utility::get_file('uploads/logo/');
+    $logo=\App\Models\Utility::get_file('uploads/logo/');
+    $prefix = app()->environment('local') ? '' : 'public/';
 @endphp
 <!DOCTYPE html>
 
@@ -12,7 +13,7 @@ $logo=\App\Models\Utility::get_file('uploads/logo/');
 
     <link rel="icon" href="{{$logo.'/'.(isset($companySettings['company_favicon']) && !empty($companySettings['company_favicon'])?$companySettings['company_favicon']->value:'favicon.png')}}" type="image" sizes="16x16">
 
-    <link rel="stylesheet" href="{{ asset('libs/@fortawesome/fontawesome-free/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ asset($prefix . 'libs/@fortawesome/fontawesome-free/css/all.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/site.css') }}" id="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
