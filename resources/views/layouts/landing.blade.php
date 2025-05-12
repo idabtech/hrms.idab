@@ -62,17 +62,17 @@
         type="image/x-icon" />
 
     <!-- font css -->
-    <link rel="stylesheet" href="{{ asset($prefix . 'modules/LandingPage/fonts/tabler-icons.min.css') }}" />
+    <link rel="stylesheet" href="{{ asset($prefix . 'modules/landingpage/fonts/tabler-icons.min.css') }}" />
 
-    <link rel="stylesheet" href=" {{ asset($prefix . 'modules/LandingPage/fonts/feather.css') }}" />
-    <link rel="stylesheet" href="  {{ asset($prefix . 'modules/LandingPage/fonts/fontawesome.css') }}" />
-    <link rel="stylesheet" href="{{ asset($prefix . 'modules/LandingPage/fonts/material.css') }}" />
+    <link rel="stylesheet" href=" {{ asset($prefix . 'modules/landingpage/fonts/feather.css') }}" />
+    <link rel="stylesheet" href="  {{ asset($prefix . 'modules/landingpage/fonts/fontawesome.css') }}" />
+    <link rel="stylesheet" href="{{ asset($prefix . 'modules/landingpage/fonts/material.css') }}" />
 
 
 
     <!-- vendor css -->
-    <link rel="stylesheet" href="  {{ asset($prefix . 'modules/LandingPage/css/style.css') }}" />
-    <link rel="stylesheet" href=" {{ asset($prefix . 'modules/LandingPage/css/customizer.css') }}" />
+    <link rel="stylesheet" href="  {{ asset($prefix . 'modules/landingpage/css/style.css') }}" />
+    <link rel="stylesheet" href=" {{ asset($prefix . 'modules/landingpage/css/customizer.css') }}" />
     <link rel="stylesheet" href=" {{ asset('assets/LandingPage/landing-page.css') }}" />
     <link rel="stylesheet" href=" {{ asset('assets/LandingPage/custom.css') }}" />
 
@@ -90,7 +90,7 @@
     @if ($setting['cust_darklayout'] == 'on')
         <link rel="stylesheet" href="{{ asset('assets/css/style-dark.css') }}">
     @else
-        <link rel="stylesheet" href="{{ asset($prefix . 'modules/LandingPage/css/style.css') }}" id="main-style-link">
+        <link rel="stylesheet" href="{{ asset($prefix . 'modules/landingpage/css/style.css') }}" id="main-style-link">
     @endif
 
 </head>
@@ -339,9 +339,9 @@
 <!-- [ Footer ] end -->
 <!-- Required Js -->
 
-<script src="{{ asset($prefix . 'modules/LandingPage/js/plugins/popper.min.js') }}"></script>
-<script src="{{ asset($prefix . 'modules/LandingPage/js/plugins/bootstrap.min.js') }}"></script>
-<script src="{{ asset($prefix . 'modules/LandingPage/js/plugins/feather.min.js') }}"></script>
+<script src="{{ asset($prefix . 'modules/landingpage/js/plugins/popper.min.js') }}"></script>
+<script src="{{ asset($prefix . 'modules/landingpage/js/plugins/bootstrap.min.js') }}"></script>
+<script src="{{ asset($prefix . 'modules/landingpage/js/plugins/feather.min.js') }}"></script>
 
 <script>
     function show_toastr(type, message) {
