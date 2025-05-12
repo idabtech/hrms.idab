@@ -73,8 +73,8 @@
     <!-- vendor css -->
     <link rel="stylesheet" href="  {{ asset($prefix . 'modules/landingpage/css/style.css') }}" />
     <link rel="stylesheet" href=" {{ asset($prefix . 'modules/landingpage/css/customizer.css') }}" />
-    <link rel="stylesheet" href=" {{ asset('assets/LandingPage/landing-page.css') }}" />
-    <link rel="stylesheet" href=" {{ asset('assets/LandingPage/custom.css') }}" />
+    <link rel="stylesheet" href=" {{ asset('assets/landingpage/landing-page.css') }}" />
+    <link rel="stylesheet" href=" {{ asset('assets/landingpage/custom.css') }}" />
 
     <style>
         :root {
