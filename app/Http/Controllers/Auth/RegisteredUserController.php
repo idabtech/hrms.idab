@@ -80,7 +80,7 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
             'type'  => 'company',
             'lang'  => !empty($default_language) ? $default_language->value : '',
-            'plan'  => 2,
+            'plan'  => 1,
             'created_by' => 1,
         ]);
 
@@ -133,7 +133,7 @@ class RegisteredUserController extends Controller
     //     // if(!empty($user)){
     //     //     $user->is_verified = 1;
     //     //     $user->save();
-              
+
     //     //     Auth::login($user);
     //     //     return redirect()->route('dashboard');
     //     // }else{
@@ -156,7 +156,7 @@ class RegisteredUserController extends Controller
 
 
     // }
-    
+
     // public function twilio($mobile, $otp){
 
     //     $sid    = "ACab6913e940c0cedd0ba3f45f35f8045a";
@@ -173,7 +173,7 @@ class RegisteredUserController extends Controller
     //     );
     //}
 
-    
+
     // public function exotel($mobile,$otp)
     // {
 
