@@ -1,5 +1,5 @@
 @php
-    $prefix = app()->environment('local') ? 'storage/' : 'public/';
+    $prefix = app()->environment('local') ? '' : 'public/';
     use App\Models\Utility;
     $settings = \Modules\LandingPage\Entities\LandingPageSetting::settings();
     $logo = Utility::get_file('uploads/landing_page_image/');
