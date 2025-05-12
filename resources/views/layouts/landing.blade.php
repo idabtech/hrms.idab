@@ -1,4 +1,5 @@
 @php
+    $prefix = app()->environment('local') ? 'storage/' : 'public/';
     use App\Models\Utility;
     $settings = \Modules\LandingPage\Entities\LandingPageSetting::settings();
     $logo = Utility::get_file('uploads/landing_page_image/');
@@ -61,17 +62,17 @@
         type="image/x-icon" />
 
     <!-- font css -->
-    <link rel="stylesheet" href="{{ asset('modules/LandingPage/fonts/tabler-icons.min.css') }}" />
+    <link rel="stylesheet" href="{{ asset($prefix . 'modules/LandingPage/fonts/tabler-icons.min.css') }}" />
 
-    <link rel="stylesheet" href=" {{ asset('modules/LandingPage/fonts/feather.css') }}" />
-    <link rel="stylesheet" href="  {{ asset('modules/LandingPage/fonts/fontawesome.css') }}" />
-    <link rel="stylesheet" href="{{ asset('modules/LandingPage/fonts/material.css') }}" />
+    <link rel="stylesheet" href=" {{ asset($prefix . 'modules/LandingPage/fonts/feather.css') }}" />
+    <link rel="stylesheet" href="  {{ asset($prefix . 'modules/LandingPage/fonts/fontawesome.css') }}" />
+    <link rel="stylesheet" href="{{ asset($prefix . 'modules/LandingPage/fonts/material.css') }}" />
 
 
 
     <!-- vendor css -->
-    <link rel="stylesheet" href="  {{ asset('modules/LandingPage/css/style.css') }}" />
-    <link rel="stylesheet" href=" {{ asset('modules/LandingPage/css/customizer.css') }}" />
+    <link rel="stylesheet" href="  {{ asset($prefix . 'modules/LandingPage/css/style.css') }}" />
+    <link rel="stylesheet" href=" {{ asset($prefix . 'modules/LandingPage/css/customizer.css') }}" />
     <link rel="stylesheet" href=" {{ asset('assets/LandingPage/landing-page.css') }}" />
     <link rel="stylesheet" href=" {{ asset('assets/LandingPage/custom.css') }}" />
 
@@ -89,7 +90,7 @@
     @if ($setting['cust_darklayout'] == 'on')
         <link rel="stylesheet" href="{{ asset('assets/css/style-dark.css') }}">
     @else
-        <link rel="stylesheet" href="{{ asset('modules/LandingPage/css/style.css') }}" id="main-style-link">
+        <link rel="stylesheet" href="{{ asset($prefix . 'modules/LandingPage/css/style.css') }}" id="main-style-link">
     @endif
 
 </head>
@@ -338,9 +339,9 @@
 <!-- [ Footer ] end -->
 <!-- Required Js -->
 
-<script src="{{ asset('modules/LandingPage/js/plugins/popper.min.js') }}"></script>
-<script src="{{ asset('modules/LandingPage/js/plugins/bootstrap.min.js') }}"></script>
-<script src="{{ asset('modules/LandingPage/js/plugins/feather.min.js') }}"></script>
+<script src="{{ asset($prefix . 'modules/LandingPage/js/plugins/popper.min.js') }}"></script>
+<script src="{{ asset($prefix . 'modules/LandingPage/js/plugins/bootstrap.min.js') }}"></script>
+<script src="{{ asset($prefix . 'modules/LandingPage/js/plugins/feather.min.js') }}"></script>
 
 <script>
     function show_toastr(type, message) {
