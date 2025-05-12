@@ -8,7 +8,7 @@ $company_logo = \App\Models\Utility::GetLogo();
 $SITE_RTL = \App\Models\Utility::getValByName('SITE_RTL');
 
 $setting = \App\Models\Utility::colorset();
-$color = !empty($setting['theme_color']) ? $setting['theme_color'] : 'theme-3';
+$color = !empty($setting['theme_color']) ? $setting['theme_color'] : 'theme-2';
 
 // $SITE_RTL=$setting['SITE_RTL'];
 

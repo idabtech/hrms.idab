@@ -16,6 +16,9 @@ use Spatie\GoogleCalendar\Event as GoogleEvent;
 
 class Utility extends Model
 {
+
+    private static $cookies = null;
+
     public static $arrShift = [
         '7' => 'Weekly',
         '15' => 'Biweekly',
@@ -87,10 +90,7 @@ class Utility extends Model
             "zoom_apikey" => "",
             'zoom_secret_key' => "",
             'disable_signup_button' => "on",
-            // "dark_mode"=>"off",
-            // "theme_color"=>'theme-3',
-            // "is_sidebar_transperent"=>'on',
-            "theme_color" => "theme-3",
+            "theme_color" => "theme-2",
             "cust_theme_bg" => "on",
             "cust_darklayout" => "off",
             "SITE_RTL" => "off",
@@ -1025,49 +1025,6 @@ class Utility extends Model
         }
     }
 
-    // public static function colorset()
-    // {
-
-    //     if(\Auth::user())
-    //     {
-    //         $user = \Auth::user()->id;
-    //         $setting = DB::table('settings')->where('created_by',$user)->pluck('value','name')->toArray();
-
-    //     }
-    //     else{
-    //         $setting = DB::table('settings')->pluck('value','name')->toArray();
-    //     }
-    //     return $setting;
-
-    //     $is_dark_mode = $setting['dark_mode'];
-
-    //     if($is_dark_mode == 'on'){
-    //         return 'logo-light.png';
-    //     }else{
-    //         return 'logo-dark.png';
-    //     }
-
-    // }
-
-    // public static function mode_layout()
-    // {
-
-    //     $data = DB::table('settings');
-    //     $data = $data->where('created_by', '=', 1);
-    //     $data     = $data->get();
-    //     $settings = [
-    //         "dark_mode" => "off",
-    //         "is_sidebar_transperent" => "off",
-    //         "theme_color" => 'theme-3'
-    //     ];
-    //     foreach($data as $row)
-    //     {
-    //         $settings[$row->name] = $row->value;
-    //     }
-
-    //     return $settings;
-    // }
-
     public static function get_superadmin_logo()
     {
 
@@ -1098,61 +1055,6 @@ class Utility extends Model
             return Utility::getValByName('company_logo');
         }
     }
-
-    //  public static function getLayoutsSetting()
-    //     {
-    //         // $data = DB::table('settings');
-
-    //         // if(\Auth::check()){
-
-    //         //      $data =\DB::table('settings')->where('created_by', '=', \Auth::user()->id )->get();
-
-    //         //      if(count($data)==0){
-    //         //         $data =\DB::table('settings')->where('created_by', '=', 1 )->get();
-    //         //     }
-    //         // }else{
-    //         //     $data = $data->where('created_by', '=', 1);
-
-    //         // }
-
-
-    //         // $data     = $data->get();
-    //         // $settings = [
-    //         //     "cust_theme_bg"=>"on",
-    //         //     "cust_darklayout"=>"off",
-    //         //     "color"=>"theme-3",
-    //         // ];
-
-    //         // foreach($data as $row)
-    //         // {
-    //         //     $settings[$row->name] = $row->value;
-    //         // }
-
-    //         // return $settings;
-
-    //         $data = DB::table('settings');
-
-    //         if (\Auth::check()) {
-
-    //              $data=$data->where('created_by','=',\Auth::user()->creatorId())->get();
-    //              if(count($data)==0){
-    //                  $data =DB::table('settings')->where('created_by', '=', 1 )->get();
-    //              }
-
-    //          } else {
-
-    //              $data->where('created_by', '=', 1);
-    //              $data = $data->get();
-    //              $settings = [
-    //                      "is_sidebar_transperent"=>"on",
-    //                     "dark_mode"=>"off",
-    //                     "color"=>"theme-3",
-    //                  ];
-    //     }
-
-    //     }
-
-
 
     public static function colorset()
     {
@@ -1619,6 +1521,48 @@ class Utility extends Model
             }
         }
         return $arrayJson;
+    }
+
+    public static function getSeoSetting()
+    {
+        $data = DB::table('settings')->whereIn('name', ['meta_title', 'meta_description', 'meta_image'])->get();
+        $settings = [];
+        foreach ($data as $row) {
+            $settings[$row->name] = $row->value;
+        }
+        return $settings;
+    }
+
+    public static function getCookieSetting()
+    {
+        if (self::$cookies === null) {
+            self::$cookies = self::fetchCookieSetting();
+        }
+        return self::$cookies;
+    }
+
+    public static function fetchCookieSetting()
+    {
+        $data = DB::table('settings')->whereIn('name', [
+            'enable_cookie', 'cookie_logging', 'cookie_title',
+            'cookie_description', 'necessary_cookies', 'strictly_cookie_title',
+            'strictly_cookie_description', 'more_information_description', 'contactus_url'
+        ])->get();
+        $settings = [
+            'enable_cookie' => 'off',
+            'necessary_cookies' => '',
+            'cookie_logging' => '',
+            'cookie_title' => '',
+            'cookie_description' => '',
+            'strictly_cookie_title' => '',
+            'strictly_cookie_description' => '',
+            'more_information_description' => '',
+            'contactus_url' => '',
+        ];
+        foreach ($data as $row) {
+            $settings[$row->name] = $row->value;
+        }
+        return $settings;
     }
 
 }

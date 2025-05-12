@@ -543,11 +543,11 @@ $wasabi_storage_validations   = explode(',', $wasabi_storage_validation);
                                                                 name="theme_color" value="theme-2"
                                                                 {{ $color == 'theme-2' ? 'checked' : '' }}>
                                                             <a href="javascript:void(0)"
-                                                                class="themes-color-change {{ $color == 'theme-3' ? 'active_color' : '' }}"
-                                                                data-value="theme-3"></a>
+                                                                class="themes-color-change {{ $color == 'theme-2' ? 'active_color' : '' }}"
+                                                                data-value="theme-2"></a>
                                                             <input type="radio" class="theme_color d-none"
-                                                                name="theme_color" value="theme-3"
-                                                                {{ $color == 'theme-3' ? 'checked' : '' }}>
+                                                                name="theme_color" value="theme-2"
+                                                                {{ $color == 'theme-2' ? 'checked' : '' }}>
                                                             <a href="javascript:void(0)"
                                                                 class="themes-color-change {{ $color == 'theme-4' ? 'active_color' : '' }}"
                                                                 data-value="theme-4"></a>

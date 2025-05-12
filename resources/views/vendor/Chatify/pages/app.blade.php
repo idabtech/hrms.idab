@@ -37,7 +37,7 @@
     // $profile=\App\Models\Utility::get_file('/'.config('chatify.user_avatar.folder'));
     $profile = \App\Models\Utility::get_file('uploads/avatar/');
     $setting = App\Models\Utility::colorset();
-    $color = !empty($setting['theme_color']) ? $setting['theme_color'] : 'theme-3';
+    $color = !empty($setting['theme_color']) ? $setting['theme_color'] : 'theme-2';
 
 @endphp
 @section('page-title')
@@ -305,7 +305,7 @@
 @endif
 
 
-@if ($color == 'theme-3')
+@if ($color == 'theme-2')
     <style type="text/css">
         .m-list-active,
         .m-list-active:hover,

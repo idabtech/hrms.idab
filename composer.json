@@ -23,6 +23,7 @@
         "milon/barcode": "^9.0",
         "mollie/mollie-api-php": "^2.48",
         "munafio/chatify": "^1.5",
+        "nwidart/laravel-modules": "9.0",
         "obydul/laraskrill": "^1.2",
         "paymentwall/paymentwall-php": "^2.2",
         "psr/simple-cache": "^2.0",
@@ -46,7 +47,8 @@
         "psr-4": {
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
-            "Database\\Seeders\\": "database/seeders/"
+            "Database\\Seeders\\": "database/seeders/",
+            "Modules\\": "Modules/"
         }
     },
     "autoload-dev": {
@@ -77,7 +79,10 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "wikimedia/composer-merge-plugin": true
+        }
     },
     "minimum-stability": "dev",
     "prefer-stable": true

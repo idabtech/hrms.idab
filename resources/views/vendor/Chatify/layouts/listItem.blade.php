@@ -2,13 +2,13 @@
     // $logo = asset(Storage::url('uploads/logo/'));
     $logo = \App\Models\Utility::get_file('uploads/logo/');
     $profile = \App\Models\Utility::get_file(config('chatify.user_avatar.folder'));
-    
+
     $company_favicon = Utility::getValByName('company_favicon');
     $dark_mode = Utility::getValByName('dark_mode');
-    
+
     $setting = App\Models\Utility::colorset();
-    
-    $color = 'theme-3';
+
+    $color = 'theme-2';
     if (!empty($mode_setting['theme_color'])) {
         $color = $mode_setting['theme_color'];
     }
