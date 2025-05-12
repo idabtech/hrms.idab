@@ -79,7 +79,7 @@ class RegisteredUserController extends Controller
             'otp'   => $otp,
             'password' => Hash::make($request->password),
             'type'  => 'company',
-            'lang'  => !empty($default_language) ? $default_language->value : '',
+            'lang'  => !empty($default_language) ? $default_language->value : 'en',
             'plan'  => 1,
             'created_by' => 1,
         ]);
