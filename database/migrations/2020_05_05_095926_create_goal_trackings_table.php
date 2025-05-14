@@ -13,8 +13,7 @@ class CreateGoalTrackingsTable extends Migration
      */
     public function up()
     {
-        Schema::create(
-            'goal_trackings', function (Blueprint $table){
+        Schema::create('goal_trackings', function (Blueprint $table){
             $table->bigIncrements('id');
             $table->integer('branch');
             $table->integer('goal_type');

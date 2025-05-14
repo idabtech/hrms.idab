@@ -14,7 +14,7 @@ class CreateEmailTemplateLangsTable extends Migration
     public function up()
     {
         Schema::create('email_template_langs', function (Blueprint $table) {
-            $table->id();
+            $table->bigIncrements('id');
             $table->integer('parent_id');
             $table->string('lang', 100);
             $table->string('subject');

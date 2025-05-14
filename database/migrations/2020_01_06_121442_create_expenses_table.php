@@ -13,8 +13,7 @@ class CreateExpensesTable extends Migration
      */
     public function up()
     {
-        Schema::create(
-            'expenses', function (Blueprint $table){
+        Schema::create('expenses', function (Blueprint $table){
             $table->bigIncrements('id');
             $table->integer('account_id');
             $table->integer('amount');

@@ -14,9 +14,10 @@ class AddTicketCreatedInTickets extends Migration
     public function up()
     {
         Schema::table(
-            'tickets', function (Blueprint $table){
-            $table->integer('ticket_created')->default(0)->after('ticket_code');
-        }
+            'tickets',
+            function (Blueprint $table) {
+                $table->integer('ticket_created')->default(0)->after('ticket_code');
+            }
         );
     }
 
@@ -27,10 +28,8 @@ class AddTicketCreatedInTickets extends Migration
      */
     public function down()
     {
-        Schema::table(
-            'tickets', function (Blueprint $table){
+        Schema::table('tickets',function (Blueprint $table) {
             $table->dropColumn('ticket_created');
-        }
-        );
+        });
     }
 }

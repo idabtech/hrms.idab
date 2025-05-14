@@ -13,8 +13,7 @@ class CreateDepositsTable extends Migration
      */
     public function up()
     {
-        Schema::create(
-            'deposits', function (Blueprint $table){
+        Schema::create('deposits', function (Blueprint $table){
             $table->bigIncrements('id');
             $table->integer('account_id');
             $table->integer('amount');

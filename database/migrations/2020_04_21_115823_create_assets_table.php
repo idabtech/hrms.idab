@@ -13,8 +13,7 @@ class CreateAssetsTable extends Migration
      */
     public function up()
     {
-        Schema::create(
-            'assets', function (Blueprint $table){
+        Schema::create('assets', function (Blueprint $table){
             $table->bigIncrements('id');
             $table->string('name');
             $table->date('purchase_date');

@@ -13,8 +13,7 @@ class CreateContractTypesTable extends Migration
      */
     public function up()
     {
-        Schema::create(
-            'contract_types', function (Blueprint $table){
+        Schema::create('contract_types', function (Blueprint $table){
             $table->bigIncrements('id');
             $table->string('name');
             $table->integer('created_by');

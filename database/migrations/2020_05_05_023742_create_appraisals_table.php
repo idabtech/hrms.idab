@@ -13,8 +13,7 @@ class CreateAppraisalsTable extends Migration
      */
     public function up()
     {
-        Schema::create(
-            'appraisals', function (Blueprint $table){
+        Schema::create('appraisals', function (Blueprint $table){
             $table->bigIncrements('id');
             $table->integer('branch')->default(0);
             $table->integer('employee')->default(0);

@@ -14,7 +14,7 @@ class CreateContractNotesTable extends Migration
     public function up()
     {
         Schema::create('contract_notes', function (Blueprint $table) {
-            $table->id();
+            $table->bigIncrements('id');
             $table->integer('contract_id');
             $table->integer('user_id');
             $table->string('note');

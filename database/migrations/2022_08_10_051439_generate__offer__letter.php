@@ -14,7 +14,7 @@ class GenerateOfferLetter extends Migration
     public function up()
     {
         Schema::create('generate_offer_letters', function (Blueprint $table) {
-            $table->id();
+            $table->bigIncrements('id');
             $table->string('lang', 100);
             $table->text('content');
             $table->integer('created_by');

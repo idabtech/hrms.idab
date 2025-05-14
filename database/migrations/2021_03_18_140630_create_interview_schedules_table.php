@@ -13,9 +13,8 @@ class CreateInterviewSchedulesTable extends Migration
      */
     public function up()
     {
-        Schema::create(
-            'interview_schedules', function (Blueprint $table){
-            $table->id();
+        Schema::create('interview_schedules', function (Blueprint $table){
+            $table->bigIncrements('id');
             $table->integer('candidate');
             $table->integer('employee')->default(0);
             $table->date('date');

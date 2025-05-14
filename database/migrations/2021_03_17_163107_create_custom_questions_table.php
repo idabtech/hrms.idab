@@ -13,9 +13,8 @@ class CreateCustomQuestionsTable extends Migration
      */
     public function up()
     {
-        Schema::create(
-            'custom_questions', function (Blueprint $table){
-            $table->id();
+        Schema::create('custom_questions', function (Blueprint $table){
+            $table->bigIncrements('id');
             $table->string('question');
             $table->string('is_required')->nullable();
             $table->integer('created_by');

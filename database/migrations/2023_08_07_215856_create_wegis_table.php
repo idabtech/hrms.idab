@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create('wegis', function (Blueprint $table) {
-            $table->id();
+            $table->bigIncrements('id');
             $table->string('wegis_type');
             $table->string('minimum');
             $table->string('da');

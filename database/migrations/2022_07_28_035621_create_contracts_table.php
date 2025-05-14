@@ -13,8 +13,7 @@ class CreateContractsTable extends Migration
      */
     public function up()
     {
-        Schema::create(
-            'contracts', function (Blueprint $table){
+        Schema::create('contracts', function (Blueprint $table){
             $table->bigIncrements('id');
             $table->string('subject')->nullable();
             $table->integer('employee_name');
