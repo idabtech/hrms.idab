@@ -1,33 +1,43 @@
+# Laravel default ignores
+/vendor
 /node_modules
 /public/hot
 /public/storage
-/public/uploads
 /storage/*.key
-/storage/framework/cache
-/storage/framework/sessions
-/storage/framework/views
-/storage/app/*
-/vendor
 .env
 .env.backup
 .phpunit.result.cache
+
+# Storage folder ignores
+/storage/app/*
+!/storage/app/public/.gitignore
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+!/storage/logs/.gitignore
+
+# Prevent tracking of uploaded files
+/public/uploads/
+/public/backend/uploads/
+/storage/app/public/*
+
+# Allow specific resource language files
 /resources/lang/*.json
 !/resources/lang/en.json
 !/resources/lang/bn.json
 !/resources/lang/ar.json
-!/storage/app
-Homestead.json
-Homestead.yaml
+
+# Editor and debug files
+/.idea
+/.vscode
 npm-debug.log
 yarn-error.log
 
-public/backend/uploads
-
-/.idea
-/.vscode
-/storage/logs/*
-/storage/app/public/*
-
-
+# Lock files
 yarn.lock
 package-lock.json
+
+# Homestead
+Homestead.json
+Homestead.yaml
