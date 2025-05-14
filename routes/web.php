@@ -99,7 +99,7 @@ use App\Http\Controllers\PearkController;
 use App\Http\Controllers\BonousController;
 use App\Http\Controllers\CommonController;
 use App\Http\Controllers\WegisController;
-
+use Illuminate\Support\Facades\DB;
 
 // use App\Http\Controllers\PlanRequestController;
 
@@ -1057,22 +1057,9 @@ Route::group(['middleware' => ['verified']], function () {
             'XSS',
         ]
     );
-    // Route::get('/plan_request/{code}', 'PlanController@plan_request')->name('plan_request')->middleware(
-    //     [
-    //         'auth',
-    //         'XSS',
-    //     ]
-    // );
 
-
-    // Route::resource('plan_requests', 'PlanRequestController');
-
-    // Route::get('/plan_requests/update/{id}', 'PlanRequestController@update')->name('plan_request.update')->middleware(
-    //     [
-    //         'auth',
-    //         'XSS',
-    //     ]
-    // );
+    Route::get('plans/plans-trial/{id}', [PlanController::class, 'PlanTrial'])->name('plans.trial');
+    Route::post('plan-disable', [PlanController::class, 'planDisable'])->name('plan.disable')->middleware(['auth', 'XSS']);
 
     Route::group(
         [
@@ -1086,8 +1073,6 @@ Route::group(['middleware' => ['verified']], function () {
             Route::resource('plan_request', PlanRequestController::class);
         }
     );
-
-
 
     // Plan Request Module
     Route::get('plan_request', [PlanRequestController::class, 'index'])->name('plan_request.index')->middleware(['auth', 'XSS',]);
@@ -1437,7 +1422,7 @@ Route::group(['middleware' => ['verified']], function () {
     Route::get('/LandingPage/show/{id}', [LandingPageSectionController::class, 'show']);
     Route::post('/LandingPage/setConetent', [LandingPageSectionController::class, 'setConetent'])->middleware(['auth', 'XSS']);
     Route::get('/get_landing_page_section/{name}', function ($name) {
-        $plans = \DB::table('plans')->get();
+        $plans = DB::table('plans')->get();
 
         return view('custom_landing_page.' . $name, compact('plans'));
     });
@@ -1475,8 +1460,6 @@ Route::group(['middleware' => ['verified']], function () {
     Route::post('paymentwall', [PaymentWallPaymentController::class, 'paymentwall'])->name('paymentwall');
     Route::post('plan-pay-with-paymentwall/{plan}', [PaymentWallPaymentController::class, 'planPayWithPaymentwall'])->name('plan.pay.with.paymentwall');
     Route::any('/plan/{flag}', [PaymentWallPaymentController::class, 'paymenterror'])->name('callback.error');
-    // Route::get('/plans/{flag}', ['as' => 'error.plan.show','uses' => 'PaymentWallPaymentController@planeerror']);
-
 
     Route::resource('competencies', CompetenciesController::class)->middleware(
         [
