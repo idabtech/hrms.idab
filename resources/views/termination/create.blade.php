@@ -32,11 +32,11 @@
         </div>
         <div class="form-group col-lg-6 col-md-6">
             {{ Form::label('notice_date', __('Notice Date'), ['class' => 'col-form-label']) }}<x-required></x-required>
-            {{ Form::text('notice_date', null, ['class' => 'form-control d_week current_date', 'autocomplete' => 'off' ,'required' => 'required']) }}
+            {{ Form::date('notice_date', null, ['class' => 'form-control d_week current_date', 'autocomplete' => 'off' ,'required' => 'required']) }}
         </div>
         <div class="form-group col-lg-6 col-md-6">
             {{ Form::label('termination_date', __('Termination Date'), ['class' => 'col-form-label']) }}<x-required></x-required>
-            {{ Form::text('termination_date', null, ['class' => 'form-control d_week current_date', 'autocomplete' => 'off' ,'required' => 'required']) }}
+            {{ Form::date('termination_date', null, ['class' => 'form-control d_week current_date', 'autocomplete' => 'off' ,'required' => 'required']) }}
         </div>
         <div class="form-group  col-lg-12">
             {{ Form::label('description', __('Description'), ['class' => 'col-form-label']) }}<x-required></x-required>

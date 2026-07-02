@@ -32,7 +32,7 @@
         </div>
         <div class="form-group col-lg-6 col-md-6">
             {{ Form::label('warning_date', __('Warning Date'), ['class' => 'col-form-label']) }}<x-required></x-required>
-            {{ Form::text('warning_date', null, ['class' => 'form-control d_week', 'autocomplete' => 'off' ,'required' => 'required']) }}
+            {{ Form::date('warning_date', null, ['class' => 'form-control d_week', 'autocomplete' => 'off' ,'required' => 'required']) }}
         </div>
         <div class="form-group col-lg-12">
             {{ Form::label('description', __('Description'), ['class' => 'col-form-label']) }}<x-required></x-required>

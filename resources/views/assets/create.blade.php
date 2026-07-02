@@ -52,7 +52,7 @@
             <div class="form-group">
                 {{ Form::label('purchase_date', __('Purchase Date'), ['class' => 'form-label']) }}<x-required></x-required>
                 <div class="form-icon-user">
-                    {{ Form::text('purchase_date', null, array('class' => 'form-control d_week current_date','required'=>'required','autocomplete'=>'off')) }}
+                    {{ Form::date('purchase_date', null, array('class' => 'form-control d_week current_date','required'=>'required','autocomplete'=>'off')) }}
                 </div>
 
             </div>
@@ -62,7 +62,7 @@
             <div class="form-group">
                 {{ Form::label('supported_date', __('Support Until'), ['class' => 'form-label']) }}<x-required></x-required>
                 <div class="form-icon-user">
-                    {{ Form::text('supported_date', null, array('class' => 'form-control d_week current_date','required'=>'required','autocomplete'=>'off')) }}
+                    {{ Form::date('supported_date', null, array('class' => 'form-control d_week current_date','required'=>'required','autocomplete'=>'off')) }}
                 </div>
 
             </div>

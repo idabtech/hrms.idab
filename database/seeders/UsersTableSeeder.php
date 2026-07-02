@@ -2447,7 +2447,7 @@ class UsersTableSeeder extends Seeder
             'Delete Zoom meeting',
             'Manage Biometric Attendance',
             'Biometric Attendance Synchronize',
-           
+
         ];
 
         $companyRole->givePermissionTo($companyPermissions);
@@ -2745,7 +2745,7 @@ class UsersTableSeeder extends Seeder
             'Show Zoom meeting',
             'Manage Biometric Attendance',
             'Biometric Attendance Synchronize',
-          
+
         ];
 
         $hrRole->givePermissionTo($hrPermission);
@@ -2823,7 +2823,7 @@ class UsersTableSeeder extends Seeder
             'Delete Attachment',
             'Manage Zoom meeting',
             'Show Zoom meeting',
-          
+
         ];
 
         $employeeRole->givePermissionTo($employeePermission);

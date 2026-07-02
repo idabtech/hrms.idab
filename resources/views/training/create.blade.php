@@ -72,13 +72,13 @@
         <div class="col-md-6">
             <div class="form-group">
                 {{ Form::label('start_date', __('Start Date'), ['class' => 'col-form-label']) }}
-                {{ Form::text('start_date', null, ['class' => 'form-control w-100', 'autocomplete' => 'off']) }}
+                {{ Form::date('start_date', null, ['class' => 'form-control w-100', 'autocomplete' => 'off']) }}
             </div>
         </div>
         <div class="col-md-6">
             <div class="form-group">
                 {{ Form::label('end_date', __('End Date'), ['class' => 'col-form-label']) }}
-                {{ Form::text('end_date', null, ['class' => 'form-control w-100', 'autocomplete' => 'off']) }}
+                {{ Form::date('end_date', null, ['class' => 'form-control w-100', 'autocomplete' => 'off']) }}
             </div>
         </div>
         <div class="form-group col-lg-12">

@@ -25,11 +25,11 @@
         </div>
         <div class="form-group col-lg-6 col-md-6">
             {{ Form::label('start_date', __('Start Date'), ['class' => 'col-form-label']) }}<x-required></x-required>
-            {{ Form::text('start_date', null, ['class' => 'form-control d_week current_date', 'autocomplete' => 'off', 'required' => 'required']) }}
+            {{ Form::date('start_date', null, ['class' => 'form-control d_week current_date', 'autocomplete' => 'off', 'required' => 'required']) }}
         </div>
         <div class="form-group col-lg-6 col-md-6">
             {{ Form::label('end_date', __('End Date'), ['class' => 'col-form-label']) }}<x-required></x-required>
-            {{ Form::text('end_date', null, ['class' => 'form-control d_week current_date', 'autocomplete' => 'off', 'required' => 'required']) }}
+            {{ Form::date('end_date', null, ['class' => 'form-control d_week current_date', 'autocomplete' => 'off', 'required' => 'required']) }}
         </div>
         <div class="form-group  col-md-6">
             {{ Form::label('purpose_of_visit', __('Purpose of Trip'), ['class' => 'col-form-label']) }}<x-required></x-required>

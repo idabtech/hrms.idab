@@ -32,7 +32,7 @@
         <div class="col-md-6">
             <div class="form-group">
                 {{ Form::label('date', __('Date'), ['class' => 'col-form-label']) }}
-                {{ Form::text('date',!empty($transferbalance->date)
+                {{ Form::date('date',!empty($transferbalance->date)
                                         ? \Carbon\Carbon::parse($transferbalance->date)->format($company_settings['site_date_format'])
                                         : null, ['class' => 'form-control w-100', 'autocomplete' => 'off']) }}
             </div>
@@ -40,7 +40,7 @@
         <div class="col-md-6">
             <div class="form-group">
                 {{ Form::label('amount', __('Amount'), ['class' => 'col-form-label']) }}<x-required></x-required>
-                {{ Form::number('amount', null, ['class' => 'form-control', 'required' => 'required', 'step' => '0.01']) }}
+                {{ Form::number('amount', null, ['class' => 'form-control', 'required' => 'required', 'placeholder' => __('Enter Amount'), 'step' => '0.01']) }}
             </div>
         </div>
         <div class="col-md-6">

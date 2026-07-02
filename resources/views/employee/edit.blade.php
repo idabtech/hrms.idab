@@ -67,7 +67,7 @@
                                         {!! Form::label('dob', __('Date of Birth'), ['class' => 'form-label']) !!}<span class="text-danger pl-1">*</span>
                                         {!! Form::date('dob',
                                         !empty($employee->dob)
-                                        ? \Carbon\Carbon::parse($employee->dob)->format($company_settings['site_date_format'])
+                                        ? \Carbon\Carbon::parse($employee->dob)
                                         : null,
                                         [
                                         'class' => 'form-control w-100',
@@ -560,30 +560,35 @@
                                 <div class="row">
                                     <div class="form-group col-md-6">
                                         {!! Form::label('account_holder_name', __('Account Holder Name'), ['class' => 'form-label']) !!}
-                                        {!! Form::text('account_holder_name', null, ['class' => 'form-control']) !!}
-
+                                        {!! Form::text('account_holder_name', !empty($employee->account_holder_name)?$employee->account_holder_name:'', ['class' => 'form-control',
+                                    'placeholder' => 'Enter account holder name']) !!}
                                     </div>
                                     <div class="form-group col-md-6">
                                         {!! Form::label('account_number', __('Account Number'), ['class' => 'form-label']) !!}
-                                        {!! Form::number('account_number', null, ['class' => 'form-control']) !!}
+                                        {!! Form::number('account_number', !empty($employee->account_number)?$employee->account_number:'', ['class' => 'form-control',
+                                    'placeholder' => 'Enter account number']) !!}
 
                                     </div>
                                     <div class="form-group col-md-6">
                                         {!! Form::label('bank_name', __('Bank Name'), ['class' => 'form-label']) !!}
-                                        {!! Form::text('bank_name', null, ['class' => 'form-control']) !!}
+                                        {!! Form::text('bank_name', !empty($employee->bank_name)?$employee->bank_name:'', ['class' => 'form-control',
+                                    'placeholder' => 'Enter bank name']) !!}
 
                                     </div>
                                     <div class="form-group col-md-6">
                                         {!! Form::label('bank_identifier_code', __(\App\Models\Utility::bankCodeLabel()), ['class' => 'form-label']) !!}
-                                        {!! Form::text('bank_identifier_code', null, ['class' => 'form-control']) !!}
+                                        {!! Form::text('bank_identifier_code', !empty($employee->bank_identifier_code)?$employee->bank_identifier_code:'', ['class' => 'form-control',
+                                    'placeholder' => 'Enter bank identifier code']) !!}
                                     </div>
                                     <div class="form-group col-md-6">
                                         {!! Form::label('branch_location', __('Branch Location'), ['class' => 'form-label']) !!}
-                                        {!! Form::text('branch_location', null, ['class' => 'form-control']) !!}
+                                        {!! Form::text('branch_location', !empty($employee->branch_location)?$employee->branch_location:'', ['class' => 'form-control',
+                                    'placeholder' => 'Enter branch location']) !!}
                                     </div>
                                     <div class="form-group col-md-6">
                                         {!! Form::label('tax_payer_id', __('Tax Payer Id'), ['class' => 'form-label']) !!}
-                                        {!! Form::text('tax_payer_id', null, ['class' => 'form-control']) !!}
+                                        {!! Form::text('tax_payer_id', !empty($employee->tax_payer_id)?$employee->tax_payer_id:'', ['class' => 'form-control',
+                                    'placeholder' => 'Enter tax payer id']) !!}
                                     </div>
                                 </div>
                             </div>

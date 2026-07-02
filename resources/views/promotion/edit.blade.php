@@ -30,7 +30,7 @@
         </div>
         <div class="form-group col-lg-6 col-md-6">
             {{ Form::label('promotion_date', __('Promotion Date'), ['class' => 'col-form-label']) }}<x-required></x-required>
-            {{ Form::text('promotion_date', null, ['class' => 'form-control d_week','autocomplete'=>'off' , 'required' => 'required']) }}
+            {{ Form::date('promotion_date', null, ['class' => 'form-control d_week','autocomplete'=>'off' , 'required' => 'required']) }}
         </div>
         <div class="form-group col-lg-12">
             {{ Form::label('description', __('Description'), ['class' => 'col-form-label']) }}<x-required></x-required>

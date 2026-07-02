@@ -48,13 +48,13 @@
         <div class="col-md-6">
             <div class="form-group">
                 {{ Form::label('start_date', __('Announcement start Date'), ['class' => 'col-form-label']) }}<x-required></x-required>
-                {{ Form::text('start_date', null, ['class' => 'form-control d_week', 'autocomplete' => 'off', 'required' => 'required']) }}
+                {{ Form::date('start_date', null, ['class' => 'form-control d_week', 'autocomplete' => 'off', 'required' => 'required']) }}
             </div>
         </div>
         <div class="col-md-6">
             <div class="form-group">
                 {{ Form::label('end_date', __('Announcement End Date'), ['class' => 'col-form-label']) }}<x-required></x-required>
-                {{ Form::text('end_date', null, ['class' => 'form-control d_week', 'autocomplete' => 'off', 'required' => 'required']) }}
+                {{ Form::date('end_date', null, ['class' => 'form-control d_week', 'autocomplete' => 'off', 'required' => 'required']) }}
             </div>
         </div>
         <div class="form-group">

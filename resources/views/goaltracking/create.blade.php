@@ -6,13 +6,13 @@
 <div class="modal-body">
 
     @if ($plan->enable_chatgpt == 'on')
-    <div class="card-footer text-end">
-        <a href="javascript:void(0)" class="btn btn-sm btn-primary" data-size="medium" data-ajax-popup-over="true"
-            data-url="{{ route('generate', ['goal tracking']) }}" data-bs-toggle="tooltip" data-bs-placement="top"
-            title="{{ __('Generate') }}" data-title="{{ __('Generate Content With AI') }}">
-            <i class="fas fa-robot"></i>{{ __(' Generate With AI') }}
-        </a>
-    </div>
+        <div class="card-footer text-end">
+            <a href="javascript:void(0)" class="btn btn-sm btn-primary" data-size="medium" data-ajax-popup-over="true"
+                data-url="{{ route('generate', ['goal tracking']) }}" data-bs-toggle="tooltip" data-bs-placement="top"
+                title="{{ __('Generate') }}" data-title="{{ __('Generate Content With AI') }}">
+                <i class="fas fa-robot"></i>{{ __(' Generate With AI') }}
+            </a>
+        </div>
     @endif
 
     <div class="row">
@@ -30,20 +30,21 @@
                 {{ Form::label('goal_type', __('Goal Types'), ['class' => 'col-form-label']) }}<x-required></x-required>
                 {{ Form::select('goal_type', $goalTypes, null, ['class' => 'form-control', 'required' => 'required']) }}
                 <div class="text-xs mt-1">
-                    {{ __('Create goal type.') }} <a href="{{ route('goaltype.index') }}"><b>{{ __('Click here') }}</b></a>
+                    {{ __('Create goal type.') }} <a
+                        href="{{ route('goaltype.index') }}"><b>{{ __('Click here') }}</b></a>
                 </div>
             </div>
         </div>
         <div class="col-md-6">
             <div class="form-group">
                 {{ Form::label('start_date', __('Start Date'), ['class' => 'col-form-label']) }}<x-required></x-required>
-                {{ Form::text('start_date', null, ['class' => 'form-control', 'autocomplete' => 'off', 'required' => 'required']) }}
+                {{ Form::date('start_date', null, ['class' => 'form-control', 'id' => 'start_date', 'required' => 'required', 'autocomplete' => 'off']) }}
             </div>
         </div>
         <div class="col-md-6">
-            <div class="form-group">
+             <div class="form-group">
                 {{ Form::label('end_date', __('End Date'), ['class' => 'col-form-label']) }}<x-required></x-required>
-                {{ Form::text('end_date', null, ['class' => 'form-control', 'autocomplete' => 'off', 'required' => 'required']) }}
+                {{ Form::date('end_date', null, ['class' => 'form-control current_date', 'id' => 'end_date', 'required' => 'required', 'autocomplete' => 'off']) }}
             </div>
         </div>
         <div class="col-md-12">

@@ -35,15 +35,19 @@
             </div>
         </div>
         <div class="col-md-6">
-            <div class="form-group">
+            {{-- <div class="form-group">
                 {{ Form::label('date', __('Date'), ['class' => 'col-form-label']) }}
                 {{ Form::text('date', null, ['class' => 'form-control w-100', 'autocomplete' => 'off']) }}
+            </div> --}}
+             <div class="form-group">
+                {{ Form::label('date', __('Date'), ['class' => 'col-form-label']) }}
+                {{ Form::date('date', null, ['class' => 'form-control', 'id' => 'date', 'required' => 'required', 'autocomplete' => 'off']) }}
             </div>
         </div>
         <div class="col-md-6">
             <div class="form-group">
                 {{ Form::label('amount', __('Amount'), ['class' => 'col-form-label']) }}<x-required></x-required>
-                {{ Form::number('amount', null, ['class' => 'form-control', 'required' => 'required', 'step' => '0.01']) }}
+                {{ Form::number('amount', null, ['class' => 'form-control', 'required' => 'required', 'step' => '0.01','placeholder' => __('Enter Amount')]) }}
             </div>
         </div>
         <div class="col-md-6">
