@@ -87,8 +87,8 @@ class PaySlipController extends Controller
         $formate_month_year = $year . '-' . $month;
         $validatePaysilp = PaySlip::where('salary_month', '=', $formate_month_year)->where('created_by', \Auth::user()->creatorId())->pluck('employee_id');
         $payslip_employee = Employee::where('created_by', \Auth::user()->creatorId())->where('company_doj', '<=', date($year . '-' . $month . '-t'))->count();
-
         if ($payslip_employee > count($validatePaysilp)) {
+
             $employees = Employee::where('created_by', \Auth::user()->creatorId())->where('company_doj', '<=', date($year . '-' . $month . '-t'))->whereNotIn('employee_id', $validatePaysilp)->get();
 
             foreach ($employees as $employee) {
@@ -124,6 +124,7 @@ class PaySlipController extends Controller
                     $payslipEmployee->salary_month = $formate_month_year;
                     $payslipEmployee->status = 0;
                     $payslipEmployee->basic_salary = !empty($employee->salary) ? $employee->salary : 0;
+                    $payslipEmployee->net_salary = !empty($employee->salary) ? $employee->salary / 2 : 0;
                     $payslipEmployee->allowance = Employee::allowance($employee->id);
                     $payslipEmployee->commission = Employee::commission($employee->id);
                     $payslipEmployee->loan = Employee::loan($employee->id);
@@ -133,6 +134,7 @@ class PaySlipController extends Controller
                     $payslipEmployee->created_by = \Auth::user()->creatorId();
                     // Set a temporary net_payble so the record can be saved first
                     $payslipEmployee->net_payble = 0;
+
                     $payslipEmployee->save();
 
                     // Now calculate the accurate net salary using employeePayslipDetail
@@ -233,7 +235,7 @@ class PaySlipController extends Controller
                 'employees.salary',
                 'payslip_types.name as payroll_type',
                 'pay_slips.basic_salary',
-                'pay_slips.net_payble',
+                'pay_slips.net_salary',
                 'pay_slips.id as pay_slip_id',
                 'pay_slips.status',
                 'employees.user_id',
@@ -255,6 +257,14 @@ class PaySlipController extends Controller
                 try {
                     $detail  = Utility::employeePayslipDetail($employee->id, $formate_month_year);
                     $liveNet = round($detail['net_salary'], 2);
+                    $salary = round($detail['salary'], 2);
+                    $basic_salary = round($detail['basic_salary'], 2);
+                    $total_loan = round($detail['totalLoan'], 2);
+                    $total_allowance = round($detail['totalAllowance'], 2);
+                    $total_bonus = round($detail['total_bonus'], 2);
+                    $total_commission = round($detail['totalCommission'], 2);
+                    $total_pension = round($detail['totalPansion'], 2);
+                    $total_saturation_deduction = round($detail['total_saturation_deduction'], 2);
                 } catch (\Throwable $_e) {
                     // fall back to stored value if detail fails
                 }
@@ -268,7 +278,14 @@ class PaySlipController extends Controller
                     $tmp[] = $employee->payroll_type;
                     $tmp[] = $employee->pay_slip_id;
                     $tmp[] = !empty($employee->basic_salary) ? \Auth::user()->priceFormat($employee->basic_salary) : '-';
+                    $tmp[] = $salary > 0 ? \Auth::user()->priceFormat($salary) : '-';
                     $tmp[] = $liveNet > 0 ? \Auth::user()->priceFormat($liveNet) : '-';
+                    $tmp[] = $total_allowance > 0 ? \Auth::user()->priceFormat($total_allowance) : '-';
+                    $tmp[] = $total_pension > 0 ? \Auth::user()->priceFormat($total_pension) : '-';
+                    $tmp[] = $total_loan > 0 ? \Auth::user()->priceFormat($total_loan) : '-';
+                    $tmp[] = $total_commission > 0 ? \Auth::user()->priceFormat($total_commission) : '-';
+                    $tmp[] = $total_saturation_deduction > 0 ? \Auth::user()->priceFormat($total_saturation_deduction) : '-';
+                    $tmp[] = $total_bonus > 0 ? \Auth::user()->priceFormat($total_bonus) : '-';
                     $tmp[] = $employee->status == 1 ? 'paid' : 'unpaid';
                     $tmp[] = !empty($employee->pay_slip_id) ? $employee->pay_slip_id : 0;
                     $tmp['url'] = route('employee.show', Crypt::encrypt($employee->id));
@@ -280,8 +297,15 @@ class PaySlipController extends Controller
                 $tmp[] = \Auth::user()->employeeIdFormat($employee->employee_id);
                 $tmp[] = $employee->name;
                 $tmp[] = $employee->payroll_type;
-                $tmp[] = !empty($employee->basic_salary) ? \Auth::user()->priceFormat($employee->basic_salary) : '-';
+                $tmp[] = !empty($employee->salary) ? \Auth::user()->priceFormat($employee->salary) : '-';
+                $tmp[] = $salary > 0 ? \Auth::user()->priceFormat($salary) : '-';
                 $tmp[] = $liveNet > 0 ? \Auth::user()->priceFormat($liveNet) : '-';
+                $tmp[] = $total_allowance > 0 ? \Auth::user()->priceFormat($total_allowance) : '-';
+                $tmp[] = $total_pension > 0 ? \Auth::user()->priceFormat($total_pension) : '-';
+                $tmp[] = $total_loan > 0 ? \Auth::user()->priceFormat($total_loan) : '-';
+                $tmp[] = $total_commission > 0 ? \Auth::user()->priceFormat($total_commission) : '-';
+                $tmp[] = $total_saturation_deduction > 0 ? \Auth::user()->priceFormat($total_saturation_deduction) : '-';
+                $tmp[] = $total_bonus > 0 ? \Auth::user()->priceFormat($total_bonus) : '-';
                 $tmp[] = $employee->status == 1 ? 'Paid' : 'UnPaid';
                 $tmp[] = !empty($employee->pay_slip_id) ? $employee->pay_slip_id : 0;
                 $tmp['url'] = route('employee.show', Crypt::encrypt($employee->id));
@@ -394,7 +418,11 @@ class PaySlipController extends Controller
         $template = Utility::isUkRequest() ? 'payslip.ukPayslipDownload' : 'payslip.payslipDownload';
 
         $pdf = Pdf::loadView($template, compact(
-            'payslip', 'employee', 'payslipDetail', 'slipYear', 'slipMonth'
+            'payslip',
+            'employee',
+            'payslipDetail',
+            'slipYear',
+            'slipMonth'
         ))->setPaper('a4', 'portrait')->setOption('isRemoteEnabled', true);
 
         return $pdf->download($employee->name . '_payslip_' . $month . '.pdf');
@@ -417,7 +445,11 @@ class PaySlipController extends Controller
         [$slipYear, $slipMonth] = explode('-', $month);
 
         $pdf = Pdf::loadView('payslip.ukPayslipDownload', compact(
-            'payslip', 'employee', 'payslipDetail', 'slipYear', 'slipMonth'
+            'payslip',
+            'employee',
+            'payslipDetail',
+            'slipYear',
+            'slipMonth'
         ))->setPaper('a4', 'portrait')->setOption('isRemoteEnabled', true);
 
         return $pdf->download($employee->name . '_uk_payslip_' . $month . '.pdf');

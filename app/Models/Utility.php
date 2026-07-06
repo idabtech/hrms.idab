@@ -414,7 +414,6 @@ class Utility extends Model
                     return '';
                 }
             });
-
         } catch (\Throwable $e) {
             $countryCode = '';
         }
@@ -463,7 +462,6 @@ class Utility extends Model
                     return '';
                 }
             });
-
         } catch (\Throwable $e) {
             return false;
         }
@@ -591,7 +589,6 @@ class Utility extends Model
         // Perk
         $earning['pearks'] = Peark::where('employee_id', $employeeId)->get();
         $totalPearks = 0;
-
         foreach ($earning['pearks'] as $peark) {
             $totalPearks += $peark->amount;
         }
@@ -612,7 +609,6 @@ class Utility extends Model
                 $totalotherpayment += $empotherpay;
             }
         }
-
         //overtime
         $earning['overTime'] = Payslip::where('employee_id', $employeeId)->where('salary_month', $month)->get();
         $ot = 0;
@@ -625,7 +621,6 @@ class Utility extends Model
                 $ot += $OverTime;
             }
         }
-
         // loan
         $deduction['loan'] = PaySlip::where('employee_id', $employeeId)->where('salary_month', $month)->get();
         $totalloan = 0;
@@ -646,7 +641,6 @@ class Utility extends Model
         // saturation_deduction
         $deduction['saturation_deduction'] = PaySlip::where('employee_id', $employeeId)->where('salary_month', $month)->get();
         $totaldeduction = 0;
-
         $arrayJson = json_decode($deduction['saturation_deduction']);
         foreach ($arrayJson as $deductions) {
             $deduc = json_decode($deductions->saturation_deduction);
@@ -658,16 +652,20 @@ class Utility extends Model
                         $deduction_option->title = $currentOptName;
                     }
                 }
-
                 if ($deduction_option->type == 'percentage') {
-                    $empdeduction = $deduction_option->amount * $deductions->basic_salary / 100;
+                    if (strtolower($deduction_option->title) == 'epf') {
+                        $empdeduction = 12 * $deductions->net_salary / 100;
+                    } elseif (strtolower($deduction_option->title) == 'gpf') {
+                        $empdeduction = 6 * $deductions->net_salary / 100;
+                    } else {
+                        $empdeduction = $deduction_option->amount * $deductions->basic_salary / 100;
+                    }
                 } else {
                     $empdeduction = $deduction_option->amount;
                 }
                 $totaldeduction += $empdeduction;
             }
         }
-
         // pansion
         $deduction['pansion'] = Pension::where('employee_id', $employeeId)->get();
         $totalPansion = 0;
@@ -694,6 +692,7 @@ class Utility extends Model
             ->where('salary_month', $month)
             ->first();
         $salary = $payslipRecord ? (float) $payslipRecord->basic_salary : (float) $employess->salary;
+        $net_salary = $payslipRecord ? (float) $payslipRecord->net_salary : (float) $employess->salary;
 
         // Working days via shared utility (same logic as attendance report)
         $workingDaysInMonth = self::getWorkingDaysInMonth($payYear, $payMonth, $employess->created_by);
@@ -724,7 +723,8 @@ class Utility extends Model
                     if ($shiftDiff > 0) {
                         $hoursPerDayShift = round($shiftDiff / 60, 2);
                     }
-                } catch (\Throwable $_e) {}
+                } catch (\Throwable $_e) {
+                }
             }
         }
 
@@ -745,16 +745,15 @@ class Utility extends Model
             // Legacy fallback: detect from name string
             $isHourly = str_contains(strtolower(trim($payslipTypeRecord?->name ?? '')), 'hour');
         }
-
+        $monthlySalaryGross = $salary;
         if ($isHourly) {
             // $salary stored IS the hourly rate directly (e.g. 140)
             // gross = hourly_rate × actual_hours_worked (calculated after attendance loop)
             $per_hour_amount    = $salary;
             $per_day_amount     = round($salary * $hoursPerDayShift, 4);
-            $monthlySalaryGross = $salary; // placeholder — recalculated after $totalWorkHours is known
         } else {
             // $salary stored is the MONTHLY fixed salary
-            $monthlySalaryGross  = $salary;
+
             $per_day_amount      = $workingDaysInMonth > 0
                 ? round($salary / $workingDaysInMonth, 4)
                 : 0;
@@ -839,7 +838,7 @@ class Utility extends Model
             ->where('status', 'Approved')
             ->where('start_date', '<=', $monthEnd->format('Y-m-d'))
             ->where('end_date',   '>=', $monthStart->format('Y-m-d'))
-            ->get(['start_date','end_date']);
+            ->get(['start_date', 'end_date']);
         foreach ($leavesForHalf as $lh) {
             foreach (\Carbon\CarbonPeriod::create($lh->start_date, $lh->end_date) as $ld) {
                 $ldStr = $ld->format('Y-m-d');
@@ -874,8 +873,12 @@ class Utility extends Model
                     $co = Carbon::parse($coRaw);
                     if ($co->gt($ci)) $dayMins = $ci->diffInMinutes($co);
                     // Handle overnight shift
-                    if ($dayMins <= 0) { $co->addDay(); $dayMins = $ci->diffInMinutes($co); }
-                } catch (\Throwable $e) {}
+                    if ($dayMins <= 0) {
+                        $co->addDay();
+                        $dayMins = $ci->diffInMinutes($co);
+                    }
+                } catch (\Throwable $e) {
+                }
             }
 
             $isOnLeaveDay = isset($leaveDatesForHalf[$dk]);
@@ -1001,8 +1004,12 @@ class Utility extends Model
                             $ci = Carbon::parse($ciRaw2);
                             $co = Carbon::parse($coRaw2);
                             if ($co->gt($ci)) $dayMins = $ci->diffInMinutes($co);
-                            if ($dayMins <= 0) { $co->addDay(); $dayMins = $ci->diffInMinutes($co); }
-                        } catch (\Throwable $e) {}
+                            if ($dayMins <= 0) {
+                                $co->addDay();
+                                $dayMins = $ci->diffInMinutes($co);
+                            }
+                        } catch (\Throwable $e) {
+                        }
                     }
 
                     if ($clockOutMissing2) {
@@ -1095,11 +1102,16 @@ class Utility extends Model
             if ($coR === '00:00:00' || $coR === '00:00') $coR = '';
             if (!empty($ciR) && !empty($coR)) {
                 try {
-                    $ci2 = Carbon::parse($ciR); $co2 = Carbon::parse($coR);
+                    $ci2 = Carbon::parse($ciR);
+                    $co2 = Carbon::parse($coR);
                     $mins = $co2->gt($ci2) ? $ci2->diffInMinutes($co2) : 0;
-                    if ($mins <= 0) { $co2->addDay(); $mins = $ci2->diffInMinutes($co2); }
+                    if ($mins <= 0) {
+                        $co2->addDay();
+                        $mins = $ci2->diffInMinutes($co2);
+                    }
                     $totalWorkMins += max(0, $mins);
-                } catch (\Throwable $e) {}
+                } catch (\Throwable $e) {
+                }
             }
         }
         $workingDayRowCount = count(array_filter(array_keys($attByDate), $isWorkingDay));
@@ -1130,7 +1142,6 @@ class Utility extends Model
             // Recalculate total deduction without LOP
             // (keep loan + saturation_deduction + pension)
         }
-
         // Extra days = days worked beyond the official working-day count
         $extra_days = max(0, $attendance_count - $workingDaysInMonth);
 
@@ -1158,17 +1169,72 @@ class Utility extends Model
             'totalPansion'         => $totalPansion,
         ]);
 
+
+        $payslip['earning']              = $earning;
         $payslip['earning']              = $earning;
         $payslip['totalEarning']         = $totalAllowance + $totalCommission + $totalotherpayment + $ot + $totalBonous + $totalPearks;
         $payslip['deduction']            = $deduction;
         // For hourly employees leave_deduction and unpaid_leave_deduction are zeroed
         // above (actual hours already exclude unpaid time — no double-deduction needed)
-        $payslip['totalDeduction']       = $totalloan + $totaldeduction + $totalPansion + $leave_deduction + $unpaid_leave_deduction;
+        $payslip['totalDeduction']       = $totalloan + $totaldeduction + $totalPansion
+            + $leave_deduction + $unpaid_leave_deduction;
+
+        $calcTotal = function ($items) use ($salary) {
+            return $items->sum(function ($item) use ($salary) {
+                return $item->type === 'percentage'
+                    ? ($item->amount * $salary / 100)
+                    : $item->amount;
+            });
+        };
+
+
+
+
+        $payslip['hra']              = $employess->hra * $salary / 100;
+        
+        $payslip['da']              = $employess->da * $salary / 100;
+        $payslip['earning']              = $earning;
+        $payslip['totalEarning']         = $totalAllowance + $totalCommission
+            + $totalotherpayment
+            // + $ot
+            + $totalBonous
+            + $payslip['hra'] + $payslip['da'];
+        // + $totalPearks;
+        $payslip['deduction']            = $deduction;
+        // For hourly employees leave_deduction and unpaid_leave_deduction are zeroed
+        // above (actual hours already exclude unpaid time — no double-deduction needed)
+        $payslip['totalDeduction']       = $totalloan + $totaldeduction + $totalPansion;
+        // + $leave_deduction + $unpaid_leave_deduction;
+        $total_saturation_deduction = $totaldeduction;
+        $total_bonus                = $calcTotal($employess->bonuses);
+        $basic_salary = $monthlySalaryGross;
+
+        $netSalary = $employess->basic_salary + $payslip['hra'] + $payslip['da'] + $totalAllowance + $totalCommission + $totalotherpayment
+            - $totalloan - $totalPansion + $total_bonus - $total_saturation_deduction;
         // Net salary:
         //   Monthly: fixed_salary + earnings - deductions (incl. LOP)
         //   Hourly:  hourly_rate × actual_hours_worked + earnings - deductions (no LOP)
-        $payslip['net_salary']           = $monthlySalaryGross + $payslip['totalEarning'] - $payslip['totalDeduction'];
-        $payslip['basic_salary']         = $monthlySalaryGross; // gross to display on slip
+
+        // $payslip['net_salary']           = $netSalary;
+
+        $payslip['totalAllowance']           = $totalAllowance;
+        $payslip['totalCommission']           = $totalCommission;
+        $payslip['totalPansion']           = $totalPansion;
+        $payslip['totalLoan']           = $totalloan;
+        $payslip['total_saturation_deduction']           = $total_saturation_deduction;
+        $payslip['total_bonus']           = $total_bonus;
+
+
+
+        // Net salary:
+        //   Monthly: fixed_salary + earnings - deductions (incl. LOP)
+        //   Hourly:  hourly_rate × actual_hours_worked + earnings - deductions (no LOP)
+        // $payslip['net_salary']           = $monthlySalaryGross + $payslip['totalEarning'] - $payslip['totalDeduction'];
+
+
+        $payslip['net_salary']           = $netSalary;
+        $payslip['salary']           = $employess->basic_salary;
+        $payslip['basic_salary']         = $basic_salary; // gross to display on slip
         $payslip['salary_rate']          = $salary;             // raw stored monthly reference amount
         $payslip['is_hourly']            = $isHourly;
         $payslip['per_day_amount']       = $per_day_amount;
@@ -1187,14 +1253,13 @@ class Utility extends Model
         $payslip['lop_days']             = $total_absent_for_lop;
         $payslip['total_work_hours']     = $totalWorkHours;
         $payslip['avg_hrs_per_day']      = $avgHrsPerDay;
-        $payslip['approved_leaves_month']= $total_leave_days;
-        $payslip['rejected_leaves_month']= $total_rejected_days;
+        $payslip['approved_leaves_month'] = $total_leave_days;
+        $payslip['rejected_leaves_month'] = $total_rejected_days;
         $payslip['total_leave_alloc']    = $totalLeaveAlloc;
         $payslip['remaining_leaves']     = $remainingLeaves;
         $payslip['total_used_ever']      = $totalUsedEver;
         // Days paid = clocked present days + paid leave days (both are compensated)
         $payslip['days_paid']            = $attendance_count + $paid_leave_days;
-
         // ── UK Year-To-Date (YTD) ─────────────────────────────────────────
         // UK tax year runs 6 April → 5 April.
         // We sum all payslips from the start of the current tax year up to and
@@ -1268,36 +1333,44 @@ class Utility extends Model
                 if ($_sdAmt <= 0 || $_sdTitle === '') continue;
 
                 // ── Employer NI — check first to avoid falling into generic NI ──
-                if (str_contains($_sdTitle, 'employer ni') ||
+                if (
+                    str_contains($_sdTitle, 'employer ni') ||
                     str_contains($_sdTitle, 'employer nic') ||
                     str_contains($_sdTitle, 'employer national') ||
-                    str_contains($_sdTitle, 'employers ni')) {
+                    str_contains($_sdTitle, 'employers ni')
+                ) {
                     $ytdEmployerNI += $_sdAmt;
                     if ($ytdTitleEmployerNI === '') $ytdTitleEmployerNI = $_origTitle;
                 }
                 // ── Employee NI / National Insurance ──────────────────────────
-                elseif (str_contains($_sdTitle, 'national insurance') ||
-                        str_contains($_sdTitle, 'employee ni') ||
-                        str_contains($_sdTitle, 'employee nic') ||
-                        $_sdTitle === 'ni' || $_sdTitle === 'nic') {
+                elseif (
+                    str_contains($_sdTitle, 'national insurance') ||
+                    str_contains($_sdTitle, 'employee ni') ||
+                    str_contains($_sdTitle, 'employee nic') ||
+                    $_sdTitle === 'ni' || $_sdTitle === 'nic'
+                ) {
                     $ytdEmployeeNI += $_sdAmt;
                     if ($ytdTitleEmployeeNI === '') $ytdTitleEmployeeNI = $_origTitle;
                 }
                 // ── Statutory Pay (SSP / SMP / SPP) ───────────────────────────
-                elseif (str_contains($_sdTitle, 'statutory') ||
-                        str_contains($_sdTitle, 'ssp') ||
-                        str_contains($_sdTitle, 'smp') ||
-                        str_contains($_sdTitle, 'maternity') ||
-                        str_contains($_sdTitle, 'paternity') ||
-                        str_contains($_sdTitle, 'sick pay')) {
+                elseif (
+                    str_contains($_sdTitle, 'statutory') ||
+                    str_contains($_sdTitle, 'ssp') ||
+                    str_contains($_sdTitle, 'smp') ||
+                    str_contains($_sdTitle, 'maternity') ||
+                    str_contains($_sdTitle, 'paternity') ||
+                    str_contains($_sdTitle, 'sick pay')
+                ) {
                     $ytdStatutoryPay += $_sdAmt;
                     if ($ytdTitleStatutoryPay === '') $ytdTitleStatutoryPay = $_origTitle;
                 }
                 // ── Any form of tax → Income Tax bucket ───────────────────────
                 // Catches: "Income Tax", "Professional Tax", "PAYE", "Tax", etc.
-                elseif (str_contains($_sdTitle, 'tax') ||
-                        str_contains($_sdTitle, 'paye') ||
-                        str_contains($_sdTitle, 'p.a.y.e')) {
+                elseif (
+                    str_contains($_sdTitle, 'tax') ||
+                    str_contains($_sdTitle, 'paye') ||
+                    str_contains($_sdTitle, 'p.a.y.e')
+                ) {
                     $ytdIncomeTax += $_sdAmt;
                     if ($ytdTitleIncomeTax === '') $ytdTitleIncomeTax = $_origTitle;
                 }
@@ -1356,7 +1429,6 @@ class Utility extends Model
         $payslip['ytd_label_employee_pension'] = $ytdTitleEmployeePension ?: null;
         $payslip['ytd_label_employer_pension'] = $ytdTitleEmployerPension;
         $payslip['ytd_label_employer_pension'] = $ytdTitleEmployerPension; // always null until DB extended
-
         return $payslip;
     }
 

@@ -15,23 +15,22 @@ class SaturationDeductionController extends Controller
         $deduction_options = DeductionOption::where('created_by', \Auth::user()->creatorId())->get()->pluck('name', 'id');
         $saturationdeduc = SaturationDeduction::$saturationDeductiontype;
 
-        return view('saturationdeduction.create', compact('employee', 'deduction_options','saturationdeduc'));
+        return view('saturationdeduction.create', compact('employee', 'deduction_options', 'saturationdeduc'));
     }
 
     public function store(Request $request)
     {
-        if(\Auth::user()->can('Create Saturation Deduction'))
-        {
+        if (\Auth::user()->can('Create Saturation Deduction')) {
             $validator = \Validator::make(
-                $request->all(), [
-                                   'employee_id' => 'required',
-                                   'deduction_option' => 'required',
-                                   'title' => 'required',
-                                   'amount' => 'required',
-                               ]
+                $request->all(),
+                [
+                    'employee_id' => 'required',
+                    'deduction_option' => 'required',
+                    'title' => 'required',
+                    'amount' => 'required',
+                ]
             );
-            if($validator->fails())
-            {
+            if ($validator->fails()) {
                 $messages = $validator->getMessageBag();
 
                 return redirect()->back()->with('error', $messages->first());
@@ -45,16 +44,20 @@ class SaturationDeductionController extends Controller
             $saturationdeduction->amount           = $request->amount;
             $saturationdeduction->created_by       = \Auth::user()->creatorId();
             $saturationdeduction->save();
-            
-            if($saturationdeduction->type == 'percentage')
-            {
+
+            if ($saturationdeduction->type == 'percentage') {
                 $employee          = Employee::find($saturationdeduction->employee_id);
-                $saturationdeductionsal  = $saturationdeduction->amount * $employee->salary / 100;
+                if (strtolower($saturationdeduction->title) == 'epf') {
+                    $empdeduction = 12 * $employee->net_salary / 100;
+                } elseif (strtolower($saturationdeduction->title) == 'gpf') {
+                    $empdeduction = 6 * $employee->net_salary / 100;
+                } else {
+                    $empdeduction = $saturationdeduction->amount * $employee->salary / 100;
+                }
+                // $saturationdeductionsal  = $saturationdeduction->amount * $employee->salary / 100;
             }
             return redirect()->back()->with('success', __('SaturationDeduction  successfully created.'));
-        }
-        else
-        {
+        } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
     }
@@ -67,43 +70,35 @@ class SaturationDeductionController extends Controller
     public function edit($saturationdeduction)
     {
         $saturationdeduction = SaturationDeduction::find($saturationdeduction);
-        if(\Auth::user()->can('Edit Saturation Deduction'))
-        {
-            if($saturationdeduction->created_by == \Auth::user()->creatorId())
-            {
+        if (\Auth::user()->can('Edit Saturation Deduction')) {
+            if ($saturationdeduction->created_by == \Auth::user()->creatorId()) {
                 $deduction_options = DeductionOption::where('created_by', \Auth::user()->creatorId())->get()->pluck('name', 'id');
                 $saturationdeduc = SaturationDeduction::$saturationDeductiontype;
 
-                return view('saturationdeduction.edit', compact('saturationdeduction', 'deduction_options','saturationdeduc'));
-            }
-            else
-            {
+                return view('saturationdeduction.edit', compact('saturationdeduction', 'deduction_options', 'saturationdeduc'));
+            } else {
 
                 return response()->json(['error' => __('Permission denied.')], 401);
             }
-        }
-        else
-        {
+        } else {
             return response()->json(['error' => __('Permission denied.')], 401);
         }
     }
 
     public function update(Request $request, SaturationDeduction $saturationdeduction)
     {
-        if(\Auth::user()->can('Edit Saturation Deduction'))
-        {
-            if($saturationdeduction->created_by == \Auth::user()->creatorId())
-            {
+        if (\Auth::user()->can('Edit Saturation Deduction')) {
+            if ($saturationdeduction->created_by == \Auth::user()->creatorId()) {
                 $validator = \Validator::make(
-                    $request->all(), [
+                    $request->all(),
+                    [
 
-                                       'deduction_option' => 'required',
-                                       'title' => 'required',
-                                       'amount' => 'required',
-                                   ]
+                        'deduction_option' => 'required',
+                        'title' => 'required',
+                        'amount' => 'required',
+                    ]
                 );
-                if($validator->fails())
-                {
+                if ($validator->fails()) {
                     $messages = $validator->getMessageBag();
 
                     return redirect()->back()->with('error', $messages->first());
@@ -115,42 +110,31 @@ class SaturationDeductionController extends Controller
                 $saturationdeduction->amount           = $request->amount;
                 $saturationdeduction->save();
 
-                if($saturationdeduction->type == 'percentage')
-                    {
-                        $employee          = Employee::find($saturationdeduction->employee_id);
-                        $saturationdeductionsal  = $saturationdeduction->amount * $employee->salary / 100;
-                    }
+                if ($saturationdeduction->type == 'percentage') {
+                    $employee          = Employee::find($saturationdeduction->employee_id);
+                    $saturationdeductionsal  = $saturationdeduction->amount * $employee->salary / 100;
+                }
 
                 return redirect()->back()->with('success', __('SaturationDeduction successfully updated.'));
-            }
-            else
-            {
+            } else {
                 return redirect()->back()->with('error', __('Permission denied.'));
             }
-        }
-        else
-        {
+        } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
     }
 
     public function destroy(SaturationDeduction $saturationdeduction)
     {
-        if(\Auth::user()->can('Delete Saturation Deduction'))
-        {
-            if($saturationdeduction->created_by == \Auth::user()->creatorId())
-            {
+        if (\Auth::user()->can('Delete Saturation Deduction')) {
+            if ($saturationdeduction->created_by == \Auth::user()->creatorId()) {
                 $saturationdeduction->delete();
 
                 return redirect()->back()->with('success', __('SaturationDeduction successfully deleted.'));
-            }
-            else
-            {
+            } else {
                 return redirect()->back()->with('error', __('Permission denied.'));
             }
-        }
-        else
-        {
+        } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
     }

@@ -56,6 +56,9 @@ class Employee extends Model
         'salary_type',
         'account_type',
         'salary',
+        'basic_salary',
+        'hra',
+        'da',
         'created_by',
         'is_admin_staff',
     ];
@@ -140,7 +143,16 @@ class Employee extends Model
         return $this->hasMany(Leave::class, 'employee_id');
     }
 
-
+    public function get_net_hra()
+    {
+        $hra = $this->hra * $this->salary / 100;
+        return round($hra, 2);
+    }
+    public function get_net_da()
+    {
+        $da = $this->da * $this->salary / 100;
+        return round($da, 2);
+    }
     public function get_net_salary()
     {
         $employee = Employee::with([
@@ -182,7 +194,8 @@ class Employee extends Model
                     try {
                         $diffMins    = \Carbon\Carbon::parse($shiftStart)->diffInMinutes(\Carbon\Carbon::parse($shiftEnd));
                         $hoursPerDay = $diffMins > 0 ? round($diffMins / 60, 2) : 0;
-                    } catch (\Throwable $_e) {}
+                    } catch (\Throwable $_e) {
+                    }
                 }
             }
 
@@ -208,12 +221,20 @@ class Employee extends Model
         // resolved monthly gross ($salary), not the raw stored value.
         $calcTotal = function ($items) use ($salary) {
             return $items->sum(function ($item) use ($salary) {
-                return $item->type === 'percentage'
-                    ? ($item->amount * $salary / 100)
-                    : $item->amount;
+                if ($item->type === 'percentage') {
+                    if (strtolower($item->title) == 'epf') {
+                        $empdeduction = 12 * $salary /  (2 * 100);
+                    } elseif (strtolower($item->title) == 'gpf') {
+                        $empdeduction = 6 * $salary /   (2 * 100);
+                    } else {
+                        $empdeduction = $item->amount * $salary / 100;
+                    }
+                    return $empdeduction;
+                } else {
+                    return $item->amount;
+                }
             });
         };
-
         $total_allowance            = $calcTotal($employee->allowances);
         $total_commission           = $calcTotal($employee->commissions);
         $total_bonus                = $calcTotal($employee->bonuses);
@@ -222,7 +243,6 @@ class Employee extends Model
         $total_saturation_deduction = $calcTotal($employee->saturationDeductions);
         $total_other_payment        = $calcTotal($employee->otherPayments);
         $total_pension              = $calcTotal($employee->pensions);
-
         // Overtime
         $total_overtime = $employee->overtimes->sum(function ($ot) {
             return $ot->number_of_days * $ot->hours * $ot->rate;
@@ -231,11 +251,19 @@ class Employee extends Model
         // ── Preview: full-month net salary assuming no absences ───────────────
         // No LOP deduction here — absence deduction only applies on the
         // actual payslip (employeePayslipDetail) after the month is complete.
-        $adjustments = $total_allowance + $total_commission + $total_bonus + $total_pearks
-            + $total_other_payment + $total_overtime
-            - $total_loan - $total_saturation_deduction - $total_pension;
+        // $adjustments = $total_allowance + $total_commission + $total_bonus + $total_pearks
+        //     + $total_other_payment + $total_overtime
+        //     - $total_loan - $total_saturation_deduction - $total_pension;
+        // dd('salary: ' . $employee->salary . "\n" . ' total_allowance: ' . $total_a?llowance . "\n" . ' total_pension: ' . $total_pension . "\n" . ' total_commission: ' . $total_commission . "\n" . ' total_loan: ' . $total_loan . "\n" . ' total_saturation_deduction: ' . $total_saturation_deduction . "\n" . ' total_bonus: ' . $total_bonus);
+        $basic_salary = $employee->basic_salary;
+        //         dump($total_loan
+        // - $total_pension
+        // - $total_saturation_deduction);
 
-        return round($salary + $adjustments, 2);
+        $netSalary = $employee->basic_salary + $this->get_net_hra()+$this->get_net_da() + $total_allowance + $total_other_payment + $total_commission - $total_loan - $total_pension + $total_bonus - $total_saturation_deduction;
+
+        // return round($salary + $adjustments, 2);
+        return round($netSalary, 2);
     }
 
     public static function allowance($id)

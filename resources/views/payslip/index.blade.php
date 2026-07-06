@@ -108,7 +108,7 @@
                             <input type="button" value="{{ __('Bulk Payment') }}" class="btn btn-primary" id="bulk_payment">
                         @endcan
 
-                       
+
                     </div>
                 </div>
             </div>
@@ -123,7 +123,14 @@
                                 @endif
                                 <th>{{ __('Payroll Type') }}</th>
                                 <th>{{ __('Salary') }}</th>
+                                <th>{{ __('Basic Salary') }}</th>
                                 <th>{{ __('Net Salary') }}</th>
+                                <th>{{ __('Allowances') }}</th>
+                                <th>{{ __('Pension') }}</th>
+                                <th>{{ __('Commission') }}</th>
+                                <th>{{ __('Loan/Advance') }}</th>
+                                <th>{{ __('Statutory Deductions') }}</th>
+                                <th>{{ __('Bonus') }}</th>
                                 <th>{{ __('Status') }}</th>
                                 <th>{{ __('Action') }}</th>
                             </tr>
@@ -260,21 +267,23 @@
                         var tr = '';
                         if (data.length > 0) {
                             $.each(data, function(indexInArray, valueOfElement) {
+                                console.log(valueOfElement);
+
                                 var status =
                                     '<div class="badge bg-danger p-2 px-3 payroll-status"><a href="javascript:void(0)" class="text-white">' +
-                                    valueOfElement[6] + '</a></div>';
-                                if (valueOfElement[6] == 'Paid' || valueOfElement[6] ==
+                                    valueOfElement[13] + '</a></div>';
+                                if (valueOfElement[13] == 'Paid' || valueOfElement[13] ==
                                     'paid') {
                                     var status =
                                         '<div class="badge bg-success p-2 px-3 payroll-status"><a href="javascript:void(0)" class="text-white">' +
-                                        valueOfElement[6] + '</a></div>';
+                                        valueOfElement[13] + '</a></div>';
                                 }
 
                                 var id = valueOfElement[0];
                                 var employee_id = valueOfElement[1];
-                                var payslip_id = valueOfElement[7];
+                                var payslip_id = valueOfElement[14];
 
-                                if (valueOfElement[7] != 0) {
+                                if (valueOfElement[14] != 0) {
                                     // var payslip =
                                     //     '<a href="javascript:void(0)" data-url="{{ url('payslip/pdf/') }}/' +
                                     //     id +
@@ -287,7 +296,7 @@
                                         '<i class="ti ti-report-money"></i>' +
                                         '</a>';
                                 }
-                                if (valueOfElement[6] == "UnPaid" && valueOfElement[7] != 0) {
+                                if (valueOfElement[13] == "UnPaid" && valueOfElement[14] != 0) {
                                     var clickToPaid =
                                         '<a href="{{ url('payslip/paysalary/') }}/' + id +
                                         '/' + datePicker +
@@ -297,7 +306,7 @@
                                     var clickToPaid = '';
                                 }
 
-                                if (valueOfElement[7] != 0 && valueOfElement[6] == "UnPaid") {
+                                if (valueOfElement[14] != 0 && valueOfElement[13] == "UnPaid") {
                                     var edit =
                                         '<a href="javascript:void(0)" data-url="{{ url('payslip/editemployee/') }}/' +
                                         payslip_id +
@@ -328,6 +337,13 @@
                                         '<td>' + valueOfElement[3] + '</td>' +
                                         '<td>' + valueOfElement[4] + '</td>' +
                                         '<td>' + valueOfElement[5] + '</td>' +
+                                        '<td>' + valueOfElement[6] + '</td>' +
+                                        '<td>' + valueOfElement[7] + '</td>' +
+                                        '<td>' + valueOfElement[8] + '</td>' +
+                                        '<td>' + valueOfElement[9] + '</td>' +
+                                        '<td>' + valueOfElement[10] + '</td>' +
+                                        '<td>' + valueOfElement[11] + '</td>' +
+                                        '<td>' + valueOfElement[12] + '</td>' +
                                         '<td>' + status + '</td>' +
                                         '<td>' + payslip + clickToPaid + edit + deleted +
                                         '</td>' +
@@ -340,6 +356,13 @@
                                         '<td>' + valueOfElement[2] + '</td> ' +
                                         '<td>' + valueOfElement[4] + '</td>' +
                                         '<td>' + valueOfElement[5] + '</td>' +
+                                        '<td>' + valueOfElement[6] + '</td>' +
+                                        '<td>' + valueOfElement[7] + '</td>' +
+                                        '<td>' + valueOfElement[8] + '</td>' +
+                                        '<td>' + valueOfElement[9] + '</td>' +
+                                        '<td>' + valueOfElement[10] + '</td>' +
+                                        '<td>' + valueOfElement[11] + '</td>' +
+                                        '<td>' + valueOfElement[12] + '</td>' +
                                         '<td>' + status + '</td>' +
                                         '<td>' + payslip + clickToPaid + edit + deleted +
                                         '</td>' +

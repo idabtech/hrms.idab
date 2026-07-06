@@ -20,6 +20,20 @@
                 <i class="ti ti-info-circle"></i>
                 {{ __('Enter the hourly rate. The payslip will calculate: hourly rate × actual hours worked = gross pay.') }}
             </small>
+        </div><div class="form-group">
+            <label for="salary-field-input" id="salary-field-label" class="col-form-label">{{ __('HRA') }} *</label>
+            {{ Form::number('hra', null, ['class' => 'form-control', 'step' => '0.01', 'required' => 'required', 'id' => 'salary-field-input', 'placeholder' => __('Enter HRA amount')]) }}
+            <small id="salary-field-hint" class="text-info" style="display:none;">
+                <i class="ti ti-info-circle"></i>
+                {{ __('Enter the HRA amount.') }}
+            </small>
+        </div><div class="form-group">
+            <label for="salary-field-input" id="salary-field-label" class="col-form-label">{{ __('DA') }} *</label>
+            {{ Form::number('da', null, ['class' => 'form-control', 'step' => '0.01', 'required' => 'required', 'id' => 'salary-field-input', 'placeholder' => __('Enter DA amount')]) }}
+            <small id="salary-field-hint" class="text-info" style="display:none;">
+                <i class="ti ti-info-circle"></i>
+                {{ __('Enter the DA amount.') }}
+            </small>
         </div>
         <div class="form-group">
             {{ Form::label('from_account_type', __('From Account'), ['class' => 'col-form-label']) }}

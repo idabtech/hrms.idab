@@ -30,6 +30,7 @@ $_themeHexMap  = [
 $_themeColor = str_starts_with($_themeName, '#')
     ? $_themeName
     : ($_themeHexMap[$_themeName] ?? '#584ED2');
+// dd($payslipDetail);
 
 // ── Currency ──────────────────────────────────────────────────────────────
 $_appSettings  = \App\Models\Utility::settings();
@@ -47,6 +48,10 @@ $slipLabel   = $carbonMonth->format('F Y');
 // ── All display values come directly from Utility::employeePayslipDetail ──
 // No duplicate calculation here — single source of truth.
 $_storedSalary   = (float) $payslipDetail['basic_salary'];
+   $_netSalary = (float) $payslipDetail['net_salary'];
+    $_salary = (float) $payslipDetail['salary'];
+    $_hra = (float) $payslipDetail['hra'];
+    $_da = (float) $payslipDetail['da'];
 $perDaySalary    = round((float) $payslipDetail['per_day_amount'], 2);
 $perHourSalary   = round((float) $payslipDetail['per_hour_amount'], 2);
 $officeDays      = (int) $payslipDetail['office_days'];
@@ -82,7 +87,7 @@ $payslipTypeName = \App\Models\PayslipType::find($employee->salary_type)?->name 
 
 // ── Earnings ──────────────────────────────────────────────────────────────
 $_basicLabel = $isHourly ? __('Gross Earned') : __('Basic Salary');
-$earRows = [['label' => $_basicLabel, 'amount' => $_storedSalary]];
+$earRows = [['label' => $_basicLabel, 'amount' => $_salary],['label' => 'HRA', 'amount' => $_hra],['label' => 'DA', 'amount' => $_da]];
 foreach ($payslipDetail['earning']['allowance'] as $_ar) {
     foreach (json_decode($_ar->allowance) as $_a) {
         $earRows[] = ['label' => $_a->title, 'amount' => $_a->type === 'percentage' ? round($_a->amount * $_storedSalary / 100, 2) : (float)$_a->amount];
@@ -101,11 +106,11 @@ foreach ($payslipDetail['earning']['otherPayment'] as $_op2) {
         $earRows[] = ['label' => $_op->title, 'amount' => $_op->type === 'percentage' ? round($_op->amount * $_storedSalary / 100, 2) : (float)$_op->amount];
     }
 }
-foreach ($payslipDetail['earning']['overTime'] as $_ot2) {
-    foreach (json_decode($_ot2->overtime) as $_ot) {
-        $earRows[] = ['label' => $_ot->title ?: __('Overtime'), 'amount' => (float)($_ot->number_of_days * $_ot->hours * $_ot->rate)];
-    }
-}
+// foreach ($payslipDetail['earning']['overTime'] as $_ot2) {
+//     foreach (json_decode($_ot2->overtime) as $_ot) {
+//         $earRows[] = ['label' => $_ot->title ?: __('Overtime'), 'amount' => (float)($_ot->number_of_days * $_ot->hours * $_ot->rate)];
+//     }
+// }
 // Extra days are informational only — not added to earnings
 
 // ── Deductions ────────────────────────────────────────────────────────────
@@ -117,27 +122,44 @@ foreach ($payslipDetail['deduction']['loan'] as $_lr) {
     }
 }
 foreach ($payslipDetail['deduction']['saturation_deduction'] as $_dr2) {
-    foreach (json_decode($_dr2->saturation_deduction) as $_dd) {
-        $_amt = $_dd->type === 'percentage' ? round($_dd->amount * $_dr2->basic_salary / 100, 2) : (float)$_dd->amount;
-        if ($_amt > 0) $dedRows[] = ['label' => $_dd->title, 'amount' => $_amt];
+        foreach (json_decode($_dr2->saturation_deduction) as $_dd) {
+            if (strtolower($_dd->title) == 'epf') {
+                $_amt = (12 * $_dr2->net_salary) / 100;
+            } elseif (strtolower($_dd->title) == 'gpf') {
+                $_amt = (6 * $_dr2->net_salary) / 100;
+            } else {
+                $_amt =
+                    $_dd->type === 'percentage'
+                        ? round(($_dd->amount * $_dr2->basic_salary) / 100, 2)
+                        : (float) $_dd->amount;
+            }
+            // $_amt =
+            //     $_dd->type === 'percentage'
+            //         ? round(($_dd->amount * $_dr2->basic_salary) / 100, 2)
+            //         : (float) $_dd->amount;
+            if ($_amt > 0) {
+                $dedRows[] = ['label' => $_dd->title, 'amount' => $_amt];
+            }
+        }
     }
-}
+
 foreach ($payslipDetail['deduction']['pansion'] as $_p) {
     $_amt = $_p->type === 'percentage' ? round($_p->amount * $employee->salary / 100, 2) : (float)$_p->amount;
     if ($_amt > 0) $dedRows[] = ['label' => $_p->title ?: __('Provident Fund'), 'amount' => $_amt];
 }
-foreach ($payslipDetail['deduction']['leave'] as $_lea) {
-    if ($_lea->empleave > 0) $dedRows[] = ['label' => __('Loss Of Pay'), 'amount' => (float)$_lea->empleave];
-}
-// Unpaid leave deduction — shown as a separate line
-if ($unpaidLeaveDeduction > 0) {
-    $dedRows[] = ['label' => __('Unpaid Leave') . ' (' . $unpaidLeaveDays . ' ' . __('days') . ')', 'amount' => $unpaidLeaveDeduction];
-}
+// foreach ($payslipDetail['deduction']['leave'] as $_lea) {
+//     if ($_lea->empleave > 0) $dedRows[] = ['label' => __('Loss Of Pay'), 'amount' => (float)$_lea->empleave];
+// }
+// // Unpaid leave deduction — shown as a separate line
+// if ($unpaidLeaveDeduction > 0) {
+//     $dedRows[] = ['label' => __('Unpaid Leave') . ' (' . $unpaidLeaveDays . ' ' . __('days') . ')', 'amount' => $unpaidLeaveDeduction];
+// }
 
 // No extra day payment added — extra days are informational only
-$totalEarnings   = $payslipDetail['totalEarning'] + $_storedSalary;
-$totalDeductions = $payslipDetail['totalDeduction'];
-$netSalary       = $payslipDetail['net_salary'];
+ $totalDeductions = $payslipDetail['totalDeduction'];
+    $amt=$_salary-$totalDeductions;
+    $totalEarnings = $payslipDetail['totalEarning'] + $_salary;
+    $netSalary = $payslipDetail['totalEarning'] +$amt;
 
 $_maxED = max(count($earRows), count($dedRows));
 while (count($earRows) < $_maxED) $earRows[] = ['label' => '', 'amount' => null];
@@ -367,7 +389,6 @@ body { font-family:DejaVu Sans, Arial, sans-serif; font-size:10px; color:#1a1a1a
         </td>
     </tr>
     </table>
-
     {{-- ══ C: Earnings | Deductions ══ --}}
     <table class="bt" style="border:none; border-top:1px solid {{ $_themeColor }}55;">
     <tr>

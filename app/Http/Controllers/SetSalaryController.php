@@ -109,6 +109,7 @@ class SetSalaryController extends Controller
             foreach ([$allowances, $commissions, $loans, $saturationdeductions, $otherpayments] as $collection) {
                 foreach ($collection as $value) {
                     if ($value->type === 'percentage') {
+
                         $value->tota_allow = ($value->amount * $employeeSalary) / 100;
                     } else {
                         $value->tota_allow = $value->amount;
@@ -183,9 +184,18 @@ class SetSalaryController extends Controller
             }
 
             foreach ($saturationdeductions as $value) {
+
                 if ($value->type == 'percentage') {
                     $employee = Employee::find($value->employee_id);
-                    $empsal = $value->amount * $employee->salary / 100;
+                    $deduction_options = DeductionOption::where('id', $value->deduction_option)->first();
+                    if (strtolower($deduction_options->name) == 'epf') {
+                        $empsal = 12 * $employee->basic_salary / 100;
+                    } elseif (strtolower($deduction_options->name) == 'gpf') {
+                        $empsal = 6 * $employee->basic_salary / 100;
+                    } else {
+                        $empsal = $value->amount * $employee->salary / 100;
+                    }
+                    // $empsal = $value->amount * $employee->salary / 100;
                     $value->tota_allow = $empsal;
                 }
             }
@@ -260,6 +270,8 @@ class SetSalaryController extends Controller
             [
                 'salary_type' => 'required',
                 'salary' => 'required',
+                'hra' => 'required',
+                'da' => 'required',
                 'from_account_type' => 'nullable',
             ]
         );
@@ -272,6 +284,9 @@ class SetSalaryController extends Controller
         $input = $request->all();
         $employee->fill($input);
         $employee->account_type = $input['from_account_type'];
+        $employee->basic_salary = $input['salary'] / 2;
+        $employee->hra = $input['hra'];
+        $employee->da = $input['da'];
         $employee->save();
 
         return redirect()->back()->with('success', 'Employee Salary Updated.');

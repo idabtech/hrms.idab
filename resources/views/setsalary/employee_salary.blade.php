@@ -57,6 +57,23 @@
                                     <div class="project-amnt pt-1">
                                         {{ \Auth::user()->priceFormat($employee->get_net_salary()) }}</div>
                                 </div>
+                            </div><div class="project-info d-flex text-sm mb-2">
+                                <div class="project-info-inner flex-grow-1">
+                                    <b class="m-0">{{ __('HRA') }}</b>
+                                </div>
+                                <div class="project-info-inner text-end">
+                                    <div class="project-amnt pt-1">
+
+                                        {{ \Auth::user()->priceFormat($employee->get_net_hra()) }}</div>
+                                </div>
+                            </div><div class="project-info d-flex text-sm mb-2">
+                                <div class="project-info-inner flex-grow-1">
+                                    <b class="m-0">{{ __('DA') }}</b>
+                                </div>
+                                <div class="project-info-inner text-end">
+                                    <div class="project-amnt pt-1">
+                                        {{ \Auth::user()->priceFormat($employee->get_net_da()) }}</div>
+                                </div>
                             </div>
 
                             <div class="project-info d-flex text-sm">
@@ -166,7 +183,7 @@
                         <div class="card-header">
                             <div class="row">
                                 <div class="col-6">
-                                    <h5>{{ __('Pansion') }}</h5>
+                                    <h5>{{ __('Pension') }}</h5>
                                 </div>
                                 @can('Create Pension')
                                     <div class="col text-end">
@@ -337,7 +354,7 @@
                         <div class="card-header">
                             <div class="row">
                                 <div class="col-11">
-                                    <h5>{{ __('Loan') }}</h5>
+                                    <h5>{{ __('Loan/Advance') }}</h5>
                                 </div>
                                 @can('Create Loan')
                                     <div class="col-1 text-end">
