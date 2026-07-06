@@ -125,6 +125,8 @@
                                 <th>{{ __('Salary') }}</th>
                                 <th>{{ __('Basic Salary') }}</th>
                                 <th>{{ __('Net Salary') }}</th>
+                                <th>{{ __('HRA') }}</th>
+                                <th>{{ __('DA') }}</th>
                                 <th>{{ __('Allowances') }}</th>
                                 <th>{{ __('Pension') }}</th>
                                 <th>{{ __('Commission') }}</th>
@@ -271,19 +273,19 @@
 
                                 var status =
                                     '<div class="badge bg-danger p-2 px-3 payroll-status"><a href="javascript:void(0)" class="text-white">' +
-                                    valueOfElement[13] + '</a></div>';
-                                if (valueOfElement[13] == 'Paid' || valueOfElement[13] ==
+                                    valueOfElement[15] + '</a></div>';
+                                if (valueOfElement[15] == 'Paid' || valueOfElement[15] ==
                                     'paid') {
                                     var status =
                                         '<div class="badge bg-success p-2 px-3 payroll-status"><a href="javascript:void(0)" class="text-white">' +
-                                        valueOfElement[13] + '</a></div>';
+                                        valueOfElement[15] + '</a></div>';
                                 }
 
                                 var id = valueOfElement[0];
                                 var employee_id = valueOfElement[1];
-                                var payslip_id = valueOfElement[14];
+                                var payslip_id = valueOfElement[16];
 
-                                if (valueOfElement[14] != 0) {
+                                if (valueOfElement[16] != 0) {
                                     // var payslip =
                                     //     '<a href="javascript:void(0)" data-url="{{ url('payslip/pdf/') }}/' +
                                     //     id +
@@ -296,7 +298,7 @@
                                         '<i class="ti ti-report-money"></i>' +
                                         '</a>';
                                 }
-                                if (valueOfElement[13] == "UnPaid" && valueOfElement[14] != 0) {
+                                if (valueOfElement[15] == "UnPaid" && valueOfElement[16] != 0) {
                                     var clickToPaid =
                                         '<a href="{{ url('payslip/paysalary/') }}/' + id +
                                         '/' + datePicker +
@@ -306,7 +308,7 @@
                                     var clickToPaid = '';
                                 }
 
-                                if (valueOfElement[14] != 0 && valueOfElement[13] == "UnPaid") {
+                                if (valueOfElement[16] != 0 && valueOfElement[15] == "UnPaid") {
                                     var edit =
                                         '<a href="javascript:void(0)" data-url="{{ url('payslip/editemployee/') }}/' +
                                         payslip_id +
@@ -344,6 +346,8 @@
                                         '<td>' + valueOfElement[10] + '</td>' +
                                         '<td>' + valueOfElement[11] + '</td>' +
                                         '<td>' + valueOfElement[12] + '</td>' +
+                                        '<td>' + valueOfElement[13] + '</td>' +
+                                        '<td>' + valueOfElement[14] + '</td>' +
                                         '<td>' + status + '</td>' +
                                         '<td>' + payslip + clickToPaid + edit + deleted +
                                         '</td>' +
@@ -363,6 +367,8 @@
                                         '<td>' + valueOfElement[10] + '</td>' +
                                         '<td>' + valueOfElement[11] + '</td>' +
                                         '<td>' + valueOfElement[12] + '</td>' +
+                                        '<td>' + valueOfElement[13] + '</td>' +
+                                        '<td>' + valueOfElement[14] + '</td>' +
                                         '<td>' + status + '</td>' +
                                         '<td>' + payslip + clickToPaid + edit + deleted +
                                         '</td>' +

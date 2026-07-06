@@ -25,6 +25,7 @@
                                     <th>{{ __('Name') }}</th>
                                     <th>{{ __('Payroll Type') }}</th>
                                     <th>{{ __('Salary') }}</th>
+                                    <th>{{ __('Basic Salary') }}</th>
                                     {{-- <th>{{ __('Loan/Advance') }}</th> --}}
                                     <th>{{ __('Net Salary') }}</th>
                                     <th width="200px">{{ __('Action') }}</th>
@@ -44,6 +45,7 @@
                                         <td>{{ $employee->name }}</td>
                                         <td>{{ !empty($employee->salary_type()) ? $employee->salary_type() : '-' }}</td>
                                         <td>{{ \Auth::user()->priceFormat($employee->salary) }}</td>
+                                        <td>{{ \Auth::user()->priceFormat($employee->basic_salary) }}</td>
                                         {{-- <td>{{ \Auth::user()->priceFormat($employee->loans->sum('amount')) }}</td> --}}
                                         <td>{{ !empty($employee->get_net_salary()) ? \Auth::user()->priceFormat($employee->get_net_salary()) : '-' }}
                                         </td>

@@ -189,9 +189,9 @@ class SetSalaryController extends Controller
                     $employee = Employee::find($value->employee_id);
                     $deduction_options = DeductionOption::where('id', $value->deduction_option)->first();
                     if (strtolower($deduction_options->name) == 'epf') {
-                        $empsal = 12 * $employee->basic_salary / 100;
+                        $empsal = ($employee->get_net_da() + $employee->basic_salary)*12/ 100;
                     } elseif (strtolower($deduction_options->name) == 'gpf') {
-                        $empsal = 6 * $employee->basic_salary / 100;
+                        $empsal = ($employee->get_net_da() + $employee->basic_salary) * 6  / 100;
                     } else {
                         $empsal = $value->amount * $employee->salary / 100;
                     }
@@ -257,7 +257,6 @@ class SetSalaryController extends Controller
             $salaryRevisions = SalaryRevision::where('employee_id', $employee->id)
                 ->orderBy('effective_from', 'desc')
                 ->get();
-
             return view('setsalary.employee_salary', compact('employee', 'payslip_type', 'peark', 'bonous', 'allowance_options', 'commissions', 'loan_options', 'overtimes', 'otherpayments', 'saturationdeductions', 'loans', 'deduction_options', 'allowances', 'pension', 'gross_salary', 'salaryRevisions'));
         }
     }

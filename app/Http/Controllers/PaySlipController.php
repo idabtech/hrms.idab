@@ -260,6 +260,8 @@ class PaySlipController extends Controller
                     $salary = round($detail['salary'], 2);
                     $basic_salary = round($detail['basic_salary'], 2);
                     $total_loan = round($detail['totalLoan'], 2);
+                    $total_hra = round($detail['hra'], 2);
+                    $total_da = round($detail['da'], 2);
                     $total_allowance = round($detail['totalAllowance'], 2);
                     $total_bonus = round($detail['total_bonus'], 2);
                     $total_commission = round($detail['totalCommission'], 2);
@@ -280,6 +282,8 @@ class PaySlipController extends Controller
                     $tmp[] = !empty($employee->basic_salary) ? \Auth::user()->priceFormat($employee->basic_salary) : '-';
                     $tmp[] = $salary > 0 ? \Auth::user()->priceFormat($salary) : '-';
                     $tmp[] = $liveNet > 0 ? \Auth::user()->priceFormat($liveNet) : '-';
+                    $tmp[] = $total_hra > 0 ? \Auth::user()->priceFormat($total_hra) : '-';
+                    $tmp[] = $total_da > 0 ? \Auth::user()->priceFormat($total_da) : '-';
                     $tmp[] = $total_allowance > 0 ? \Auth::user()->priceFormat($total_allowance) : '-';
                     $tmp[] = $total_pension > 0 ? \Auth::user()->priceFormat($total_pension) : '-';
                     $tmp[] = $total_loan > 0 ? \Auth::user()->priceFormat($total_loan) : '-';
@@ -300,6 +304,8 @@ class PaySlipController extends Controller
                 $tmp[] = !empty($employee->salary) ? \Auth::user()->priceFormat($employee->salary) : '-';
                 $tmp[] = $salary > 0 ? \Auth::user()->priceFormat($salary) : '-';
                 $tmp[] = $liveNet > 0 ? \Auth::user()->priceFormat($liveNet) : '-';
+                $tmp[] = $total_hra > 0 ? \Auth::user()->priceFormat($total_hra) : '-';
+                $tmp[] = $total_da > 0 ? \Auth::user()->priceFormat($total_da) : '-';
                 $tmp[] = $total_allowance > 0 ? \Auth::user()->priceFormat($total_allowance) : '-';
                 $tmp[] = $total_pension > 0 ? \Auth::user()->priceFormat($total_pension) : '-';
                 $tmp[] = $total_loan > 0 ? \Auth::user()->priceFormat($total_loan) : '-';

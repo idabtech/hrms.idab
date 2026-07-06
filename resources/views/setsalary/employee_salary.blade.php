@@ -1,5 +1,17 @@
 @extends('layouts.admin')
-
+@push('css-page')
+<style>
+    .emp-basic {
+        background-color: aliceblue;
+    }
+    .deduction {
+        background-color: #f2e1e1;
+    }
+    .earning {
+        background-color: #deefdf;
+    }
+</style>
+@endpush
 @section('page-title')
     {{ __('Employee Set Salary') }}
 @endsection
@@ -18,7 +30,7 @@
         <div class="col-12">
             <div class="row">
                 <div class="col-xl-6">
-                    <div class="card set-card">
+                    <div class="card set-card emp-basic">
                         <div class="card-header">
                             <div class="row">
                                 <div class="col-11">
@@ -51,13 +63,22 @@
 
                             <div class="project-info d-flex text-sm mb-2">
                                 <div class="project-info-inner flex-grow-1">
+                                    <b class="m-0">{{ __('Basic Salary') }}</b>
+                                </div>
+                                <div class="project-info-inner text-end">
+                                    <div class="project-amnt pt-1">
+                                        {{ \Auth::user()->priceFormat($employee->basic_salary) }}</div>
+                                </div>
+                            </div><div class="project-info d-flex text-sm mb-2">
+                                <div class="project-info-inner flex-grow-1">
                                     <b class="m-0">{{ __('Net Salary') }}</b>
                                 </div>
                                 <div class="project-info-inner text-end">
                                     <div class="project-amnt pt-1">
                                         {{ \Auth::user()->priceFormat($employee->get_net_salary()) }}</div>
                                 </div>
-                            </div><div class="project-info d-flex text-sm mb-2">
+                            </div>
+                            <div class="project-info d-flex text-sm mb-2">
                                 <div class="project-info-inner flex-grow-1">
                                     <b class="m-0">{{ __('HRA') }}</b>
                                 </div>
@@ -90,7 +111,7 @@
 
                 <!-- allowance -->
                 <div class="col-md-6">
-                    <div class="card set-card">
+                    <div class="card set-card earning">
                         <div class="card-header">
                             <div class="row">
                                 <div class="col-11">
@@ -179,7 +200,7 @@
 
                 <!--pension-->
                 <div class="col-md-6">
-                    <div class="card set-card">
+                    <div class="card set-card deduction">
                         <div class="card-header">
                             <div class="row">
                                 <div class="col-6">
@@ -259,7 +280,7 @@
 
                 <!-- Commission -->
                 <div class="col-md-6">
-                    <div class="card set-card">
+                    <div class="card set-card earning">
                         <div class="card-header">
                             <div class="row">
                                 <div class="col-11">
@@ -350,7 +371,7 @@
 
                 <!-- loan-->
                 <div class="col-md-6">
-                    <div class="card set-card">
+                    <div class="card set-card deduction">
                         <div class="card-header">
                             <div class="row">
                                 <div class="col-11">
@@ -440,7 +461,7 @@
 
                 <!-- Saturation -->
                 <div class="col-md-6">
-                    <div class="card set-card">
+                    <div class="card set-card deduction">
                         <div class="card-header">
                             <div class="row">
                                 <div class="col-11">
@@ -533,7 +554,7 @@
 
                 <!-- other payment-->
                 <div class="col-md-6">
-                    <div class="card set-card">
+                    <div class="card set-card earning">
                         <div class="card-header">
                             <div class="row">
                                 <div class="col-11">
@@ -622,7 +643,7 @@
 
                 <!--Perk-->
                 <div class="col-md-6">
-                    <div class="card set-card">
+                    <div class="card set-card earning">
                         <div class="card-header">
                             <div class="row">
                                 <div class="col-6">
@@ -706,7 +727,7 @@
 
                 <!--bonous-->
                 <div class="col-md-6">
-                    <div class="card set-card">
+                    <div class="card set-card earning">
                         <div class="card-header">
                             <div class="row">
                                 <div class="col-6">
@@ -789,7 +810,7 @@
 
                 <!--overtime-->
                 <div class="col-md-6">
-                    <div class="card set-card">
+                    <div class="card set-card earning">
                         <div class="card-header">
                             <div class="row">
                                 <div class="col-11">

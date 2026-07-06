@@ -85,7 +85,11 @@
     // ── Earnings ──────────────────────────────────────────────────────────────
     $_basicLabel = $isHourly ? __('Gross Earned') : __('Basic Salary');
     // $earRows = [['label' => $_basicLabel, 'amount' => $_storedSalary]];
-    $earRows = [['label' => $_basicLabel, 'amount' => $_salary],['label' => 'HRA', 'amount' => $_hra],['label' => 'DA', 'amount' => $_da]];
+    $earRows = [
+        ['label' => $_basicLabel, 'amount' => $_salary],
+        ['label' => 'HRA', 'amount' => $_hra],
+        ['label' => 'DA', 'amount' => $_da],
+    ];
 
     foreach ($payslipDetail['earning']['allowance'] as $_ar) {
         foreach (json_decode($_ar->allowance) as $_a) {
@@ -141,16 +145,17 @@
                     ? round(($_ln->amount * $_lr->basic_salary) / 100, 2)
                     : (float) $_ln->amount;
             if ($_amt > 0) {
-                      $dedRows[] = ['label' => $_ln->title ?: __('Loan'), 'amount' => $_amt];
+                $dedRows[] = ['label' => $_ln->title ?: __('Loan'), 'amount' => $_amt];
             }
         }
     }
     foreach ($payslipDetail['deduction']['saturation_deduction'] as $_dr2) {
         foreach (json_decode($_dr2->saturation_deduction) as $_dd) {
             if (strtolower($_dd->title) == 'epf') {
-                $_amt = (12 * $_dr2->net_salary) / 100;
+
+                $_amt = (($employee->get_net_da() + $_dr2->net_salary) * 12) / 100;
             } elseif (strtolower($_dd->title) == 'gpf') {
-                $_amt = (6 * $_dr2->net_salary) / 100;
+                $_amt = (($employee->get_net_da() + $_dr2->net_salary) * 6) / 100;
             } else {
                 $_amt =
                     $_dd->type === 'percentage'
@@ -188,9 +193,9 @@
 
     // No extra day payment added — extra days are informational only
     $totalDeductions = $payslipDetail['totalDeduction'];
-    $amt=$_salary-$totalDeductions;
+    $amt = $_salary - $totalDeductions;
     $totalEarnings = $payslipDetail['totalEarning'] + $_salary;
-    $netSalary = $payslipDetail['totalEarning'] +$amt;
+    $netSalary = $payslipDetail['totalEarning'] + $amt;
 
     $_maxED = max(count($earRows), count($dedRows));
     while (count($earRows) < $_maxED) {
@@ -756,7 +761,6 @@
                                 <td style="padding-left:10px;">{{ $er['label'] }}</td>
                                 <td class="ra">
                                     @if ($er['amount'] !== null)
-
                                         {{ $_fmtMoney($er['amount']) }}
                                     @endif
                                 </td>
@@ -814,8 +818,7 @@
                     <table class="ps-net-inner">
                         <tr>
                             <td class="ps-net-lbl">{{ __('Net Pay') }}</td>
-                            @if($netSalary > 0)
-
+                            @if ($netSalary > 0)
                                 <td class="ps-net-val">{{ $_fmtMoney($netSalary) }}</td>
                             @else
                                 <td class="ps-net-val">{{ $_fmtMoney(0) }}</td>

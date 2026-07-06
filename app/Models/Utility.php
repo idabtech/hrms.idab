@@ -652,11 +652,13 @@ class Utility extends Model
                         $deduction_option->title = $currentOptName;
                     }
                 }
+                $emp = Employee::find($employeeId);
+
                 if ($deduction_option->type == 'percentage') {
                     if (strtolower($deduction_option->title) == 'epf') {
-                        $empdeduction = 12 * $deductions->net_salary / 100;
+                        $empdeduction = ($emp->get_net_da() + $deductions->net_salary) * 12/ 100;
                     } elseif (strtolower($deduction_option->title) == 'gpf') {
-                        $empdeduction = 6 * $deductions->net_salary / 100;
+                        $empdeduction = ($emp->get_net_da() + $deductions->net_salary) * 6   / 100;
                     } else {
                         $empdeduction = $deduction_option->amount * $deductions->basic_salary / 100;
                     }
@@ -1190,9 +1192,8 @@ class Utility extends Model
 
 
 
-        $payslip['hra']              = $employess->hra * $salary / 100;
-        
-        $payslip['da']              = $employess->da * $salary / 100;
+        $payslip['hra']              = $employess->get_net_hra();
+        $payslip['da']              = $employess->get_net_da();
         $payslip['earning']              = $earning;
         $payslip['totalEarning']         = $totalAllowance + $totalCommission
             + $totalotherpayment

@@ -35,7 +35,6 @@ class SaturationDeductionController extends Controller
 
                 return redirect()->back()->with('error', $messages->first());
             }
-
             $saturationdeduction                   = new SaturationDeduction;
             $saturationdeduction->employee_id      = $request->employee_id;
             $saturationdeduction->deduction_option = $request->deduction_option;
@@ -44,13 +43,15 @@ class SaturationDeductionController extends Controller
             $saturationdeduction->amount           = $request->amount;
             $saturationdeduction->created_by       = \Auth::user()->creatorId();
             $saturationdeduction->save();
+            
+
 
             if ($saturationdeduction->type == 'percentage') {
                 $employee          = Employee::find($saturationdeduction->employee_id);
                 if (strtolower($saturationdeduction->title) == 'epf') {
-                    $empdeduction = 12 * $employee->net_salary / 100;
+                    $empdeduction =  ($employee->get_net_da() + $employee->net_salary) * 12 / 100;
                 } elseif (strtolower($saturationdeduction->title) == 'gpf') {
-                    $empdeduction = 6 * $employee->net_salary / 100;
+                    $empdeduction = ($employee->get_net_da() + $employee->net_salary) * 6  / 100;
                 } else {
                     $empdeduction = $saturationdeduction->amount * $employee->salary / 100;
                 }

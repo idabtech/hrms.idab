@@ -145,12 +145,12 @@ class Employee extends Model
 
     public function get_net_hra()
     {
-        $hra = $this->hra * $this->salary / 100;
+        $hra = $this->hra * $this->basic_salary / 100;
         return round($hra, 2);
     }
     public function get_net_da()
     {
-        $da = $this->da * $this->salary / 100;
+        $da = $this->da * $this->basic_salary / 100;
         return round($da, 2);
     }
     public function get_net_salary()
@@ -223,9 +223,9 @@ class Employee extends Model
             return $items->sum(function ($item) use ($salary) {
                 if ($item->type === 'percentage') {
                     if (strtolower($item->title) == 'epf') {
-                        $empdeduction = 12 * $salary /  (2 * 100);
+                        $empdeduction = ($this->get_net_da() +  $salary) *12 /  (2 * 100);
                     } elseif (strtolower($item->title) == 'gpf') {
-                        $empdeduction = 6 * $salary /   (2 * 100);
+                        $empdeduction = ($this->get_net_da() +  $salary) * 6   /  (2 * 100);
                     } else {
                         $empdeduction = $item->amount * $salary / 100;
                     }
@@ -235,6 +235,7 @@ class Employee extends Model
                 }
             });
         };
+
         $total_allowance            = $calcTotal($employee->allowances);
         $total_commission           = $calcTotal($employee->commissions);
         $total_bonus                = $calcTotal($employee->bonuses);
