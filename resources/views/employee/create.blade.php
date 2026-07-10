@@ -479,6 +479,42 @@
                 </div>
             </div>
 
+            {{-- ── Leave Type Assignment ─────────────────────────────────────────── --}}
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card em-card">
+                        <div class="card-header">
+                            <h5>{{ __('Assign Leave Types') }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="form-group col-md-12">
+                                    {!! Form::label('leave_types', __('Leave Types'), ['class' => 'form-label']) !!}
+                                    <small class="text-muted d-block mb-2">{{ __('Select the leave types this employee can apply for. If none selected, all leave types will be available.') }}</small>
+                                    <div class="row">
+                                        @foreach ($leaveTypes as $leaveType)
+                                            <div class="col-md-4 col-sm-6 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        name="leave_types[]"
+                                                        value="{{ $leaveType->id }}"
+                                                        id="leave_type_{{ $leaveType->id }}"
+                                                        {{ in_array($leaveType->id, old('leave_types', [])) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="leave_type_{{ $leaveType->id }}">
+                                                        {{ $leaveType->title }}
+                                                        <small class="text-muted">({{ $leaveType->days }} {{ __('days') }}{{ $leaveType->is_paid ? ', ' . __('Paid') : ', ' . __('Unpaid') }})</small>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="float-end">
                 <button type="submit" class="btn  btn-primary">{{ 'Create' }}</button>
             </div>

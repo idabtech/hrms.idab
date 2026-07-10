@@ -54,7 +54,7 @@
                                 <div class="col-xl col-lg-3 col-md-6 col-sm-12 col-12">
                                     <div class="btn-box">
                                         {{ Form::label('leave_type', __('Leave Type'), ['class' => 'form-label']) }}
-                                        {{ Form::select('leave_type', $leaveTypes, isset($_GET['leave_type']) ? $_GET['leave_type'] : '', ['class' => 'form-control select']) }}
+                                        {{ Form::select('leave_type', $leaveTypes, isset($_GET['leave_type']) ? $_GET['leave_type'] : '', ['class' => 'form-control select', 'id' => 'filter_leave_type']) }}
                                     </div>
                                 </div>
                                 <div class="col-xl col-lg-3 col-md-6 col-sm-12 col-12">
@@ -391,6 +391,47 @@
                         );
                         if (oldval && oldval == value.id) {
                             $('#leave_type_id option[value="' + oldval + '"]').prop('selected', true);
+                        }
+                    });
+                }
+            });
+        });
+
+        // ── Filter: update Leave Type dropdown when employee filter changes ──
+        $(document).on('change', '#filter_employee_id', function() {
+            var employee_id = $(this).val();
+
+            if (!employee_id) {
+                // Reset to show all leave types
+                var allTypes = {!! json_encode($leaveTypes) !!};
+                $('#filter_leave_type').empty();
+                $('#filter_leave_type').append('<option value="">{{ __("All") }}</option>');
+                $.each(allTypes, function(id, title) {
+                    if (id !== '') {
+                        $('#filter_leave_type').append('<option value="' + id + '">' + title + '</option>');
+                    }
+                });
+                return;
+            }
+
+            $.ajax({
+                url: '{{ route('leave.jsoncount') }}',
+                type: 'POST',
+                data: {
+                    "employee_id": employee_id,
+                    "_token": "{{ csrf_token() }}",
+                },
+                success: function(data) {
+                    var oldval = $('#filter_leave_type').val();
+                    $('#filter_leave_type').empty();
+                    $('#filter_leave_type').append('<option value="">{{ __("All") }}</option>');
+
+                    $.each(data, function(key, value) {
+                        $('#filter_leave_type').append(
+                            '<option value="' + value.id + '">' + value.title + '</option>'
+                        );
+                        if (oldval && oldval == value.id) {
+                            $('#filter_leave_type option[value="' + value.id + '"]').prop('selected', true);
                         }
                     });
                 }

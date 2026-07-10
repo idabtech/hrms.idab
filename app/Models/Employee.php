@@ -143,6 +143,15 @@ class Employee extends Model
         return $this->hasMany(Leave::class, 'employee_id');
     }
 
+    /**
+     * Leave types assigned to this employee (pivot).
+     */
+    public function leaveTypes()
+    {
+        return $this->belongsToMany(LeaveType::class, 'employee_leave_types', 'employee_id', 'leave_type_id')
+                    ->withTimestamps();
+    }
+
     public function get_net_hra()
     {
         $hra = $this->hra * $this->basic_salary / 100;

@@ -42,14 +42,18 @@
             <div class="form-group">
                 {{ Form::label('leave_type_id', __('Leave Type'), ['class' => 'col-form-label']) }}<x-required></x-required>
                 <select name="leave_type_id" id="leave_type_id" class="form-control select" required>
-                    <option value="">{{ __('Select Leave Type') }}</option>
-                    @foreach ($leavetypes as $ltype)
-                        <option value="{{ $ltype->id }}"
-                            data-is-paid="{{ $ltype->is_paid ? 1 : 0 }}"
-                            data-days="{{ $ltype->days }}">
-                            {{ $ltype->title }} ({{ $ltype->days }} {{ __('days') }})
-                        </option>
-                    @endforeach
+                    @if (\Auth::user()->type != 'employee')
+                        <option value="">{{ __('Select Employee First') }}</option>
+                    @else
+                        <option value="">{{ __('Select Leave Type') }}</option>
+                        @foreach ($leavetypes as $ltype)
+                            <option value="{{ $ltype->id }}"
+                                data-is-paid="{{ $ltype->is_paid ? 1 : 0 }}"
+                                data-days="{{ $ltype->days }}">
+                                {{ $ltype->title }} ({{ $ltype->days }} {{ __('days') }})
+                            </option>
+                        @endforeach
+                    @endif
                 </select>
                 @can('Create Leave Type')
                     <div class="text-xs mt-1">
