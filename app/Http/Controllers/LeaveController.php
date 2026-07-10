@@ -57,12 +57,15 @@ class LeaveController extends Controller
             $leaves = $query->orderBy('id', 'desc')->get();
 
             // Stat cards: leave balance per type for current employee
-            $assignedIds = $employee->leaveTypes()->pluck('leave_type_id')->toArray();
+            $assignedLeaveTypesForCards = $employee->leaveTypes()->get();
 
-            if (empty($assignedIds)) {
+            if ($assignedLeaveTypesForCards->isEmpty()) {
                 // No leave types assigned — no balance cards
                 $leaveBalances = collect();
             } else {
+                $assignedIds = $assignedLeaveTypesForCards->pluck('id')->toArray();
+                $pivotDaysMap = $assignedLeaveTypesForCards->pluck('pivot.total_days', 'id')->toArray();
+
                 $leaveBalanceQuery = LeaveType::select(
                         \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_used, leave_types.title, leave_types.days, leave_types.id')
                     )
@@ -78,7 +81,10 @@ class LeaveController extends Controller
                 $leaveBalances = $leaveBalanceQuery
                     ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days')
                     ->get()
-                    ->map(function ($item) {
+                    ->map(function ($item) use ($pivotDaysMap) {
+                        // Use per-employee total_days from pivot (treat 0 as "use global default")
+                        $pivotDays = $pivotDaysMap[$item->id] ?? 0;
+                        $item->days = $pivotDays > 0 ? $pivotDays : $item->days;
                         $item->remaining = max(0, $item->days - $item->total_used);
                         return $item;
                     });
@@ -123,12 +129,15 @@ class LeaveController extends Controller
             if (!empty($request->employee)) {
                 // Get assigned leave types for the selected employee
                 $selectedEmp = Employee::find($request->employee);
-                $assignedIds = $selectedEmp ? $selectedEmp->leaveTypes()->pluck('leave_type_id')->toArray() : [];
+                $assignedLeaveTypesAdmin = $selectedEmp ? $selectedEmp->leaveTypes()->get() : collect();
 
-                if (empty($assignedIds)) {
+                if ($assignedLeaveTypesAdmin->isEmpty()) {
                     // No leave types assigned — no balance cards
                     $leaveBalances = collect();
                 } else {
+                    $assignedIds = $assignedLeaveTypesAdmin->pluck('id')->toArray();
+                    $pivotDaysMap = $assignedLeaveTypesAdmin->pluck('pivot.total_days', 'id')->toArray();
+
                     $leaveBalances = LeaveType::select(
                             \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_used, leave_types.title, leave_types.days, leave_types.id')
                         )
@@ -142,7 +151,9 @@ class LeaveController extends Controller
                         ->whereIn('leave_types.id', $assignedIds)
                         ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days')
                         ->get()
-                        ->map(function ($item) {
+                        ->map(function ($item) use ($pivotDaysMap) {
+                            $pivotDays = $pivotDaysMap[$item->id] ?? 0;
+                            $item->days = $pivotDays > 0 ? $pivotDays : $item->days;
                             $item->remaining = max(0, $item->days - $item->total_used);
                             return $item;
                         });
@@ -184,13 +195,21 @@ class LeaveController extends Controller
 
         if (Auth::user()->type == 'employee') {
             $employees = Employee::where('user_id', '=', \Auth::user()->id)->first();
-            // For employee users, only show their assigned leave types
-            $assignedIds = $employees ? $employees->leaveTypes()->pluck('leave_type_id')->toArray() : [];
-            if (!empty($assignedIds)) {
-                $leavetypes = LeaveType::where('created_by', '=', \Auth::user()->creatorId())
-                                ->whereIn('id', $assignedIds)->get();
+            // For employee users, only show their assigned leave types with per-employee data
+            if ($employees) {
+                $assignedLeaveTypes = $employees->leaveTypes()->get();
+                if ($assignedLeaveTypes->isNotEmpty()) {
+                    // Override global values with per-employee pivot values (treat 0 as "use global")
+                    $leavetypes = $assignedLeaveTypes->map(function ($lt) {
+                        $pivotDays = $lt->pivot->total_days ?? 0;
+                        $lt->days = $pivotDays > 0 ? $pivotDays : $lt->days;
+                        $lt->is_paid = $lt->pivot->is_paid ?? $lt->is_paid;
+                        return $lt;
+                    });
+                } else {
+                    $leavetypes = collect();
+                }
             } else {
-                // No leave types assigned — show empty
                 $leavetypes = collect();
             }
         } else {
@@ -262,7 +281,11 @@ class LeaveController extends Controller
             ->whereBetween('created_at', [$date['start_date'], $date['end_date']])
             ->sum('total_leave_days');
 
-        $remaining = $leave_type->days - $leaves_used;
+        // Use per-employee total_days from pivot if assigned, otherwise fallback to global
+        $empLeaveType = \App\Models\EmployeeLeaveType::where('employee_id', $request->employee_id)
+            ->where('leave_type_id', $leave_type->id)->first();
+        $allowedDays = ($empLeaveType && $empLeaveType->total_days > 0) ? $empLeaveType->total_days : $leave_type->days;
+        $remaining = $allowedDays - $leaves_used;
 
         if ($paidDays > $remaining) {
             return redirect()->back()->with('error', __('You are not eligible for leave.'));
@@ -352,11 +375,19 @@ class LeaveController extends Controller
 
         if (Auth::user()->type == 'employee') {
             $employees = Employee::where('user_id', '=', \Auth::user()->id)->first();
-            // For employee users, only show their assigned leave types
-            $assignedIds = $employees ? $employees->leaveTypes()->pluck('leave_type_id')->toArray() : [];
-            if (!empty($assignedIds)) {
-                $leavetypes = LeaveType::where('created_by', '=', \Auth::user()->creatorId())
-                                ->whereIn('id', $assignedIds)->get();
+            // For employee users, only show their assigned leave types with per-employee data
+            if ($employees) {
+                $assignedLeaveTypes = $employees->leaveTypes()->get();
+                if ($assignedLeaveTypes->isNotEmpty()) {
+                    $leavetypes = $assignedLeaveTypes->map(function ($lt) {
+                        $pivotDays = $lt->pivot->total_days ?? 0;
+                        $lt->days = $pivotDays > 0 ? $pivotDays : $lt->days;
+                        $lt->is_paid = $lt->pivot->is_paid ?? $lt->is_paid;
+                        return $lt;
+                    });
+                } else {
+                    $leavetypes = collect();
+                }
             } else {
                 $leavetypes = collect();
             }
@@ -430,7 +461,11 @@ class LeaveController extends Controller
             ->whereBetween('created_at', [$date['start_date'], $date['end_date']])
             ->sum('total_leave_days');
 
-        $remaining = $leave_type->days - $leaves_used;
+        // Use per-employee total_days from pivot if assigned, otherwise fallback to global
+        $empLeaveType = \App\Models\EmployeeLeaveType::where('employee_id', $request->employee_id)
+            ->where('leave_type_id', $leave_type->id)->first();
+        $allowedDays = ($empLeaveType && $empLeaveType->total_days > 0) ? $empLeaveType->total_days : $leave_type->days;
+        $remaining = $allowedDays - $leaves_used;
 
         if ($paidDays > $remaining) {
             return redirect()->back()->with('error', __('You are not eligible for leave.'));
@@ -646,12 +681,21 @@ class LeaveController extends Controller
     {
         $date = Utility::AnnualLeaveCycle();
 
-        // Get leave types assigned to this specific employee
+        // Get leave types assigned to this specific employee (with pivot total_days)
         $employee = Employee::find($request->employee_id);
-        $assignedLeaveTypeIds = [];
-        if ($employee) {
-            $assignedLeaveTypeIds = $employee->leaveTypes()->pluck('leave_type_id')->toArray();
+        if (!$employee) {
+            return collect();
         }
+
+        $assignedLeaveTypes = $employee->leaveTypes()->get();
+        if ($assignedLeaveTypes->isEmpty()) {
+            return collect();
+        }
+
+        $assignedLeaveTypeIds = $assignedLeaveTypes->pluck('id')->toArray();
+        // Build maps from pivot
+        $pivotDaysMap = $assignedLeaveTypes->pluck('pivot.total_days', 'id')->toArray();
+        $pivotIsPaidMap = $assignedLeaveTypes->pluck('pivot.is_paid', 'id')->toArray();
 
         $query = LeaveType::select(
                 \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_leave, leave_types.title, leave_types.days, leave_types.id, leave_types.is_paid')
@@ -662,21 +706,17 @@ class LeaveController extends Controller
                 $join->where('leaves.status', '=', 'Approved');
                 $join->whereBetween('leaves.created_at', [$date['start_date'], $date['end_date']]);
             })
-            ->where('leave_types.created_by', '=', \Auth::user()->creatorId());
-
-        // If employee has assigned leave types, filter to only those
-        // If no leave types are assigned, return empty (employee must have assignments)
-        if (!empty($assignedLeaveTypeIds)) {
-            $query->whereIn('leave_types.id', $assignedLeaveTypeIds);
-        } else {
-            // No leave types assigned — return empty collection
-            return collect();
-        }
+            ->where('leave_types.created_by', '=', \Auth::user()->creatorId())
+            ->whereIn('leave_types.id', $assignedLeaveTypeIds);
 
         $leave_counts = $query
             ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days', 'leave_types.is_paid')
             ->get()
-            ->map(function ($item) {
+            ->map(function ($item) use ($pivotDaysMap, $pivotIsPaidMap) {
+                // Use per-employee values from pivot (treat 0 as "use global default")
+                $pivotDays = $pivotDaysMap[$item->id] ?? 0;
+                $item->days = $pivotDays > 0 ? $pivotDays : $item->days;
+                $item->is_paid = $pivotIsPaidMap[$item->id] ?? $item->is_paid;
                 $item->remaining = max(0, $item->days - $item->total_leave);
                 return $item;
             });
