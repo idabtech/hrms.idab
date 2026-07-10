@@ -1230,8 +1230,8 @@ class Utility extends Model
 
 
 
-        $payslip['hra']              = $employess->get_net_hra();
-        $payslip['da']              = $employess->get_net_da();
+        $payslip['hra']              = self::isUkRequest() ? 0 : $employess->get_net_hra();
+        $payslip['da']              = self::isUkRequest() ? 0 : $employess->get_net_da();
         $payslip['earning']              = $earning;
         $payslip['totalEarning']         = $totalAllowance + $totalCommission
             + $totalotherpayment

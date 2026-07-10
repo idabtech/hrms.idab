@@ -2,13 +2,21 @@
 @push('css-page')
 <style>
     .emp-basic {
-        background-color: aliceblue;
+        background-color: #fff;
     }
     .deduction {
-        background-color: #f2e1e1;
+        background-color: #fff;
+        border: 1px solid #dc3545;
+    }
+    .deduction .card-header h5 {
+        color: #dc3545;
     }
     .earning {
-        background-color: #deefdf;
+        background-color: #fff;
+        border: 1px solid #198754;
+    }
+    .earning .card-header h5 {
+        color: #198754;
     }
 </style>
 @endpush
@@ -56,8 +64,7 @@
                                 </div>
                                 <div class="project-info-inner text-end">
                                     <b class="m-0">{{ __('Salary') }}</b>
-                                    <div class="project-amnt pt-1">{{ \Auth::user()->priceFormat($employee->salary) }}
-                                    </div>
+                                    <div class="project-amnt pt-1">{{ \Auth::user()->priceFormat($employee->salary) }}</div>
                                 </div>
                             </div>
 
@@ -66,40 +73,44 @@
                                     <b class="m-0">{{ __('Basic Salary') }}</b>
                                 </div>
                                 <div class="project-info-inner text-end">
-                                    <div class="project-amnt pt-1">
-                                        {{ \Auth::user()->priceFormat($employee->basic_salary) }}</div>
+                                    <div class="project-amnt pt-1">{{ \Auth::user()->priceFormat($employee->basic_salary) }}</div>
                                 </div>
-                            </div><div class="project-info d-flex text-sm mb-2">
+                            </div>
+
+                            <div class="project-info d-flex text-sm mb-2">
                                 <div class="project-info-inner flex-grow-1">
                                     <b class="m-0">{{ __('Net Salary') }}</b>
                                 </div>
                                 <div class="project-info-inner text-end">
-                                    <div class="project-amnt pt-1">
-                                        {{ \Auth::user()->priceFormat($employee->get_net_salary()) }}</div>
+                                    <div class="project-amnt pt-1">{{ \Auth::user()->priceFormat($employee->get_net_salary()) }}</div>
                                 </div>
                             </div>
+
+                            @if (!\App\Models\Utility::isUkRequest())
                             <div class="project-info d-flex text-sm mb-2">
                                 <div class="project-info-inner flex-grow-1">
-                                    <b class="m-0">{{ __('HRA') }}</b>
+                                    <b class="m-0">{{ __('HRA') }} <small class="text-muted">({{ $employee->hra }}%)</small></b>
                                 </div>
                                 <div class="project-info-inner text-end">
-                                    <div class="project-amnt pt-1">
-
-                                        {{ \Auth::user()->priceFormat($employee->get_net_hra()) }}</div>
-                                </div>
-                            </div><div class="project-info d-flex text-sm mb-2">
-                                <div class="project-info-inner flex-grow-1">
-                                    <b class="m-0">{{ __('DA') }}</b>
-                                </div>
-                                <div class="project-info-inner text-end">
-                                    <div class="project-amnt pt-1">
-                                        {{ \Auth::user()->priceFormat($employee->get_net_da()) }}</div>
+                                    <div class="project-amnt pt-1">{{ \Auth::user()->priceFormat($employee->get_net_hra()) }}</div>
                                 </div>
                             </div>
+
+                            <div class="project-info d-flex text-sm mb-2">
+                                <div class="project-info-inner flex-grow-1">
+                                    <b class="m-0">{{ __('DA') }} <small class="text-muted">({{ $employee->da }}%)</small></b>
+                                </div>
+                                <div class="project-info-inner text-end">
+                                    <div class="project-amnt pt-1">{{ \Auth::user()->priceFormat($employee->get_net_da()) }}</div>
+                                </div>
+                            </div>
+                            @endif
 
                             <div class="project-info d-flex text-sm">
                                 <div class="project-info-inner flex-grow-1">
                                     <b class="m-0">{{ __('Account Type') }}</b>
+                                </div>
+                                <div class="project-info-inner text-end">
                                     <div class="project-amnt pt-1">
                                         {{ !empty($employee->account_type()) ? $employee->account_type() : '-' }}
                                     </div>
