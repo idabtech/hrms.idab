@@ -274,6 +274,7 @@ Route::group(['middleware' => ['verified']], function () {
             Route::post('/pwa-settings', [SettingsController::class, 'pwaSettingStore'])->name('pwa.settings.store');
             Route::post('company-settings', [SettingsController::class, 'saveCompanySettings'])->name('company.settings');
             Route::post('payment-settings', [SettingsController::class, 'savePaymentSettings'])->name('payment.settings');
+            Route::post('hmrc-settings', [SettingsController::class, 'saveHmrcSettings'])->name('hmrc.settings.store');
             Route::post('system-settings', [SettingsController::class, 'saveSystemSettings'])->name('system.settings');
 
             // Google Calendar

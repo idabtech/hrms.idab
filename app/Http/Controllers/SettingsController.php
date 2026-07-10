@@ -2267,4 +2267,45 @@ class SettingsController extends Controller
             ]
         );
     }
+
+    /**
+     * Save HMRC API settings (super admin only).
+     * Stores credentials in admin_payment_settings table following the same
+     * pattern used by Stripe, PayPal, and other payment gateway keys.
+     */
+    public function saveHmrcSettings(Request $request)
+    {
+        if (Auth::user()->type != 'super admin') {
+            return redirect()->back()->with('error', __('Permission denied.'));
+        }
+
+        $post = [];
+
+        // Enable/disable flag
+        $post['hmrc_enabled'] = $request->hmrc_enabled ?? 'off';
+
+        // Environment
+        $post['hmrc_environment'] = $request->hmrc_environment ?? 'sandbox';
+
+        // Developer Hub OAuth credentials
+        if (!empty($request->hmrc_client_id)) {
+            $post['hmrc_client_id'] = $request->hmrc_client_id;
+        }
+        if (!empty($request->hmrc_client_secret)) {
+            $post['hmrc_client_secret'] = $request->hmrc_client_secret;
+        }
+        if (!empty($request->hmrc_server_token)) {
+            $post['hmrc_server_token'] = $request->hmrc_server_token;
+        }
+        $post['hmrc_callback_uri'] = $request->hmrc_callback_uri ?? url('/hmrc/callback');
+
+        foreach ($post as $key => $data) {
+            DB::insert(
+                'INSERT INTO admin_payment_settings (`value`, `name`, `created_by`) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)',
+                [$data, $key, Auth::user()->id]
+            );
+        }
+
+        return redirect()->back()->with('success', __('HMRC settings saved successfully.'));
+    }
 }
