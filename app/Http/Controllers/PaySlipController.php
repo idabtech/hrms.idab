@@ -351,6 +351,28 @@ class PaySlipController extends Controller
             $set_expense->created_by = $get_employee->created_by;
             $set_expense->save();
 
+            // ── HMRC RTI: Submit FPS after payment (UK employees with NI number) ──
+            if (!empty($get_employee->ni_number) && \App\Services\HmrcRtiService::isConfigured()) {
+                try {
+                    $rtiService = new \App\Services\HmrcRtiService();
+                    $fpsResult  = $rtiService->submitFps($get_employee->id, $date);
+
+                    if (!$fpsResult['success']) {
+                        \Log::warning('HMRC FPS submission failed', [
+                            'employee_id'  => $get_employee->id,
+                            'salary_month' => $date,
+                            'message'      => $fpsResult['message'],
+                        ]);
+                    }
+                } catch (\Throwable $e) {
+                    \Log::error('HMRC FPS submission exception', [
+                        'employee_id'  => $get_employee->id,
+                        'salary_month' => $date,
+                        'error'        => $e->getMessage(),
+                    ]);
+                }
+            }
+
             return redirect()->route('payslip.index')->with('success', __('Payslip Payment successfully.'));
         } else {
             return redirect()->route('payslip.index')->with('error', __('Payslip Payment failed.'));

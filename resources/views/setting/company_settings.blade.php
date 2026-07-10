@@ -364,6 +364,11 @@ $lang = \App\Models\Utility::getValByName('default_language');
                         <div class="float-end"><i class="ti ti-chevron-right"></i></div>
                         </a> --}}
 
+                        <a href="#hmrc-paye-settings" id="hmrc-paye-tab"
+                            class="list-group-item list-group-item-action border-0">{{ __('HMRC PAYE Settings') }}
+                            <div class="float-end"><i class="ti ti-chevron-right"></i></div>
+                        </a>
+
                     </div>
 
                 </div>
@@ -2444,6 +2449,66 @@ $lang = \App\Models\Utility::getValByName('default_language');
         </div>
     </div>
 
+    {{-- HMRC PAYE Settings (Company Level) --}}
+    <div class="" id="hmrc-paye-settings">
+        <div class="card">
+            <div class="card-header">
+                <h5>{{ __('HMRC PAYE Settings') }}</h5>
+                <small class="text-secondary font-weight-bold">
+                    {{ __('Enter your employer PAYE details for HMRC RTI submissions (Full Payment Submission). These are specific to your company.') }}
+                </small>
+            </div>
+
+            {{ Form::open(['route' => 'hmrc.paye.settings.store', 'method' => 'post']) }}
+            @csrf
+            <div class="card-body">
+                <div class="row">
+                    {{-- Employer PAYE Ref --}}
+                    <div class="col-md-6 form-group">
+                        {{ Form::label('hmrc_employer_paye_ref', __('Employer PAYE Reference'), ['class' => 'col-form-label']) }}
+                        {{ Form::text('hmrc_employer_paye_ref', isset($settings['hmrc_employer_paye_ref']) ? $settings['hmrc_employer_paye_ref'] : '', ['class' => 'form-control', 'placeholder' => __('e.g. 123/AB12345')]) }}
+                        <small class="text-muted">{{ __('Format: 3-digit HMRC office number / employer reference. Found on the letter HMRC sent when you registered as an employer.') }}</small>
+                    </div>
+
+                    {{-- Accounts Office Ref --}}
+                    <div class="col-md-6 form-group">
+                        {{ Form::label('hmrc_accounts_office_ref', __('Accounts Office Reference'), ['class' => 'col-form-label']) }}
+                        {{ Form::text('hmrc_accounts_office_ref', isset($settings['hmrc_accounts_office_ref']) ? $settings['hmrc_accounts_office_ref'] : '', ['class' => 'form-control', 'placeholder' => __('e.g. 123PA00012345')]) }}
+                        <small class="text-muted">{{ __('13-character reference from HMRC. Available online if you pay electronically.') }}</small>
+                    </div>
+
+                    {{-- Tax Year --}}
+                    <div class="col-md-6 form-group">
+                        {{ Form::label('hmrc_tax_year', __('Current Tax Year'), ['class' => 'col-form-label']) }}
+                        @php
+                            $currentMonth = (int) date('n');
+                            $currentYear  = (int) date('Y');
+                            $taxYearStart = $currentMonth >= 4 ? $currentYear : $currentYear - 1;
+                            $taxYearLabel = $taxYearStart . '-' . ($taxYearStart + 1);
+                        @endphp
+                        {{ Form::text('hmrc_tax_year', $taxYearLabel, ['class' => 'form-control', 'readonly']) }}
+                        <small class="text-muted">{{ __('UK tax year runs 6 April to 5 April. Auto-calculated.') }}</small>
+                    </div>
+
+                    {{-- Corporation Tax Ref (optional) --}}
+                    <div class="col-md-6 form-group">
+                        {{ Form::label('hmrc_cotax_ref', __('Corporation Tax Reference (Optional)'), ['class' => 'col-form-label']) }}
+                        {{ Form::text('hmrc_cotax_ref', isset($settings['hmrc_cotax_ref']) ? $settings['hmrc_cotax_ref'] : '', ['class' => 'form-control', 'placeholder' => __('Only for limited companies')]) }}
+                        <small class="text-muted">{{ __('Your COTAX reference if you are a limited company.') }}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-end">
+                <button type="button" class="btn btn-outline-info me-2" id="btn-hmrc-test-company">
+                    <i class="ti ti-plug"></i> {{ __('Test HMRC Connection') }}
+                </button>
+                <input type="submit" value="{{ __('Save Changes') }}" class="btn-submit btn btn-primary">
+                <div id="hmrc-company-result" class="mt-2 text-start" style="display:none;"></div>
+            </div>
+            {{ Form::close() }}
+        </div>
+    </div>
+
 </div>
 </div>
 </div>
@@ -2662,6 +2727,35 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('shiftTableWrapper').style.display = 'block';
         loadExistingShifts();
     }
+});
+
+// ── HMRC Test Connection (Company Settings) ──────────────────────────
+$(document).on('click', '#btn-hmrc-test-company', function() {
+    var $btn = $(this);
+    var $result = $('#hmrc-company-result');
+
+    $btn.prop('disabled', true).html('<i class="ti ti-loader"></i> {{ __("Testing...") }}');
+    $result.hide();
+
+    $.ajax({
+        url: '{{ route("hmrc.test.connection") }}',
+        type: 'GET',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        success: function(res) {
+            if (res.success) {
+                $result.html('<span class="text-success"><i class="ti ti-check"></i> ' + res.message + '</span>').show();
+            } else {
+                $result.html('<span class="text-danger"><i class="ti ti-x"></i> ' + res.message + '</span>').show();
+            }
+        },
+        error: function(xhr) {
+            var msg = xhr.responseJSON ? xhr.responseJSON.message : '{{ __("Connection test failed.") }}';
+            $result.html('<span class="text-danger"><i class="ti ti-x"></i> ' + msg + '</span>').show();
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html('<i class="ti ti-plug"></i> {{ __("Test HMRC Connection") }}');
+        }
+    });
 });
 </script>
 @endsection

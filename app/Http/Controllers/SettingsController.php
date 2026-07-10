@@ -2308,4 +2308,34 @@ class SettingsController extends Controller
 
         return redirect()->back()->with('success', __('HMRC settings saved successfully.'));
     }
+
+    /**
+     * Save HMRC PAYE settings (company level).
+     * Stores employer PAYE reference and Accounts Office reference
+     * in the settings table per company — each company has their own PAYE scheme.
+     */
+    public function saveHmrcPayeSettings(Request $request)
+    {
+        if (!in_array(Auth::user()->type, ['company', 'super admin'])) {
+            return redirect()->back()->with('error', __('Permission denied.'));
+        }
+
+        $fields = [
+            'hmrc_employer_paye_ref',
+            'hmrc_accounts_office_ref',
+            'hmrc_cotax_ref',
+        ];
+
+        foreach ($fields as $field) {
+            $value = $request->input($field, '');
+            DB::table('settings')->updateOrInsert(
+                ['name' => $field, 'created_by' => Auth::user()->creatorId()],
+                ['value' => $value, 'created_at' => now(), 'updated_at' => now()]
+            );
+        }
+
+        Utility::clearSettingsCache();
+
+        return redirect()->back()->with('success', __('HMRC PAYE settings saved successfully.'));
+    }
 }

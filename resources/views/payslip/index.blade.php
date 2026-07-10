@@ -308,6 +308,15 @@
                                     var clickToPaid = '';
                                 }
 
+                                // HMRC Submit FPS button — shows for Paid payslips (company/hr only, UK IP only)
+                                var hmrcBtn = '';
+                                @if ((\Auth::user()->type == 'company' || \Auth::user()->type == 'hr') && (\App\Models\Utility::isUkRequest() || request()->boolean('uk_preview')))
+                                if (valueOfElement[15] == "Paid" && valueOfElement[16] != 0) {
+                                    hmrcBtn = '<button type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ __('Submit to HMRC') }}" class="btn-sm btn btn-outline-success me-1 btn-hmrc-fps" data-employee-id="' + id + '" data-month="' + datePicker + '">' +
+                                        '<i class="ti ti-send"></i>' + '</button>';
+                                }
+                                @endif
+
                                 if (valueOfElement[16] != 0 && valueOfElement[15] == "UnPaid") {
                                     var edit =
                                         '<a href="javascript:void(0)" data-url="{{ url('payslip/editemployee/') }}/' +
@@ -349,7 +358,7 @@
                                         '<td>' + valueOfElement[13] + '</td>' +
                                         '<td>' + valueOfElement[14] + '</td>' +
                                         '<td>' + status + '</td>' +
-                                        '<td>' + payslip + clickToPaid + edit + deleted +
+                                        '<td>' + payslip + clickToPaid + edit + hmrcBtn + deleted +
                                         '</td>' +
                                         '</tr>';
                                 @else
@@ -499,5 +508,39 @@
                 }
             });
         }
+
+        // ── HMRC Submit FPS ──────────────────────────────────────────────────
+        $(document).on('click', '.btn-hmrc-fps', function() {
+            var $btn = $(this);
+            var employeeId = $btn.data('employee-id');
+            var month = $btn.data('month');
+
+            if (!confirm('{{ __("Submit this payslip to HMRC as a Full Payment Submission (FPS)?") }}')) {
+                return;
+            }
+
+            $btn.prop('disabled', true).html('<i class="ti ti-loader ti-spin"></i>');
+
+            $.ajax({
+                url: '{{ url("hmrc/submit-fps") }}/' + employeeId + '/' + month,
+                type: 'POST',
+                data: { _token: '{{ csrf_token() }}' },
+                success: function(res) {
+                    if (res.success) {
+                        show_toastr('Success', res.message, 'success');
+                        $btn.removeClass('btn-outline-success').addClass('btn-success')
+                            .html('<i class="ti ti-check"></i>').attr('title', '{{ __("Submitted") }}');
+                    } else {
+                        show_toastr('Error', res.message, 'error');
+                        $btn.prop('disabled', false).html('<i class="ti ti-send"></i>');
+                    }
+                },
+                error: function(xhr) {
+                    var msg = xhr.responseJSON ? xhr.responseJSON.message : '{{ __("HMRC submission failed.") }}';
+                    show_toastr('Error', msg, 'error');
+                    $btn.prop('disabled', false).html('<i class="ti ti-send"></i>');
+                }
+            });
+        });
     </script>
 @endpush

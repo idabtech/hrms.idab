@@ -177,4 +177,67 @@ class HmrcController extends Controller
             'employees'      => $results,
         ]);
     }
+
+    /**
+     * Manually submit FPS for a specific employee/month.
+     * Company/HR can trigger this if automatic submission failed.
+     *
+     * POST /hmrc/submit-fps/{employeeId}/{salaryMonth}
+     */
+    public function submitFps($employeeId, $salaryMonth)
+    {
+        if (!in_array(Auth::user()->type, ['company', 'hr', 'super admin'])) {
+            return response()->json(['success' => false, 'message' => __('Permission denied.')], 403);
+        }
+
+        if (!\App\Services\HmrcRtiService::isConfigured()) {
+            return response()->json([
+                'success' => false,
+                'message' => __('HMRC RTI is not fully configured. Ensure employer PAYE reference and Accounts Office reference are set in HMRC Settings.'),
+            ], 400);
+        }
+
+        // Verify employee belongs to this company
+        $employee = Employee::where('id', $employeeId)
+            ->where('created_by', Auth::user()->creatorId())
+            ->first();
+
+        if (!$employee) {
+            return response()->json(['success' => false, 'message' => __('Employee not found.')], 404);
+        }
+
+        $rtiService = new \App\Services\HmrcRtiService();
+        $result = $rtiService->submitFps((int)$employeeId, $salaryMonth);
+
+        return response()->json($result);
+    }
+
+    /**
+     * Get FPS submission status/history for an employee.
+     *
+     * GET /hmrc/fps-status/{employeeId}/{salaryMonth?}
+     */
+    public function fpsStatus($employeeId, $salaryMonth = null)
+    {
+        if (!in_array(Auth::user()->type, ['company', 'hr', 'super admin'])) {
+            return response()->json(['success' => false, 'message' => __('Permission denied.')], 403);
+        }
+
+        // Verify employee belongs to this company
+        $employee = Employee::where('id', $employeeId)
+            ->where('created_by', Auth::user()->creatorId())
+            ->first();
+
+        if (!$employee) {
+            return response()->json(['success' => false, 'message' => __('Employee not found.')], 404);
+        }
+
+        $submissions = \App\Services\HmrcRtiService::getSubmissions((int)$employeeId, $salaryMonth);
+
+        return response()->json([
+            'success'     => true,
+            'employee'    => $employee->name,
+            'submissions' => $submissions,
+        ]);
+    }
 }
