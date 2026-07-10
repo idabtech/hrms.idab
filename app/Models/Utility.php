@@ -1090,9 +1090,47 @@ class Utility extends Model
         }
 
         // Leave allocation totals (for display on payslip)
-        $totalLeaveAlloc   = (int) LeaveType::where('created_by', $employess->created_by)->sum('days');
+        // Use per-employee assigned leave types if available, otherwise fallback to global
+        $assignedLeaveTypesForPayslip = $employess->leaveTypes()->get();
+        if ($assignedLeaveTypesForPayslip->isNotEmpty()) {
+            $totalLeaveAlloc = 0;
+            foreach ($assignedLeaveTypesForPayslip as $alt) {
+                $pivotDays = $alt->pivot->total_days ?? 0;
+                $totalLeaveAlloc += $pivotDays > 0 ? $pivotDays : $alt->days;
+            }
+            $totalLeaveAlloc = (int) $totalLeaveAlloc;
+        } else {
+            $totalLeaveAlloc = (int) LeaveType::where('created_by', $employess->created_by)->sum('days');
+        }
         $totalUsedEver     = (int) Leave::where('employee_id', $employeeId)->where('status', 'Approved')->sum('total_leave_days');
         $remainingLeaves   = max(0, $totalLeaveAlloc - $totalUsedEver);
+
+        // Per-type leave breakdown for payslip display
+        $leaveBreakdown = [];
+        $leaveTypesForBreakdown = $assignedLeaveTypesForPayslip->isNotEmpty()
+            ? $assignedLeaveTypesForPayslip
+            : LeaveType::where('created_by', $employess->created_by)->get();
+
+        $annualCycle = self::AnnualLeaveCycle();
+        foreach ($leaveTypesForBreakdown as $lt) {
+            $pivotDays = ($lt->pivot->total_days ?? 0);
+            $allocDays = $pivotDays > 0 ? $pivotDays : $lt->days;
+            $isPaid = isset($lt->pivot) ? ($lt->pivot->is_paid ?? $lt->is_paid) : $lt->is_paid;
+
+            $usedDays = (float) Leave::where('employee_id', $employeeId)
+                ->where('leave_type_id', $lt->id)
+                ->where('status', 'Approved')
+                ->whereBetween('created_at', [$annualCycle['start_date'], $annualCycle['end_date']])
+                ->sum('total_leave_days');
+
+            $leaveBreakdown[] = [
+                'title'     => $lt->title,
+                'is_paid'   => $isPaid,
+                'allocated' => $allocDays,
+                'used'      => $usedDays,
+                'remaining' => max(0, $allocDays - $usedDays),
+            ];
+        }
 
         // Total hours worked this month
         $totalWorkMins = 0;
@@ -1259,6 +1297,7 @@ class Utility extends Model
         $payslip['total_leave_alloc']    = $totalLeaveAlloc;
         $payslip['remaining_leaves']     = $remainingLeaves;
         $payslip['total_used_ever']      = $totalUsedEver;
+        $payslip['leave_breakdown']      = $leaveBreakdown;   // per-type leave details
         // Days paid = clocked present days + paid leave days (both are compensated)
         $payslip['days_paid']            = $attendance_count + $paid_leave_days;
         // ── UK Year-To-Date (YTD) ─────────────────────────────────────────

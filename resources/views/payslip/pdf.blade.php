@@ -619,11 +619,11 @@
                             </tr>
                             <tr>
                                 <td><span class="paid">Paid: {{ $paidLeaveDays }}</span></td>
-                                <td>Remaining: <strong class="cb">{{ $remainingLeaves }}</strong></td>
+                                <td>Used: <strong>{{ $usedLeaves }}</strong></td>
                             </tr>
                             <tr>
                                 <td><span class="unpaid">Unpaid: {{ $unpaidLeaveDays }}</span></td>
-                                <td>Rejected: <strong class="cr">{{ $disapprovedLeaves }}</strong></td>
+                                <td>Remaining: <strong class="cb">{{ $remainingLeaves }}</strong></td>
                             </tr>
                         </table>
                     </td>
