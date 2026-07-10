@@ -382,7 +382,7 @@
 
                 <!-- loan-->
                 <div class="col-md-6">
-                    <div class="card set-card deduction">
+                    <div class="card set-card earning">
                         <div class="card-header">
                             <div class="row">
                                 <div class="col-11">
@@ -452,6 +452,93 @@
                                                                     'id' => 'delete-form-' . $loan->id,
                                                                 ]) !!}
                                                                 <a class=" btn btn-sm bg-danger align-items-center bs-pass-para"
+                                                                    data-bs-trigger="hover" data-bs-toggle="tooltip"
+                                                                    title="" data-bs-original-title="Delete"
+                                                                    aria-label="Delete"><span class="text-white"><i
+                                                                            class="ti ti-trash"></i></span></a>
+                                                                </form>
+                                                            </div>
+                                                        @endcan
+                                                    </td>
+                                                @endcan
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loan Repayment -->
+                <div class="col-md-6">
+                    <div class="card set-card deduction">
+                        <div class="card-header">
+                            <div class="row">
+                                <div class="col-11">
+                                    <h5>{{ __('Loan Repayment') }}</h5>
+                                </div>
+                                @can('Create Loan')
+                                    <div class="col-1 text-end">
+                                        <a data-url="{{ route('loan-repayment.create', $employee->id) }}" data-ajax-popup="true"
+                                            data-title="{{ __('Create Loan Repayment') }}" data-bs-toggle="tooltip" title=""
+                                            data-size="lg" class="btn btn-sm btn-primary"
+                                            data-bs-original-title="{{ __('Create') }}">
+                                            <i class="ti ti-plus"></i>
+                                        </a>
+                                    </div>
+                                @endcan
+                            </div>
+                        </div>
+                        <div class="card-body table-border-style" style="overflow:auto">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>{{ __('Employee') }}</th>
+                                            <th>{{ __('Title') }}</th>
+                                            <th>{{ __('Type') }}</th>
+                                            <th>{{ __('Amount') }}</th>
+                                            @can(['Edit Loan', 'Delete Loan'])
+                                                <th>{{ __('Action') }}</th>
+                                            @endcan
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($loanRepayments ?? [] as $repayment)
+                                            <tr>
+                                                <td>{{ !empty($repayment->employee()) ? $repayment->employee()->name : '' }}</td>
+                                                <td>{{ $repayment->title }}</td>
+                                                <td>{{ ucfirst($repayment->type) }}</td>
+                                                @if ($repayment->type == 'fixed')
+                                                    <td>{{ \Auth::user()->priceFormat($repayment->amount) }}</td>
+                                                @else
+                                                    <td>{{ $repayment->amount }}%
+                                                        ({{ \Auth::user()->priceFormat($repayment->tota_allow ?? ($repayment->amount * $employee->salary / 100)) }})
+                                                    </td>
+                                                @endif
+                                                @can(['Edit Loan', 'Delete Loan'])
+                                                    <td class="Action">
+                                                        @can('Edit Loan')
+                                                            <div class="action-btn me-2">
+                                                                <a class="mx-3 btn btn-sm bg-info align-items-center"
+                                                                    data-url="{{ URL::to('loan-repayment/' . $repayment->id . '/edit') }}"
+                                                                    data-ajax-popup="true" data-size="lg"
+                                                                    data-bs-toggle="tooltip" title=""
+                                                                    data-title="{{ __('Edit Loan Repayment') }}"
+                                                                    data-bs-original-title="{{ __('Edit') }}">
+                                                                    <span class="text-white"><i class="ti ti-pencil"></i></span>
+                                                                </a>
+                                                            </div>
+                                                        @endcan
+                                                        @can('Delete Loan')
+                                                            <div class="action-btn">
+                                                                {!! Form::open([
+                                                                    'method' => 'DELETE',
+                                                                    'route'  => ['loan-repayment.destroy', $repayment->id],
+                                                                    'id'     => 'delete-form-' . $repayment->id,
+                                                                ]) !!}
+                                                                <a class="btn btn-sm bg-danger align-items-center bs-pass-para"
                                                                     data-bs-trigger="hover" data-bs-toggle="tooltip"
                                                                     title="" data-bs-original-title="Delete"
                                                                     aria-label="Delete"><span class="text-white"><i

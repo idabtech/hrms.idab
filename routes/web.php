@@ -752,6 +752,9 @@ Route::group(['middleware' => ['verified']], function () {
         ]
     );
 
+    Route::get('loan-repayment/create/{eid}', [\App\Http\Controllers\LoanRepaymentController::class, 'create'])->name('loan-repayment.create')->middleware(['auth', 'XSS']);
+    Route::resource('loan-repayment', \App\Http\Controllers\LoanRepaymentController::class)->except(['create', 'index', 'show'])->middleware(['auth', 'XSS']);
+
 
     Route::resource('saturationdeduction', SaturationDeductionController::class)->middleware(
         [

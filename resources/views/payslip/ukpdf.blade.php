@@ -125,11 +125,10 @@ foreach ($payslipDetail['earning']['overTime'] as $_ot2) {
 
 // ── Deductions rows ───────────────────────────────────────────────────────
 $dedRows = [];
-foreach ($payslipDetail['deduction']['loan'] as $_lr) {
-    foreach (json_decode($_lr->loan) as $_ln) {
-        $_amt = $_ln->type === 'percentage' ? round($_ln->amount * $_lr->basic_salary / 100, 2) : (float)$_ln->amount;
-        if ($_amt > 0) $dedRows[] = ['label' => $_ln->title ?: __('Loan'), 'amount' => $_amt];
-    }
+// Loan Repayment (deduction)
+$totalLoanRepayment = $payslipDetail['totalLoanRepayment'] ?? 0;
+if ($totalLoanRepayment > 0) {
+    $dedRows[] = ['label' => __('Loan Repayment'), 'amount' => $totalLoanRepayment];
 }
 foreach ($payslipDetail['deduction']['saturation_deduction'] as $_dr2) {
     foreach (json_decode($_dr2->saturation_deduction) as $_dd) {

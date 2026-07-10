@@ -11,6 +11,7 @@ use App\Models\DeductionOption;
 use App\Models\Employee;
 use App\Models\Loan;
 use App\Models\LoanOption;
+use App\Models\LoanRepayment;
 use App\Models\OtherPayment;
 use App\Models\Overtime;
 use App\Models\PayslipType;
@@ -144,7 +145,9 @@ class SetSalaryController extends Controller
                 ->orderBy('effective_from', 'desc')
                 ->get();
 
-            return view('setsalary.employee_salary', compact('employee', 'payslip_type', 'peark', 'bonous', 'allowance_options', 'commissions', 'loan_options', 'overtimes', 'otherpayments', 'saturationdeductions', 'loans', 'deduction_options', 'allowances', 'pension', 'gross_salary', 'salaryRevisions'));
+            $loanRepayments = LoanRepayment::where('employee_id', $employee->id)->get();
+
+            return view('setsalary.employee_salary', compact('employee', 'payslip_type', 'peark', 'bonous', 'allowance_options', 'commissions', 'loan_options', 'overtimes', 'otherpayments', 'saturationdeductions', 'loans', 'deduction_options', 'allowances', 'pension', 'gross_salary', 'salaryRevisions', 'loanRepayments'));
         } else {
             $allowances = Allowance::where('employee_id', $id)->get();
             $commissions = Commission::where('employee_id', $id)->get();
@@ -257,7 +260,10 @@ class SetSalaryController extends Controller
             $salaryRevisions = SalaryRevision::where('employee_id', $employee->id)
                 ->orderBy('effective_from', 'desc')
                 ->get();
-            return view('setsalary.employee_salary', compact('employee', 'payslip_type', 'peark', 'bonous', 'allowance_options', 'commissions', 'loan_options', 'overtimes', 'otherpayments', 'saturationdeductions', 'loans', 'deduction_options', 'allowances', 'pension', 'gross_salary', 'salaryRevisions'));
+
+            $loanRepayments = LoanRepayment::where('employee_id', $employee->id)->get();
+
+            return view('setsalary.employee_salary', compact('employee', 'payslip_type', 'peark', 'bonous', 'allowance_options', 'commissions', 'loan_options', 'overtimes', 'otherpayments', 'saturationdeductions', 'loans', 'deduction_options', 'allowances', 'pension', 'gross_salary', 'salaryRevisions', 'loanRepayments'));
         }
     }
 

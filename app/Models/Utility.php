@@ -621,11 +621,11 @@ class Utility extends Model
                 $ot += $OverTime;
             }
         }
-        // loan
-        $deduction['loan'] = PaySlip::where('employee_id', $employeeId)->where('salary_month', $month)->get();
+        // loan (earning — money given to employee)
+        $earning['loan'] = PaySlip::where('employee_id', $employeeId)->where('salary_month', $month)->get();
         $totalloan = 0;
 
-        $arrayJson = json_decode($deduction['loan']);
+        $arrayJson = json_decode($earning['loan']);
         foreach ($arrayJson as $loan) {
             $loans = json_decode($loan->loan);
             foreach ($loans as $emploans) {
@@ -636,6 +636,18 @@ class Utility extends Model
                 }
                 $totalloan += $emploan;
             }
+        }
+
+        // loan repayment (deduction — money employee pays back)
+        $loanRepayments = LoanRepayment::where('employee_id', $employeeId)->get();
+        $totalLoanRepayment = 0;
+        foreach ($loanRepayments as $repay) {
+            if ($repay->type == 'percentage') {
+                $repayAmt = $repay->amount * $employess->salary / 100;
+            } else {
+                $repayAmt = $repay->amount;
+            }
+            $totalLoanRepayment += $repayAmt;
         }
 
         // saturation_deduction
@@ -1212,11 +1224,11 @@ class Utility extends Model
 
         $payslip['earning']              = $earning;
         $payslip['earning']              = $earning;
-        $payslip['totalEarning']         = $totalAllowance + $totalCommission + $totalotherpayment + $ot + $totalBonous + $totalPearks;
+        $payslip['totalEarning']         = $totalAllowance + $totalCommission + $totalotherpayment + $ot + $totalBonous + $totalPearks + $totalloan;
         $payslip['deduction']            = $deduction;
         // For hourly employees leave_deduction and unpaid_leave_deduction are zeroed
         // above (actual hours already exclude unpaid time — no double-deduction needed)
-        $payslip['totalDeduction']       = $totalloan + $totaldeduction + $totalPansion
+        $payslip['totalDeduction']       = $totalLoanRepayment + $totaldeduction + $totalPansion
             + $leave_deduction + $unpaid_leave_deduction;
 
         $calcTotal = function ($items) use ($salary) {
@@ -1237,19 +1249,20 @@ class Utility extends Model
             + $totalotherpayment
             // + $ot
             + $totalBonous
+            + $totalloan
             + $payslip['hra'] + $payslip['da'];
         // + $totalPearks;
         $payslip['deduction']            = $deduction;
         // For hourly employees leave_deduction and unpaid_leave_deduction are zeroed
         // above (actual hours already exclude unpaid time — no double-deduction needed)
-        $payslip['totalDeduction']       = $totalloan + $totaldeduction + $totalPansion;
+        $payslip['totalDeduction']       = $totalLoanRepayment + $totaldeduction + $totalPansion;
         // + $leave_deduction + $unpaid_leave_deduction;
         $total_saturation_deduction = $totaldeduction;
         $total_bonus                = $calcTotal($employess->bonuses);
         $basic_salary = $monthlySalaryGross;
 
         $netSalary = $employess->basic_salary + $payslip['hra'] + $payslip['da'] + $totalAllowance + $totalCommission + $totalotherpayment
-            - $totalloan - $totalPansion + $total_bonus - $total_saturation_deduction;
+            + $totalloan - $totalLoanRepayment - $totalPansion + $total_bonus - $total_saturation_deduction;
         // Net salary:
         //   Monthly: fixed_salary + earnings - deductions (incl. LOP)
         //   Hourly:  hourly_rate × actual_hours_worked + earnings - deductions (no LOP)
@@ -1260,6 +1273,7 @@ class Utility extends Model
         $payslip['totalCommission']           = $totalCommission;
         $payslip['totalPansion']           = $totalPansion;
         $payslip['totalLoan']           = $totalloan;
+        $payslip['totalLoanRepayment']   = $totalLoanRepayment;
         $payslip['total_saturation_deduction']           = $total_saturation_deduction;
         $payslip['total_bonus']           = $total_bonus;
 
