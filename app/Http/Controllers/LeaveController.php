@@ -57,22 +57,32 @@ class LeaveController extends Controller
             $leaves = $query->orderBy('id', 'desc')->get();
 
             // Stat cards: leave balance per type for current employee
-            $leaveBalances = LeaveType::select(
-                    \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_used, leave_types.title, leave_types.days, leave_types.id')
-                )
-                ->leftjoin('leaves', function ($join) use ($employee, $date) {
-                    $join->on('leaves.leave_type_id', '=', 'leave_types.id');
-                    $join->where('leaves.employee_id', '=', $employee->id);
-                    $join->where('leaves.status', '=', 'Approved');
-                    $join->whereBetween('leaves.created_at', [$date['start_date'], $date['end_date']]);
-                })
-                ->where('leave_types.created_by', '=', \Auth::user()->creatorId())
-                ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days')
-                ->get()
-                ->map(function ($item) {
-                    $item->remaining = max(0, $item->days - $item->total_used);
-                    return $item;
-                });
+            $assignedIds = $employee->leaveTypes()->pluck('leave_type_id')->toArray();
+
+            if (empty($assignedIds)) {
+                // No leave types assigned — no balance cards
+                $leaveBalances = collect();
+            } else {
+                $leaveBalanceQuery = LeaveType::select(
+                        \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_used, leave_types.title, leave_types.days, leave_types.id')
+                    )
+                    ->leftjoin('leaves', function ($join) use ($employee, $date) {
+                        $join->on('leaves.leave_type_id', '=', 'leave_types.id');
+                        $join->where('leaves.employee_id', '=', $employee->id);
+                        $join->where('leaves.status', '=', 'Approved');
+                        $join->whereBetween('leaves.created_at', [$date['start_date'], $date['end_date']]);
+                    })
+                    ->where('leave_types.created_by', '=', \Auth::user()->creatorId())
+                    ->whereIn('leave_types.id', $assignedIds);
+
+                $leaveBalances = $leaveBalanceQuery
+                    ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days')
+                    ->get()
+                    ->map(function ($item) {
+                        $item->remaining = max(0, $item->days - $item->total_used);
+                        return $item;
+                    });
+            }
 
             $employeesList = [];
             $selectedEmployee = $employee->id;
@@ -111,29 +121,52 @@ class LeaveController extends Controller
             $selectedEmployee = $request->employee ?? '';
 
             if (!empty($request->employee)) {
-                $leaveBalances = LeaveType::select(
-                        \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_used, leave_types.title, leave_types.days, leave_types.id')
-                    )
-                    ->leftjoin('leaves', function ($join) use ($request, $date) {
-                        $join->on('leaves.leave_type_id', '=', 'leave_types.id');
-                        $join->where('leaves.employee_id', '=', $request->employee);
-                        $join->where('leaves.status', '=', 'Approved');
-                        $join->whereBetween('leaves.created_at', [$date['start_date'], $date['end_date']]);
-                    })
-                    ->where('leave_types.created_by', '=', \Auth::user()->creatorId())
-                    ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days')
-                    ->get()
-                    ->map(function ($item) {
-                        $item->remaining = max(0, $item->days - $item->total_used);
-                        return $item;
-                    });
+                // Get assigned leave types for the selected employee
+                $selectedEmp = Employee::find($request->employee);
+                $assignedIds = $selectedEmp ? $selectedEmp->leaveTypes()->pluck('leave_type_id')->toArray() : [];
+
+                if (empty($assignedIds)) {
+                    // No leave types assigned — no balance cards
+                    $leaveBalances = collect();
+                } else {
+                    $leaveBalances = LeaveType::select(
+                            \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_used, leave_types.title, leave_types.days, leave_types.id')
+                        )
+                        ->leftjoin('leaves', function ($join) use ($request, $date) {
+                            $join->on('leaves.leave_type_id', '=', 'leave_types.id');
+                            $join->where('leaves.employee_id', '=', $request->employee);
+                            $join->where('leaves.status', '=', 'Approved');
+                            $join->whereBetween('leaves.created_at', [$date['start_date'], $date['end_date']]);
+                        })
+                        ->where('leave_types.created_by', '=', \Auth::user()->creatorId())
+                        ->whereIn('leave_types.id', $assignedIds)
+                        ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days')
+                        ->get()
+                        ->map(function ($item) {
+                            $item->remaining = max(0, $item->days - $item->total_used);
+                            return $item;
+                        });
+                }
             }
         }
 
         // Leave types for filter dropdown
-        $leaveTypes = LeaveType::where('created_by', \Auth::user()->creatorId())
-                        ->get()
-                        ->pluck('title', 'id');
+        if (\Auth::user()->type == 'employee') {
+            // Employee sees only their assigned leave types in the filter
+            $assignedFilterIds = $employee->leaveTypes()->pluck('leave_type_id')->toArray();
+            if (!empty($assignedFilterIds)) {
+                $leaveTypes = LeaveType::where('created_by', \Auth::user()->creatorId())
+                                ->whereIn('id', $assignedFilterIds)
+                                ->get()
+                                ->pluck('title', 'id');
+            } else {
+                $leaveTypes = collect();
+            }
+        } else {
+            $leaveTypes = LeaveType::where('created_by', \Auth::user()->creatorId())
+                            ->get()
+                            ->pluck('title', 'id');
+        }
         $leaveTypes->prepend(__('All'), '');
 
         return view('leave.index', compact('leaves', 'leaveBalances', 'leaveTypes', 'employeesList', 'selectedEmployee'));
@@ -151,12 +184,21 @@ class LeaveController extends Controller
 
         if (Auth::user()->type == 'employee') {
             $employees = Employee::where('user_id', '=', \Auth::user()->id)->first();
+            // For employee users, only show their assigned leave types
+            $assignedIds = $employees ? $employees->leaveTypes()->pluck('leave_type_id')->toArray() : [];
+            if (!empty($assignedIds)) {
+                $leavetypes = LeaveType::where('created_by', '=', \Auth::user()->creatorId())
+                                ->whereIn('id', $assignedIds)->get();
+            } else {
+                // No leave types assigned — show empty
+                $leavetypes = collect();
+            }
         } else {
             $employees = Employee::where('created_by', '=', \Auth::user()->creatorId())
                             ->get()->pluck('name', 'id');
+            // For admin/HR, show all initially — AJAX will filter per employee
+            $leavetypes = LeaveType::where('created_by', '=', \Auth::user()->creatorId())->get();
         }
-
-        $leavetypes = LeaveType::where('created_by', '=', \Auth::user()->creatorId())->get();
 
         return view('leave.create', compact('employees', 'leavetypes'));
     }
@@ -310,12 +352,19 @@ class LeaveController extends Controller
 
         if (Auth::user()->type == 'employee') {
             $employees = Employee::where('user_id', '=', \Auth::user()->id)->first();
+            // For employee users, only show their assigned leave types
+            $assignedIds = $employees ? $employees->leaveTypes()->pluck('leave_type_id')->toArray() : [];
+            if (!empty($assignedIds)) {
+                $leavetypes = LeaveType::where('created_by', '=', \Auth::user()->creatorId())
+                                ->whereIn('id', $assignedIds)->get();
+            } else {
+                $leavetypes = collect();
+            }
         } else {
             $employees = Employee::where('created_by', '=', \Auth::user()->creatorId())
                             ->get()->pluck('name', 'id');
+            $leavetypes = LeaveType::where('created_by', '=', \Auth::user()->creatorId())->get();
         }
-
-        $leavetypes = LeaveType::where('created_by', '=', \Auth::user()->creatorId())->get();
 
         // Eager-load day details so the view can pre-populate the breakdown table
         $leave->load('dayDetails');
@@ -597,7 +646,14 @@ class LeaveController extends Controller
     {
         $date = Utility::AnnualLeaveCycle();
 
-        $leave_counts = LeaveType::select(
+        // Get leave types assigned to this specific employee
+        $employee = Employee::find($request->employee_id);
+        $assignedLeaveTypeIds = [];
+        if ($employee) {
+            $assignedLeaveTypeIds = $employee->leaveTypes()->pluck('leave_type_id')->toArray();
+        }
+
+        $query = LeaveType::select(
                 \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_leave, leave_types.title, leave_types.days, leave_types.id, leave_types.is_paid')
             )
             ->leftjoin('leaves', function ($join) use ($request, $date) {
@@ -606,7 +662,18 @@ class LeaveController extends Controller
                 $join->where('leaves.status', '=', 'Approved');
                 $join->whereBetween('leaves.created_at', [$date['start_date'], $date['end_date']]);
             })
-            ->where('leave_types.created_by', '=', \Auth::user()->creatorId())
+            ->where('leave_types.created_by', '=', \Auth::user()->creatorId());
+
+        // If employee has assigned leave types, filter to only those
+        // If no leave types are assigned, return empty (employee must have assignments)
+        if (!empty($assignedLeaveTypeIds)) {
+            $query->whereIn('leave_types.id', $assignedLeaveTypeIds);
+        } else {
+            // No leave types assigned — return empty collection
+            return collect();
+        }
+
+        $leave_counts = $query
             ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days', 'leave_types.is_paid')
             ->get()
             ->map(function ($item) {

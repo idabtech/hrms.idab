@@ -17,6 +17,7 @@ use App\Models\SubDepartment;
 use App\Models\User;
 use App\Models\Utility;
 use App\Models\EmploymentType;
+use App\Models\LeaveType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
@@ -73,7 +74,10 @@ class EmployeeController extends Controller
             $employeesId = Auth::user()->employeeIdFormat($this->employeeNumber());
 
             $employmentTypes = EmploymentType::where('created_by', Auth::user()->creatorId())->get()->pluck('name','id');
-            return view('employee.create', compact('employees', 'employeesId', 'company_shifts', 'departments', 'subdepartments', 'designations', 'shift', 'documents', 'branches', 'company_settings', 'employmentTypes'));
+
+            $leaveTypes = LeaveType::where('created_by', Auth::user()->creatorId())->get();
+
+            return view('employee.create', compact('employees', 'employeesId', 'company_shifts', 'departments', 'subdepartments', 'designations', 'shift', 'documents', 'branches', 'company_settings', 'employmentTypes', 'leaveTypes'));
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
@@ -309,6 +313,12 @@ class EmployeeController extends Controller
                 }
             }
             $setings = Utility::settings();
+
+            // ── Sync assigned leave types ──────────────────────────────────────
+            if ($request->has('leave_types') && is_array($request->leave_types)) {
+                $employee->leaveTypes()->sync($request->leave_types);
+            }
+
             if ($setings['new_employee'] == 1) {
                 $department = Department::find($request['department_id']);
                 $branch = Branch::find($request['branch_id']);
@@ -353,7 +363,10 @@ class EmployeeController extends Controller
 
             $employmentTypes = EmploymentType::where('created_by', Auth::user()->creatorId())->get()->pluck('name','id');
 
-            return view('employee.edit', compact('company_settings', 'company_shifts', 'employee', 'employeesId', 'branches', 'departments', 'subdepartments', 'shift', 'designations', 'documents', 'employmentTypes'));
+            $leaveTypes = LeaveType::where('created_by', Auth::user()->creatorId())->get();
+            $assignedLeaveTypeIds = $employee->leaveTypes()->pluck('leave_type_id')->toArray();
+
+            return view('employee.edit', compact('company_settings', 'company_shifts', 'employee', 'employeesId', 'branches', 'departments', 'subdepartments', 'shift', 'designations', 'documents', 'employmentTypes', 'leaveTypes', 'assignedLeaveTypeIds'));
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
@@ -553,6 +566,11 @@ class EmployeeController extends Controller
             $input['documents'] = $document_implode;
 
             $employee->fill($input)->save();
+
+            // ── Sync assigned leave types ──────────────────────────────────────
+            if ($request->has('leave_types')) {
+                $employee->leaveTypes()->sync($request->leave_types ?? []);
+            }
 
             if (!empty($request->email)) {
                 $user = User::find($employee->user_id);
