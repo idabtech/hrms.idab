@@ -149,6 +149,7 @@ class Employee extends Model
     public function leaveTypes()
     {
         return $this->belongsToMany(LeaveType::class, 'employee_leave_types', 'employee_id', 'leave_type_id')
+                    ->withPivot('total_days', 'is_paid')
                     ->withTimestamps();
     }
 

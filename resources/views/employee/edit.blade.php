@@ -718,29 +718,66 @@
                             <div class="card-header">
                                 <h5>{{ __('Assign Leave Types') }}</h5>
                             </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="form-group col-md-12">
-                                        {!! Form::label('leave_types', __('Leave Types'), ['class' => 'form-label']) !!}
-                                        <small class="text-muted d-block mb-2">{{ __('Select the leave types this employee can apply for. If none selected, all leave types will be available.') }}</small>
-                                        <div class="row">
-                                            @foreach ($leaveTypes as $leaveType)
-                                                <div class="col-md-4 col-sm-6 mb-2">
+                            <div class="card-body table-border-style">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th style="width:50px;">
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox"
-                                                            name="leave_types[]"
-                                                            value="{{ $leaveType->id }}"
-                                                            id="leave_type_{{ $leaveType->id }}"
-                                                            {{ in_array($leaveType->id, $assignedLeaveTypeIds ?? []) ? 'checked' : '' }}>
-                                                        <label class="form-check-label" for="leave_type_{{ $leaveType->id }}">
-                                                            {{ $leaveType->title }}
-                                                            <small class="text-muted">({{ $leaveType->days }} {{ __('days') }}{{ $leaveType->is_paid ? ', ' . __('Paid') : ', ' . __('Unpaid') }})</small>
-                                                        </label>
+                                                        <input class="form-check-input" type="checkbox" id="select_all_leave_types">
                                                     </div>
-                                                </div>
+                                                </th>
+                                                <th>{{ __('Leave Type') }}</th>
+                                                <th class="text-center" style="width:120px;">{{ __('Paid/Unpaid') }}</th>
+                                                <th class="text-center" style="width:150px;">{{ __('Total Days') }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($leaveTypes as $leaveType)
+                                                @php
+                                                    $isAssigned = array_key_exists($leaveType->id, $assignedLeaveTypes ?? []);
+                                                    $assignedDays = $isAssigned ? ($assignedLeaveTypes[$leaveType->id]['total_days'] ?? $leaveType->days) : $leaveType->days;
+                                                    $isPaid = $isAssigned ? ($assignedLeaveTypes[$leaveType->id]['is_paid'] ?? $leaveType->is_paid) : $leaveType->is_paid;
+                                                @endphp
+                                                <tr>
+                                                    <td>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input leave-type-check" type="checkbox"
+                                                                name="leave_types[{{ $leaveType->id }}][checked]"
+                                                                value="1"
+                                                                id="leave_type_{{ $leaveType->id }}"
+                                                                {{ $isAssigned ? 'checked' : '' }}>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <label for="leave_type_{{ $leaveType->id }}" class="mb-0">
+                                                            {{ $leaveType->title }}
+                                                        </label>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <div class="form-check form-switch d-flex justify-content-center mb-0">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                name="leave_types[{{ $leaveType->id }}][is_paid]"
+                                                                value="1"
+                                                                id="is_paid_{{ $leaveType->id }}"
+                                                                {{ $isPaid ? 'checked' : '' }}>
+                                                            <label class="form-check-label ms-2 small" for="is_paid_{{ $leaveType->id }}" id="is_paid_label_{{ $leaveType->id }}">
+                                                                {{ $isPaid ? __('Paid') : __('Unpaid') }}
+                                                            </label>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" step="0.5" min="0"
+                                                            class="form-control text-center"
+                                                            name="leave_types[{{ $leaveType->id }}][days]"
+                                                            value="{{ $assignedDays }}"
+                                                            placeholder="{{ $leaveType->days }}">
+                                                    </td>
+                                                </tr>
                                             @endforeach
-                                        </div>
-                                    </div>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -1176,5 +1213,23 @@
                     '<div class="text-muted small mt-1" style="word-break:break-all; max-width:160px;">' + fileName + '</div>';
             }
         }
+
+        // Select All leave types checkbox
+        $(document).on('change', '#select_all_leave_types', function() {
+            $('.leave-type-check').prop('checked', $(this).prop('checked'));
+        });
+        $(document).on('change', '.leave-type-check', function() {
+            var total = $('.leave-type-check').length;
+            var checked = $('.leave-type-check:checked').length;
+            $('#select_all_leave_types').prop('checked', total === checked);
+        });
+
+        // Toggle Paid/Unpaid label text
+        $(document).on('change', '[id^="is_paid_"]', function() {
+            var id = $(this).attr('id');
+            var leaveTypeId = id.replace('is_paid_', '');
+            var $label = $('#is_paid_label_' + leaveTypeId);
+            $label.text($(this).prop('checked') ? '{{ __("Paid") }}' : '{{ __("Unpaid") }}');
+        });
     </script>
     @endpush

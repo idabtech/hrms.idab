@@ -316,7 +316,16 @@ class EmployeeController extends Controller
 
             // ── Sync assigned leave types ──────────────────────────────────────
             if ($request->has('leave_types') && is_array($request->leave_types)) {
-                $employee->leaveTypes()->sync($request->leave_types);
+                $syncData = [];
+                foreach ($request->leave_types as $leaveTypeId => $data) {
+                    if (!empty($data['checked'])) {
+                        $syncData[$leaveTypeId] = [
+                            'total_days' => $data['days'] ?? 0,
+                            'is_paid'    => isset($data['is_paid']) ? 1 : 0,
+                        ];
+                    }
+                }
+                $employee->leaveTypes()->sync($syncData);
             }
 
             if ($setings['new_employee'] == 1) {
@@ -364,9 +373,14 @@ class EmployeeController extends Controller
             $employmentTypes = EmploymentType::where('created_by', Auth::user()->creatorId())->get()->pluck('name','id');
 
             $leaveTypes = LeaveType::where('created_by', Auth::user()->creatorId())->get();
-            $assignedLeaveTypeIds = $employee->leaveTypes()->pluck('leave_type_id')->toArray();
+            $assignedLeaveTypes = $employee->leaveTypes()->get()->keyBy('id')->map(function ($lt) {
+                return [
+                    'total_days' => $lt->pivot->total_days,
+                    'is_paid'    => $lt->pivot->is_paid,
+                ];
+            })->toArray();
 
-            return view('employee.edit', compact('company_settings', 'company_shifts', 'employee', 'employeesId', 'branches', 'departments', 'subdepartments', 'shift', 'designations', 'documents', 'employmentTypes', 'leaveTypes', 'assignedLeaveTypeIds'));
+            return view('employee.edit', compact('company_settings', 'company_shifts', 'employee', 'employeesId', 'branches', 'departments', 'subdepartments', 'shift', 'designations', 'documents', 'employmentTypes', 'leaveTypes', 'assignedLeaveTypes'));
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
@@ -569,7 +583,16 @@ class EmployeeController extends Controller
 
             // ── Sync assigned leave types ──────────────────────────────────────
             if ($request->has('leave_types')) {
-                $employee->leaveTypes()->sync($request->leave_types ?? []);
+                $syncData = [];
+                foreach (($request->leave_types ?? []) as $leaveTypeId => $data) {
+                    if (!empty($data['checked'])) {
+                        $syncData[$leaveTypeId] = [
+                            'total_days' => $data['days'] ?? 0,
+                            'is_paid'    => isset($data['is_paid']) ? 1 : 0,
+                        ];
+                    }
+                }
+                $employee->leaveTypes()->sync($syncData);
             }
 
             if (!empty($request->email)) {
