@@ -438,7 +438,6 @@ class Utility extends Model
      */
     public static function isUkRequest(): bool
     {
-        return true;
         try {
             $ip = request()->ip();
 
