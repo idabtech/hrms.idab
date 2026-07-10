@@ -33,10 +33,118 @@
 @section('content')
     <div class="row">
 
+        {{-- ══════════════════════════════════════════════════════════════════════
+            FILTERS
+        ══════════════════════════════════════════════════════════════════════ --}}
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-body">
+                    {{ Form::open(['route' => ['leave.index'], 'method' => 'get', 'id' => 'leave_filter']) }}
+                    <div class="row align-items-center justify-content-end">
+                        <div class="col">
+                            <div class="row">
+                                @if (\Auth::user()->type != 'employee')
+                                    <div class="col-xl col-lg-3 col-md-6 col-sm-12 col-12">
+                                        <div class="btn-box">
+                                            {{ Form::label('employee', __('Employee'), ['class' => 'form-label']) }}
+                                            {{ Form::select('employee', $employeesList, isset($_GET['employee']) ? $_GET['employee'] : '', ['class' => 'form-control select', 'id' => 'filter_employee_id']) }}
+                                        </div>
+                                    </div>
+                                @endif
+                                <div class="col-xl col-lg-3 col-md-6 col-sm-12 col-12">
+                                    <div class="btn-box">
+                                        {{ Form::label('leave_type', __('Leave Type'), ['class' => 'form-label']) }}
+                                        {{ Form::select('leave_type', $leaveTypes, isset($_GET['leave_type']) ? $_GET['leave_type'] : '', ['class' => 'form-control select']) }}
+                                    </div>
+                                </div>
+                                <div class="col-xl col-lg-3 col-md-6 col-sm-12 col-12">
+                                    <div class="btn-box">
+                                        {{ Form::label('status', __('Status'), ['class' => 'form-label']) }}
+                                        {{ Form::select('status', ['' => __('All'), 'Pending' => __('Pending'), 'Approved' => __('Approved'), 'Reject' => __('Reject')], isset($_GET['status']) ? $_GET['status'] : '', ['class' => 'form-control select']) }}
+                                    </div>
+                                </div>
+                                <div class="col-xl col-lg-3 col-md-6 col-sm-12 col-12">
+                                    <div class="btn-box">
+                                        {{ Form::label('start_date', __('Start Date'), ['class' => 'form-label']) }}
+                                        {{ Form::date('start_date', isset($_GET['start_date']) ? $_GET['start_date'] : null, ['class' => 'form-control w-100', 'autocomplete' => 'off']) }}
+                                    </div>
+                                </div>
+                                <div class="col-xl col-lg-3 col-md-6 col-sm-12 col-12">
+                                    <div class="btn-box">
+                                        {{ Form::label('end_date', __('End Date'), ['class' => 'form-label']) }}
+                                        {{ Form::date('end_date', isset($_GET['end_date']) ? $_GET['end_date'] : null, ['class' => 'form-control w-100', 'autocomplete' => 'off']) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="row">
+                                <div class="col-auto mt-4">
+                                    <a href="javascript:void(0)" class="btn btn-sm btn-primary me-1"
+                                        onclick="document.getElementById('leave_filter').submit(); return false;"
+                                        data-bs-toggle="tooltip" title="" data-bs-original-title="{{ __('Apply') }}">
+                                        <span class="btn-inner--icon"><i class="ti ti-search"></i></span>
+                                    </a>
+                                    <a href="{{ route('leave.index') }}" class="btn btn-sm btn-danger"
+                                        data-bs-toggle="tooltip" title="" data-bs-original-title="{{ __('Reset') }}">
+                                        <span class="btn-inner--icon"><i class="ti ti-refresh text-white-off"></i></span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {{ Form::close() }}
+                </div>
+            </div>
+        </div>
+
+        {{-- ══════════════════════════════════════════════════════════════════════
+            STAT CARDS — Leave Balance Summary
+        ══════════════════════════════════════════════════════════════════════ --}}
+        @if ($leaveBalances->isNotEmpty())
+            @foreach ($leaveBalances as $balance)
+                @php
+                    $percentage = $balance->days > 0 ? round(($balance->total_used / $balance->days) * 100) : 0;
+                    $bgColor = $percentage > 80 ? 'danger' : ($percentage > 50 ? 'warning' : 'primary');
+                @endphp
+                <div class="col-lg-4 col-md-6">
+                    <div class="card stats-wrapper dash-info-card">
+                        <div class="card-body stats">
+                            <div class="row align-items-center justify-content-between">
+                                <div class="col-auto mb-3 mb-sm-0">
+                                    <div class="d-flex align-items-center">
+                                        <div class="badge theme-avtar bg-{{ $bgColor }}">
+                                            <i class="ti ti-calendar-event"></i>
+                                        </div>
+                                        <div class="ms-3">
+                                            <small class="text-muted">{{ $balance->title }}</small>
+                                            <h6 class="m-0">{{ __('Remaining') }}: {{ $balance->remaining }} / {{ $balance->days }}</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-auto text-end">
+                                    <h4 class="m-0 text-{{ $bgColor }}">{{ $balance->total_used }}</h4>
+                                    <small class="text-muted">{{ __('Used') }}</small>
+                                </div>
+                            </div>
+                            <div class="progress mt-3" style="height: 5px;">
+                                <div class="progress-bar bg-{{ $bgColor }}"
+                                    role="progressbar" style="width: {{ $percentage }}%"
+                                    aria-valuenow="{{ $percentage }}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        @endif
+
+        {{-- ══════════════════════════════════════════════════════════════════════
+            LEAVE TABLE
+        ══════════════════════════════════════════════════════════════════════ --}}
         <div class="col-xl-12">
             <div class="card">
                 <div class="card-header card-body table-border-style">
-                    {{-- <h5> </h5> --}}
                     <div class="table-responsive">
                         <table class="table" id="pc-dt-simple">
                             <thead>
@@ -252,7 +360,6 @@
                 </div>
             </div>
         </div>
-    </div>
     </div>
 @endsection
 

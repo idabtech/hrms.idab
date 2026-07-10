@@ -25,27 +25,118 @@ class LeaveController extends Controller
     // INDEX
     // =========================================================================
 
-    public function index()
+    public function index(Request $request)
     {
         if (!\Auth::user()->can('Manage Leave')) {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
 
+        $date = Utility::AnnualLeaveCycle();
+
         if (\Auth::user()->type == 'employee') {
             $user     = \Auth::user();
             $employee = Employee::where('user_id', '=', $user->id)->first();
-            $leaves   = LocalLeave::where('employee_id', '=', $employee->id)
-                            ->with(['dayDetails'])
-                            ->orderBy('id', 'desc')
-                            ->get();
+
+            $query = LocalLeave::where('employee_id', '=', $employee->id)
+                        ->with(['dayDetails', 'leaveType']);
+
+            // Filters
+            if (!empty($request->leave_type)) {
+                $query->where('leave_type_id', $request->leave_type);
+            }
+            if (!empty($request->status)) {
+                $query->where('status', $request->status);
+            }
+            if (!empty($request->start_date)) {
+                $query->where('start_date', '>=', $request->start_date);
+            }
+            if (!empty($request->end_date)) {
+                $query->where('end_date', '<=', $request->end_date);
+            }
+
+            $leaves = $query->orderBy('id', 'desc')->get();
+
+            // Stat cards: leave balance per type for current employee
+            $leaveBalances = LeaveType::select(
+                    \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_used, leave_types.title, leave_types.days, leave_types.id')
+                )
+                ->leftjoin('leaves', function ($join) use ($employee, $date) {
+                    $join->on('leaves.leave_type_id', '=', 'leave_types.id');
+                    $join->where('leaves.employee_id', '=', $employee->id);
+                    $join->where('leaves.status', '=', 'Approved');
+                    $join->whereBetween('leaves.created_at', [$date['start_date'], $date['end_date']]);
+                })
+                ->where('leave_types.created_by', '=', \Auth::user()->creatorId())
+                ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days')
+                ->get()
+                ->map(function ($item) {
+                    $item->remaining = max(0, $item->days - $item->total_used);
+                    return $item;
+                });
+
+            $employeesList = [];
+            $selectedEmployee = $employee->id;
+
         } else {
-            $leaves = LocalLeave::where('created_by', '=', \Auth::user()->creatorId())
-                            ->with(['employees', 'leaveType', 'dayDetails'])
-                            ->orderBy('id', 'desc')
-                            ->get();
+            // HR / Admin / Company
+            $employeesList = Employee::where('created_by', \Auth::user()->creatorId())
+                                ->get()
+                                ->pluck('name', 'id');
+            $employeesList->prepend(__('All'), '');
+
+            $query = LocalLeave::where('created_by', '=', \Auth::user()->creatorId())
+                        ->with(['employees', 'leaveType', 'dayDetails']);
+
+            // Filters
+            if (!empty($request->employee)) {
+                $query->where('employee_id', $request->employee);
+            }
+            if (!empty($request->leave_type)) {
+                $query->where('leave_type_id', $request->leave_type);
+            }
+            if (!empty($request->status)) {
+                $query->where('status', $request->status);
+            }
+            if (!empty($request->start_date)) {
+                $query->where('start_date', '>=', $request->start_date);
+            }
+            if (!empty($request->end_date)) {
+                $query->where('end_date', '<=', $request->end_date);
+            }
+
+            $leaves = $query->orderBy('id', 'desc')->get();
+
+            // Stat cards for selected employee or null
+            $leaveBalances = collect();
+            $selectedEmployee = $request->employee ?? '';
+
+            if (!empty($request->employee)) {
+                $leaveBalances = LeaveType::select(
+                        \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_used, leave_types.title, leave_types.days, leave_types.id')
+                    )
+                    ->leftjoin('leaves', function ($join) use ($request, $date) {
+                        $join->on('leaves.leave_type_id', '=', 'leave_types.id');
+                        $join->where('leaves.employee_id', '=', $request->employee);
+                        $join->where('leaves.status', '=', 'Approved');
+                        $join->whereBetween('leaves.created_at', [$date['start_date'], $date['end_date']]);
+                    })
+                    ->where('leave_types.created_by', '=', \Auth::user()->creatorId())
+                    ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days')
+                    ->get()
+                    ->map(function ($item) {
+                        $item->remaining = max(0, $item->days - $item->total_used);
+                        return $item;
+                    });
+            }
         }
 
-        return view('leave.index', compact('leaves'));
+        // Leave types for filter dropdown
+        $leaveTypes = LeaveType::where('created_by', \Auth::user()->creatorId())
+                        ->get()
+                        ->pluck('title', 'id');
+        $leaveTypes->prepend(__('All'), '');
+
+        return view('leave.index', compact('leaves', 'leaveBalances', 'leaveTypes', 'employeesList', 'selectedEmployee'));
     }
 
     // =========================================================================
@@ -135,9 +226,9 @@ class LeaveController extends Controller
             return redirect()->back()->with('error', __('You are not eligible for leave.'));
         }
 
-        if (!empty($leaves_pending) && ($leaves_pending + $paidDays) > $remaining) {
-            return redirect()->back()->with('error', __('Multiple leave entry is pending.'));
-        }
+        // if (!empty($leaves_pending) && ($leaves_pending + $paidDays) > $remaining) {
+        //     return redirect()->back()->with('error', __('Multiple leave entry is pending.'));
+        // }
 
         // ── Save leave ─────────────────────────────────────────────────────
         $leave                   = new LocalLeave();
@@ -296,9 +387,9 @@ class LeaveController extends Controller
             return redirect()->back()->with('error', __('You are not eligible for leave.'));
         }
 
-        if (!empty($leaves_pending) && ($leaves_pending + $paidDays) > $remaining) {
-            return redirect()->back()->with('error', __('Multiple leave entry is pending.'));
-        }
+        // if (!empty($leaves_pending) && ($leaves_pending + $paidDays) > $remaining) {
+        //     return redirect()->back()->with('error', __('Multiple leave entry is pending.'));
+        // }
 
         // ── Save ───────────────────────────────────────────────────────────
         $leave->employee_id      = $request->employee_id;
