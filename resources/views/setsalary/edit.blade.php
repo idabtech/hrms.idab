@@ -683,8 +683,14 @@
                                         <div class="col-12 col-md-4">
                                             <div class="form-group">
                                                 {{ Form::label('ni_number', __('NI Number'), ['class' => 'col-form-label']) }}
-                                                {{ Form::text('ni_number', null, ['class' => 'form-control', 'placeholder' => 'e.g. JS877742C']) }}
+                                                <div class="input-group">
+                                                    {{ Form::text('ni_number', null, ['class' => 'form-control', 'placeholder' => 'e.g. JS877742C', 'id' => 'ni_number_field']) }}
+                                                    <button type="button" class="btn btn-outline-info btn-sm" id="btn-verify-nino" title="{{ __('Verify NI Number') }}">
+                                                        <i class="fa fa-check-circle"></i> {{ __('Verify') }}
+                                                    </button>
+                                                </div>
                                                 <small class="text-muted">{{ __('National Insurance Number') }}</small>
+                                                <div id="nino-verification-result" class="mt-1" style="display:none;"></div>
                                             </div>
                                         </div>
                                         <div class="col-12 col-md-4">
@@ -843,5 +849,51 @@
                 }
             });
         }
+
+        // ── HMRC NI Number Verification ──────────────────────────────────────
+        $('#btn-verify-nino').on('click', function() {
+            var nino = $('#ni_number_field').val().trim();
+            var $btn = $(this);
+            var $result = $('#nino-verification-result');
+
+            if (!nino) {
+                $result.html('<span class="text-warning"><i class="fa fa-exclamation-triangle"></i> {{ __("Please enter a NI number first.") }}</span>').show();
+                return;
+            }
+
+            $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
+            $result.hide();
+
+            $.ajax({
+                url: '{{ route("hmrc.verify.nino") }}',
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    nino: nino
+                },
+                success: function(res) {
+                    if (res.format_valid) {
+                        var icon = res.hmrc_connected ? 'fa-check-circle text-success' : 'fa-check-circle text-info';
+                        var msg = '<span class="' + (res.hmrc_connected ? 'text-success' : 'text-info') + '">'
+                            + '<i class="fa ' + icon + '"></i> '
+                            + '{{ __("Valid format") }}: ' + (res.formatted_nino || res.nino);
+                        if (res.hmrc_connected) {
+                            msg += ' <small class="text-muted">({{ __("HMRC Connected") }})</small>';
+                        }
+                        msg += '</span>';
+                        $result.html(msg).show();
+                    } else {
+                        $result.html('<span class="text-danger"><i class="fa fa-times-circle"></i> ' + res.message + '</span>').show();
+                    }
+                },
+                error: function(xhr) {
+                    var msg = xhr.responseJSON ? xhr.responseJSON.message : '{{ __("Verification failed.") }}';
+                    $result.html('<span class="text-danger"><i class="fa fa-times-circle"></i> ' + msg + '</span>').show();
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html('<i class="fa fa-check-circle"></i> {{ __("Verify") }}');
+                }
+            });
+        });
     </script>
 @endpush

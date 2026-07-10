@@ -187,6 +187,36 @@
             }
         });
     </script>
+    <script>
+        // ── HMRC Test Connection ─────────────────────────────────────────────
+        $(document).on('click', '#btn-hmrc-test-connection', function() {
+            var $btn = $(this);
+            var $result = $('#hmrc-connection-result');
+
+            $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> {{ __("Testing...") }}');
+            $result.hide();
+
+            $.ajax({
+                url: '{{ route("hmrc.test.connection") }}',
+                type: 'GET',
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                success: function(res) {
+                    if (res.success) {
+                        $result.html('<span class="text-success"><i class="fa fa-check-circle"></i> ' + res.message + '</span>').show();
+                    } else {
+                        $result.html('<span class="text-danger"><i class="fa fa-times-circle"></i> ' + res.message + '</span>').show();
+                    }
+                },
+                error: function(xhr) {
+                    var msg = xhr.responseJSON ? xhr.responseJSON.message : '{{ __("Connection test failed.") }}';
+                    $result.html('<span class="text-danger"><i class="fa fa-times-circle"></i> ' + msg + '</span>').show();
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html('<i class="fa fa-plug"></i> {{ __("Test Connection") }}');
+                }
+            });
+        });
+    </script>
 @endpush
 
 @section('breadcrumb')
@@ -4208,8 +4238,12 @@
                                     </div>
                                 </div>
                                 <div class="card-footer text-end">
+                                    <button type="button" class="btn btn-outline-info me-2" id="btn-hmrc-test-connection">
+                                        <i class="fa fa-plug"></i> {{ __('Test Connection') }}
+                                    </button>
                                     <input type="submit" value="{{ __('Save Changes') }}"
                                         class="btn-submit btn btn-primary">
+                                    <div id="hmrc-connection-result" class="mt-2 text-start" style="display:none;"></div>
                                 </div>
                                 {{ Form::close() }}
                             </div>

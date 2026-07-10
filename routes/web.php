@@ -3,6 +3,7 @@
 use App\Http\Controllers\AamarpayController;
 use App\Http\Controllers\AttendanceRequestController;
 use App\Http\Controllers\SubDepartmentController;
+use App\Http\Controllers\HmrcController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -275,6 +276,12 @@ Route::group(['middleware' => ['verified']], function () {
             Route::post('company-settings', [SettingsController::class, 'saveCompanySettings'])->name('company.settings');
             Route::post('payment-settings', [SettingsController::class, 'savePaymentSettings'])->name('payment.settings');
             Route::post('hmrc-settings', [SettingsController::class, 'saveHmrcSettings'])->name('hmrc.settings.store');
+
+            // HMRC NI Verification (company/hr can verify employee NI numbers)
+            Route::post('hmrc/verify-nino', [HmrcController::class, 'verifyNino'])->name('hmrc.verify.nino');
+            Route::post('hmrc/verify-employee-nino/{id}', [HmrcController::class, 'verifyEmployeeNino'])->name('hmrc.verify.employee.nino');
+            Route::get('hmrc/test-connection', [HmrcController::class, 'testConnection'])->name('hmrc.test.connection');
+            Route::get('hmrc/bulk-verify-nino', [HmrcController::class, 'bulkVerifyNino'])->name('hmrc.bulk.verify.nino');
             Route::post('system-settings', [SettingsController::class, 'saveSystemSettings'])->name('system.settings');
 
             // Google Calendar
