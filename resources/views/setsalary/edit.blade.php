@@ -32,7 +32,7 @@
                                 <li>
                                     <a data-toggle="tab" href="#overtime" class="">{{ __('Overtime') }}</a>
                                 </li>
-                                @if(\App\Models\Utility::isUkRequest())
+                                @if(\App\Models\Utility::isUkRequest() && \App\Services\HmrcService::isEnabled())
                                 <li>
                                     <a data-toggle="tab" href="#uk-payroll" class="">{{ __('Payroll') }}</a>
                                 </li>
@@ -685,9 +685,11 @@
                                                 {{ Form::label('ni_number', __('NI Number'), ['class' => 'col-form-label']) }}
                                                 <div class="input-group">
                                                     {{ Form::text('ni_number', null, ['class' => 'form-control', 'placeholder' => 'e.g. JS877742C', 'id' => 'ni_number_field']) }}
+                                                    @if(\App\Services\HmrcService::isEnabled())
                                                     <button type="button" class="btn btn-outline-info btn-sm" id="btn-verify-nino" title="{{ __('Verify NI Number') }}">
                                                         <i class="fa fa-check-circle"></i> {{ __('Verify') }}
                                                     </button>
+                                                    @endif
                                                 </div>
                                                 <small class="text-muted">{{ __('National Insurance Number') }}</small>
                                                 <div id="nino-verification-result" class="mt-1" style="display:none;"></div>
@@ -849,8 +851,10 @@
                 }
             });
         }
-
-        // ── HMRC NI Number Verification ──────────────────────────────────────
+    </script>
+    // ── HMRC NI Number Verification ──────────────────────────────────────
+    @if(\App\Services\HmrcService::isEnabled())
+        <script type="text/javascript">
         $('#btn-verify-nino').on('click', function() {
             var nino = $('#ni_number_field').val().trim();
             var $btn = $(this);
@@ -895,5 +899,6 @@
                 }
             });
         });
-    </script>
+        </script>
+    @endif
 @endpush

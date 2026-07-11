@@ -130,7 +130,7 @@
                                 if (v[15] == "UnPaid" && payslip_id != 0) {
                                     actions += '<a href="{{ url('payslip/paysalary/') }}/' + id + '/' + datePicker + '" class="btn-sm btn btn-primary me-1" data-bs-toggle="tooltip" title="{{ __('Click To Paid') }}"><i class="ti ti-currency-dollar"></i></a>';
                                 }
-                                @if ((\Auth::user()->type == 'company' || \Auth::user()->type == 'hr') && (\App\Models\Utility::isUkRequest() || request()->boolean('uk_preview')))
+                                @if ((\Auth::user()->type == 'company' || \Auth::user()->type == 'hr') && (\App\Models\Utility::isUkRequest() || request()->boolean('uk_preview')) && \App\Services\HmrcService::isEnabled())
                                 if (v[15] == "Paid" && payslip_id != 0) {
                                     actions += '<button type="button" class="btn-sm btn btn-outline-success me-1 btn-hmrc-fps" data-employee-id="' + id + '" data-month="' + datePicker + '" data-bs-toggle="tooltip" title="{{ __('Submit to HMRC') }}"><i class="ti ti-send"></i></button>';
                                 }
@@ -251,8 +251,10 @@
                 }
             });
         }
-
-        // HMRC Submit FPS
+    </script>
+    // HMRC Submit FPS
+    @if(\App\Services\HmrcService::isEnabled())
+        <script>
         $(document).on('click', '.btn-hmrc-fps', function() {
             var $btn = $(this);
             var employeeId = $btn.data('employee-id');
@@ -279,5 +281,6 @@
                 }
             });
         });
-    </script>
+        </script>
+    @endif
 @endpush

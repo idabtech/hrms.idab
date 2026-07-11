@@ -364,10 +364,12 @@ $lang = \App\Models\Utility::getValByName('default_language');
                         <div class="float-end"><i class="ti ti-chevron-right"></i></div>
                         </a> --}}
 
+                        @if(\App\Services\HmrcService::isEnabled())
                         <a href="#hmrc-paye-settings" id="hmrc-paye-tab"
                             class="list-group-item list-group-item-action border-0">{{ __('HMRC PAYE Settings') }}
                             <div class="float-end"><i class="ti ti-chevron-right"></i></div>
                         </a>
+                        @endif
 
                     </div>
 
@@ -2450,6 +2452,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
     </div>
 
     {{-- HMRC PAYE Settings (Company Level) --}}
+    @if(\App\Services\HmrcService::isEnabled())
     <div class="" id="hmrc-paye-settings">
         <div class="card">
             <div class="card-header">
@@ -2508,6 +2511,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
             {{ Form::close() }}
         </div>
     </div>
+    @endif
 
 </div>
 </div>
@@ -2730,6 +2734,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ── HMRC Test Connection (Company Settings) ──────────────────────────
+@if(\App\Services\HmrcService::isEnabled())
 $(document).on('click', '#btn-hmrc-test-company', function() {
     var $btn = $(this);
     var $result = $('#hmrc-company-result');
@@ -2757,5 +2762,6 @@ $(document).on('click', '#btn-hmrc-test-company', function() {
         }
     });
 });
+@endif
 </script>
 @endsection
