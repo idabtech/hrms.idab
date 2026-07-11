@@ -370,7 +370,7 @@ class LeaveController extends Controller
 
     public function edit(LocalLeave $leave)
     {
-        if (!\Auth::user()->can('Edit Leave')) {
+        if (!\Auth::user()->can('Edit Leave') && !in_array(strtolower(\Auth::user()->type), ['company', 'hr', 'admin'])) {
             return response()->json(['error' => __('Permission denied.')], 401);
         }
 
@@ -416,7 +416,7 @@ class LeaveController extends Controller
     {
         $leave = LocalLeave::find($leave);
 
-        if (!\Auth::user()->can('Edit Leave')) {
+        if (!\Auth::user()->can('Edit Leave') && !in_array(strtolower(\Auth::user()->type), ['company', 'hr', 'admin'])) {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
 
@@ -493,7 +493,9 @@ class LeaveController extends Controller
 
         // ── Status change (HR/Admin only, not own leave) ───────────────────
         $statusChanged = false;
-        $canAction     = in_array(Auth::user()->type, ['company', 'hr', 'admin']);
+        $canAction     = in_array(strtolower(Auth::user()->type), ['company', 'hr', 'admin'])
+                         || Auth::user()->can('Edit Leave')
+                         || Auth::user()->hasRole('hr');
         $actorEmployee = $canAction ? Employee::where('user_id', Auth::id())->first() : null;
         $isOwnLeave    = $actorEmployee && $actorEmployee->id == $leave->employee_id;
 

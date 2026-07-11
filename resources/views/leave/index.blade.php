@@ -169,7 +169,8 @@
                                         // Compute once per row — used in both Status and Action columns
                                         $actorEmpId = optional(\Auth::user()->employee)->id ?? null;
                                         $isOwnLeave = $actorEmpId && $actorEmpId == $leave->employee_id;
-                                        $canAction  = in_array(\Auth::user()->type, ['company', 'hr', 'admin']);
+                                        $canAction  = in_array(strtolower(\Auth::user()->type), ['company', 'hr', 'admin'])
+                                                      || \Auth::user()->can('Edit Leave');
                                     @endphp
                                     <tr>
                                         @if (\Auth::user()->type != 'employee')

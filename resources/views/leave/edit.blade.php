@@ -203,26 +203,27 @@
     </div>
 
     {{-- Leave Status (HR/Admin only, not own leave) --}}
-    @if (in_array(\Auth::user()->type, ['company', 'hr', 'admin']))
-        @php
-            $actorEmpId = optional(\Auth::user()->employee)->id ?? null;
-            $isOwnLeave = $actorEmpId && $actorEmpId == $leave->employee_id;
-        @endphp
-        @if (!$isOwnLeave)
-        <div class="row">
-            <div class="col-md-12">
-                <div class="form-group">
-                    {{ Form::label('status', __('Leave Status'), ['class' => 'col-form-label']) }}
-                    <select name="status" class="form-control">
-                        <option value="Pending" {{ $leave->status == 'Pending' ? 'selected' : '' }}>{{ __('Pending') }}</option>
-                        <option value="Approved" {{ $leave->status == 'Approved' ? 'selected' : '' }}>{{ __('Approved') }}</option>
-                        <option value="Reject" {{ $leave->status == 'Reject' ? 'selected' : '' }}>{{ __('Reject') }}</option>
-                    </select>
-                    <small class="text-muted">{{ __('Change the leave status directly from here.') }}</small>
-                </div>
+    @php
+        $canChangeStatus = in_array(strtolower(\Auth::user()->type), ['company', 'hr', 'admin'])
+                           || \Auth::user()->can('Edit Leave')
+                           || \Auth::user()->hasRole('hr');
+        $actorEmpId = optional(\Auth::user()->employee)->id ?? null;
+        $isOwnLeave = $actorEmpId && $actorEmpId == $leave->employee_id;
+    @endphp
+    @if ($canChangeStatus && !$isOwnLeave)
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                {{ Form::label('status', __('Leave Status'), ['class' => 'col-form-label']) }}
+                <select name="status" class="form-control">
+                    <option value="Pending" {{ $leave->status == 'Pending' ? 'selected' : '' }}>{{ __('Pending') }}</option>
+                    <option value="Approved" {{ $leave->status == 'Approved' ? 'selected' : '' }}>{{ __('Approved') }}</option>
+                    <option value="Reject" {{ $leave->status == 'Reject' ? 'selected' : '' }}>{{ __('Reject') }}</option>
+                </select>
+                <small class="text-muted">{{ __('Change the leave status directly from here.') }}</small>
             </div>
         </div>
-        @endif
+    </div>
     @endif
 
 </div>
