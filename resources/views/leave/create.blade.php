@@ -349,9 +349,9 @@
 
     // ── Build a single table row ───────────────────────────────────────────
     function buildRow(dateStr, dateDisp, dayName, duration, period, status, locked) {
-        var periodStyle = duration === 'half_day' ? '' : 'display:none;';
         var uid         = dateStr.replace(/-/g, '_');
         var disAttr     = locked ? ' disabled' : '';
+        var isHalf      = duration === 'half_day';
         var lockedBadge = locked
             ? '<span class="badge bg-secondary ms-1" title="{{ __("Auto-set based on leave type or quota") }}">'
               + '<i class="ti ti-lock"></i></span>'
@@ -386,8 +386,9 @@
             + '</td>'
 
             // Period
-            + '<td class="period-cell" style="' + periodStyle + '">'
-            +   '<select name="half_day_period_day[' + dateStr + ']" class="form-control form-control-sm period-select"' + disAttr + '>'
+            + '<td class="period-cell">'
+            +   '<span class="period-dash"' + (isHalf ? ' style="display:none;"' : '') + '>-</span>'
+            +   '<select name="half_day_period_day[' + dateStr + ']" class="form-control form-control-sm period-select"' + disAttr + (isHalf ? '' : ' style="display:none;"') + '>'
             +     '<option value="morning"   ' + (period === 'morning'   ? 'selected' : '') + '>{{ __("Morning") }}</option>'
             +     '<option value="afternoon" ' + (period === 'afternoon' ? 'selected' : '') + '>{{ __("Afternoon") }}</option>'
             +   '</select>'
@@ -422,7 +423,9 @@
     $(document).on('change', '.dur-radio', function () {
         var row  = $(this).closest('tr');
         var cell = row.find('.period-cell');
-        cell[$(this).val() === 'half_day' ? 'show' : 'hide']();
+        var isHalf = $(this).val() === 'half_day';
+        cell.find('.period-dash').toggle(!isHalf);
+        cell.find('.period-select').toggle(isHalf);
         updateSummary();
         // Note: quota re-balancing on half/full toggle is complex;
         // full rebuild is the cleanest approach when employee changes duration

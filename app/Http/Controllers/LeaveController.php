@@ -485,11 +485,123 @@ class LeaveController extends Controller
         $leave->half_day_period  = $halfDayPeriod;
         $leave->leave_reason     = $request->leave_reason;
         $leave->remark           = $request->remark;
+
+        // ── Status change (HR/Admin only, not own leave) ───────────────────
+        $statusChanged = false;
+        $canAction     = in_array(Auth::user()->type, ['company', 'hr', 'admin']);
+        $actorEmployee = $canAction ? Employee::where('user_id', Auth::id())->first() : null;
+        $isOwnLeave    = $actorEmployee && $actorEmployee->id == $leave->employee_id;
+
+        if ($canAction && !$isOwnLeave && $request->filled('status') && in_array($request->status, ['Pending', 'Approved', 'Reject'])) {
+            $oldStatus = $leave->getOriginal('status');
+            $leave->status = $request->status;
+            $statusChanged = ($oldStatus !== $request->status);
+
+            if ($leave->status == 'Approved') {
+                $leave->load('dayDetails');
+                $leave->total_leave_days = $leave->totalDaysConsumed();
+            }
+        }
+
         $leave->save();
 
         // Re-save day breakdown
         $leave->dayDetails()->delete();
         $this->persistDayDetails($leave->id, $dayDetails);
+
+        // ── Rota shifts sync (on status change) ────────────────────────────
+        if ($statusChanged) {
+            $employee = Employee::find($leave->employee_id);
+            if ($employee) {
+                try {
+                    $creatorId = $leave->created_by;
+                    $leaveTypeName = optional($leave->leaveType)->title ?? 'Leave';
+                    $sd = $leave->start_date instanceof Carbon ? $leave->start_date->format('Y-m-d') : $leave->start_date;
+                    $ed = $leave->end_date instanceof Carbon ? $leave->end_date->format('Y-m-d') : $leave->end_date;
+                    $period = CarbonPeriod::create($sd, $ed);
+
+                    if ($leave->status === 'Approved') {
+                        foreach ($period as $day) {
+                            Shift::updateOrCreate(
+                                ['employee_id' => $employee->id, 'date' => $day->format('Y-m-d')],
+                                [
+                                    'name'               => $leaveTypeName,
+                                    'company_start_time' => '00:00:00',
+                                    'company_end_time'   => '23:59:00',
+                                    'type'               => 'leave',
+                                    'notes'              => $leave->leave_reason ?? null,
+                                    'is_deleted'         => false,
+                                    'created_by'         => $creatorId,
+                                ]
+                            );
+                        }
+                    } else {
+                        foreach ($period as $day) {
+                            $shiftRow = Shift::where('employee_id', $employee->id)
+                                ->where('date', $day->format('Y-m-d'))
+                                ->where('type', 'leave')
+                                ->where('created_by', $creatorId)
+                                ->first();
+                            if ($shiftRow) {
+                                $shiftRow->delete();
+                            }
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    Log::error('LeaveController@update: rota shift sync failed.', [
+                        'leave_id' => $leave->id, 'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            // ── Idab API notification ──────────────────────────────────────
+            if ($leave->status === 'Approved' && $employee) {
+                try {
+                    $idab = app(IdabApiService::class);
+                    $leaveTypeName = optional($leave->leaveType)->title ?? 'Leave';
+                    $idab->notifyLeaveApproved(
+                        $employee->id,
+                        $leave->start_date,
+                        $leave->end_date,
+                        $leaveTypeName,
+                        $leave->leave_reason ?? ''
+                    );
+                } catch (\Throwable $e) {
+                    Log::error('LeaveController@update: idabcard notifyLeaveApproved failed.', [
+                        'leave_id' => $leave->id, 'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            // ── Twilio notification ────────────────────────────────────────
+            $setting = Utility::settings(Auth::user()->creatorId());
+            $emp = Employee::find($leave->employee_id);
+            if (isset($setting['twilio_leave_approve_notification']) && $setting['twilio_leave_approve_notification'] == 1) {
+                if (!empty($emp->phone)) {
+                    Utility::send_twilio_msg($emp->phone, 'leave_approve_reject', ['leave_status' => $leave->status]);
+                }
+            }
+
+            // ── Email notification ─────────────────────────────────────────
+            $setings = Utility::settings();
+            if (isset($setings['leave_status']) && $setings['leave_status'] == 1) {
+                $empForEmail = Employee::where('id', $leave->employee_id)
+                    ->where('created_by', '=', Auth::user()->creatorId())
+                    ->first();
+                if ($empForEmail && !empty($empForEmail->email)) {
+                    $uArr = [
+                        'leave_email'       => $empForEmail->email,
+                        'leave_status_name' => $empForEmail->name,
+                        'leave_status'      => $leave->status,
+                        'leave_reason'      => $leave->leave_reason,
+                        'leave_start_date'  => $leave->start_date,
+                        'leave_end_date'    => $leave->end_date,
+                        'total_leave_days'  => $leave->total_leave_days,
+                    ];
+                    Utility::sendEmailTemplate('leave_status', [$empForEmail->email], $uArr);
+                }
+            }
+        }
 
         return redirect()->route('leave.index')->with('success', __('Leave successfully updated.'));
     }
