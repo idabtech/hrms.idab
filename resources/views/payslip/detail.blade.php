@@ -6,6 +6,7 @@
     $da = $payslipDetail['da'] ?? 0;
     $totalAllowance = $payslipDetail['totalAllowance'] ?? 0;
     $totalCommission = $payslipDetail['totalCommission'] ?? 0;
+    $totalOtherPayment = $payslipDetail['totalOtherPayment'] ?? 0;
     $totalLoan = $payslipDetail['totalLoan'] ?? 0;
     $totalLoanRepayment = $payslipDetail['totalLoanRepayment'] ?? 0;
     $totalPension = $payslipDetail['totalPansion'] ?? 0;
@@ -59,6 +60,12 @@
             <tr>
                 <td>{{ __('Commission') }}</td>
                 <td class="text-end">{{ \Auth::user()->priceFormat($totalCommission) }}</td>
+            </tr>
+            @endif
+            @if ($totalOtherPayment > 0)
+            <tr>
+                <td>{{ __('Other Payment') }}</td>
+                <td class="text-end">{{ \Auth::user()->priceFormat($totalOtherPayment) }}</td>
             </tr>
             @endif
             @if ($totalLoan > 0)

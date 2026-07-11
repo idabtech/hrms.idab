@@ -1271,6 +1271,7 @@ class Utility extends Model
 
         $payslip['totalAllowance']           = $totalAllowance;
         $payslip['totalCommission']           = $totalCommission;
+        $payslip['totalOtherPayment']    = $totalotherpayment;
         $payslip['totalPansion']           = $totalPansion;
         $payslip['totalLoan']           = $totalloan;
         $payslip['totalLoanRepayment']   = $totalLoanRepayment;
