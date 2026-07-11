@@ -89,7 +89,7 @@ class PaySlipController extends Controller
         $payslip_employee = Employee::where('created_by', \Auth::user()->creatorId())->where('company_doj', '<=', date($year . '-' . $month . '-t'))->count();
         if ($payslip_employee > count($validatePaysilp)) {
 
-            $employees = Employee::where('created_by', \Auth::user()->creatorId())->where('company_doj', '<=', date($year . '-' . $month . '-t'))->whereNotIn('employee_id', $validatePaysilp)->get();
+            $employees = Employee::where('created_by', \Auth::user()->creatorId())->where('company_doj', '<=', date($year . '-' . $month . '-t'))->whereNotIn('id', $validatePaysilp)->get();
 
             foreach ($employees as $employee) {
 
