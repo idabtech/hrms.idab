@@ -382,10 +382,10 @@
                                 class="list-group-item list-group-item-action border-0">{{ __('PWA Settings') }}
                                 <div class="float-end"><i class="ti ti-chevron-right"></i></div>
                             </a>
-                            <a href="#hmrc-settings" id="hmrc-setting-tab"
+                            {{-- <a href="#hmrc-settings" id="hmrc-setting-tab"
                                 class="list-group-item list-group-item-action border-0">{{ __('HMRC Settings') }}
                                 <div class="float-end"><i class="ti ti-chevron-right"></i></div>
-                            </a>
+                            </a> --}}
                         </div>
                     </div>
                 </div>
@@ -4160,7 +4160,7 @@
                     </div>
 
                     {{-- ═══ HMRC API Settings ═══ --}}
-                    <div id="hmrc-settings">
+                    {{-- <div id="hmrc-settings">
                         <div class="col-md-12">
                             <div class="card">
                                 <div class="card-header">
@@ -4174,9 +4174,9 @@
                                 {{ Form::open(['route' => 'hmrc.settings.store', 'method' => 'post']) }}
                                 @csrf
                                 <div class="card-body">
-                                    <div class="row">
+                                    <div class="row"> --}}
                                         {{-- Enable / Disable --}}
-                                        <div class="col-md-12 form-group">
+                                        {{-- <div class="col-md-12 form-group">
                                             <div class="d-flex align-items-center">
                                                 <span class="me-3 fw-bold">{{ __('Enable HMRC Integration') }}</span>
                                                 <div class="form-check form-switch custom-switch-v1">
@@ -4188,20 +4188,20 @@
                                                         {{ isset($admin_payment_setting['hmrc_enabled']) && $admin_payment_setting['hmrc_enabled'] == 'on' ? 'checked' : '' }}>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </div> --}}
 
                                         {{-- Environment --}}
-                                        <div class="col-md-6 form-group">
+                                        {{-- <div class="col-md-6 form-group">
                                             {{ Form::label('hmrc_environment', __('Environment'), ['class' => 'col-form-label']) }}
                                             {{ Form::select('hmrc_environment', ['sandbox' => 'Sandbox (Testing)', 'production' => 'Production (Live)'], isset($admin_payment_setting['hmrc_environment']) ? $admin_payment_setting['hmrc_environment'] : 'sandbox', ['class' => 'form-control']) }}
                                             <small class="text-muted">{{ __('Use Sandbox for testing before switching to Production.') }}</small>
-                                        </div>
+                                        </div> --}}
 
                                         {{-- Spacer --}}
-                                        <div class="col-md-6"></div>
+                                        {{-- <div class="col-md-6"></div> --}}
 
                                         {{-- Client ID --}}
-                                        <div class="col-md-6 form-group">
+                                        {{-- <div class="col-md-6 form-group">
                                             {{ Form::label('hmrc_client_id', __('Client ID'), ['class' => 'col-form-label']) }}
                                             {{ Form::text('hmrc_client_id', isset($admin_payment_setting['hmrc_client_id']) ? $admin_payment_setting['hmrc_client_id'] : '', ['class' => 'form-control', 'placeholder' => __('Enter HMRC Client ID')]) }}
                                             @if ($errors->has('hmrc_client_id'))
@@ -4209,10 +4209,10 @@
                                                     {{ $errors->first('hmrc_client_id') }}
                                                 </span>
                                             @endif
-                                        </div>
+                                        </div> --}}
 
                                         {{-- Client Secret --}}
-                                        <div class="col-md-6 form-group">
+                                        {{-- <div class="col-md-6 form-group">
                                             {{ Form::label('hmrc_client_secret', __('Client Secret'), ['class' => 'col-form-label']) }}
                                             {{ Form::text('hmrc_client_secret', isset($admin_payment_setting['hmrc_client_secret']) ? $admin_payment_setting['hmrc_client_secret'] : '', ['class' => 'form-control', 'placeholder' => __('Enter HMRC Client Secret')]) }}
                                             @if ($errors->has('hmrc_client_secret'))
@@ -4220,17 +4220,17 @@
                                                     {{ $errors->first('hmrc_client_secret') }}
                                                 </span>
                                             @endif
-                                        </div>
+                                        </div> --}}
 
                                         {{-- Server Token --}}
-                                        <div class="col-md-6 form-group">
+                                        {{-- <div class="col-md-6 form-group">
                                             {{ Form::label('hmrc_server_token', __('Server Token'), ['class' => 'col-form-label']) }}
                                             {{ Form::text('hmrc_server_token', isset($admin_payment_setting['hmrc_server_token']) ? $admin_payment_setting['hmrc_server_token'] : '', ['class' => 'form-control', 'placeholder' => __('Enter HMRC Server Token')]) }}
                                             <small class="text-muted">{{ __('Found in your HMRC Developer Hub application credentials.') }}</small>
-                                        </div>
+                                        </div> --}}
 
                                         {{-- Callback URI --}}
-                                        <div class="col-md-6 form-group">
+                                        {{-- <div class="col-md-6 form-group">
                                             {{ Form::label('hmrc_callback_uri', __('OAuth Callback URI'), ['class' => 'col-form-label']) }}
                                             {{ Form::text('hmrc_callback_uri', isset($admin_payment_setting['hmrc_callback_uri']) ? $admin_payment_setting['hmrc_callback_uri'] : url('/hmrc/callback'), ['class' => 'form-control', 'placeholder' => __('https://yourdomain.com/hmrc/callback')]) }}
                                             <small class="text-muted">{{ __('Must match the redirect URI registered in your HMRC application.') }}</small>
@@ -4248,8 +4248,8 @@
                                 {{ Form::close() }}
                             </div>
                         </div>
-                    </div>
-
+                    </div> --}}
+                    {{-- ═══ HMRC API Settings End --}}
                 </div>
             </div>
         @endsection
