@@ -124,7 +124,7 @@
                             </div>
 
                             @if (\Auth::user()->type == 'employee')
-                            {!! Form::submit('Update', ['class' => 'btn-create btn-xs badge-blue radius-10px float-right']) !!}
+                            {{-- {!! Form::submit('Update', ['class' => 'btn  btn-primary float-right']) !!} --}}
                             @endif
                         </div>
                     </div>
