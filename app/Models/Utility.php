@@ -621,11 +621,11 @@ class Utility extends Model
                 $ot += $OverTime;
             }
         }
-        // loan
-        $deduction['loan'] = PaySlip::where('employee_id', $employeeId)->where('salary_month', $month)->get();
+        // loan (earning — money given to employee)
+        $earning['loan'] = PaySlip::where('employee_id', $employeeId)->where('salary_month', $month)->get();
         $totalloan = 0;
 
-        $arrayJson = json_decode($deduction['loan']);
+        $arrayJson = json_decode($earning['loan']);
         foreach ($arrayJson as $loan) {
             $loans = json_decode($loan->loan);
             foreach ($loans as $emploans) {
@@ -636,6 +636,18 @@ class Utility extends Model
                 }
                 $totalloan += $emploan;
             }
+        }
+
+        // loan repayment (deduction — money employee pays back)
+        $loanRepayments = LoanRepayment::where('employee_id', $employeeId)->get();
+        $totalLoanRepayment = 0;
+        foreach ($loanRepayments as $repay) {
+            if ($repay->type == 'percentage') {
+                $repayAmt = $repay->amount * $employess->salary / 100;
+            } else {
+                $repayAmt = $repay->amount;
+            }
+            $totalLoanRepayment += $repayAmt;
         }
 
         // saturation_deduction
@@ -1090,9 +1102,47 @@ class Utility extends Model
         }
 
         // Leave allocation totals (for display on payslip)
-        $totalLeaveAlloc   = (int) LeaveType::where('created_by', $employess->created_by)->sum('days');
+        // Use per-employee assigned leave types if available, otherwise fallback to global
+        $assignedLeaveTypesForPayslip = $employess->leaveTypes()->get();
+        if ($assignedLeaveTypesForPayslip->isNotEmpty()) {
+            $totalLeaveAlloc = 0;
+            foreach ($assignedLeaveTypesForPayslip as $alt) {
+                $pivotDays = $alt->pivot->total_days ?? 0;
+                $totalLeaveAlloc += $pivotDays > 0 ? $pivotDays : $alt->days;
+            }
+            $totalLeaveAlloc = (int) $totalLeaveAlloc;
+        } else {
+            $totalLeaveAlloc = (int) LeaveType::where('created_by', $employess->created_by)->sum('days');
+        }
         $totalUsedEver     = (int) Leave::where('employee_id', $employeeId)->where('status', 'Approved')->sum('total_leave_days');
         $remainingLeaves   = max(0, $totalLeaveAlloc - $totalUsedEver);
+
+        // Per-type leave breakdown for payslip display
+        $leaveBreakdown = [];
+        $leaveTypesForBreakdown = $assignedLeaveTypesForPayslip->isNotEmpty()
+            ? $assignedLeaveTypesForPayslip
+            : LeaveType::where('created_by', $employess->created_by)->get();
+
+        $annualCycle = self::AnnualLeaveCycle();
+        foreach ($leaveTypesForBreakdown as $lt) {
+            $pivotDays = ($lt->pivot->total_days ?? 0);
+            $allocDays = $pivotDays > 0 ? $pivotDays : $lt->days;
+            $isPaid = isset($lt->pivot) ? ($lt->pivot->is_paid ?? $lt->is_paid) : $lt->is_paid;
+
+            $usedDays = (float) Leave::where('employee_id', $employeeId)
+                ->where('leave_type_id', $lt->id)
+                ->where('status', 'Approved')
+                ->whereBetween('created_at', [$annualCycle['start_date'], $annualCycle['end_date']])
+                ->sum('total_leave_days');
+
+            $leaveBreakdown[] = [
+                'title'     => $lt->title,
+                'is_paid'   => $isPaid,
+                'allocated' => $allocDays,
+                'used'      => $usedDays,
+                'remaining' => max(0, $allocDays - $usedDays),
+            ];
+        }
 
         // Total hours worked this month
         $totalWorkMins = 0;
@@ -1174,11 +1224,11 @@ class Utility extends Model
 
         $payslip['earning']              = $earning;
         $payslip['earning']              = $earning;
-        $payslip['totalEarning']         = $totalAllowance + $totalCommission + $totalotherpayment + $ot + $totalBonous + $totalPearks;
+        $payslip['totalEarning']         = $totalAllowance + $totalCommission + $totalotherpayment + $ot + $totalBonous + $totalPearks + $totalloan;
         $payslip['deduction']            = $deduction;
         // For hourly employees leave_deduction and unpaid_leave_deduction are zeroed
         // above (actual hours already exclude unpaid time — no double-deduction needed)
-        $payslip['totalDeduction']       = $totalloan + $totaldeduction + $totalPansion
+        $payslip['totalDeduction']       = $totalLoanRepayment + $totaldeduction + $totalPansion
             + $leave_deduction + $unpaid_leave_deduction;
 
         $calcTotal = function ($items) use ($salary) {
@@ -1192,26 +1242,27 @@ class Utility extends Model
 
 
 
-        $payslip['hra']              = $employess->get_net_hra();
-        $payslip['da']              = $employess->get_net_da();
+        $payslip['hra']              = self::isUkRequest() ? 0 : $employess->get_net_hra();
+        $payslip['da']              = self::isUkRequest() ? 0 : $employess->get_net_da();
         $payslip['earning']              = $earning;
         $payslip['totalEarning']         = $totalAllowance + $totalCommission
             + $totalotherpayment
             // + $ot
             + $totalBonous
+            + $totalloan
             + $payslip['hra'] + $payslip['da'];
         // + $totalPearks;
         $payslip['deduction']            = $deduction;
         // For hourly employees leave_deduction and unpaid_leave_deduction are zeroed
         // above (actual hours already exclude unpaid time — no double-deduction needed)
-        $payslip['totalDeduction']       = $totalloan + $totaldeduction + $totalPansion;
+        $payslip['totalDeduction']       = $totalLoanRepayment + $totaldeduction + $totalPansion;
         // + $leave_deduction + $unpaid_leave_deduction;
         $total_saturation_deduction = $totaldeduction;
         $total_bonus                = $calcTotal($employess->bonuses);
         $basic_salary = $monthlySalaryGross;
 
         $netSalary = $employess->basic_salary + $payslip['hra'] + $payslip['da'] + $totalAllowance + $totalCommission + $totalotherpayment
-            - $totalloan - $totalPansion + $total_bonus - $total_saturation_deduction;
+            + $totalloan - $totalLoanRepayment - $totalPansion + $total_bonus - $total_saturation_deduction;
         // Net salary:
         //   Monthly: fixed_salary + earnings - deductions (incl. LOP)
         //   Hourly:  hourly_rate × actual_hours_worked + earnings - deductions (no LOP)
@@ -1222,6 +1273,7 @@ class Utility extends Model
         $payslip['totalCommission']           = $totalCommission;
         $payslip['totalPansion']           = $totalPansion;
         $payslip['totalLoan']           = $totalloan;
+        $payslip['totalLoanRepayment']   = $totalLoanRepayment;
         $payslip['total_saturation_deduction']           = $total_saturation_deduction;
         $payslip['total_bonus']           = $total_bonus;
 
@@ -1259,6 +1311,7 @@ class Utility extends Model
         $payslip['total_leave_alloc']    = $totalLeaveAlloc;
         $payslip['remaining_leaves']     = $remainingLeaves;
         $payslip['total_used_ever']      = $totalUsedEver;
+        $payslip['leave_breakdown']      = $leaveBreakdown;   // per-type leave details
         // Days paid = clocked present days + paid leave days (both are compensated)
         $payslip['days_paid']            = $attendance_count + $paid_leave_days;
         // ── UK Year-To-Date (YTD) ─────────────────────────────────────────

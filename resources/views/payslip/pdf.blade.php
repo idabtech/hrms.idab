@@ -136,19 +136,29 @@
     //     }
     // }
     // Extra days are informational only — not added to earnings
-    // ── Deductions ────────────────────────────────────────────────────────────
-    $dedRows = [];
-    foreach ($payslipDetail['deduction']['loan'] as $_lr) {
+
+    // Loan/Advance (earning — money given to employee)
+    foreach ($payslipDetail['earning']['loan'] as $_lr) {
         foreach (json_decode($_lr->loan) as $_ln) {
             $_amt =
                 $_ln->type === 'percentage'
                     ? round(($_ln->amount * $_lr->basic_salary) / 100, 2)
                     : (float) $_ln->amount;
             if ($_amt > 0) {
-                $dedRows[] = ['label' => $_ln->title ?: __('Loan'), 'amount' => $_amt];
+                $earRows[] = ['label' => $_ln->title ?: __('Loan/Advance'), 'amount' => $_amt];
             }
         }
     }
+
+    // ── Deductions ────────────────────────────────────────────────────────────
+    $dedRows = [];
+
+    // Loan Repayment (deduction — money employee pays back)
+    $totalLoanRepayment = $payslipDetail['totalLoanRepayment'] ?? 0;
+    if ($totalLoanRepayment > 0) {
+        $dedRows[] = ['label' => __('Loan Repayment'), 'amount' => $totalLoanRepayment];
+    }
+
     foreach ($payslipDetail['deduction']['saturation_deduction'] as $_dr2) {
         foreach (json_decode($_dr2->saturation_deduction) as $_dd) {
             if (strtolower($_dd->title) == 'epf') {
@@ -619,11 +629,11 @@
                             </tr>
                             <tr>
                                 <td><span class="paid">Paid: {{ $paidLeaveDays }}</span></td>
-                                <td>Remaining: <strong class="cb">{{ $remainingLeaves }}</strong></td>
+                                <td>Used: <strong>{{ $usedLeaves }}</strong></td>
                             </tr>
                             <tr>
                                 <td><span class="unpaid">Unpaid: {{ $unpaidLeaveDays }}</span></td>
-                                <td>Rejected: <strong class="cr">{{ $disapprovedLeaves }}</strong></td>
+                                <td>Remaining: <strong class="cb">{{ $remainingLeaves }}</strong></td>
                             </tr>
                         </table>
                     </td>
