@@ -114,7 +114,7 @@
                         <th>{{ __('Date') }}</th>
                         <th>{{ __('Day') }}</th>
                         <th>{{ __('Duration') }}</th>
-                        <th>{{ __('Period') }}<small class="text-muted d-block">{{ __('(if half day)') }}</small></th>
+                        <th>{{ __('Period') }}</th>
                         <th>{{ __('Status') }}</th>
                     </tr>
                 </thead>
@@ -145,8 +145,9 @@
                                     <label class="form-check-label" for="half_{{ $uid }}">{{ __('Half') }}</label>
                                 </div>
                             </td>
-                            <td class="period-cell" style="{{ $dur !== 'half_day' ? 'display:none;' : '' }}">
-                                <select name="half_day_period_day[{{ $dk }}]" class="form-control form-control-sm period-select">
+                            <td class="period-cell">
+                                <span class="period-dash" style="{{ $dur === 'half_day' ? 'display:none;' : '' }}">-</span>
+                                <select name="half_day_period_day[{{ $dk }}]" class="form-control form-control-sm period-select" style="{{ $dur !== 'half_day' ? 'display:none;' : '' }}">
                                     <option value="morning" {{ $period === 'morning' ? 'selected' : '' }}>{{ __('Morning') }}</option>
                                     <option value="afternoon" {{ $period === 'afternoon' ? 'selected' : '' }}>{{ __('Afternoon') }}</option>
                                 </select>
@@ -200,6 +201,29 @@
             </div>
         </div>
     </div>
+
+    {{-- Leave Status (HR/Admin only, not own leave) --}}
+    @if (in_array(\Auth::user()->type, ['company', 'hr', 'admin']))
+        @php
+            $actorEmpId = optional(\Auth::user()->employee)->id ?? null;
+            $isOwnLeave = $actorEmpId && $actorEmpId == $leave->employee_id;
+        @endphp
+        @if (!$isOwnLeave)
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group">
+                    {{ Form::label('status', __('Leave Status'), ['class' => 'col-form-label']) }}
+                    <select name="status" class="form-control">
+                        <option value="Pending" {{ $leave->status == 'Pending' ? 'selected' : '' }}>{{ __('Pending') }}</option>
+                        <option value="Approved" {{ $leave->status == 'Approved' ? 'selected' : '' }}>{{ __('Approved') }}</option>
+                        <option value="Reject" {{ $leave->status == 'Reject' ? 'selected' : '' }}>{{ __('Reject') }}</option>
+                    </select>
+                    <small class="text-muted">{{ __('Change the leave status directly from here.') }}</small>
+                </div>
+            </div>
+        </div>
+        @endif
+    @endif
 
 </div>
 <div class="modal-footer">
@@ -265,7 +289,10 @@
     });
 
     $form.on('change', '.dur-radio', function () {
-        $(this).closest('tr').find('.period-cell').toggle($(this).val() === 'half_day');
+        var isHalf = $(this).val() === 'half_day';
+        var $cell = $(this).closest('tr').find('.period-cell');
+        $cell.find('.period-dash').toggle(!isHalf);
+        $cell.find('.period-select').toggle(isHalf);
         updateSummary();
     });
 
@@ -366,8 +393,8 @@
     }
 
     function buildRow(dateStr, dateDisp, dayName, duration, period, status) {
-        var ps = duration === 'half_day' ? '' : 'display:none;';
         var uid = dateStr.replace(/-/g, '_') + '_{{ $leave->id }}';
+        var showSelect = duration === 'half_day';
         return '<tr data-date="' + dateStr + '">'
             + '<td><small>' + dateDisp + '</small></td>'
             + '<td><small>' + dayName + '</small></td>'
@@ -375,7 +402,10 @@
             + '<div class="form-check form-check-inline"><input class="form-check-input dur-radio" type="radio" name="day_duration[' + dateStr + ']" id="full_' + uid + '" value="full_day"' + (duration !== 'half_day' ? ' checked' : '') + '><label class="form-check-label" for="full_' + uid + '">{{ __("Full") }}</label></div>'
             + '<div class="form-check form-check-inline"><input class="form-check-input dur-radio" type="radio" name="day_duration[' + dateStr + ']" id="half_' + uid + '" value="half_day"' + (duration === 'half_day' ? ' checked' : '') + '><label class="form-check-label" for="half_' + uid + '">{{ __("Half") }}</label></div>'
             + '</td>'
-            + '<td class="period-cell" style="' + ps + '"><select name="half_day_period_day[' + dateStr + ']" class="form-control form-control-sm period-select"><option value="morning"' + (period === 'morning' ? ' selected' : '') + '>{{ __("Morning") }}</option><option value="afternoon"' + (period === 'afternoon' ? ' selected' : '') + '>{{ __("Afternoon") }}</option></select></td>'
+            + '<td class="period-cell">'
+            + '<span class="period-dash"' + (showSelect ? ' style="display:none;"' : '') + '>-</span>'
+            + '<select name="half_day_period_day[' + dateStr + ']" class="form-control form-control-sm period-select"' + (!showSelect ? ' style="display:none;"' : '') + '><option value="morning"' + (period === 'morning' ? ' selected' : '') + '>{{ __("Morning") }}</option><option value="afternoon"' + (period === 'afternoon' ? ' selected' : '') + '>{{ __("Afternoon") }}</option></select>'
+            + '</td>'
             + '<td>'
             + '<div class="form-check form-check-inline"><input class="form-check-input stat-radio" type="radio" name="day_status[' + dateStr + ']" id="paid_' + uid + '" value="paid"' + (status === 'paid' ? ' checked' : '') + '><label class="form-check-label text-success" for="paid_' + uid + '">{{ __("Paid") }}</label></div>'
             + '<div class="form-check form-check-inline"><input class="form-check-input stat-radio" type="radio" name="day_status[' + dateStr + ']" id="unpaid_' + uid + '" value="unpaid"' + (status === 'unpaid' ? ' checked' : '') + '><label class="form-check-label text-danger" for="unpaid_' + uid + '">{{ __("Unpaid") }}</label></div>'
