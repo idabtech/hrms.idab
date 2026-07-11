@@ -169,8 +169,8 @@
                                         // Compute once per row — used in both Status and Action columns
                                         $actorEmpId = optional(\Auth::user()->employee)->id ?? null;
                                         $isOwnLeave = $actorEmpId && $actorEmpId == $leave->employee_id;
-                                        $canAction  = in_array(strtolower(\Auth::user()->type), ['company', 'hr', 'admin'])
-                                                      || \Auth::user()->can('Edit Leave');
+                                        $canAction  = (in_array(strtolower(\Auth::user()->type), ['company', 'hr', 'admin'])
+                                                      || \Auth::user()->can('Edit Leave')) && \Auth::user()->type != 'employee';
                                     @endphp
                                     <tr>
                                         @if (\Auth::user()->type != 'employee')
@@ -222,7 +222,7 @@
                                         </td>
                                         <td>
                                             @if(strlen($leave->leave_reason) > 5)
-                                                <span 
+                                                <span
                                                     data-bs-toggle="tooltip"
                                                     data-bs-placement="top"
                                                     data-bs-custom-class="tooltip-primary"
@@ -340,7 +340,7 @@
                                                     </div>
                                                 @endcan
                                             @else
-                                                {{-- Employee: only detail modal on their own leaves --}}
+                                                {{-- Employee: view detail + edit/delete own pending leaves --}}
                                                 <div class="action-btn me-2">
                                                     <a href="javascript:void(0)"
                                                         class="mx-3 btn btn-sm bg-success align-items-center"
@@ -351,6 +351,39 @@
                                                         <span class="text-white"><i class="ti ti-caret-right"></i></span>
                                                     </a>
                                                 </div>
+
+                                                @if ($leave->status == 'Pending')
+                                                    @can('Edit Leave')
+                                                        <div class="action-btn me-2">
+                                                            <a href="javascript:void(0)"
+                                                                class="mx-3 btn btn-sm bg-info align-items-center"
+                                                                data-url="{{ URL::to('leave/' . $leave->id . '/edit') }}"
+                                                                data-ajax-popup="true" data-size="lg"
+                                                                data-bs-toggle="tooltip" title="{{ __('Edit') }}"
+                                                                data-title="{{ __('Edit Leave') }}">
+                                                                <span class="text-white"><i class="ti ti-pencil"></i></span>
+                                                            </a>
+                                                        </div>
+                                                    @endcan
+
+                                                    @can('Delete Leave')
+                                                        <div class="action-btn">
+                                                            {!! Form::open([
+                                                                'method' => 'DELETE',
+                                                                'route'  => ['leave.destroy', $leave->id],
+                                                                'id'     => 'delete-form-' . $leave->id,
+                                                            ]) !!}
+                                                            <a href="javascript:void(0)"
+                                                                data-bs-trigger="hover"
+                                                                class="btn btn-sm bg-danger align-items-center bs-pass-para"
+                                                                data-bs-toggle="tooltip" title="{{ __('Delete') }}"
+                                                                aria-label="{{ __('Delete') }}">
+                                                                <span class="text-white"><i class="ti ti-trash"></i></span>
+                                                            </a>
+                                                            {!! Form::close() !!}
+                                                        </div>
+                                                    @endcan
+                                                @endif
                                             @endif
                                         </td>
                                     </tr>
