@@ -937,6 +937,12 @@ Route::group(['middleware' => ['verified']], function () {
             'XSS',
         ]
     );
+    Route::get('payslip/detail/{id}/{month}', [PaySlipController::class, 'detail'])->name('payslip.detail')->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
     Route::get('payslip/editemployee/{id}', [PaySlipController::class, 'editemployee'])->name('payslip.editemployee')->middleware(
         [
             'auth',

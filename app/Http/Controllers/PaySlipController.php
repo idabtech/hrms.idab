@@ -213,6 +213,23 @@ class PaySlipController extends Controller
         return view('payslip.show', compact('payslip'));
     }
 
+    /**
+     * Payslip detail modal — shows salary breakdown for a specific employee/month.
+     */
+    public function detail($id, $month)
+    {
+        $payslip = PaySlip::where('employee_id', $id)
+            ->where('salary_month', $month)
+            ->where('created_by', \Auth::user()->creatorId())
+            ->first();
+
+        $employee = Employee::find($id);
+        $payslipDetail = Utility::employeePayslipDetail($id, $month);
+        $isUk = Utility::isUkRequest();
+
+        return view('payslip.detail', compact('payslip', 'employee', 'payslipDetail', 'isUk'));
+    }
+
     public function search_json(Request $request)
     {
         $formate_month_year = $request->datePicker;
