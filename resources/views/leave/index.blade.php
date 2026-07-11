@@ -105,7 +105,8 @@
             @foreach ($leaveBalances as $balance)
                 @php
                     $percentage = $balance->days > 0 ? round(($balance->total_used / $balance->days) * 100) : 0;
-                    $bgColor = $percentage > 80 ? 'danger' : ($percentage > 50 ? 'warning' : 'primary');
+                    // Unpaid leave types always show danger badge; otherwise color by usage percentage
+                    $bgColor = (!$balance->is_paid) ? 'danger' : ($percentage > 80 ? 'danger' : ($percentage > 50 ? 'warning' : 'primary'));
                 @endphp
                 <div class="col-lg-4 col-md-6">
                     <div class="card stats-wrapper dash-info-card">
@@ -308,18 +309,17 @@
                                                     </div>
                                                 @endif
 
-                                                @can('Edit Leave')
-                                                    <div class="action-btn me-2">
-                                                        <a href="javascript:void(0)"
-                                                            class="mx-3 btn btn-sm bg-info align-items-center"
-                                                            data-url="{{ URL::to('leave/' . $leave->id . '/edit') }}"
-                                                            data-ajax-popup="true" data-size="lg"
-                                                            data-bs-toggle="tooltip" title="{{ __('Edit') }}"
-                                                            data-title="{{ __('Edit Leave') }}">
-                                                            <span class="text-white"><i class="ti ti-pencil"></i></span>
-                                                        </a>
-                                                    </div>
-                                                @endcan
+                                                {{-- Edit: show for all admin/company/hr so they can edit employee leaves --}}
+                                                <div class="action-btn me-2">
+                                                    <a href="javascript:void(0)"
+                                                        class="mx-3 btn btn-sm bg-info align-items-center"
+                                                        data-url="{{ URL::to('leave/' . $leave->id . '/edit') }}"
+                                                        data-ajax-popup="true" data-size="lg"
+                                                        data-bs-toggle="tooltip" title="{{ __('Edit') }}"
+                                                        data-title="{{ __('Edit Leave') }}">
+                                                        <span class="text-white"><i class="ti ti-pencil"></i></span>
+                                                    </a>
+                                                </div>
 
                                                 @can('Delete Leave')
                                                     <div class="action-btn">

@@ -65,9 +65,10 @@ class LeaveController extends Controller
             } else {
                 $assignedIds = $assignedLeaveTypesForCards->pluck('id')->toArray();
                 $pivotDaysMap = $assignedLeaveTypesForCards->pluck('pivot.total_days', 'id')->toArray();
+                $pivotIsPaidMap = $assignedLeaveTypesForCards->pluck('pivot.is_paid', 'id')->toArray();
 
                 $leaveBalanceQuery = LeaveType::select(
-                        \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_used, leave_types.title, leave_types.days, leave_types.id')
+                        \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_used, leave_types.title, leave_types.days, leave_types.id, leave_types.is_paid')
                     )
                     ->leftjoin('leaves', function ($join) use ($employee, $date) {
                         $join->on('leaves.leave_type_id', '=', 'leave_types.id');
@@ -79,12 +80,14 @@ class LeaveController extends Controller
                     ->whereIn('leave_types.id', $assignedIds);
 
                 $leaveBalances = $leaveBalanceQuery
-                    ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days')
+                    ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days', 'leave_types.is_paid')
                     ->get()
-                    ->map(function ($item) use ($pivotDaysMap) {
+                    ->map(function ($item) use ($pivotDaysMap, $pivotIsPaidMap) {
                         // Use per-employee total_days from pivot (treat 0 as "use global default")
                         $pivotDays = $pivotDaysMap[$item->id] ?? 0;
                         $item->days = $pivotDays > 0 ? $pivotDays : $item->days;
+                        // Use per-employee is_paid from pivot if available
+                        $item->is_paid = $pivotIsPaidMap[$item->id] ?? $item->is_paid;
                         $item->remaining = max(0, $item->days - $item->total_used);
                         return $item;
                     });
@@ -137,9 +140,10 @@ class LeaveController extends Controller
                 } else {
                     $assignedIds = $assignedLeaveTypesAdmin->pluck('id')->toArray();
                     $pivotDaysMap = $assignedLeaveTypesAdmin->pluck('pivot.total_days', 'id')->toArray();
+                    $pivotIsPaidMap = $assignedLeaveTypesAdmin->pluck('pivot.is_paid', 'id')->toArray();
 
                     $leaveBalances = LeaveType::select(
-                            \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_used, leave_types.title, leave_types.days, leave_types.id')
+                            \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_used, leave_types.title, leave_types.days, leave_types.id, leave_types.is_paid')
                         )
                         ->leftjoin('leaves', function ($join) use ($request, $date) {
                             $join->on('leaves.leave_type_id', '=', 'leave_types.id');
@@ -149,11 +153,12 @@ class LeaveController extends Controller
                         })
                         ->where('leave_types.created_by', '=', \Auth::user()->creatorId())
                         ->whereIn('leave_types.id', $assignedIds)
-                        ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days')
+                        ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days', 'leave_types.is_paid')
                         ->get()
-                        ->map(function ($item) use ($pivotDaysMap) {
+                        ->map(function ($item) use ($pivotDaysMap, $pivotIsPaidMap) {
                             $pivotDays = $pivotDaysMap[$item->id] ?? 0;
                             $item->days = $pivotDays > 0 ? $pivotDays : $item->days;
+                            $item->is_paid = $pivotIsPaidMap[$item->id] ?? $item->is_paid;
                             $item->remaining = max(0, $item->days - $item->total_used);
                             return $item;
                         });
