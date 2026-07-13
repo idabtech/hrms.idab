@@ -53,6 +53,18 @@
                                     <td class="description-col" data-description="{{ $warning->description }}"></td>
                                     <td class="Action">
                                         @if (Gate::check('Edit Warning') || Gate::check('Delete Warning'))
+                                                {{-- Attachments --}}
+                                                <div class="action-btn me-2">
+                                                    <a href="javascript:void(0)"
+                                                        class="mx-3 btn btn-sm bg-warning align-items-center"
+                                                        data-url="{{ route('warning.attachments', $warning->id) }}"
+                                                        data-ajax-popup="true" data-size="lg"
+                                                        data-bs-toggle="tooltip" title="{{ __('Attachments') }}"
+                                                        data-title="{{ __('Warning Attachments') }}">
+                                                        <span class="text-white"><i class="ti ti-paperclip"></i></span>
+                                                    </a>
+                                                </div>
+
                                                 @can('Edit Warning')
                                                     <div class="action-btn me-2">
                                                         <a href="javascript:void(0)" class="mx-3 btn btn-sm bg-info align-items-center" data-size="lg"

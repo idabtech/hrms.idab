@@ -29,4 +29,9 @@ class Warning extends Model
     {
         return Employee::where('id',$warningby)->first();
     }
+
+    public function attachments()
+    {
+        return $this->hasMany(WarningAttachment::class)->orderBy('sort_order');
+    }
 }

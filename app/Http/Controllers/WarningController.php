@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Mail\WarningSend;
 use App\Models\Utility;
 use App\Models\Warning;
+use App\Models\WarningAttachment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -19,11 +20,11 @@ class WarningController extends Controller
             if(Auth::user()->type == 'employee')
             {
                 $emp      = Employee::where('user_id', '=', \Auth::user()->id)->first();
-                $warnings = Warning::where('warning_by', '=', $emp->id)->get();
+                $warnings = Warning::where('warning_by', '=', $emp->id)->with('attachments')->get();
             }
             else
             {
-                $warnings = Warning::where('created_by', '=', \Auth::user()->creatorId())->get();
+                $warnings = Warning::where('created_by', '=', \Auth::user()->creatorId())->with('attachments')->get();
             }
 
             return view('warning.index', compact('warnings'));
@@ -246,5 +247,105 @@ class WarningController extends Controller
         {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
+    }
+
+    // =========================================================================
+    // ATTACHMENTS
+    // =========================================================================
+
+    public function attachments($id)
+    {
+        $warning = Warning::find($id);
+        if (!$warning || $warning->created_by != \Auth::user()->creatorId()) {
+            return response()->json(['error' => __('Permission denied.')], 401);
+        }
+
+        $attachments = $warning->attachments;
+
+        return view('warning.attachments', compact('warning', 'attachments'));
+    }
+
+    public function attachmentUpload(Request $request, $id)
+    {
+        $warning = Warning::find($id);
+        if (!$warning || $warning->created_by != \Auth::user()->creatorId()) {
+            return response()->json(['is_success' => false, 'error' => __('Permission denied.')], 401);
+        }
+
+        $request->validate(['file' => 'required']);
+
+        $dir = 'warning_attachments/';
+        $fileName = time() . '_' . $request->file->getClientOriginalName();
+        $result = Utility::upload_file($request, 'file', $fileName, $dir, []);
+
+        if ($result['flag'] == 1) {
+            $maxOrder = WarningAttachment::where('warning_id', $warning->id)->max('sort_order');
+
+            $attachment = WarningAttachment::create([
+                'warning_id' => $warning->id,
+                'user_id'    => \Auth::user()->id,
+                'file_name'  => $request->file->getClientOriginalName(),
+                'file_path'  => $fileName,
+                'sort_order' => ($maxOrder ?? 0) + 1,
+            ]);
+
+            return response()->json([
+                'is_success' => true,
+                'message'    => __('Attachment uploaded successfully.'),
+                'attachment' => [
+                    'id'        => $attachment->id,
+                    'file_name' => $attachment->file_name,
+                    'url'       => route('warning.attachment.download', [$warning->id, $attachment->id]),
+                    'delete_url'=> route('warning.attachment.delete', [$warning->id, $attachment->id]),
+                ],
+            ]);
+        } else {
+            return response()->json(['is_success' => false, 'error' => $result['msg']], 422);
+        }
+    }
+
+    public function attachmentDownload($id, $attachmentId)
+    {
+        $warning = Warning::find($id);
+        if (!$warning || $warning->created_by != \Auth::user()->creatorId()) {
+            return redirect()->back()->with('error', __('Permission denied.'));
+        }
+
+        $attachment = WarningAttachment::where('id', $attachmentId)->where('warning_id', $id)->first();
+        if (!$attachment) {
+            return redirect()->back()->with('error', __('File not found.'));
+        }
+
+        $filePath = storage_path('app/public/warning_attachments/' . $attachment->file_path);
+        if (file_exists($filePath)) {
+            return response()->download($filePath, $attachment->file_name);
+        }
+
+        return redirect()->back()->with('error', __('File not found on server.'));
+    }
+
+    public function attachmentDelete($id, $attachmentId)
+    {
+        $warning = Warning::find($id);
+        if (!$warning || $warning->created_by != \Auth::user()->creatorId()) {
+            return response()->json(['is_success' => false, 'error' => __('Permission denied.')], 401);
+        }
+
+        $attachment = WarningAttachment::where('id', $attachmentId)->where('warning_id', $id)->first();
+        if (!$attachment) {
+            return response()->json(['is_success' => false, 'error' => __('File not found.')], 404);
+        }
+
+        $filePath = storage_path('app/public/warning_attachments/' . $attachment->file_path);
+        if (file_exists($filePath)) {
+            \File::delete($filePath);
+        }
+
+        $attachment->delete();
+
+        return response()->json([
+            'is_success' => true,
+            'message'    => __('Attachment deleted successfully.'),
+        ]);
     }
 }
