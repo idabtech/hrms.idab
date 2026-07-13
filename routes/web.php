@@ -1039,6 +1039,12 @@ Route::group(['middleware' => ['verified']], function () {
         ]
     );
 
+    // Warning Attachments
+    Route::get('warning/{id}/attachments', [WarningController::class, 'attachments'])->name('warning.attachments')->middleware(['auth', 'XSS']);
+    Route::post('warning/{id}/attachment/upload', [WarningController::class, 'attachmentUpload'])->name('warning.attachment.upload')->middleware(['auth', 'XSS']);
+    Route::get('warning/{id}/attachment/{aid}/download', [WarningController::class, 'attachmentDownload'])->name('warning.attachment.download')->middleware(['auth', 'XSS']);
+    Route::delete('warning/{id}/attachment/{aid}/delete', [WarningController::class, 'attachmentDelete'])->name('warning.attachment.delete')->middleware(['auth', 'XSS']);
+
     Route::get('profile', [UserController::class, 'profile'])->name('profile')->middleware(
         [
             'auth',
