@@ -24,4 +24,9 @@ class Termination extends Model
     {
         return $this->hasOne('App\Models\Employee', 'id', 'employee_id');
     }
+
+    public function attachments()
+    {
+        return $this->hasMany(TerminationAttachment::class)->orderBy('sort_order');
+    }
 }
