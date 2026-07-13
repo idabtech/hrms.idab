@@ -1663,6 +1663,13 @@ class Utility extends Model
 
     public static function sendEmailTemplate($emailTemplate, $mailTo, $obj)
     {
+        // Extract attachments from obj if present (won't be used as email variable)
+        $attachments = [];
+        if (isset($obj['attachments']) && is_array($obj['attachments'])) {
+            $attachments = $obj['attachments'];
+            unset($obj['attachments']);
+        }
+
         $usr = \Auth::user();
         //Remove Current Login user Email don't send mail to them
         if ($usr) {
@@ -1723,10 +1730,21 @@ class Utility extends Model
                                 'mail.from.name' => $settings['mail_from_name'] ? $settings['mail_from_name'] : $setting['mail_from_name'],
                             ]
                         );
+                        $mailable = new CommonEmailTemplate($content, $settings, is_array($mailTo) ? $mailTo : $mailTo[0]);
+
+                        // Attach files if attachments were provided
+                        if (!empty($attachments)) {
+                            foreach ($attachments as $filePath) {
+                                if (file_exists($filePath)) {
+                                    $mailable->attach($filePath);
+                                }
+                            }
+                        }
+
                         if (is_array($mailTo)) {
-                            Mail::to($mailTo)->send(new CommonEmailTemplate($content, $settings, $mailTo));
+                            Mail::to($mailTo)->send($mailable);
                         } else {
-                            Mail::to($mailTo)->send(new CommonEmailTemplate($content, $settings, $mailTo[0]));
+                            Mail::to($mailTo)->send($mailable);
                         }
                     } catch (\Exception $e) {
                         $error = __('E-Mail has been not sent due to SMTP configuration');

@@ -2,7 +2,7 @@
     $plan = App\Models\Utility::getChatGPTSettings();
 @endphp
 
-{{ Form::open(['url' => 'warning', 'method' => 'post', 'class' => 'needs-validation', 'novalidate']) }}
+{{ Form::open(['url' => 'warning', 'method' => 'post', 'class' => 'needs-validation', 'novalidate', 'enctype' => 'multipart/form-data']) }}
 <div class="modal-body">
 
     @if ($plan->enable_chatgpt == 'on')
@@ -43,6 +43,11 @@
         <div class="form-group col-md-12">
             {{ Form::label('description', __('Description'), ['class' => 'col-form-label']) }}<x-required></x-required>
             {{ Form::textarea('description', null, ['class' => 'form-control', 'placeholder' => __('Enter Description') ,'rows' => '3' ,'required' => 'required']) }}
+        </div>
+        <div class="form-group col-md-12">
+            {{ Form::label('attachments', __('Attachments'), ['class' => 'col-form-label']) }}
+            <input type="file" name="attachments[]" class="form-control" multiple>
+            <small class="text-muted">{{ __('You can select multiple files. These will also be sent with the warning email.') }}</small>
         </div>
     </div>
 </div>

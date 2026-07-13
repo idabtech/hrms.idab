@@ -105,6 +105,37 @@ class WarningController extends Controller
             $warning->created_by   = \Auth::user()->creatorId();
             $warning->save();
 
+            // ── Save attachments ───────────────────────────────────────────
+            $attachmentPaths = [];
+            if ($request->hasFile('attachments')) {
+                $sortOrder = 1;
+                $dir = 'warning_attachments/';
+
+                foreach ($request->file('attachments') as $index => $file) {
+                    $fileName = time() . '_' . $sortOrder . '_' . $file->getClientOriginalName();
+                    $originalName = $file->getClientOriginalName();
+
+                    // Use Utility::upload_file — needs a request-like object with the single file
+                    $uploadRequest = new Request();
+                    $uploadRequest->files->set('file', $file);
+                    $result = Utility::upload_file($uploadRequest, 'file', $fileName, $dir, []);
+
+                    if ($result['flag'] == 1) {
+                        WarningAttachment::create([
+                            'warning_id' => $warning->id,
+                            'user_id'    => \Auth::user()->id,
+                            'file_name'  => $originalName,
+                            'file_path'  => $fileName,
+                            'sort_order' => $sortOrder,
+                        ]);
+
+                        $attachmentPaths[] = storage_path('app/public/' . $dir . $fileName);
+                    }
+
+                    $sortOrder++;
+                }
+            }
+
             $setings = Utility::settings();
 
             if($setings['employee_warning'] == 1)
@@ -114,13 +145,13 @@ class WarningController extends Controller
                 'employee_warning_name'=>$employee->name,
                 'warning_subject'=>$request->subject,
                 'warning_description'=>$request->description,
-
-
+                'attachments' => $attachmentPaths,
              ];
-          $resp = Utility::sendEmailTemplate('employee_warning', [$employee->email], $uArr);
-          return redirect()->route('warning.index')->with('success', __('Warning  successfully created.') . ((!empty($resp) && $resp['is_success'] == false && !empty($resp['error'])) ? '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
-           }
 
+              $resp = Utility::sendEmailTemplate('employee_warning', [$employee->email], $uArr);
+
+              return redirect()->route('warning.index')->with('success', __('Warning  successfully created.') . ((!empty($resp) && $resp['is_success'] == false && !empty($resp['error'])) ? '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
+           }
             return redirect()->route('warning.index')->with('success', __('Warning  successfully created.'));
         }
         else
@@ -316,12 +347,8 @@ class WarningController extends Controller
             return redirect()->back()->with('error', __('File not found.'));
         }
 
-        $filePath = storage_path('app/public/warning_attachments/' . $attachment->file_path);
-        if (file_exists($filePath)) {
-            return response()->download($filePath, $attachment->file_name);
-        }
-
-        return redirect()->back()->with('error', __('File not found on server.'));
+        $fileUrl = Utility::get_file('warning_attachments/' . $attachment->file_path);
+        return redirect($fileUrl);
     }
 
     public function attachmentDelete($id, $attachmentId)
@@ -336,10 +363,9 @@ class WarningController extends Controller
             return response()->json(['is_success' => false, 'error' => __('File not found.')], 404);
         }
 
-        $filePath = storage_path('app/public/warning_attachments/' . $attachment->file_path);
-        if (file_exists($filePath)) {
-            \File::delete($filePath);
-        }
+        // Delete from storage
+        $dir = 'warning_attachments/';
+        \Storage::disk(Utility::settings()['storage_setting'] ?? 'local')->delete($dir . $attachment->file_path);
 
         $attachment->delete();
 
