@@ -69,6 +69,17 @@
                                         </td>
                                         <td class="Action">
                                             @if (Gate::check('Edit Termination') || Gate::check('Delete Termination'))
+                                                {{-- Attachments --}}
+                                                <div class="action-btn me-2">
+                                                    <a href="javascript:void(0)"
+                                                        class="mx-3 btn btn-sm bg-warning align-items-center"
+                                                        data-url="{{ route('termination.attachments', $termination->id) }}"
+                                                        data-ajax-popup="true" data-size="lg"
+                                                        data-bs-toggle="tooltip" title="{{ __('Attachments') }}"
+                                                        data-title="{{ __('Termination Attachments') }}">
+                                                        <span class="text-white"><i class="ti ti-paperclip"></i></span>
+                                                    </a>
+                                                </div>
                                                         @can('Edit Termination')
                                                             <div class="action-btn me-2">
                                                                 <a href="javascript:void(0)" class="mx-3 btn btn-sm bg-info align-items-center"

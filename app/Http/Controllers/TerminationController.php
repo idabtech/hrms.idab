@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\Mail\TerminationSend;
 use App\Models\Termination;
+use App\Models\TerminationAttachment;
 use App\Models\TerminationType;
 use App\Models\Utility;
 use Illuminate\Http\Request;
@@ -80,6 +81,36 @@ class TerminationController extends Controller
             $termination->created_by       = \Auth::user()->creatorId();
             $termination->save();
 
+            $attachmentPaths = [];
+            if ($request->hasFile('attachments')) {
+                $sortOrder = 1;
+                $dir = 'termination_attachments/';
+
+                foreach ($request->file('attachments') as $index => $file) {
+                    $fileName = time() . '_' . $sortOrder . '_' . $file->getClientOriginalName();
+                    $originalName = $file->getClientOriginalName();
+
+                    // Use Utility::upload_file — needs a request-like object with the single file
+                    $uploadRequest = new Request();
+                    $uploadRequest->files->set('file', $file);
+                    $result = Utility::upload_file($uploadRequest, 'file', $fileName, $dir, []);
+
+                    if ($result['flag'] == 1) {
+                        TerminationAttachment::create([
+                            'termination_id' => $termination->id,
+                            'user_id'    => \Auth::user()->id,
+                            'file_name'  => $originalName,
+                            'file_path'  => $fileName,
+                            'sort_order' => $sortOrder,
+                        ]);
+
+                        $attachmentPaths[] = storage_path('app/public/' . $dir . $fileName);
+                    }
+
+                    $sortOrder++;
+                }
+            }
+
             $setings = Utility::settings();
             if($setings['employee_termination'] == 1)
             {
@@ -90,6 +121,7 @@ class TerminationController extends Controller
                 'notice_date'=>$request->notice_date,
                 'termination_date'=>$request->termination_date, 
                 'termination_type'=>$request->termination_type,
+                'attachments' => $attachmentPaths,
              ];
           $resp = Utility::sendEmailTemplate('employee_termination', [$employee->email], $uArr);
            return redirect()->route('termination.index')->with('success', __('Termination  successfully created.'). ((!empty($resp) && $resp['is_success'] == false && !empty($resp['error'])) ? '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
@@ -199,5 +231,100 @@ class TerminationController extends Controller
         $termination = Termination::find($id);
 
         return view('termination.description', compact('termination'));
+    }
+
+    // =========================================================================
+    // ATTACHMENTS
+    // =========================================================================
+
+    public function attachments($id)
+    {
+        $termination = Termination::find($id);
+        if (!$termination || $termination->created_by != \Auth::user()->creatorId()) {
+            return response()->json(['error' => __('Permission denied.')], 401);
+        }
+
+        $attachments = $termination->attachments;
+
+        return view('termination.attachments', compact('termination', 'attachments'));
+    }
+
+    public function attachmentUpload(Request $request, $id)
+    {
+        $termination = Termination::find($id);
+        if (!$termination || $termination->created_by != \Auth::user()->creatorId()) {
+            return response()->json(['is_success' => false, 'error' => __('Permission denied.')], 401);
+        }
+
+        $request->validate(['file' => 'required']);
+
+        $dir = 'termination_attachments/';
+        $fileName = time() . '_' . $request->file->getClientOriginalName();
+        $result = Utility::upload_file($request, 'file', $fileName, $dir, []);
+
+        if ($result['flag'] == 1) {
+            $maxOrder = TerminationAttachment::where('termination_id', $termination->id)->max('sort_order');
+
+            $attachment = TerminationAttachment::create([
+                'termination_id' => $termination->id,
+                'user_id'    => \Auth::user()->id,
+                'file_name'  => $request->file->getClientOriginalName(),
+                'file_path'  => $fileName,
+                'sort_order' => ($maxOrder ?? 0) + 1,
+            ]);
+
+            return response()->json([
+                'is_success' => true,
+                'message'    => __('Attachment uploaded successfully.'),
+                'attachment' => [
+                    'id'        => $attachment->id,
+                    'file_name' => $attachment->file_name,
+                    'url'       => route('termination.attachment.download', [$termination->id, $attachment->id]),
+                    'delete_url'=> route('termination.attachment.delete', [$termination->id, $attachment->id]),
+                ],
+            ]);
+        } else {
+            return response()->json(['is_success' => false, 'error' => $result['msg']], 422);
+        }
+    }
+
+    public function attachmentDownload($id, $attachmentId)
+    {
+        $termination = Termination::find($id);
+        if (!$termination || $termination->created_by != \Auth::user()->creatorId()) {
+            return redirect()->back()->with('error', __('Permission denied.'));
+        }
+
+        $attachment = TerminationAttachment::where('id', $attachmentId)->where('termination_id', $id)->first();
+        if (!$attachment) {
+            return redirect()->back()->with('error', __('File not found.'));
+        }
+
+        $fileUrl = Utility::get_file('termination_attachments/' . $attachment->file_path);
+        return redirect($fileUrl);
+    }
+
+    public function attachmentDelete($id, $attachmentId)
+    {
+        $termination = Termination::find($id);
+        if (!$termination || $termination->created_by != \Auth::user()->creatorId()) {
+            return response()->json(['is_success' => false, 'error' => __('Permission denied.')], 401);
+        }
+
+        $attachment = TerminationAttachment::where('id', $attachmentId)->where('termination_id', $id)->first();
+        if (!$attachment) {
+            return response()->json(['is_success' => false, 'error' => __('File not found.')], 404);
+        }
+
+        // Delete from storage
+        $dir = 'termination_attachments/';
+        \Storage::disk(Utility::settings()['storage_setting'] ?? 'local')->delete($dir . $attachment->file_path);
+
+        $attachment->delete();
+
+        return response()->json([
+            'is_success' => true,
+            'message'    => __('Attachment deleted successfully.'),
+        ]);
     }
 }

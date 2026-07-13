@@ -587,6 +587,13 @@ Route::group(['middleware' => ['verified']], function () {
             'XSS',
         ]
     );
+
+    // Termination Attachments
+    Route::get('termination/{id}/attachments', [TerminationController::class, 'attachments'])->name('termination.attachments')->middleware(['auth', 'XSS']);
+    Route::post('termination/{id}/attachment/upload', [TerminationController::class, 'attachmentUpload'])->name('termination.attachment.upload')->middleware(['auth', 'XSS']);
+    Route::get('termination/{id}/attachment/{aid}/download', [TerminationController::class, 'attachmentDownload'])->name('termination.attachment.download')->middleware(['auth', 'XSS']);
+    Route::delete('termination/{id}/attachment/{aid}/delete', [TerminationController::class, 'attachmentDelete'])->name('termination.attachment.delete')->middleware(['auth', 'XSS']);
+
     Route::resource('terminationtype', TerminationTypeController::class)->middleware(
         [
             'auth',
