@@ -63,6 +63,10 @@ class AttendanceRequestController extends Controller
 
         $employee = Employee::where('user_id', Auth::user()->id)->firstOrFail();
 
+        $settings = Utility::settings();
+        if (isset($settings['timezone']) && !empty($settings['timezone']) && $settings['timezone'] != 'UTC') {
+            date_default_timezone_set($settings['timezone']);
+        }
         $date = date("Y-m-d");
         $time = date("H:i:s");
 
@@ -75,7 +79,6 @@ class AttendanceRequestController extends Controller
             'clock_out'    => $request->type == 'clock_out' ? $time : null,
             'created_by'   => Auth::user()->creatorId(),
         ]);
-        $settings = Utility::settings();
 
         if (isset($settings['attendance_request']) && $settings['attendance_request'] == 1) {
             $companyOwner = User::find(Auth::user()->creatorId());
