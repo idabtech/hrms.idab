@@ -57,17 +57,24 @@
                         </div>
 
                         <div class="card-body">
+                            @php
+                                $empSalaryType = \App\Models\PayslipType::find($employee->salary_type);
+                                $empIsHourly   = ($empSalaryType->salary_basis ?? 'monthly') === 'hourly';
+                            @endphp
+
                             <div class="project-info d-flex text-sm mb-2">
                                 <div class="project-info-inner flex-grow-1">
                                     <b class="m-0">{{ __('Payslip Type') }}</b>
                                     <div class="project-amnt pt-1">{{ $employee->salary_type() }}</div>
                                 </div>
                                 <div class="project-info-inner text-end">
-                                    <b class="m-0">{{ __('Salary') }}</b>
+                                    <b class="m-0">{{ $empIsHourly ? __('Hourly Rate') : __('Salary') }}</b>
                                     <div class="project-amnt pt-1">{{ \Auth::user()->priceFormat($employee->salary) }}</div>
                                 </div>
                             </div>
 
+                            @if (!$empIsHourly)
+                            {{-- Basic Salary and Net Salary are only meaningful for monthly employees --}}
                             <div class="project-info d-flex text-sm mb-2">
                                 <div class="project-info-inner flex-grow-1">
                                     <b class="m-0">{{ __('Basic Salary') }}</b>
@@ -85,13 +92,21 @@
                                     <div class="project-amnt pt-1">{{ \Auth::user()->priceFormat($employee->get_net_salary()) }}</div>
                                 </div>
                             </div>
+                            @else
+                            {{-- Hourly: show a projected estimate note instead --}}
+                            <div class="project-info d-flex text-sm mb-2">
+                                <div class="project-info-inner flex-grow-1">
+                                    <b class="m-0">{{ __('Net Salary') }}</b>
+                                    <div class="text-muted" style="font-size:11px;">{{ __('Varies by hours worked') }}</div>
+                                </div>
+                                <div class="project-info-inner text-end">
+                                    <div class="project-amnt pt-1 text-muted">—</div>
+                                </div>
+                            </div>
+                            @endif
 
-                            @if (!\App\Models\Utility::isUkRequest())
-                            @php
-                                $empSalaryType = \App\Models\PayslipType::find($employee->salary_type);
-                                $empIsHourly   = ($empSalaryType->salary_basis ?? 'monthly') === 'hourly';
-                            @endphp
-                            @if (!$empIsHourly)
+                            @if (!\App\Models\Utility::isUkRequest() && !$empIsHourly)
+                            {{-- HRA and DA — monthly employees only --}}
                             <div class="project-info d-flex text-sm mb-2">
                                 <div class="project-info-inner flex-grow-1">
                                     <b class="m-0">{{ __('HRA') }} <small class="text-muted">({{ $employee->hra }}%)</small></b>
@@ -109,7 +124,6 @@
                                     <div class="project-amnt pt-1">{{ \Auth::user()->priceFormat($employee->get_net_da()) }}</div>
                                 </div>
                             </div>
-                            @endif
                             @endif
 
                             <div class="project-info d-flex text-sm">
