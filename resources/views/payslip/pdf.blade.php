@@ -192,24 +192,29 @@
             $dedRows[] = ['label' => $_p->title ?: __('Provident Fund'), 'amount' => $_amt];
         }
     }
-    // foreach ($payslipDetail['deduction']['leave'] as $_lea) {
-    //     if ($_lea->empleave > 0) {
-    //         $dedRows[] = ['label' => __('Loss Of Pay'), 'amount' => (float) $_lea->empleave];
-    //     }
-    // }
-    // // Unpaid leave deduction — shown as a separate line
-    // if ($unpaidLeaveDeduction > 0) {
-    //     $dedRows[] = [
-    //         'label' => __('Unpaid Leave') . ' (' . $unpaidLeaveDays . ' ' . __('days') . ')',
-    //         'amount' => $unpaidLeaveDeduction,
-    //     ];
-    // }
+    // ── LOP (Loss of Pay) — absent days deduction ────────────────────────────
+    // Only shown for monthly employees; hourly employees never have LOP (zeroed in Utility).
+    foreach ($payslipDetail['deduction']['leave'] as $_lea) {
+        if ($_lea->empleave > 0) {
+            $lopDaysLabel = is_numeric($total_absent_for_lop ?? null)
+                ? ' (' . $total_absent_for_lop . ' ' . __('days') . ')'
+                : '';
+            $dedRows[] = ['label' => __('Loss Of Pay') . $lopDaysLabel, 'amount' => (float) $_lea->empleave];
+        }
+    }
+    // Unpaid leave deduction — shown as a separate line when > 0
+    if ($unpaidLeaveDeduction > 0) {
+        $dedRows[] = [
+            'label'  => __('Unpaid Leave') . ' (' . $unpaidLeaveDays . ' ' . __('days') . ')',
+            'amount' => $unpaidLeaveDeduction,
+        ];
+    }
 
     // No extra day payment added — extra days are informational only
     $totalDeductions = $payslipDetail['totalDeduction'];
     $amt = $_salary - $totalDeductions;
     $totalEarnings = $payslipDetail['totalEarning'] + $_salary;
-    $netSalary = $payslipDetail['totalEarning'] + $amt;
+    $netSalary = max(0, $payslipDetail['totalEarning'] + $amt);
 
     $_maxED = max(count($earRows), count($dedRows));
     while (count($earRows) < $_maxED) {
