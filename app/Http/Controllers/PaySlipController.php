@@ -352,12 +352,14 @@ class PaySlipController extends Controller
             $employeePayslip->status = 1;
             $employeePayslip->save();
 
-            $total_balance = $initial_balance - $net_salary;
-            $get_account->initial_balance = $total_balance;
-            $get_account->save();
+            if ($get_account) {
+                $total_balance = $initial_balance - $net_salary;
+                $get_account->initial_balance = $total_balance;
+                $get_account->save();
+            }
 
             $set_expense = new Expense();
-            $set_expense->account_id = $get_account->id;
+            $set_expense->account_id = $get_account?->id ?? null;
             $set_expense->amount = $employeePayslip->net_payble;
             $set_expense->date = date('Y-m-d');
             $set_expense->expense_category_id = '';
