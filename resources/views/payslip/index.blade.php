@@ -32,7 +32,7 @@
                         </div>
                     </div>
                     <div class="col-auto d-flex gap-3">
-                        @if (Auth::user()->type == 'company' || Auth::user()->type == 'hr')
+                        @if (Auth::user()->type == 'company' || Auth::user()->type == 'hr' || Auth::user()->type == 'HR')
                             {{ Form::open(['route' => ['payslip.export'], 'method' => 'POST', 'id' => 'payslip_form']) }}
                             <input type="hidden" name="filter_month" class="filter_month">
                             <input type="hidden" name="filter_year" class="filter_year">
@@ -130,7 +130,7 @@
                                 if (v[15] == "UnPaid" && payslip_id != 0) {
                                     actions += '<a href="{{ url('payslip/paysalary/') }}/' + id + '/' + datePicker + '" class="btn-sm btn btn-primary me-1" data-bs-toggle="tooltip" title="{{ __('Click To Paid') }}"><i class="ti ti-currency-dollar"></i></a>';
                                 }
-                                @if ((\Auth::user()->type == 'company' || \Auth::user()->type == 'hr') && (\App\Models\Utility::isUkRequest() || request()->boolean('uk_preview')) && \App\Services\HmrcService::isEnabled())
+                                @if ((\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR') && (\App\Models\Utility::isUkRequest() || request()->boolean('uk_preview')) && \App\Services\HmrcService::isEnabled())
                                 if (v[15] == "Paid" && payslip_id != 0) {
                                     actions += '<button type="button" class="btn-sm btn btn-outline-success me-1 btn-hmrc-fps" data-employee-id="' + id + '" data-month="' + datePicker + '" data-bs-toggle="tooltip" title="{{ __('Submit to HMRC') }}"><i class="ti ti-send"></i></button>';
                                 }
@@ -138,12 +138,12 @@
                                 if (payslip_id != 0 && v[15] == "UnPaid") {
                                     actions += '<a href="javascript:void(0)" data-url="{{ url('payslip/editemployee/') }}/' + payslip_id + '" data-ajax-popup="true" data-size="lg" class="btn-sm btn btn-info me-1" data-bs-toggle="tooltip" title="{{ __('Edit') }}" data-title="{{ __('Edit Employee salary') }}"><i class="ti ti-pencil"></i></a>';
                                 }
-                                @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr')
+                                @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
                                 var delUrl = '{{ route('payslip.delete', ':id') }}'.replace(':id', payslip_id);
                                 actions += '<a href="javascript:void(0)" data-url="' + delUrl + '" class="payslip_delete btn btn-danger btn-sm" data-bs-toggle="tooltip" title="{{ __('Delete') }}"><i class="ti ti-trash"></i></a>';
                                 @endif
 
-                                @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr')
+                                @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
                                 tr += '<tr>' +
                                     '<td><a class="btn btn-outline-primary btn-sm" href="' + url_employee + '">' + v[1] + '</a></td>' +
                                     '<td>' + v[2] + '</td>' +
