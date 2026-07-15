@@ -42,7 +42,7 @@
                         <div class="card-header">
                             <div class="row">
                                 <div class="col-11">
-                                    <h5>{{ __('Employee Salary') }}</h5>
+                                    <h5>{{ $employee->name }} {{ __('Salary') }}</h5>
                                 </div>
                                 @can('Create Set Salary')
                                     <div class="col-1 text-end">
