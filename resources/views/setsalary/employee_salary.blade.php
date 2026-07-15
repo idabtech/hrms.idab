@@ -60,81 +60,94 @@
                             @php
                                 $empSalaryType = \App\Models\PayslipType::find($employee->salary_type);
                                 $empIsHourly   = ($empSalaryType->salary_basis ?? 'monthly') === 'hourly';
+
+                                $empWith = \App\Models\Employee::with([
+                                    'allowances', 'commissions', 'bonuses', 'pearks',
+                                    'loans', 'saturationDeductions', 'otherPayments', 'pensions',
+                                ])->find($employee->id);
+
+                                // Percentage allowances/deductions are calculated on basic_salary
+                                $calcTotal = function ($items) use ($employee) {
+                                    return $items->sum(function ($item) use ($employee) {
+                                        if ($item->type === 'percentage') {
+                                            return $item->amount * $employee->basic_salary / 100;
+                                        }
+                                        return $item->amount;
+                                    });
+                                };
+
+                                $totalAllowances = $calcTotal($empWith->allowances)
+                                    + $calcTotal($empWith->commissions)
+                                    + $calcTotal($empWith->bonuses)
+                                    + $calcTotal($empWith->pearks)
+                                    + $calcTotal($empWith->otherPayments);
+
+                                $totalDeductions = $calcTotal($empWith->loans)
+                                    + $calcTotal($empWith->saturationDeductions)
+                                    + $calcTotal($empWith->pensions);
+
+                                // Net Pay = basic_salary + allowances − deductions
+                                // e.g. 17500 + 17500 − 200 = 34800
+                                $netPay = $employee->basic_salary + $totalAllowances - $totalDeductions;
                             @endphp
 
-                            <div class="project-info d-flex text-sm mb-2">
-                                <div class="project-info-inner flex-grow-1">
-                                    <b class="m-0">{{ __('Payslip Type') }}</b>
-                                    <div class="project-amnt pt-1">{{ $employee->salary_type() }}</div>
-                                </div>
-                                <div class="project-info-inner text-end">
-                                    <b class="m-0">{{ $empIsHourly ? __('Hourly Rate') : __('Salary') }}</b>
-                                    <div class="project-amnt pt-1">{{ \Auth::user()->priceFormat($employee->salary) }}</div>
-                                </div>
+                            {{-- Payslip Type --}}
+                            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                                <span class="text-muted small">{{ __('Payslip Type') }}</span>
+                                <span class="small fw-semibold">{{ $employee->salary_type() }}</span>
                             </div>
 
                             @if (!$empIsHourly)
-                            {{-- Basic Salary and Net Salary are only meaningful for monthly employees --}}
-                            <div class="project-info d-flex text-sm mb-2">
-                                <div class="project-info-inner flex-grow-1">
-                                    <b class="m-0">{{ __('Basic Salary') }}</b>
-                                </div>
-                                <div class="project-info-inner text-end">
-                                    <div class="project-amnt pt-1">{{ \Auth::user()->priceFormat($employee->basic_salary) }}</div>
-                                </div>
+
+                            {{-- Gross Salary --}}
+                            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                                <span class="text-muted small">{{ __('Gross Salary') }}</span>
+                                <span class="small fw-semibold">{{ \Auth::user()->priceFormat($employee->salary) }}</span>
                             </div>
 
-                            <div class="project-info d-flex text-sm mb-2">
-                                <div class="project-info-inner flex-grow-1">
-                                    <b class="m-0">{{ __('Net Salary') }}</b>
-                                </div>
-                                <div class="project-info-inner text-end">
-                                    <div class="project-amnt pt-1">{{ \Auth::user()->priceFormat($employee->get_net_salary()) }}</div>
-                                </div>
+                            {{-- Basic Salary --}}
+                            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                                <span class="text-muted small">{{ __('Basic Salary') }}</span>
+                                <span class="small fw-semibold">{{ \Auth::user()->priceFormat($employee->basic_salary) }}</span>
                             </div>
+
+                            {{-- Total Allowances --}}
+                            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                                <span class="small text-success fw-semibold">{{ __('Total Allowances') }}</span>
+                                <span class="small text-success fw-semibold">+ {{ \Auth::user()->priceFormat($totalAllowances) }}</span>
+                            </div>
+
+                            {{-- Total Deductions --}}
+                            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                                <span class="small text-danger fw-semibold">{{ __('Total Deductions') }}</span>
+                                <span class="small text-danger fw-semibold">- {{ \Auth::user()->priceFormat($totalDeductions) }}</span>
+                            </div>
+
+                            {{-- Net Pay --}}
+                            <div class="d-flex justify-content-between align-items-center pt-2 mt-1">
+                                <span class="fw-bold">{{ __('Net Pay') }}</span>
+                                <span class="fw-bold fs-6">{{ \Auth::user()->priceFormat($netPay) }}</span>
+                            </div>
+
                             @else
-                            {{-- Hourly: show a projected estimate note instead --}}
-                            <div class="project-info d-flex text-sm mb-2">
-                                <div class="project-info-inner flex-grow-1">
-                                    <b class="m-0">{{ __('Net Salary') }}</b>
-                                    <div class="text-muted" style="font-size:11px;">{{ __('Varies by hours worked') }}</div>
-                                </div>
-                                <div class="project-info-inner text-end">
-                                    <div class="project-amnt pt-1 text-muted">—</div>
-                                </div>
+
+                            {{-- Hourly Rate --}}
+                            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                                <span class="text-muted small">{{ __('Hourly Rate') }}</span>
+                                <span class="small fw-semibold">{{ \Auth::user()->priceFormat($employee->salary) }}</span>
                             </div>
+
+                            {{-- Net Pay --}}
+                            <div class="d-flex justify-content-between align-items-center pt-2 mt-1">
+                                <span class="fw-bold">{{ __('Net Pay') }}</span>
+                                <span class="small text-muted">{{ __('Varies by hours worked') }}</span>
+                            </div>
+
                             @endif
 
-                            @if (!\App\Models\Utility::isUkRequest() && !$empIsHourly)
-                            {{-- HRA and DA — monthly employees only --}}
-                            <div class="project-info d-flex text-sm mb-2">
-                                <div class="project-info-inner flex-grow-1">
-                                    <b class="m-0">{{ __('HRA') }} <small class="text-muted">({{ $employee->hra }}%)</small></b>
-                                </div>
-                                <div class="project-info-inner text-end">
-                                    <div class="project-amnt pt-1">{{ \Auth::user()->priceFormat($employee->get_net_hra()) }}</div>
-                                </div>
-                            </div>
-
-                            <div class="project-info d-flex text-sm mb-2">
-                                <div class="project-info-inner flex-grow-1">
-                                    <b class="m-0">{{ __('DA') }} <small class="text-muted">({{ $employee->da }}%)</small></b>
-                                </div>
-                                <div class="project-info-inner text-end">
-                                    <div class="project-amnt pt-1">{{ \Auth::user()->priceFormat($employee->get_net_da()) }}</div>
-                                </div>
-                            </div>
-                            @endif
-
-                            <div class="project-info d-flex text-sm">
-                                <div class="project-info-inner flex-grow-1">
-                                    <b class="m-0">{{ __('Account Type') }}</b>
-                                </div>
-                                <div class="project-info-inner text-end">
-                                    <div class="project-amnt pt-1">
-                                        {{ !empty($employee->account_type()) ? $employee->account_type() : '-' }}
-                                    </div>
-                                </div>
+                            <div class="d-flex justify-content-between align-items-center py-1 mt-1 border-top">
+                                <span class="text-muted small">{{ __('Account Type') }}</span>
+                                <span class="small">{{ !empty($employee->account_type()) ? $employee->account_type() : '-' }}</span>
                             </div>
                         </div>
                     </div>

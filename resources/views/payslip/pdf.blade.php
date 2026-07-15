@@ -44,7 +44,8 @@
 
     // ── All display values come directly from Utility::employeePayslipDetail ──
     // No duplicate calculation here — single source of truth.
-    $_storedSalary = (float) $payslipDetail['basic_salary'];
+    $_storedSalary = (float) $payslipDetail['basic_salary'];  // gross salary snapshot
+    $_basicSalary  = (float) $employee->basic_salary;          // basic salary — base for % allowances
     $_netSalary = (float) $payslipDetail['net_salary'];
     $_salary = (float) $payslipDetail['salary'];
     $_hra = (float) $payslipDetail['hra'];
@@ -87,47 +88,41 @@
     $earRows = [
         ['label' => $_basicLabel, 'amount' => $_salary],
     ];
-    // HRA and DA are monthly-only components — skip for hourly (they will be 0)
-    if ($_hra > 0) {
-        $earRows[] = ['label' => 'HRA', 'amount' => $_hra];
-    }
-    if ($_da > 0) {
-        $earRows[] = ['label' => 'DA', 'amount' => $_da];
-    }
+    // HRA and DA are now stored as allowances — skip separate rows to avoid double-counting
+    // if ($_hra > 0) {
+    //     $earRows[] = ['label' => 'HRA', 'amount' => $_hra];
+    // }
+    // if ($_da > 0) {
+    //     $earRows[] = ['label' => 'DA', 'amount' => $_da];
+    // }
 
     foreach ($payslipDetail['earning']['allowance'] as $_ar) {
         foreach (json_decode($_ar->allowance) as $_a) {
             $earRows[] = [
-                'label' => $_a->title,
-                'amount' =>
-                    $_a->type === 'percentage' ? round(($_a->amount * $_storedSalary) / 100, 2) : (float) $_a->amount,
+                'label'  => $_a->title,
+                'amount' => $_a->type === 'percentage' ? round(($_a->amount * $_basicSalary) / 100, 2) : (float) $_a->amount,
             ];
         }
     }
     foreach ($payslipDetail['earning']['commission'] as $_cr) {
         foreach (json_decode($_cr->commission) as $_c) {
             $earRows[] = [
-                'label' => $_c->title,
-                'amount' =>
-                    $_c->type === 'percentage' ? round(($_c->amount * $_storedSalary) / 100, 2) : (float) $_c->amount,
+                'label'  => $_c->title,
+                'amount' => $_c->type === 'percentage' ? round(($_c->amount * $_basicSalary) / 100, 2) : (float) $_c->amount,
             ];
         }
     }
     foreach ($payslipDetail['earning']['bonous'] as $_b) {
         $earRows[] = [
-            'label' => $_b->title ?: __('Bonus'),
-            'amount' =>
-                $_b->type === 'percentage' ? round(($_b->amount * $employee->salary) / 100, 2) : (float) $_b->amount,
+            'label'  => $_b->title ?: __('Bonus'),
+            'amount' => $_b->type === 'percentage' ? round(($_b->amount * $_basicSalary) / 100, 2) : (float) $_b->amount,
         ];
     }
     foreach ($payslipDetail['earning']['otherPayment'] as $_op2) {
         foreach (json_decode($_op2->other_payment) as $_op) {
             $earRows[] = [
-                'label' => $_op->title,
-                'amount' =>
-                    $_op->type === 'percentage'
-                        ? round(($_op->amount * $_storedSalary) / 100, 2)
-                        : (float) $_op->amount,
+                'label'  => $_op->title,
+                'amount' => $_op->type === 'percentage' ? round(($_op->amount * $_basicSalary) / 100, 2) : (float) $_op->amount,
             ];
         }
     }
@@ -144,10 +139,9 @@
     // Loan/Advance (earning — money given to employee)
     foreach ($payslipDetail['earning']['loan'] as $_lr) {
         foreach (json_decode($_lr->loan) as $_ln) {
-            $_amt =
-                $_ln->type === 'percentage'
-                    ? round(($_ln->amount * $_lr->basic_salary) / 100, 2)
-                    : (float) $_ln->amount;
+            $_amt = $_ln->type === 'percentage'
+                ? round(($_ln->amount * $_basicSalary) / 100, 2)
+                : (float) $_ln->amount;
             if ($_amt > 0) {
                 $earRows[] = ['label' => $_ln->title ?: __('Loan/Advance'), 'amount' => $_amt];
             }
@@ -166,20 +160,14 @@
     foreach ($payslipDetail['deduction']['saturation_deduction'] as $_dr2) {
         foreach (json_decode($_dr2->saturation_deduction) as $_dd) {
             if (strtolower($_dd->title) == 'epf') {
-
-                $_amt = (($employee->get_net_da() + $_dr2->net_salary) * 12) / 100;
+                $_amt = ($_basicSalary * 12) / 100;
             } elseif (strtolower($_dd->title) == 'gpf') {
-                $_amt = (($employee->get_net_da() + $_dr2->net_salary) * 6) / 100;
+                $_amt = ($_basicSalary * 6) / 100;
             } else {
-                $_amt =
-                    $_dd->type === 'percentage'
-                        ? round(($_dd->amount * $_dr2->basic_salary) / 100, 2)
-                        : (float) $_dd->amount;
+                $_amt = $_dd->type === 'percentage'
+                    ? round(($_dd->amount * $_basicSalary) / 100, 2)
+                    : (float) $_dd->amount;
             }
-            // $_amt =
-            //     $_dd->type === 'percentage'
-            //         ? round(($_dd->amount * $_dr2->basic_salary) / 100, 2)
-            //         : (float) $_dd->amount;
             if ($_amt > 0) {
                 $dedRows[] = ['label' => $_dd->title, 'amount' => $_amt];
             }
@@ -187,7 +175,7 @@
     }
 
     foreach ($payslipDetail['deduction']['pansion'] as $_p) {
-        $_amt = $_p->type === 'percentage' ? round(($_p->amount * $employee->salary) / 100, 2) : (float) $_p->amount;
+        $_amt = $_p->type === 'percentage' ? round(($_p->amount * $_basicSalary) / 100, 2) : (float) $_p->amount;
         if ($_amt > 0) {
             $dedRows[] = ['label' => $_p->title ?: __('Provident Fund'), 'amount' => $_amt];
         }

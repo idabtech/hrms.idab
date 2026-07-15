@@ -14,17 +14,23 @@
                 {{ __('Create payslip type.') }} <a href="{{ route('paysliptype.index') }}"><b>{{ __('Click here') }}</b></a>
             </div>
         </div>
-        <div class="form-group">
-            <label for="salary-field-input" id="salary-field-label" class="col-form-label">{{ __('Monthly Salary') }} <x-required></x-required></label>
-            {{ Form::number('salary', null, ['class' => 'form-control', 'step' => '0.01', 'required' => 'required', 'id' => 'salary-field-input', 'placeholder' => __('Enter monthly salary amount')]) }}
+        <div class="form-group" id="monthly-salary-wrap">
+            <label for="gross-salary-input" class="col-form-label">{{ __('Gross Salary') }} <x-required></x-required></label>
+            {{ Form::number('salary', null, ['class' => 'form-control', 'step' => '0.01', 'required' => 'required', 'id' => 'gross-salary-input', 'placeholder' => __('Enter gross monthly salary e.g. 35000')]) }}
+            <small class="text-muted">{{ __('Total monthly salary package (CTC component)') }}</small>
+        </div>
+        <div class="form-group" id="basic-salary-wrap">
+            <label for="salary-field-input" id="salary-field-label" class="col-form-label">{{ __('Basic Salary') }} <x-required></x-required></label>
+            {{ Form::number('basic_salary', null, ['class' => 'form-control', 'step' => '0.01', 'required' => 'required', 'id' => 'salary-field-input', 'placeholder' => __('Enter basic salary e.g. 17500')]) }}
+            <small class="text-muted">{{ __('Basic component of the salary (used for allowance calculations)') }}</small>
             <small id="salary-field-hint" class="text-info" style="display:none;">
                 <i class="ti ti-info-circle"></i>
                 {{ __('Enter the hourly rate. The payslip will calculate: hourly rate × actual hours worked = gross pay.') }}
             </small>
         </div>
 
+        {{-- HRA and DA fields — commented out, to be removed later
         @if (!$isUk)
-        {{-- HRA and DA are monthly-only components — hidden for hourly payslip types --}}
         <div class="form-group" id="hra-da-wrap">
             <div class="form-group" id="hra-field-wrap">
                 <label for="hra-field-input" class="col-form-label">{{ __('HRA') }} (%)</label>
@@ -44,6 +50,7 @@
             </div>
         </div>
         @endif
+        --}}
 
         <div class="form-group">
             {{ Form::label('from_account_type', __('From Account'), ['class' => 'col-form-label']) }}
@@ -71,25 +78,27 @@
         var label = document.getElementById('salary-field-label');
         var input = document.getElementById('salary-field-input');
         var hint  = document.getElementById('salary-field-hint');
-        var hraDaWrap = document.getElementById('hra-da-wrap');
+        var monthlyWrap = document.getElementById('monthly-salary-wrap');
+        var basicWrap   = document.getElementById('basic-salary-wrap');
         if (!label || !input || !hint) return;
         if (basis === 'hourly') {
-            label.innerHTML = '{{ __('Hourly Rate (per hour)') }} <span class="text-danger">*</span>';
+            // Hourly: only show the rate field (repurpose basic salary field), hide gross
+            label.innerHTML    = '{{ __('Hourly Rate (per hour)') }} <span class="text-danger">*</span>';
             input.placeholder  = '{{ __('Enter rate per hour e.g. 15.50') }}';
             hint.style.display = 'block';
-            // Hide HRA/DA — not applicable for hourly employees
-            if (hraDaWrap) hraDaWrap.style.display = 'none';
+            if (monthlyWrap) monthlyWrap.style.display = 'none';
         } else {
-            label.innerHTML  = '{{ __('Monthly Salary') }} <span class="text-danger">*</span>';
-            input.placeholder  = '{{ __('Enter monthly salary amount') }}';
+            // Monthly: show both Gross Salary and Basic Salary fields
+            label.innerHTML    = '{{ __('Basic Salary') }} <span class="text-danger">*</span>';
+            input.placeholder  = '{{ __('Enter basic salary e.g. 17500') }}';
             hint.style.display = 'none';
-            // Show HRA/DA — only for monthly employees
-            if (hraDaWrap) hraDaWrap.style.display = 'block';
+            if (monthlyWrap) monthlyWrap.style.display = 'block';
         }
-        _updateHraDaPreview();
     }
 
     function _updateHraDaPreview() {
+        // HRA/DA preview — commented out, to be removed later
+        /*
         if (_isUk) return;
         var basicSalary = parseFloat(document.getElementById('salary-field-input').value) || _basicSalary;
         var hraEl = document.getElementById('hra-field-input');
@@ -107,6 +116,7 @@
             var daAmount = (daPercent * basicSalary / 100).toFixed(2);
             daPreview.textContent = daPercent > 0 ? '= ' + daAmount : '';
         }
+        */
     }
 
     // Initialize
@@ -119,15 +129,16 @@
 
         if (!_isUk) {
             var salaryInput = document.getElementById('salary-field-input');
-            var hraInput = document.getElementById('hra-field-input');
-            var daInput = document.getElementById('da-field-input');
+            // HRA/DA event listeners — commented out, to be removed later
+            // var hraInput = document.getElementById('hra-field-input');
+            // var daInput = document.getElementById('da-field-input');
 
             if (salaryInput) salaryInput.addEventListener('input', _updateHraDaPreview);
-            if (hraInput) hraInput.addEventListener('input', _updateHraDaPreview);
-            if (daInput) daInput.addEventListener('input', _updateHraDaPreview);
+            // if (hraInput) hraInput.addEventListener('input', _updateHraDaPreview);
+            // if (daInput) daInput.addEventListener('input', _updateHraDaPreview);
 
             // Show preview on load
-            _updateHraDaPreview();
+            // _updateHraDaPreview();
         }
     })();
 </script>

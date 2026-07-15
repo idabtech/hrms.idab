@@ -67,7 +67,7 @@
                                                             @foreach ($allowances as $allownace)
                                                                 @php
                                                                     $employess = \App\Models\Employee::find($allownace->employee_id);
-                                                                    $empallow = ($allownace->amount * $employess->salary) / 100;
+                                                                    $empallow = ($allownace->amount * $employess->basic_salary) / 100;
                                                                 @endphp
                                                                 <tr>
                                                                     <td>{{ $allownace->title }}</td>
@@ -112,7 +112,7 @@
                                                             @foreach ($commissions as $commission)
                                                                 @php
                                                                     $employess = \App\Models\Employee::find($commission->employee_id);
-                                                                    $empcomm = ($commission->amount * $employess->salary) / 100;
+                                                                    $empcomm = ($commission->amount * $employess->basic_salary) / 100;
                                                                 @endphp
                                                                 <tr>
                                                                     <td>{{ $commission->title }}</td>
@@ -155,7 +155,7 @@
                                                             @foreach ($loans as $loan)
                                                                 @php
                                                                     $employess = \App\Models\Employee::find($loan->employee_id);
-                                                                    $emploan = ($loan->amount * $employess->salary) / 100;
+                                                                    $emploan = ($loan->amount * $employess->basic_salary) / 100;
                                                                 @endphp
                                                                 <tr>
                                                                     <td>{{ $loan->title }}</td>
@@ -198,7 +198,7 @@
                                                             @foreach ($saturation_deductions as $deduction)
                                                                 @php
                                                                     $employess = \App\Models\Employee::find($deduction->employee_id);
-                                                                    $empdeduction = ($deduction->amount * $employess->salary) / 100;
+                                                                    $empdeduction = ($deduction->amount * $employess->basic_salary) / 100;
                                                                 @endphp
                                                                 <tr>
                                                                     <td>{{ $deduction->title }}</td>
@@ -241,7 +241,7 @@
                                                             @foreach ($other_payments as $payment)
                                                                 @php
                                                                     $employess = \App\Models\Employee::find($payment->employee_id);
-                                                                    $emppayment = ($payment->amount * $employess->salary) / 100;
+                                                                    $emppayment = ($payment->amount * $employess->basic_salary) / 100;
                                                                 @endphp
                                                                 <tr>
                                                                     <td>{{ $payment->title }}</td>

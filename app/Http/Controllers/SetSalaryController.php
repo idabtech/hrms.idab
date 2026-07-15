@@ -275,8 +275,8 @@ class SetSalaryController extends Controller
             [
                 'salary_type' => 'required',
                 'salary' => 'required',
-                'hra' => 'required',
-                'da' => 'required',
+                //'hra' => 'required',
+                //'da' => 'required',
                 'from_account_type' => 'nullable',
             ]
         );
@@ -288,10 +288,11 @@ class SetSalaryController extends Controller
         $employee = Employee::findOrFail($id);
         $input = $request->all();
         $employee->fill($input);
-        $employee->account_type = $input['from_account_type'];
-        $employee->basic_salary = $input['salary'] / 2;
-        $employee->hra = $input['hra'];
-        $employee->da = $input['da'];
+        $employee->account_type  = $input['from_account_type'];
+        $employee->salary        = $input['salary'];
+        $employee->basic_salary  = $input['basic_salary'] ?? $input['salary'];
+        //$employee->hra = $input['hra'];
+        //$employee->da = $input['da'];
         $employee->save();
 
         return redirect()->back()->with('success', 'Employee Salary Updated.');

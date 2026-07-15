@@ -541,6 +541,7 @@ class Utility extends Model
         $employess = Employee::find($employeeId);
 
         // allowance
+        // Percentage allowances are calculated on employee's basic_salary (not gross salary)
         $earning['allowance'] = PaySlip::where('employee_id', $employeeId)->where('salary_month', $month)->get();
         $totalAllowance = 0;
 
@@ -549,7 +550,7 @@ class Utility extends Model
             $allowancejson = json_decode($earn->allowance);
             foreach ($allowancejson as $allowances) {
                 if ($allowances->type == 'percentage') {
-                    $empall = $allowances->amount * $earn->basic_salary / 100;
+                    $empall = $allowances->amount * $employess->basic_salary / 100;
                 } else {
                     $empall = $allowances->amount;
                 }
@@ -558,6 +559,7 @@ class Utility extends Model
         }
 
         // commission
+        // Percentage commissions are calculated on employee's basic_salary (not gross salary)
         $earning['commission'] = PaySlip::where('employee_id', $employeeId)->where('salary_month', $month)->get();
         $totalCommission = 0;
 
@@ -566,7 +568,7 @@ class Utility extends Model
             $commissionjson = json_decode($earn->commission);
             foreach ($commissionjson as $commissions) {
                 if ($commissions->type == 'percentage') {
-                    $empcom = $commissions->amount * $earn->basic_salary / 100;
+                    $empcom = $commissions->amount * $employess->basic_salary / 100;
                 } else {
                     $empcom = $commissions->amount;
                 }
@@ -575,11 +577,12 @@ class Utility extends Model
         }
 
         // bonous
+        // Percentage bonuses are calculated on employee's basic_salary (not gross salary)
         $earning['bonous'] = Bonous::where('employee_id', $employeeId)->get();
         $totalBonous = 0;
         foreach ($earning['bonous'] as $earn) {
             if ($earn->type == 'percentage') {
-                $empbon = $earn->amount * $employess->salary / 100;
+                $empbon = $earn->amount * $employess->basic_salary / 100;
             } else {
                 $empbon = $earn->amount;
             }
@@ -594,6 +597,7 @@ class Utility extends Model
         }
 
         // otherpayment
+        // Percentage other payments are calculated on employee's basic_salary (not gross salary)
         $earning['otherPayment'] = PaySlip::where('employee_id', $employeeId)->where('salary_month', $month)->get();
         $totalotherpayment = 0;
 
@@ -602,7 +606,7 @@ class Utility extends Model
             $otherpaymentjson = json_decode($earn->other_payment);
             foreach ($otherpaymentjson as $otherpay) {
                 if ($otherpay->type == 'percentage') {
-                    $empotherpay = $otherpay->amount * $earn->basic_salary / 100;
+                    $empotherpay = $otherpay->amount * $employess->basic_salary / 100;
                 } else {
                     $empotherpay = $otherpay->amount;
                 }
@@ -622,6 +626,7 @@ class Utility extends Model
             }
         }
         // loan (earning — money given to employee)
+        // Percentage loans are calculated on employee's basic_salary (not gross salary)
         $earning['loan'] = PaySlip::where('employee_id', $employeeId)->where('salary_month', $month)->get();
         $totalloan = 0;
 
@@ -630,7 +635,7 @@ class Utility extends Model
             $loans = json_decode($loan->loan);
             foreach ($loans as $emploans) {
                 if ($emploans->type == 'percentage') {
-                    $emploan = $emploans->amount * $loan->basic_salary / 100;
+                    $emploan = $emploans->amount * $employess->basic_salary / 100;
                 } else {
                     $emploan = $emploans->amount;
                 }
@@ -639,11 +644,12 @@ class Utility extends Model
         }
 
         // loan repayment (deduction — money employee pays back)
+        // Percentage repayments are calculated on employee's basic_salary (not gross salary)
         $loanRepayments = LoanRepayment::where('employee_id', $employeeId)->get();
         $totalLoanRepayment = 0;
         foreach ($loanRepayments as $repay) {
             if ($repay->type == 'percentage') {
-                $repayAmt = $repay->amount * $employess->salary / 100;
+                $repayAmt = $repay->amount * $employess->basic_salary / 100;
             } else {
                 $repayAmt = $repay->amount;
             }
@@ -664,15 +670,17 @@ class Utility extends Model
                         $deduction_option->title = $currentOptName;
                     }
                 }
-                $emp = Employee::find($employeeId);
+                $emp = $employess; // reuse already-loaded employee
 
                 if ($deduction_option->type == 'percentage') {
                     if (strtolower($deduction_option->title) == 'epf') {
-                        $empdeduction = ($emp->get_net_da() + $deductions->net_salary) * 12/ 100;
+                        // EPF = 12% of basic_salary
+                        $empdeduction = $employess->basic_salary * 12 / 100;
                     } elseif (strtolower($deduction_option->title) == 'gpf') {
-                        $empdeduction = ($emp->get_net_da() + $deductions->net_salary) * 6   / 100;
+                        // GPF = 6% of basic_salary
+                        $empdeduction = $employess->basic_salary * 6 / 100;
                     } else {
-                        $empdeduction = $deduction_option->amount * $deductions->basic_salary / 100;
+                        $empdeduction = $deduction_option->amount * $employess->basic_salary / 100;
                     }
                 } else {
                     $empdeduction = $deduction_option->amount;
@@ -681,12 +689,13 @@ class Utility extends Model
             }
         }
         // pansion
+        // Percentage pension is calculated on employee's basic_salary (not gross salary)
         $deduction['pansion'] = Pension::where('employee_id', $employeeId)->get();
         $totalPansion = 0;
 
         foreach ($deduction['pansion'] as $earn) {
             if ($earn->type == 'percentage') {
-                $emppansion = $earn->amount * $employess->salary / 100;
+                $emppansion = $earn->amount * $employess->basic_salary / 100;
             } else {
                 $emppansion = $earn->amount;
             }
@@ -702,9 +711,12 @@ class Utility extends Model
         $monthEnd   = Carbon::createFromDate($payYear, $payMonth, 1)->endOfMonth();
 
         // Use the payslip month's salary snapshot from pay_slips table
+        // Note: pay_slips.basic_salary column stores the gross salary (employee->salary)
+        // as a snapshot taken at payslip generation time.
         $payslipRecord = PaySlip::where('employee_id', $employeeId)
             ->where('salary_month', $month)
             ->first();
+        // $salary = gross salary — used for per_day/per_hour (LOP) calculation
         $salary = $payslipRecord ? (float) $payslipRecord->basic_salary : (float) $employess->salary;
         $net_salary = $payslipRecord ? (float) $payslipRecord->net_salary : (float) $employess->salary;
 
@@ -1222,28 +1234,20 @@ class Utility extends Model
         ]);
 
 
-        $calcTotal = function ($items) use ($salary) {
-            return $items->sum(function ($item) use ($salary) {
+        // $calcTotal for bonus — percentage on basic_salary (consistent with all other earnings)
+        $calcTotal = function ($items) use ($employess) {
+            return $items->sum(function ($item) use ($employess) {
                 return $item->type === 'percentage'
-                    ? ($item->amount * $salary / 100)
+                    ? ($item->amount * $employess->basic_salary / 100)
                     : $item->amount;
             });
         };
 
         // ── HRA & DA ──────────────────────────────────────────────────────────
-        // HRA and DA are Indian monthly salary components — they have no meaning
-        // for hourly workers (who have no fixed monthly basic to apply them against).
-        // UK payroll never uses HRA/DA either.
-        // → Hourly employees: always 0
-        // → UK request:       always 0
-        // → Monthly employees: percentage of basic_salary
-        if (self::isUkRequest() || $isHourly) {
-            $payslip['hra'] = 0;
-            $payslip['da']  = 0;
-        } else {
-            $payslip['hra'] = $employess->get_net_hra();
-            $payslip['da']  = $employess->get_net_da();
-        }
+        // HRA and DA are now stored as allowances — no separate calculation needed.
+        // Always set to 0 to avoid double-counting with the allowance totals.
+        $payslip['hra'] = 0;
+        $payslip['da']  = 0;
 
         $total_saturation_deduction = $totaldeduction;
         $total_bonus                = $calcTotal($employess->bonuses);
@@ -1254,8 +1258,7 @@ class Utility extends Model
         $payslip['totalEarning'] = $totalAllowance + $totalCommission
             + $totalotherpayment
             + $totalBonous
-            + $totalloan
-            + $payslip['hra'] + $payslip['da'];
+            + $totalloan;
 
         // ── Deductions total ──────────────────────────────────────────────────
         // Monthly employees: LOP (absent days × per-day rate) + unpaid-leave deduction
@@ -1279,7 +1282,6 @@ class Utility extends Model
         //          − unpaid-leave deduction
         // Hourly:  gross-earned + earnings − deductions  (no LOP — already embedded)
         $netSalary = $salaryBase
-            + $payslip['hra'] + $payslip['da']
             + $totalAllowance + $totalCommission + $totalotherpayment
             + $totalloan
             - $totalLoanRepayment - $totalPansion
