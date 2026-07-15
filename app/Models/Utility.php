@@ -1222,15 +1222,6 @@ class Utility extends Model
         ]);
 
 
-        $payslip['earning']              = $earning;
-        $payslip['earning']              = $earning;
-        $payslip['totalEarning']         = $totalAllowance + $totalCommission + $totalotherpayment + $ot + $totalBonous + $totalPearks + $totalloan;
-        $payslip['deduction']            = $deduction;
-        // For hourly employees leave_deduction and unpaid_leave_deduction are zeroed
-        // above (actual hours already exclude unpaid time — no double-deduction needed)
-        $payslip['totalDeduction']       = $totalLoanRepayment + $totaldeduction + $totalPansion
-            + $leave_deduction + $unpaid_leave_deduction;
-
         $calcTotal = function ($items) use ($salary) {
             return $items->sum(function ($item) use ($salary) {
                 return $item->type === 'percentage'
@@ -1239,55 +1230,76 @@ class Utility extends Model
             });
         };
 
+        // ── HRA & DA ──────────────────────────────────────────────────────────
+        // HRA and DA are Indian monthly salary components — they have no meaning
+        // for hourly workers (who have no fixed monthly basic to apply them against).
+        // UK payroll never uses HRA/DA either.
+        // → Hourly employees: always 0
+        // → UK request:       always 0
+        // → Monthly employees: percentage of basic_salary
+        if (self::isUkRequest() || $isHourly) {
+            $payslip['hra'] = 0;
+            $payslip['da']  = 0;
+        } else {
+            $payslip['hra'] = $employess->get_net_hra();
+            $payslip['da']  = $employess->get_net_da();
+        }
 
+        $total_saturation_deduction = $totaldeduction;
+        $total_bonus                = $calcTotal($employess->bonuses);
+        $basic_salary               = $monthlySalaryGross;
 
-
-        $payslip['hra']              = self::isUkRequest() ? 0 : $employess->get_net_hra();
-        $payslip['da']              = self::isUkRequest() ? 0 : $employess->get_net_da();
-        $payslip['earning']              = $earning;
-        $payslip['totalEarning']         = $totalAllowance + $totalCommission
+        // ── Earnings total (additions on top of base salary) ─────────────────
+        $payslip['earning']      = $earning;
+        $payslip['totalEarning'] = $totalAllowance + $totalCommission
             + $totalotherpayment
-            // + $ot
             + $totalBonous
             + $totalloan
             + $payslip['hra'] + $payslip['da'];
-        // + $totalPearks;
-        $payslip['deduction']            = $deduction;
-        // For hourly employees leave_deduction and unpaid_leave_deduction are zeroed
-        // above (actual hours already exclude unpaid time — no double-deduction needed)
-        $payslip['totalDeduction']       = $totalLoanRepayment + $totaldeduction + $totalPansion;
-        // + $leave_deduction + $unpaid_leave_deduction;
-        $total_saturation_deduction = $totaldeduction;
-        $total_bonus                = $calcTotal($employess->bonuses);
-        $basic_salary = $monthlySalaryGross;
 
-        $netSalary = $employess->basic_salary + $payslip['hra'] + $payslip['da'] + $totalAllowance + $totalCommission + $totalotherpayment
-            + $totalloan - $totalLoanRepayment - $totalPansion + $total_bonus - $total_saturation_deduction;
-        // Net salary:
-        //   Monthly: fixed_salary + earnings - deductions (incl. LOP)
-        //   Hourly:  hourly_rate × actual_hours_worked + earnings - deductions (no LOP)
+        // ── Deductions total ──────────────────────────────────────────────────
+        // Monthly employees: LOP (absent days × per-day rate) + unpaid-leave deduction
+        //   are applied on top of loan repayment + statutory deductions + pension.
+        // Hourly employees: $leave_deduction and $unpaid_leave_deduction were already
+        //   zeroed above — only get paid for hours actually worked, no double-deduction.
+        $payslip['deduction']      = $deduction;
+        $payslip['totalDeduction'] = $totalLoanRepayment + $totaldeduction + $totalPansion
+            + $leave_deduction + $unpaid_leave_deduction;
 
-        // $payslip['net_salary']           = $netSalary;
+        // ── Base amount used in net salary formula ────────────────────────────
+        // Monthly: use the employee's stored basic_salary component (full month value).
+        //   LOP (absent days) is subtracted below — not baked into the base.
+        // Hourly:  use monthlySalaryGross = hourly_rate × actual_hours_worked.
+        $salaryBase = $isHourly ? $monthlySalaryGross : (float) $employess->basic_salary;
 
-        $payslip['totalAllowance']           = $totalAllowance;
-        $payslip['totalCommission']           = $totalCommission;
-        $payslip['totalOtherPayment']    = $totalotherpayment;
-        $payslip['totalPansion']           = $totalPansion;
-        $payslip['totalLoan']           = $totalloan;
-        $payslip['totalLoanRepayment']   = $totalLoanRepayment;
-        $payslip['total_saturation_deduction']           = $total_saturation_deduction;
-        $payslip['total_bonus']           = $total_bonus;
+        // ── Net salary ────────────────────────────────────────────────────────
+        // Monthly: basic_salary + HRA + DA + allowances/commission/loans/bonus
+        //          − loan-repayment − pension − saturation-deductions
+        //          − LOP (absent days deduction)
+        //          − unpaid-leave deduction
+        // Hourly:  gross-earned + earnings − deductions  (no LOP — already embedded)
+        $netSalary = $salaryBase
+            + $payslip['hra'] + $payslip['da']
+            + $totalAllowance + $totalCommission + $totalotherpayment
+            + $totalloan
+            - $totalLoanRepayment - $totalPansion
+            + $total_bonus - $total_saturation_deduction
+            - $leave_deduction - $unpaid_leave_deduction;
 
+        $payslip['totalAllowance']             = $totalAllowance;
+        $payslip['totalCommission']            = $totalCommission;
+        $payslip['totalOtherPayment']          = $totalotherpayment;
+        $payslip['totalPansion']               = $totalPansion;
+        $payslip['totalLoan']                  = $totalloan;
+        $payslip['totalLoanRepayment']         = $totalLoanRepayment;
+        $payslip['total_saturation_deduction'] = $total_saturation_deduction;
+        $payslip['total_bonus']                = $total_bonus;
 
-
-        // Net salary:
-        //   Monthly: fixed_salary + earnings - deductions (incl. LOP)
-        //   Hourly:  hourly_rate × actual_hours_worked + earnings - deductions (no LOP)
-        // $payslip['net_salary']           = $monthlySalaryGross + $payslip['totalEarning'] - $payslip['totalDeduction'];
-
-
-        $payslip['net_salary']           = $netSalary;
-        $payslip['salary']           = $employess->basic_salary;
+        $payslip['net_salary']   = max(0, round($netSalary, 2));
+        // 'salary' — shown in the Earnings table "Basic Salary / Gross Earned" row.
+        //   Monthly: full month basic_salary (deductions shown separately as LOP)
+        //   Hourly:  monthlySalaryGross (rate × hours_worked — the real earned amount)
+        $payslip['salary']       = $isHourly ? $monthlySalaryGross : (float) $employess->basic_salary;
         $payslip['basic_salary']         = $basic_salary; // gross to display on slip
         $payslip['salary_rate']          = $salary;             // raw stored monthly reference amount
         $payslip['is_hourly']            = $isHourly;

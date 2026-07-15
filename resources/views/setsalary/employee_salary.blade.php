@@ -87,6 +87,11 @@
                             </div>
 
                             @if (!\App\Models\Utility::isUkRequest())
+                            @php
+                                $empSalaryType = \App\Models\PayslipType::find($employee->salary_type);
+                                $empIsHourly   = ($empSalaryType->salary_basis ?? 'monthly') === 'hourly';
+                            @endphp
+                            @if (!$empIsHourly)
                             <div class="project-info d-flex text-sm mb-2">
                                 <div class="project-info-inner flex-grow-1">
                                     <b class="m-0">{{ __('HRA') }} <small class="text-muted">({{ $employee->hra }}%)</small></b>
@@ -104,6 +109,7 @@
                                     <div class="project-amnt pt-1">{{ \Auth::user()->priceFormat($employee->get_net_da()) }}</div>
                                 </div>
                             </div>
+                            @endif
                             @endif
 
                             <div class="project-info d-flex text-sm">

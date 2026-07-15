@@ -24,21 +24,24 @@
         </div>
 
         @if (!$isUk)
-        <div class="form-group">
-            <label for="hra-field-input" class="col-form-label">{{ __('HRA') }} (%) <x-required></x-required></label>
-            {{ Form::number('hra', null, ['class' => 'form-control', 'step' => '0.01', 'required' => 'required', 'id' => 'hra-field-input', 'placeholder' => __('Enter HRA percentage')]) }}
-            <small id="hra-preview" class="text-muted">
-                <i class="ti ti-calculator"></i>
-                <span id="hra-preview-amount"></span>
-            </small>
-        </div>
-        <div class="form-group">
-            <label for="da-field-input" class="col-form-label">{{ __('DA') }} (%) <x-required></x-required></label>
-            {{ Form::number('da', null, ['class' => 'form-control', 'step' => '0.01', 'required' => 'required', 'id' => 'da-field-input', 'placeholder' => __('Enter DA percentage')]) }}
-            <small id="da-preview" class="text-muted">
-                <i class="ti ti-calculator"></i>
-                <span id="da-preview-amount"></span>
-            </small>
+        {{-- HRA and DA are monthly-only components — hidden for hourly payslip types --}}
+        <div class="form-group" id="hra-da-wrap">
+            <div class="form-group" id="hra-field-wrap">
+                <label for="hra-field-input" class="col-form-label">{{ __('HRA') }} (%)</label>
+                {{ Form::number('hra', null, ['class' => 'form-control', 'step' => '0.01', 'id' => 'hra-field-input', 'placeholder' => __('Enter HRA percentage')]) }}
+                <small id="hra-preview" class="text-muted">
+                    <i class="ti ti-calculator"></i>
+                    <span id="hra-preview-amount"></span>
+                </small>
+            </div>
+            <div class="form-group" id="da-field-wrap">
+                <label for="da-field-input" class="col-form-label">{{ __('DA') }} (%)</label>
+                {{ Form::number('da', null, ['class' => 'form-control', 'step' => '0.01', 'id' => 'da-field-input', 'placeholder' => __('Enter DA percentage')]) }}
+                <small id="da-preview" class="text-muted">
+                    <i class="ti ti-calculator"></i>
+                    <span id="da-preview-amount"></span>
+                </small>
+            </div>
         </div>
         @endif
 
@@ -68,16 +71,22 @@
         var label = document.getElementById('salary-field-label');
         var input = document.getElementById('salary-field-input');
         var hint  = document.getElementById('salary-field-hint');
+        var hraDaWrap = document.getElementById('hra-da-wrap');
         if (!label || !input || !hint) return;
         if (basis === 'hourly') {
             label.innerHTML = '{{ __('Hourly Rate (per hour)') }} <span class="text-danger">*</span>';
             input.placeholder  = '{{ __('Enter rate per hour e.g. 15.50') }}';
             hint.style.display = 'block';
+            // Hide HRA/DA — not applicable for hourly employees
+            if (hraDaWrap) hraDaWrap.style.display = 'none';
         } else {
             label.innerHTML  = '{{ __('Monthly Salary') }} <span class="text-danger">*</span>';
             input.placeholder  = '{{ __('Enter monthly salary amount') }}';
             hint.style.display = 'none';
+            // Show HRA/DA — only for monthly employees
+            if (hraDaWrap) hraDaWrap.style.display = 'block';
         }
+        _updateHraDaPreview();
     }
 
     function _updateHraDaPreview() {
