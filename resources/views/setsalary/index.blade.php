@@ -34,6 +34,10 @@
                             <tbody>
                                 @foreach ($employees as $employee)
                                     @if ($employee?->user)
+                                    @php
+                                        $_empSalaryType = \App\Models\PayslipType::find($employee->salary_type);
+                                        $_empIsHourly   = ($_empSalaryType->salary_basis ?? 'monthly') === 'hourly';
+                                    @endphp
                                     <tr>
                                         <td>
                                             <a href="{{ route('setsalary.show', \Illuminate\Support\Facades\Crypt::encrypt($employee->id)) }}"
@@ -44,11 +48,35 @@
 
                                         <td>{{ $employee->name }}</td>
                                         <td>{{ !empty($employee->salary_type()) ? $employee->salary_type() : '-' }}</td>
-                                        <td>{{ \Auth::user()->priceFormat($employee->salary) }}</td>
-                                        <td>{{ \Auth::user()->priceFormat($employee->basic_salary) }}</td>
-                                        {{-- <td>{{ \Auth::user()->priceFormat($employee->loans->sum('amount')) }}</td> --}}
-                                        <td>{{ !empty($employee->get_net_salary()) ? \Auth::user()->priceFormat($employee->get_net_salary()) : '-' }}
+
+                                        {{-- Salary: show hourly rate label for hourly employees --}}
+                                        <td>
+                                            @if ($_empIsHourly)
+                                                {{ \Auth::user()->priceFormat($employee->salary) }}
+                                                <small class="text-muted d-block" style="font-size:10px;">{{ __('per hr') }}</small>
+                                            @else
+                                                {{ \Auth::user()->priceFormat($employee->salary) }}
+                                            @endif
                                         </td>
+
+                                        {{-- Basic Salary: not applicable for hourly employees --}}
+                                        <td>
+                                            @if ($_empIsHourly)
+                                                <span class="text-muted">—</span>
+                                            @else
+                                                {{ \Auth::user()->priceFormat($employee->basic_salary) }}
+                                            @endif
+                                        </td>
+
+                                        {{-- Net Salary: hourly net varies by hours worked each month --}}
+                                        <td>
+                                            @if ($_empIsHourly)
+                                                <span class="text-muted" title="{{ __('Varies by hours worked') }}">—</span>
+                                            @else
+                                                {{ !empty($employee->get_net_salary()) ? \Auth::user()->priceFormat($employee->get_net_salary()) : '-' }}
+                                            @endif
+                                        </td>
+
                                         <td class="Action">
                                             @if ($employee?->user?->is_active == 1 && $employee?->user?->is_disable == 1)
                                             <div class="dt-buttons">
