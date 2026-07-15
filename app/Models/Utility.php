@@ -1242,8 +1242,20 @@ class Utility extends Model
 
 
 
-        $payslip['hra']              = self::isUkRequest() ? 0 : $employess->get_net_hra();
-        $payslip['da']              = self::isUkRequest() ? 0 : $employess->get_net_da();
+        // ── HRA & DA ──────────────────────────────────────────────────────────
+        // HRA and DA are Indian monthly salary components — they have no meaning
+        // for hourly workers (who have no fixed monthly basic to apply them against).
+        // UK payroll never uses HRA/DA either.
+        // → Hourly employees: always 0
+        // → UK request:       always 0
+        // → Monthly employees: percentage of basic_salary
+        if (self::isUkRequest() || $isHourly) {
+            $payslip['hra'] = 0;
+            $payslip['da']  = 0;
+        } else {
+            $payslip['hra'] = $employess->get_net_hra();
+            $payslip['da']  = $employess->get_net_da();
+        }
         $payslip['earning']              = $earning;
         $payslip['totalEarning']         = $totalAllowance + $totalCommission
             + $totalotherpayment
@@ -1261,33 +1273,31 @@ class Utility extends Model
         $total_bonus                = $calcTotal($employess->bonuses);
         $basic_salary = $monthlySalaryGross;
 
-        $netSalary = $employess->basic_salary + $payslip['hra'] + $payslip['da'] + $totalAllowance + $totalCommission + $totalotherpayment
-            + $totalloan - $totalLoanRepayment - $totalPansion + $total_bonus - $total_saturation_deduction;
+        // ── Base amount used in net salary formula ────────────────────────
+        // Monthly: use the employee's stored basic_salary component
+        // Hourly:  use monthlySalaryGross = hourly_rate × actual_hours_worked
+        $salaryBase = $isHourly ? $monthlySalaryGross : (float) $employess->basic_salary;
+
         // Net salary:
         //   Monthly: fixed_salary + earnings - deductions (incl. LOP)
         //   Hourly:  hourly_rate × actual_hours_worked + earnings - deductions (no LOP)
-
-        // $payslip['net_salary']           = $netSalary;
+        $netSalary = $salaryBase + $payslip['hra'] + $payslip['da'] + $totalAllowance + $totalCommission + $totalotherpayment
+            + $totalloan - $totalLoanRepayment - $totalPansion + $total_bonus - $total_saturation_deduction;
 
         $payslip['totalAllowance']           = $totalAllowance;
         $payslip['totalCommission']           = $totalCommission;
-        $payslip['totalOtherPayment']    = $totalotherpayment;
-        $payslip['totalPansion']           = $totalPansion;
-        $payslip['totalLoan']           = $totalloan;
-        $payslip['totalLoanRepayment']   = $totalLoanRepayment;
-        $payslip['total_saturation_deduction']           = $total_saturation_deduction;
-        $payslip['total_bonus']           = $total_bonus;
-
-
-
-        // Net salary:
-        //   Monthly: fixed_salary + earnings - deductions (incl. LOP)
-        //   Hourly:  hourly_rate × actual_hours_worked + earnings - deductions (no LOP)
-        // $payslip['net_salary']           = $monthlySalaryGross + $payslip['totalEarning'] - $payslip['totalDeduction'];
-
+        $payslip['totalOtherPayment']        = $totalotherpayment;
+        $payslip['totalPansion']             = $totalPansion;
+        $payslip['totalLoan']                = $totalloan;
+        $payslip['totalLoanRepayment']       = $totalLoanRepayment;
+        $payslip['total_saturation_deduction'] = $total_saturation_deduction;
+        $payslip['total_bonus']              = $total_bonus;
 
         $payslip['net_salary']           = $netSalary;
-        $payslip['salary']           = $employess->basic_salary;
+        // 'salary'      — the value shown in the Earnings table "Basic Salary / Gross Earned" row.
+        //   Monthly: employee's basic_salary component (fixed base)
+        //   Hourly:  monthlySalaryGross (hourly_rate × hours_worked) — the real earned amount
+        $payslip['salary']           = $isHourly ? $monthlySalaryGross : (float) $employess->basic_salary;
         $payslip['basic_salary']         = $basic_salary; // gross to display on slip
         $payslip['salary_rate']          = $salary;             // raw stored monthly reference amount
         $payslip['is_hourly']            = $isHourly;

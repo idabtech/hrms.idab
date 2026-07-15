@@ -88,9 +88,14 @@
     $_basicLabel = $isHourly ? __('Gross Earned') : __('Basic Salary');
     $earRows = [
         ['label' => $_basicLabel, 'amount' => $_salary],
-        ['label' => 'HRA', 'amount' => $_hra],
-        ['label' => 'DA', 'amount' => $_da],
     ];
+    // HRA and DA are monthly-only components — skip for hourly (they will be 0)
+    if ($_hra > 0) {
+        $earRows[] = ['label' => 'HRA', 'amount' => $_hra];
+    }
+    if ($_da > 0) {
+        $earRows[] = ['label' => 'DA', 'amount' => $_da];
+    }
     foreach ($payslipDetail['earning']['allowance'] as $_ar) {
         foreach (json_decode($_ar->allowance) as $_a) {
             $earRows[] = [
