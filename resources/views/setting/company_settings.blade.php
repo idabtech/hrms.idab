@@ -77,6 +77,45 @@ $lang = \App\Models\Utility::getValByName('default_language');
 #salary-slip-settings .card-body .row.g-4 {
     min-height: 520px;
 }
+
+/* ── Payslip Color Swatches (brand-settings style) ──────────────── */
+.payslip-color-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    width: 200px;
+    margin: 0;
+    padding: 0;
+}
+.payslip-swatch {
+    width: 35px;
+    height: 25px;
+    border-radius: 3px;
+    display: inline-block;
+    cursor: pointer;
+    border: 2px solid transparent;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+.payslip-swatch:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+}
+/* Relies on brand-settings .active_color (border: 2px solid #000 !important) */
+
+/* Custom color input — same visual as brand-settings .color-wrp .color-picker-wrp input[type="color"] */
+.payslip-custom-picker {
+    background-color: #fff;
+    height: 55px;
+    cursor: pointer;
+    border-radius: 3px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    width: 50px;
+    flex-shrink: 0;
+}
 </style>
 @push('script-page')
 <script src="{{ asset('css/summernote/summernote-bs4.js') }}"></script>
@@ -298,16 +337,127 @@ $lang = \App\Models\Utility::getValByName('default_language');
         iframe.src = previewUrl;
 
         // Hide loading when iframe loads, then send stamp via postMessage
+        // Reuse the shared resizer function
+        attachPreviewResizer(iframe);
+    }
+
+    /**
+     * Payslip preset color swatch click handler.
+     * When a preset is clicked, highlight it, update the hidden color input, and refresh preview.
+     */
+    $(document).on('click', '.payslip-swatch', function() {
+        var color = $(this).data('color');
+        $('.payslip-swatch').removeClass('active_color');
+        $(this).addClass('active_color');
+
+        // Update the native color input and hex display
+        var colorInput = document.getElementById('payslip_primary_color');
+        var hexDisplay = document.getElementById('payslip_color_hex');
+        if (colorInput) colorInput.value = color;
+        if (hexDisplay) hexDisplay.value = color;
+
+        // Update the preview
+        updateSalarySlipPreview();
+    });
+
+    /**
+     * When the custom color picker changes, deselect all presets and update preview.
+     */
+    function onPayslipCustomColorChange(color) {
+        $('.payslip-swatch').removeClass('active_color');
+        var hexDisplay = document.getElementById('payslip_color_hex');
+        if (hexDisplay) hexDisplay.value = color;
+        updateSalarySlipPreview();
+    }
+
+    /**
+     * Reset payslip color to the default preset (#584ED2).
+     */
+    function resetPayslipColor() {
+        var defaultColor = '#584ED2';
+        var colorInput = document.getElementById('payslip_primary_color');
+        var hexDisplay = document.getElementById('payslip_color_hex');
+        if (colorInput) colorInput.value = defaultColor;
+        if (hexDisplay) hexDisplay.value = defaultColor;
+
+        // Highlight the default swatch
+        $('.payslip-swatch').removeClass('active_color');
+        $('.payslip-swatch[data-color="' + defaultColor + '"]').addClass('active_color');
+
+        updateSalarySlipPreview();
+    }
+
+    /**
+     * Attach dynamic height resizer to the preview iframe.
+     */
+    function attachPreviewResizer(iframe) {
+        if (!iframe) return;
         iframe.onload = function() {
+            var loading = document.getElementById('preview-loading');
             if (loading) loading.style.display = 'none';
-            if (_cachedStampDataUrl) {
+
+            // Dynamically resize iframe to match content height
+            try {
+                var doc = iframe.contentDocument || iframe.contentWindow.document;
+                if (doc && doc.body) {
+                    var h = doc.body.scrollHeight;
+                    if (h > 100) {
+                        iframe.style.height = h + 'px';
+                        iframe.style.minHeight = 'auto';
+                    }
+                }
+            } catch(e) {
+                iframe.style.height = 'auto';
+            }
+
+            if (window._cachedStampDataUrl) {
                 iframe.contentWindow.postMessage({
                     type: 'payslip-stamp',
-                    dataUrl: _cachedStampDataUrl
+                    dataUrl: window._cachedStampDataUrl
                 }, '*');
             }
         };
     }
+
+    /**
+     * Sync the custom color picker and swatch UI on page load.
+     */
+    $(document).ready(function() {
+        // If no preset is selected but a custom color is saved, ensure presets are deselected
+        var savedColor = document.getElementById('payslip_primary_color')?.value || '';
+        if (savedColor) {
+            var matchingSwatch = $('.payslip-swatch[data-color="' + savedColor + '"]');
+            if (matchingSwatch.length === 0) {
+                $('.payslip-swatch').removeClass('active_color');
+            }
+        }
+
+        // Attach dynamic height resizer to the initial iframe
+        var previewIframe = document.getElementById('salary-slip-preview-iframe');
+        attachPreviewResizer(previewIframe);
+        // Trigger initial resize once iframe loads (if already loaded, it won't fire)
+        if (previewIframe && previewIframe.contentDocument && previewIframe.contentDocument.body) {
+            var h = previewIframe.contentDocument.body.scrollHeight;
+            if (h > 100) {
+                previewIframe.style.height = h + 'px';
+                previewIframe.style.minHeight = 'auto';
+            }
+        }
+        // Also try after a small delay for async rendering
+        setTimeout(function() {
+            try {
+                var iframe = document.getElementById('salary-slip-preview-iframe');
+                var doc = iframe.contentDocument || iframe.contentWindow.document;
+                if (doc && doc.body) {
+                    var h = doc.body.scrollHeight;
+                    if (h > 100) {
+                        iframe.style.height = h + 'px';
+                        iframe.style.minHeight = 'auto';
+                    }
+                }
+            } catch(e) {}
+        }, 600);
+    });
 
     function toggleTimeFields() {
         for (let i = 0; i < 4; i++) {
@@ -2561,31 +2711,56 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                     <i class="ti ti-info-circle me-1"></i>
                                     {{ __('Determines the payslip layout for PDF downloads & previews.') }}
                                 </small>
-                            </div>
-
-                            {{-- Primary Color --}}
+                            </div>                                {{-- Primary Color --}}
                             <div class="col-12 form-group">
                                 {{ Form::label('payslip_primary_color', __('Payslip Color'), ['class' => 'col-form-label fw-semibold']) }}
-                                <div class="d-flex align-items-center gap-2">
-                                    <input type="color" name="payslip_primary_color"
-                                        id="payslip_primary_color"
-                                        value="{{ $_selectedColor ?: '#584ED2' }}"
-                                        oninput="updateSalarySlipPreview(); document.getElementById('payslip_color_hex').value = this.value;"
-                                        class="form-control form-control-color"
-                                        style="width:50px; height:38px; padding:2px; cursor:pointer; flex-shrink:0;">
-                                    <input type="text" readonly
-                                        id="payslip_color_hex"
-                                        value="{{ $_selectedColor ?: '#584ED2' }}"
-                                        class="form-control" style="width:100px; font-size:12px;">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm"
-                                        onclick="document.getElementById('payslip_primary_color').value='#584ED2'; document.getElementById('payslip_color_hex').value='#584ED2'; updateSalarySlipPreview();"
-                                        data-bs-toggle="tooltip" title="{{ __('Reset to default') }}">
-                                        <i class="ti ti-refresh"></i>
-                                    </button>
-                                </div>
+                                @php
+                                    $payslipPresets = [
+                                        '#584ED2' => __('Default Purple'),
+                                        '#4F46E5' => __('Indigo'),
+                                        '#2563EB' => __('Blue'),
+                                        '#0891B2' => __('Teal'),
+                                        '#059669' => __('Green'),
+                                        '#D97706' => __('Amber'),
+                                        '#DC2626' => __('Red'),
+                                        '#9333EA' => __('Purple'),
+                                        '#BE185D' => __('Pink'),
+                                        '#1E293B' => __('Slate'),
+                                    ];
+                                    $_defaultHex = '#584ED2';
+                                @endphp                                    {{-- Row 1 & 2: 10 Preset color swatches (5 per row, auto-wraps) --}}
+                                    <div class="payslip-color-swatches">
+                                        @foreach($payslipPresets as $hex => $label)
+                                            <a href="javascript:void(0)"
+                                                class="payslip-swatch {{ ($_selectedColor === $hex) || (empty($_selectedColor) && $hex === $_defaultHex) ? 'active_color' : '' }}"
+                                                data-color="{{ $hex }}"
+                                                data-bs-toggle="tooltip"
+                                                title="{{ $label }}"
+                                                style="background: {{ $hex }};"></a>
+                                        @endforeach
+                                    </div>
+                                    {{-- Row 3: Custom color picker + hex display + reset --}}
+                                    <div class="d-flex align-items-center gap-2 mt-2">
+                                        <div class="color-picker-wrp">
+                                            <input type="color" name="payslip_primary_color"
+                                                id="payslip_primary_color"
+                                                value="{{ $_selectedColor ?: $_defaultHex }}"
+                                                oninput="onPayslipCustomColorChange(this.value)"
+                                                class="payslip-custom-picker">
+                                        </div>
+                                        <input type="text" readonly
+                                            id="payslip_color_hex"
+                                            value="{{ $_selectedColor ?: $_defaultHex }}"
+                                            class="form-control" style="width:85px; font-size:12px;">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            onclick="resetPayslipColor()"
+                                            data-bs-toggle="tooltip" title="{{ __('Reset to default') }}">
+                                            <i class="ti ti-refresh"></i>
+                                        </button>
+                                    </div>
                                 <small class="text-muted d-block mt-1">
                                     <i class="ti ti-info-circle me-1"></i>
-                                    {{ __('Leave default to use the app theme color.') }}
+                                    {{ __('Choose a preset color or pick a custom one.') }}
                                 </small>
                             </div>
 
@@ -2642,10 +2817,10 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                     <small class="text-muted" style="font-size:11px;">{{ __('Changes reflect instantly') }}</small>
                                 </div>
                             </div>
-                            <div class="card-body p-0" style="position:relative; min-height:500px; background:#f5f5f5;">
+                            <div class="card-body p-0" style="position:relative; min-height:400px; background:#f5f5f5;">
                                 <iframe id="salary-slip-preview-iframe"
                                     src="{{ route('payslip.settings-preview', ['template' => $_selectedTemplate, 'color' => $_selectedColor ?: '']) }}"
-                                    style="width:100%; min-height:500px; border:none; display:block;"
+                                    style="width:100%; height:400px; border:none; display:block;"
                                     title="{{ __('Salary Slip Preview') }}" sandbox="allow-scripts allow-same-origin"></iframe>
                                 <div id="preview-loading"
                                     style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); display:none;">
