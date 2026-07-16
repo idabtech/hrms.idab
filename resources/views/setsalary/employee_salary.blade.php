@@ -124,7 +124,7 @@
                             </div>
 
                             {{-- Net Pay --}}
-                            <div class="d-flex justify-content-between align-items-center pt-2 mt-1">
+                            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
                                 <span class="fw-bold">{{ __('Net Pay') }}</span>
                                 <span class="fw-bold fs-6">{{ \Auth::user()->priceFormat($netPay) }}</span>
                             </div>
@@ -138,14 +138,15 @@
                             </div>
 
                             {{-- Net Pay --}}
-                            <div class="d-flex justify-content-between align-items-center pt-2 mt-1">
+                            <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
                                 <span class="fw-bold">{{ __('Net Pay') }}</span>
                                 <span class="small text-muted">{{ __('Varies by hours worked') }}</span>
                             </div>
 
                             @endif
 
-                            <div class="d-flex justify-content-between align-items-center py-1 mt-1 border-top">
+                            {{-- Account Type --}}
+                            <div class="d-flex justify-content-between align-items-center py-1">
                                 <span class="text-muted small">{{ __('Account Type') }}</span>
                                 <span class="small">{{ !empty($employee->account_type()) ? $employee->account_type() : '-' }}</span>
                             </div>
@@ -547,7 +548,7 @@
                                                     <td>{{ \Auth::user()->priceFormat($repayment->amount) }}</td>
                                                 @else
                                                     <td>{{ $repayment->amount }}%
-                                                        ({{ \Auth::user()->priceFormat($repayment->tota_allow ?? ($repayment->amount * $employee->salary / 100)) }})
+                                                        ({{ \Auth::user()->priceFormat($repayment->tota_allow ?? ($repayment->amount * $employee->basic_salary / 100)) }})
                                                     </td>
                                                 @endif
                                                 @can(['Edit Loan', 'Delete Loan'])

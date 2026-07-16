@@ -964,7 +964,7 @@ class Utility extends Model
             ->where('status', 'Approved')
             ->where('start_date', '<=', $monthEnd->format('Y-m-d'))
             ->where('end_date',   '>=', $monthStart->format('Y-m-d'))
-            ->with('dayDetails')
+            ->with(['dayDetails', 'leaveType'])
             ->get();
 
         $total_leave_days  = 0;
@@ -1005,8 +1005,11 @@ class Utility extends Model
                     $dayPayStatus = $dayDetail->day_status    ?? 'paid';
                 } else {
                     // No per-day record → use leave-level flags (legacy or single-day)
-                    $dayDuration  = $leave->leave_duration  ?? 'full_day';
-                    $dayPayStatus = 'paid'; // legacy leaves default to paid
+                    $dayDuration  = $leave->leave_duration ?? 'full_day';
+                    // Derive paid/unpaid from the leave type's is_paid flag.
+                    // Falls back to 'paid' only if the leave type cannot be resolved.
+                    $leaveTypeIsPaid = $leave->leaveType->is_paid ?? true;
+                    $dayPayStatus = $leaveTypeIsPaid ? 'paid' : 'unpaid';
                 }
 
                 // Determine how many days this entry consumes (0.5 for half, 1.0 for full)
