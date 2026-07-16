@@ -431,6 +431,384 @@ class PaySlipController extends Controller
         return view('payslip.employeepayslip', compact('payslip'));
     }
 
+    /**
+     * ---------------------------------------------------------------
+     * SHARED: Prepare all display data for payslip templates.
+     *
+     * Returns an array of ALL variables that any payslip template
+     * (pdf, ukpdf, compact, professional) needs — earnings rows,
+     * deduction rows, theme colors, currency, company info, UK
+     * fields, stamp, etc.
+     *
+     * Call this from pdf(), downloadPdf(), settingsPreview() and
+     * extract the result with compact() or pass it directly.
+     * ---------------------------------------------------------------
+     */
+    public static function preparePayslipTemplateData(
+        $employee,
+        $payslip,
+        array $payslipDetail,
+        ?string $previewColor = null,
+        bool   $previewMode = false,
+        bool   $forDownload = false
+    ): array {
+        // Coerce null → empty string so downstream code always has a string
+        $previewColor = $previewColor ?? '';
+
+        [$slipYear, $slipMonth] = explode('-', $payslip->salary_month);
+
+        // ── Logo / Download URL ──────────────────────────────────────────────
+        $logo       = \App\Models\Utility::get_file('uploads/logo/');
+        $companyLogo = \App\Models\Utility::get_company_logo();
+        $logoUrl    = $logo . '/' . (!empty($companyLogo) ? $companyLogo : 'logo-dark.png');
+        $downloadUrl = $forDownload
+            ? ''
+            : route('payslip.download', [$employee->id, $payslip->salary_month]);
+
+        // ── Theme color ──────────────────────────────────────────────────────
+        $_previewColor = !empty($previewColor) ? $previewColor : null;
+        $_colorSetting = \App\Models\Utility::colorset();
+        $_appSettings  = \App\Models\Utility::settings();
+        $_savedPayslipColor = !empty($_appSettings['payslip_primary_color'])
+            ? $_appSettings['payslip_primary_color']
+            : null;
+        $_themeName = $_previewColor
+            ? $_previewColor
+            : ($_savedPayslipColor ?: ($_colorSetting['theme_color'] ?? 'theme-2'));
+        $_themeHexMap = [
+            'theme-1' => '#0CAF60', 'theme-2' => '#584ED2', 'theme-3' => '#6FD943',
+            'theme-4' => '#145388', 'theme-5' => '#B9406B', 'theme-6' => '#008ECC',
+            'theme-7' => '#922C88', 'theme-8' => '#C0A145', 'theme-9' => '#48494B',
+            'theme-10' => '#0C7785',
+        ];
+        $_themeColor = str_starts_with($_themeName, '#')
+            ? $_themeName
+            : ($_themeHexMap[$_themeName] ?? '#584ED2');
+
+        // RGBA helper
+        $_hex = ltrim($_themeColor, '#');
+        $_r   = hexdec(substr($_hex, 0, 2));
+        $_g   = hexdec(substr($_hex, 2, 2));
+        $_b   = hexdec(substr($_hex, 4, 2));
+        $_bgRgba  = "rgba({$_r},{$_g},{$_b},0.10)";
+        $_bgLight = "rgba({$_r},{$_g},{$_b},0.06)";
+        $_bgMed   = "rgba({$_r},{$_g},{$_b},0.12)";
+
+        // ── Currency ─────────────────────────────────────────────────────────
+        $_currSymbol = $_appSettings['site_currency_symbol'] ?? '';
+        $_currPos    = $_appSettings['site_currency_symbol_position'] ?? 'pre';
+        $_fmtMoney   = function ($amount) use ($_currSymbol, $_currPos) {
+            $n = number_format((float) $amount, 2);
+            return $_currPos === 'pre' ? $_currSymbol . $n : $n . $_currSymbol;
+        };
+
+        // ── Month ────────────────────────────────────────────────────────────
+        $carbonMonth  = \Illuminate\Support\Carbon::createFromDate((int) $slipYear, (int) $slipMonth, 1);
+        $slipLabel    = $carbonMonth->format('F Y');
+        $slipShort    = $carbonMonth->format('M Y');
+        $payDate      = $carbonMonth->copy()->endOfMonth()->format('d M Y');
+
+        // ── Values from payslipDetail ────────────────────────────────────────
+        $_storedSalary        = (float) ($payslipDetail['basic_salary'] ?? 0);
+        $_basicSalary         = (float) ($employee->basic_salary ?? 0);
+        $_salary              = (float) ($payslipDetail['salary'] ?? 0);
+        $_hra                 = (float) ($payslipDetail['hra'] ?? 0);
+        $_da                  = (float) ($payslipDetail['da'] ?? 0);
+        $perDaySalary         = round((float) ($payslipDetail['per_day_amount'] ?? 0), 2);
+        $perHourSalary        = round((float) ($payslipDetail['per_hour_amount'] ?? 0), 2);
+        $officeDays           = (int) ($payslipDetail['office_days'] ?? 0);
+        $presentDays          = (float) ($payslipDetail['present_days'] ?? 0);
+        $approvedLeaves       = (float) ($payslipDetail['approved_leaves_month'] ?? 0);
+        $disapprovedLeaves    = (int) ($payslipDetail['rejected_leaves_month'] ?? 0);
+        $absentDays           = (float) ($payslipDetail['absent_days'] ?? 0);
+        $extraDays            = (float) ($payslipDetail['extra_days'] ?? 0);
+        $totalWorkHours       = (float) ($payslipDetail['total_work_hours'] ?? 0);
+        $avgHrsPerDay         = (float) ($payslipDetail['avg_hrs_per_day'] ?? 0);
+        $totalLeaveAlloc      = (int) ($payslipDetail['total_leave_alloc'] ?? 0);
+        $remainingLeaves      = (int) ($payslipDetail['remaining_leaves'] ?? 0);
+        $paidLeaveDays        = (float) ($payslipDetail['paid_leave_days'] ?? 0);
+        $unpaidLeaveDays      = (float) ($payslipDetail['unpaid_leave_days'] ?? 0);
+        $unpaidLeaveDeduction = (float) ($payslipDetail['unpaid_leave_deduction'] ?? 0);
+        $daysPaid             = (float) ($payslipDetail['days_paid'] ?? ($presentDays + $paidLeaveDays));
+        $isHourly             = (bool) ($payslipDetail['is_hourly'] ?? false);
+        $hoursPerDay          = (float) ($payslipDetail['hours_per_day'] ?? 8);
+        $totalShiftHours      = (float) ($payslipDetail['total_shift_hours'] ?? ($officeDays * $hoursPerDay));
+        $salaryRate           = (float) ($payslipDetail['salary_rate'] ?? $_storedSalary);
+        $isPaid               = ($payslip->status ?? 0) == 1;
+        $payslipTypeName      = optional(\App\Models\PayslipType::find($employee->salary_type ?? null))->name ?? 'Monthly';
+        $usedLeaves           = $approvedLeaves;
+
+        // ── Format helpers ───────────────────────────────────────────────────
+        $presentDisplay  = min($presentDays, $officeDays);
+        $presentDaysFmt  = ($presentDisplay == floor($presentDisplay)) ? (int) $presentDisplay : $presentDisplay;
+        $absentDaysFmt   = ($absentDays == floor($absentDays)) ? (int) $absentDays : $absentDays;
+        $extraDaysFmt    = ($extraDays == floor($extraDays)) ? (int) $extraDays : $extraDays;
+
+        // ── Earnings rows ────────────────────────────────────────────────────
+        $_basicLabel = $isHourly ? __('Gross Earned') : __('Basic Salary');
+        $earRows = [['label' => $_basicLabel, 'amount' => $_salary]];
+
+        foreach ($payslipDetail['earning']['allowance'] ?? [] as $_ar) {
+            foreach (json_decode($_ar->allowance ?? '[]') as $_a) {
+                $earRows[] = [
+                    'label'  => $_a->title ?? '',
+                    'amount' => ($_a->type ?? 'fixed') === 'percentage'
+                        ? round(($_a->amount ?? 0) * $_basicSalary / 100, 2)
+                        : (float) ($_a->amount ?? 0),
+                ];
+            }
+        }
+        foreach ($payslipDetail['earning']['commission'] ?? [] as $_cr) {
+            foreach (json_decode($_cr->commission ?? '[]') as $_c) {
+                $earRows[] = [
+                    'label'  => $_c->title ?? '',
+                    'amount' => ($_c->type ?? 'fixed') === 'percentage'
+                        ? round(($_c->amount ?? 0) * $_basicSalary / 100, 2)
+                        : (float) ($_c->amount ?? 0),
+                ];
+            }
+        }
+        foreach ($payslipDetail['earning']['bonous'] ?? [] as $_b) {
+            $earRows[] = [
+                'label'  => $_b->title ?: __('Bonus'),
+                'amount' => ($_b->type ?? 'fixed') === 'percentage'
+                    ? round(($_b->amount ?? 0) * $_basicSalary / 100, 2)
+                    : (float) ($_b->amount ?? 0),
+            ];
+        }
+        foreach ($payslipDetail['earning']['otherPayment'] ?? [] as $_op2) {
+            foreach (json_decode($_op2->other_payment ?? '[]') as $_op) {
+                $earRows[] = [
+                    'label'  => $_op->title ?? '',
+                    'amount' => ($_op->type ?? 'fixed') === 'percentage'
+                        ? round(($_op->amount ?? 0) * $_basicSalary / 100, 2)
+                        : (float) ($_op->amount ?? 0),
+                ];
+            }
+        }
+        // Overtime
+        foreach ($payslipDetail['earning']['overTime'] ?? [] as $_ot2) {
+            foreach (json_decode($_ot2->overtime ?? '[]') as $_ot) {
+                $earRows[] = [
+                    'label'  => $_ot->title ?: __('Overtime'),
+                    'amount' => (float) (($_ot->number_of_days ?? 0) * ($_ot->hours ?? 0) * ($_ot->rate ?? 0)),
+                ];
+            }
+        }
+        // Loan/Advance
+        foreach ($payslipDetail['earning']['loan'] ?? [] as $_lr) {
+            foreach (json_decode($_lr->loan ?? '[]') as $_ln) {
+                $_amt = ($_ln->type ?? 'fixed') === 'percentage'
+                    ? round(($_ln->amount ?? 0) * $_basicSalary / 100, 2)
+                    : (float) ($_ln->amount ?? 0);
+                if ($_amt > 0) {
+                    $earRows[] = ['label' => $_ln->title ?: __('Loan/Advance'), 'amount' => $_amt];
+                }
+            }
+        }
+
+        // ── Deductions rows ──────────────────────────────────────────────────
+        $dedRows = [];
+        $totalLoanRepayment = (float) ($payslipDetail['totalLoanRepayment'] ?? 0);
+        if ($totalLoanRepayment > 0) {
+            $dedRows[] = ['label' => __('Loan Repayment'), 'amount' => $totalLoanRepayment];
+        }
+        foreach ($payslipDetail['deduction']['saturation_deduction'] ?? [] as $_dr2) {
+            foreach (json_decode($_dr2->saturation_deduction ?? '[]') as $_dd) {
+                $titleLower = strtolower($_dd->title ?? '');
+                if ($titleLower === 'epf') {
+                    $_amt = ($_basicSalary * 12) / 100;
+                } elseif ($titleLower === 'gpf') {
+                    $_amt = ($_basicSalary * 6) / 100;
+                } else {
+                    $_amt = ($_dd->type ?? 'fixed') === 'percentage'
+                        ? round(($_dd->amount ?? 0) * $_basicSalary / 100, 2)
+                        : (float) ($_dd->amount ?? 0);
+                }
+                if ($_amt > 0) {
+                    $dedRows[] = ['label' => $_dd->title ?? '', 'amount' => $_amt];
+                }
+            }
+        }
+        foreach ($payslipDetail['deduction']['pansion'] ?? [] as $_p) {
+            $_amt = ($_p->type ?? 'fixed') === 'percentage'
+                ? round(($_p->amount ?? 0) * $_basicSalary / 100, 2)
+                : (float) ($_p->amount ?? 0);
+            if ($_amt > 0) {
+                $dedRows[] = ['label' => $_p->title ?: __('Provident Fund'), 'amount' => $_amt];
+            }
+        }
+        foreach ($payslipDetail['deduction']['leave'] ?? [] as $_lea) {
+            if (($_lea->empleave ?? 0) > 0) {
+                $dedRows[] = ['label' => __('Loss Of Pay'), 'amount' => (float) $_lea->empleave];
+            }
+        }
+        if ($unpaidLeaveDeduction > 0) {
+            $dedRows[] = [
+                'label'  => __('Unpaid Leave') . ' (' . $unpaidLeaveDays . ' ' . __('days') . ')',
+                'amount' => $unpaidLeaveDeduction,
+            ];
+        }
+
+        // Pad rows to equal count (for side-by-side tables)
+        // (only needed for standard/pdf template — others can ignore)
+        $_maxED = max(count($earRows), count($dedRows));
+        $earRowsPadded = $earRows;
+        $dedRowsPadded = $dedRows;
+        while (count($earRowsPadded) < $_maxED) {
+            $earRowsPadded[] = ['label' => '', 'amount' => null];
+        }
+        while (count($dedRowsPadded) < $_maxED) {
+            $dedRowsPadded[] = ['label' => '', 'amount' => null];
+        }
+
+        $totalEarnings   = (float) ($payslipDetail['totalEarning'] ?? 0) + $_salary;
+        $totalDeductions = (float) ($payslipDetail['totalDeduction'] ?? 0);
+        $netSalary       = max(
+            0,
+            (float) ($payslipDetail['totalEarning'] ?? 0) + ($_salary - (float) ($payslipDetail['totalDeduction'] ?? 0))
+        );
+
+        // ── Company ──────────────────────────────────────────────────────────
+        $companyName  = \App\Models\Utility::getValByName('company_name') ?? '';
+        $companyAddr  = \App\Models\Utility::getValByName('company_address') ?? '';
+        $companyCity  = \App\Models\Utility::getValByName('company_city') ?? '';
+        $companyState = \App\Models\Utility::getValByName('company_state') ?? '';
+        $companyZip   = \App\Models\Utility::getValByName('company_zipcode') ?? '';
+        $companyPhone = \App\Models\Utility::getValByName('company_telephone') ?? '';
+        $companyEmail = \App\Models\Utility::getValByName('company_email') ?? '';
+        $companyWeb   = \App\Models\Utility::getValByName('company_website') ?? '';
+
+        // ── Stamp ────────────────────────────────────────────────────────────
+        // Stamp is rendered server-side from the DB value.
+        // For live preview before save, the stamp data URL is sent via
+        // postMessage to the iframe (see updateSalarySlipPreview JS).
+        // Cache busting (time) ensures the browser shows the updated stamp
+        // immediately after a save + page refresh.
+        $_stampFile = \App\Models\Utility::getValByName('company_stamp');
+        $_stampUrl  = !empty($_stampFile)
+            ? \App\Models\Utility::get_file('uploads/logo/') . '/' . $_stampFile . '?' . time()
+            : null;
+
+        // ── UK fields ────────────────────────────────────────────────────────
+        $_isUkRequest = \App\Models\Utility::isUkRequest() || request()->boolean('uk_preview');
+        $taxCode        = !empty($employee->tax_payer_id)      ? $employee->tax_payer_id      : '—';
+        $niNumber       = !empty($employee->ni_number)         ? $employee->ni_number         : '—';
+        $niTableLetter  = !empty($employee->ni_table_letter)   ? $employee->ni_table_letter   : 'A';
+        $paymentMethod  = !empty($employee->payment_method)    ? $employee->payment_method    : 'BACS';
+        $worksNo        = !empty($employee->employee_id)       ? $employee->employee_id       : '—';
+        $sortCode       = !empty($employee->bank_identifier_code) ? $employee->bank_identifier_code : '—';
+
+        // ── YTD (UK) ─────────────────────────────────────────────────────────
+        $ytdTaxableGross         = $payslipDetail['ytd_taxable_gross']          ?? $totalEarnings;
+        $ytdIncomeTax            = $payslipDetail['ytd_income_tax']             ?? 0;
+        $ytdEmployeeNI           = $payslipDetail['ytd_employee_ni']            ?? 0;
+        $ytdEmployerNI           = $payslipDetail['ytd_employer_ni']            ?? 0;
+        $ytdStatutoryPay         = $payslipDetail['ytd_statutory_pay']          ?? 0;
+        $ytdEmployeePension      = $payslipDetail['ytd_employee_pension']       ?? 0;
+        $ytdEmployerPension      = $payslipDetail['ytd_employer_pension']       ?? 0;
+        $ytdLabelIncomeTax       = $payslipDetail['ytd_label_income_tax']       ?? __('Income Tax');
+        $ytdLabelEmployeeNI      = $payslipDetail['ytd_label_employee_ni']      ?? __('National Insurance');
+        $ytdLabelEmployerNI      = $payslipDetail['ytd_label_employer_ni']      ?? __('Employer NI');
+        $ytdLabelStatutoryPay    = $payslipDetail['ytd_label_statutory_pay']    ?? __('Statutory Pay');
+        $ytdLabelEmployeePension = $payslipDetail['ytd_label_employee_pension'] ?? __('Employee Pension');
+        $ytdLabelEmployerPension = $payslipDetail['ytd_label_employer_pension'] ?? __('Employer Pension');
+        $ytdPensionRows          = $payslipDetail['ytd_pension_rows']           ?? [];
+
+        return compact(
+            'slipYear', 'slipMonth', 'slipLabel', 'slipShort', 'payDate',
+            'logoUrl', 'downloadUrl',
+            '_themeColor', '_bgRgba', '_bgLight', '_bgMed',
+            '_currSymbol', '_currPos', '_fmtMoney',
+            '_storedSalary', '_basicSalary', '_salary', '_hra', '_da',
+            'perDaySalary', 'perHourSalary',
+            'officeDays', 'presentDays', 'presentDaysFmt',
+            'approvedLeaves', 'disapprovedLeaves',
+            'absentDays', 'absentDaysFmt',
+            'extraDays', 'extraDaysFmt',
+            'totalWorkHours', 'avgHrsPerDay',
+            'totalLeaveAlloc', 'remainingLeaves', 'usedLeaves',
+            'paidLeaveDays', 'unpaidLeaveDays', 'unpaidLeaveDeduction',
+            'daysPaid', 'isHourly', 'hoursPerDay', 'totalShiftHours', 'salaryRate',
+            'payslipTypeName', 'isPaid',
+            'earRows', 'earRowsPadded', 'dedRows', 'dedRowsPadded',
+            'totalEarnings', 'totalDeductions', 'netSalary',
+            'totalLoanRepayment',
+            'companyName', 'companyAddr', 'companyCity', 'companyState', 'companyZip',
+            'companyPhone', 'companyEmail', 'companyWeb',
+            '_stampUrl',
+            '_isUkRequest',
+            'taxCode', 'niNumber', 'niTableLetter', 'paymentMethod', 'worksNo', 'sortCode',
+            'ytdTaxableGross', 'ytdIncomeTax', 'ytdEmployeeNI', 'ytdEmployerNI',
+            'ytdStatutoryPay', 'ytdEmployeePension', 'ytdEmployerPension',
+            'ytdLabelIncomeTax', 'ytdLabelEmployeeNI', 'ytdLabelEmployerNI',
+            'ytdLabelStatutoryPay', 'ytdLabelEmployeePension', 'ytdLabelEmployerPension',
+            'ytdPensionRows',
+            'previewMode',
+        );
+    }
+
+    /**
+     * Returns the mapping of saved template keys to view names.
+     * Shared between pdf(), downloadPdf(), and settingsPreview().
+     */
+    public static function payslipViewMap(string $type = 'view'): array
+    {
+        if ($type === 'download') {
+            return [
+                'standard'       => 'payslip.payslipDownload',
+                'uk'             => 'payslip.ukPayslipDownload',
+                'compact'        => 'payslip.compactDownload',
+                'professional'   => 'payslip.professionalDownload',
+                'modern'         => 'payslip.modernDownload',
+                'classic'        => 'payslip.classicDownload',
+                'minimal'        => 'payslip.minimalDownload',
+                'executive'      => 'payslip.executiveDownload',
+                'bold'           => 'payslip.boldDownload',
+                'elegant'        => 'payslip.elegantDownload',
+                'contemporary'   => 'payslip.contemporaryDownload',
+            ];
+        }
+
+        return [
+            'standard'       => 'payslip.pdf',
+            'uk'             => 'payslip.ukpdf',
+            'compact'        => 'payslip.compact',
+            'professional'   => 'payslip.professional',
+            'modern'         => 'payslip.modern',
+            'classic'        => 'payslip.classic',
+            'minimal'        => 'payslip.minimal',
+            'executive'      => 'payslip.executive',
+            'bold'           => 'payslip.bold',
+            'elegant'        => 'payslip.elegant',
+            'contemporary'   => 'payslip.contemporary',
+        ];
+    }
+
+    /**
+     * Resolve the payslip template view based on the saved payslip_template setting.
+     */
+    protected function resolvePayslipTemplate(): string
+    {
+        $settings = Utility::settings();
+        $template = $settings['payslip_template'] ?? 'standard';
+        $map      = self::payslipViewMap('view');
+
+        return $map[$template] ?? 'payslip.pdf';
+    }
+
+    /**
+     * Resolve the download PDF template based on the saved payslip_template setting.
+     */
+    protected function resolveDownloadTemplate(): string
+    {
+        $settings = Utility::settings();
+        $template = $settings['payslip_template'] ?? 'standard';
+        $map      = self::payslipViewMap('download');
+
+        return $map[$template] ?? 'payslip.payslipDownload';
+    }
+
     public function pdf($id, $month)
     {
         $payslip = PaySlip::where('employee_id', $id)->where('salary_month', $month)->where('created_by', \Auth::user()->creatorId())->first();
@@ -439,11 +817,19 @@ class PaySlipController extends Controller
 
         $payslipDetail = Utility::employeePayslipDetail($id, $month);
 
-        // Use UK layout for UK requests, standard layout for everyone else
-        $view = Utility::isUkRequest() ? 'payslip.ukpdf' : 'payslip.pdf';
+        // Prepare all template data via the shared method
+        $templateData = self::preparePayslipTemplateData(
+            $employee, $payslip, $payslipDetail, '', false, false
+        );
 
-        return view($view, compact('payslip', 'employee', 'payslipDetail'));
+        // Use the saved payslip_template setting instead of IP detection
+        $view = $this->resolvePayslipTemplate();
+
+        $previewMode = false;
+        return view($view, $templateData + compact('employee', 'payslip', 'previewMode'));
     }
+
+
 
     /**
      * Server-side PDF download via dompdf.
@@ -461,16 +847,16 @@ class PaySlipController extends Controller
 
         [$slipYear, $slipMonth] = explode('-', $month);
 
-        // Use UK download template for UK requests, standard for everyone else
-        $template = Utility::isUkRequest() ? 'payslip.ukPayslipDownload' : 'payslip.payslipDownload';
+        // Prepare all template data via the shared method (download mode)
+        $templateData = self::preparePayslipTemplateData(
+            $employee, $payslip, $payslipDetail, '', false, true
+        );
 
-        $pdf = Pdf::loadView($template, compact(
-            'payslip',
-            'employee',
-            'payslipDetail',
-            'slipYear',
-            'slipMonth'
-        ))->setPaper('a4', 'portrait')->setOption('isRemoteEnabled', true);
+        // Use the saved payslip_template setting instead of IP detection
+        $template = $this->resolveDownloadTemplate();
+
+        $pdf = Pdf::loadView($template, $templateData + compact('employee', 'payslip'))
+            ->setPaper('a4', 'portrait')->setOption('isRemoteEnabled', true);
 
         return $pdf->download($employee->name . '_payslip_' . $month . '.pdf');
     }
@@ -489,15 +875,13 @@ class PaySlipController extends Controller
         $employee      = Employee::findOrFail($payslip->employee_id);
         $payslipDetail = Utility::employeePayslipDetail($id, $month);
 
-        [$slipYear, $slipMonth] = explode('-', $month);
+        // Prepare all template data via the shared method (download mode)
+        $templateData = self::preparePayslipTemplateData(
+            $employee, $payslip, $payslipDetail, '', false, true
+        );
 
-        $pdf = Pdf::loadView('payslip.ukPayslipDownload', compact(
-            'payslip',
-            'employee',
-            'payslipDetail',
-            'slipYear',
-            'slipMonth'
-        ))->setPaper('a4', 'portrait')->setOption('isRemoteEnabled', true);
+        $pdf = Pdf::loadView('payslip.ukPayslipDownload', $templateData + compact('employee', 'payslip'))
+            ->setPaper('a4', 'portrait')->setOption('isRemoteEnabled', true);
 
         return $pdf->download($employee->name . '_uk_payslip_' . $month . '.pdf');
     }
@@ -543,6 +927,129 @@ class PaySlipController extends Controller
         $payslipDetail = Utility::employeePayslipDetail($payslip->employee_id, $month);
 
         return view('payslip.payslipPdf', compact('payslip', 'employee', 'payslipDetail'));
+    }
+
+    /**
+     * Live preview for the Salary Slip Settings page.
+     * Renders a demo payslip with sample data so the preview is always available.
+     * Route: GET payslip/settings-preview
+     */
+    public function settingsPreview(Request $request)
+    {
+        $template = $request->get('template', 'standard');
+        $color    = $request->get('color', '');
+        // Stamp preview is sent via postMessage to avoid URL length limits.
+
+        // ── Build demo payslip data ───────────────────────────────────────────
+        $demoMonth     = date('Y-m');
+        [$slipYear, $slipMonth] = explode('-', $demoMonth);
+
+        $demoDept = new \stdClass();
+        $demoDept->name = 'Engineering';
+
+        $demoDesignation = new \stdClass();
+        $demoDesignation->name = 'Senior Developer';
+
+        $demoEmployee = new \stdClass();
+        $demoEmployee->id               = 1;
+        $demoEmployee->name             = 'John Doe';
+        $demoEmployee->employee_id      = 'EMP001';
+        $demoEmployee->basic_salary     = 50000;
+        $demoEmployee->salary           = 50000;
+        $demoEmployee->salary_type      = 1;
+        $demoEmployee->tax_payer_id     = 'ABCPD1234K';
+        $demoEmployee->company_doj      = '2020-06-15';
+        $demoEmployee->bank_name        = 'State Bank';
+        $demoEmployee->account_number   = '12345678901';
+        $demoEmployee->bank_identifier_code = 'SBIN0001234';
+        $demoEmployee->account_holder_name  = 'John Doe';
+        $demoEmployee->designation      = $demoDesignation;
+        $demoEmployee->department       = $demoDept;
+        $demoEmployee->ni_number        = 'JS877742C';
+        $demoEmployee->ni_table_letter  = 'A';
+        $demoEmployee->payment_method   = 'BACS';
+
+        $demoPayslip = new \stdClass();
+        $demoPayslip->employee_id  = 1;
+        $demoPayslip->salary_month = $demoMonth;
+        $demoPayslip->status       = 0;
+        $demoPayslip->basic_salary = 50000;
+        $demoPayslip->net_salary   = 50000;
+        $demoPayslip->net_payble   = 42350;
+
+        $demoDetail = [ /* ... same as before ... */ ];
+        $demoDetail = [
+            'basic_salary'          => 50000,
+            'net_salary'            => 42350,
+            'salary'                => 50000,
+            'salary_rate'           => 50000,
+            'hra'                   => 0,
+            'da'                    => 0,
+            'per_day_amount'        => 1923.08,
+            'per_hour_amount'       => 240.38,
+            'office_days'           => 22,
+            'present_days'          => 20,
+            'approved_leaves_month' => 1,
+            'rejected_leaves_month' => 0,
+            'absent_days'           => 1,
+            'extra_days'            => 0,
+            'total_work_hours'      => 160,
+            'avg_hrs_per_day'       => 8,
+            'total_leave_alloc'     => 18,
+            'remaining_leaves'      => 12,
+            'paid_leave_days'       => 1,
+            'unpaid_leave_days'     => 0,
+            'unpaid_leave_deduction'=> 0,
+            'days_paid'             => 21,
+            'is_hourly'             => false,
+            'hours_per_day'         => 8,
+            'total_shift_hours'     => 176,
+            'totalEarning'          => 5000,
+            'totalDeduction'        => 7650,
+            'totalLoanRepayment'    => 0,
+            'earning' => [
+                'allowance'  => [], 'commission' => [], 'bonous' => [],
+                'otherPayment' => [], 'overTime' => [], 'loan' => [], 'pearks' => [],
+            ],
+            'deduction' => [
+                'saturation_deduction' => [],
+                'pansion'             => [],
+                'leave'               => [
+                    (object) [
+                        'leave_reason'     => 'Loss of Pay',
+                        'leave_type'       => 'Loss of Pay',
+                        'total_leave_days' => '1 days',
+                        'empleave'         => 1923.08,
+                    ],
+                ],
+                'unpaid_leave' => [],
+            ],
+            'ytd_taxable_gross'         => 50000,
+            'ytd_income_tax'            => 5500,
+            'ytd_employee_ni'           => 2150,
+            'ytd_employer_ni'           => 0,
+            'ytd_statutory_pay'         => 0,
+            'ytd_employee_pension'      => 750,
+            'ytd_employer_pension'      => 0,
+            'ytd_label_income_tax'      => 'Income Tax',
+            'ytd_label_employee_ni'     => 'National Insurance',
+            'ytd_label_employer_ni'     => 'Employer NI',
+            'ytd_label_statutory_pay'   => 'Statutory Pay',
+            'ytd_label_employee_pension'=> 'Employee Pension',
+            'ytd_label_employer_pension'=> 'Employer Pension',
+            'ytd_pension_rows'          => [
+                ['label' => 'Employee Pension', 'amount' => 750],
+            ],
+        ];
+
+        $templateData = self::preparePayslipTemplateData(
+            $demoEmployee, $demoPayslip, $demoDetail, $color, true, false
+        );
+
+        $map  = self::payslipViewMap('view');
+        $view = $map[$template] ?? 'payslip.pdf';
+
+        return view($view, $templateData + ['employee' => $demoEmployee, 'payslip' => $demoPayslip]);
     }
 
     public function editEmployee($paySlip)

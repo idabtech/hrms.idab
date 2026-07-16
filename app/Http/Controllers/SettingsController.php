@@ -377,30 +377,36 @@ class SettingsController extends Controller
                 return redirect()->back()->with('success', __('IP Restrict setting successfully updated.'));
             }
 
-            $rules = [
-                'company_name' => 'required|string|max:255',
-                'company_address' => 'required',
-                'company_city' => 'required',
-                'company_state' => 'required',
-                'company_zipcode' => 'required',
-                'company_country' => 'required',
-                'company_telephone' => 'required',
-                'timezone' => 'required',
-            ];
+            // ── Conditional validation ───────────────────────────────────
+            // Only apply company field validation when company fields are actually
+            // being submitted (the Salary Slip Settings form shares the same route
+            // but only posts payslip_template, payslip_primary_color & company_stamp).
+            if ($request->has('company_name') || $request->has('company_address') || $request->has('timezone')) {
+                $rules = [
+                    'company_name' => 'required|string|max:255',
+                    'company_address' => 'required',
+                    'company_city' => 'required',
+                    'company_state' => 'required',
+                    'company_zipcode' => 'required',
+                    'company_country' => 'required',
+                    'company_telephone' => 'required',
+                    'timezone' => 'required',
+                ];
 
-            for ($i = 0; $i < 4; $i++) {
-                $startKey = $i === 0 ? 'company_start_time' : "company_start_time$i";
-                $endKey   = $i === 0 ? 'company_end_time'   : "company_end_time$i";
+                for ($i = 0; $i < 4; $i++) {
+                    $startKey = $i === 0 ? 'company_start_time' : "company_start_time$i";
+                    $endKey   = $i === 0 ? 'company_end_time'   : "company_end_time$i";
 
-                $rules[$startKey] = ['nullable', 'required_with:' . $endKey, 'date_format:H:i'];
-                $rules[$endKey]   = ['nullable', 'required_with:' . $startKey, 'date_format:H:i'];
+                    $rules[$startKey] = ['nullable', 'required_with:' . $endKey, 'date_format:H:i'];
+                    $rules[$endKey]   = ['nullable', 'required_with:' . $startKey, 'date_format:H:i'];
+                }
+
+                $messages = [
+                    'required_with' => __('Both start and end times must be filled together.'),
+                ];
+
+                $request->validate($rules, $messages);
             }
-
-            $messages = [
-                'required_with' => __('Both start and end times must be filled together.'),
-            ];
-
-            $request->validate($rules, $messages);
 
             // Handle company stamp upload
             if ($request->hasFile('company_stamp')) {

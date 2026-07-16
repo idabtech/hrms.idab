@@ -994,6 +994,13 @@ Route::group(['middleware' => ['verified']], function () {
         ]
     );
 
+    Route::get('payslip/settings-preview', [PaySlipController::class, 'settingsPreview'])->name('payslip.settings-preview')->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+
     Route::get('payslip/delete/{id}', [PaySlipController::class, 'destroy'])->name('payslip.delete')->middleware(
         [
             'auth',

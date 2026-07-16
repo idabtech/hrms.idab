@@ -50,6 +50,33 @@ $lang = \App\Models\Utility::getValByName('default_language');
 .shift-table td {
     padding: 10px;
 }
+
+/* ── Salary Slip Settings ─────────────────────────────────────────── */
+/* Color picker styling */
+.form-control-color {
+    cursor: pointer;
+    border-radius: 6px;
+}
+.form-control-color::-webkit-color-swatch-wrapper { padding: 0; }
+.form-control-color::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+}
+
+/* Live preview iframe */
+#salary-slip-preview-iframe {
+    transition: opacity 0.3s ease;
+}
+
+/* Stamp preview styling */
+#stamp_preview {
+    transition: all 0.2s ease;
+}
+
+/* Two-column layout for settings */
+#salary-slip-settings .card-body .row.g-4 {
+    min-height: 520px;
+}
 </style>
 @push('script-page')
 <script src="{{ asset('css/summernote/summernote-bs4.js') }}"></script>
@@ -207,6 +234,9 @@ $lang = \App\Models\Utility::getValByName('default_language');
     }
 </script>
 <script>
+    // ── Stamp data URL cache (for live preview via postMessage) ────────
+    var _cachedStampDataUrl = '';
+
     document.getElementById('company_stamp').onchange = function() {
         if (this.files && this.files[0]) {
             var src = URL.createObjectURL(this.files[0]);
@@ -215,11 +245,70 @@ $lang = \App\Models\Utility::getValByName('default_language');
             preview.src = src;
             preview.style.display = 'block';
             if (placeholder) placeholder.style.display = 'none';
+
+            // Read the file as a base64 data URL for the live preview iframe
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                _cachedStampDataUrl = e.target.result;
+                updateSalarySlipPreview();
+            };
+            reader.readAsDataURL(this.files[0]);
+        } else {
+            // File was cleared — revert to server-stored stamp
+            _cachedStampDataUrl = '';
+            var preview = document.getElementById('stamp_preview');
+            if (preview) preview.style.display = 'none';
+            var ph = document.getElementById('stamp_preview_placeholder');
+            if (ph) ph.style.display = 'flex';
+            updateSalarySlipPreview();
         }
     }
 </script>
 
 <script>
+    /**
+     * Live preview for salary slip settings.
+     * Reads the dropdown + color picker and reloads the preview iframe.
+     */
+    function updateSalarySlipPreview() {
+        var templateEl = document.getElementById('payslip_template');
+        var colorInput = document.getElementById('payslip_primary_color');
+        var hexDisplay = document.getElementById('payslip_color_hex');
+        var iframe = document.getElementById('salary-slip-preview-iframe');
+        var loading = document.getElementById('preview-loading');
+
+        if (!templateEl || !iframe) return;
+
+        var tpl = templateEl.value;
+        var clr = colorInput ? colorInput.value : '';
+
+        // Update hex display
+        if (hexDisplay) {
+            hexDisplay.value = clr;
+        }
+
+        // Show loading spinner
+        if (loading) loading.style.display = 'block';
+
+        // Build preview URL (no stamp param — use postMessage to avoid URL length issues)
+        var baseUrl = '{{ route("payslip.settings-preview") }}';
+        var previewUrl = baseUrl + '?template=' + encodeURIComponent(tpl) + '&color=' + encodeURIComponent(clr);
+
+        // Update iframe and reload
+        iframe.src = previewUrl;
+
+        // Hide loading when iframe loads, then send stamp via postMessage
+        iframe.onload = function() {
+            if (loading) loading.style.display = 'none';
+            if (_cachedStampDataUrl) {
+                iframe.contentWindow.postMessage({
+                    type: 'payslip-stamp',
+                    dataUrl: _cachedStampDataUrl
+                }, '*');
+            }
+        };
+    }
+
     function toggleTimeFields() {
         for (let i = 0; i < 4; i++) {
             let start = document.querySelector(`[name="company_start_time${i === 0 ? '' : i}"]`);
@@ -355,6 +444,11 @@ $lang = \App\Models\Utility::getValByName('default_language');
 
                         <a href="#webhook-settings" id="webhook-tab"
                             class="list-group-item list-group-item-action border-0">{{ __('Webhook Settings') }}
+                            <div class="float-end"><i class="ti ti-chevron-right"></i></div>
+                        </a>
+
+                        <a href="#salary-slip-settings" id="salary-slip-tab"
+                            class="list-group-item list-group-item-action border-0">{{ __('Salary Slip Settings') }}
                             <div class="float-end"><i class="ti ti-chevron-right"></i></div>
                         </a>
 
@@ -1229,42 +1323,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                     </div>
                                 </div>
                             </div>
-                            <div class="row align-items-center mt-3">
-                                <div class="col-md-3 text-center">
-                                    @php
-                                        $stampFile = \App\Models\Utility::getValByName('company_stamp');
-                                        $stampUrl  = $stampFile
-                                            ? \App\Models\Utility::get_file('uploads/logo/') . $stampFile . '?' . time()
-                                            : null;
-                                    @endphp
-                                    @if($stampUrl)
-                                        <img id="stamp_preview" src="{{ $stampUrl }}" alt="Stamp"
-                                            style="width:100px;height:100px;border-radius:50%;object-fit:contain;border:3px solid #ccc;">
-                                    @else
-                                        <div id="stamp_preview_placeholder"
-                                            style="width:100px;height:100px;border-radius:50%;border:3px dashed #aaa;display:flex;align-items:center;justify-content:center;margin:0 auto;color:#aaa;font-size:11px;text-align:center;padding:10px;">
-                                            {{ __('No stamp') }}
-                                        </div>
-                                        <img id="stamp_preview" src="" alt="Stamp"
-                                            style="width:100px;height:100px;border-radius:50%;object-fit:contain;border:3px solid #ccc;display:none;">
-                                    @endif
-                                </div>
-                                <div class="col-md-5">
-                                    <b><label for="company_stamp" class="col-form-label">{{ __('Upload Stamp Image') }}</label></b>
-                                    <input type="file" class="form-control" name="company_stamp" id="company_stamp"
-                                        accept="image/png,image/jpeg,image/jpg">
-                                    <small class="text-muted">{{ __('PNG/JPG recommended. Use a transparent-background PNG for best results on payslips.') }}</small>
-                                    @error('company_stamp')
-                                        <span class="text-danger d-block mt-1"><small>{{ $message }}</small></span>
-                                    @enderror
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="alert alert-info p-2 mb-0" style="font-size:12px;">
-                                        <i class="ti ti-info-circle me-1"></i>
-                                        {{ __('If a stamp image is uploaded, it will appear as the authorized seal on all payslips. If no image is uploaded, the company name text ring will be shown instead.') }}
-                                    </div>
-                                </div>
-                            </div>
+                            {{-- Stamp upload moved to Salary Slip Settings section --}}
                         </div>
 
                         <div class="card-footer text-end">
@@ -2448,6 +2507,166 @@ $lang = \App\Models\Utility::getValByName('default_language');
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+
+    {{-- ── Salary Slip Settings (Payslip Template & Color) ─────────────────────── --}}
+    <div class="" id="salary-slip-settings">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="ti ti-receipt me-1"></i>{{ __('Salary Slip Settings') }}</h5>
+                <small class="text-secondary font-weight-bold">
+                    {{ __('Configure the payslip template, color, and stamp for all salary slips.') }}
+                </small>
+            </div>
+
+            {{ Form::model($settings, ['route' => 'company.settings', 'method' => 'post', 'enctype' => 'multipart/form-data', 'id' => 'salary-slip-form']) }}
+            @csrf
+            @php
+                $_selectedTemplate = $settings['payslip_template'] ?? 'standard';
+                $_selectedColor    = $settings['payslip_primary_color'] ?? '';
+                $_stampFile        = \App\Models\Utility::getValByName('company_stamp');
+                $_stampUrl         = $_stampFile
+                    ? \App\Models\Utility::get_file('uploads/logo/') . '/' . $_stampFile . '?' . time()
+                    : null;
+            @endphp
+
+            <div class="card-body">
+                <div class="row g-4">
+                    {{-- ═══ LEFT COLUMN: Form Fields ═══ --}}
+                    <div class="col-lg-5 col-xl-4">
+                        <div class="row gy-3">
+
+                            {{-- Template Format (Dropdown) --}}
+                            <div class="col-12 form-group">
+                                {{ Form::label('payslip_template', __('Payslip Template'), ['class' => 'col-form-label fw-semibold']) }}
+                                {{ Form::select('payslip_template', [
+                                    'standard'       => __('Standard — India / US / International'),
+                                    'uk'             => __('UK — Tax Code, NI, YTD'),
+                                    'compact'        => __('Compact — Minimalist Style'),
+                                    'professional'   => __('Professional — Corporate Formal'),
+                                    'modern'         => __('Modern — Card Based Design'),
+                                    'classic'        => __('Classic — Elegant Serif Style'),
+                                    'minimal'        => __('Minimal — Clean Monochrome'),
+                                    'executive'      => __('Executive — Premium Dark Theme'),
+                                    'bold'           => __('Bold — Striking High Contrast'),
+                                    'elegant'        => __('Elegant — Refined Sophisticated'),
+                                    'contemporary'   => __('Contemporary — Trendy Asymmetric'),
+                                ], $_selectedTemplate, [
+                                    'class' => 'form-control select2',
+                                    'id' => 'payslip_template',
+                                    'onchange' => 'updateSalarySlipPreview()',
+                                ]) }}
+                                <small class="text-muted d-block mt-1">
+                                    <i class="ti ti-info-circle me-1"></i>
+                                    {{ __('Determines the payslip layout for PDF downloads & previews.') }}
+                                </small>
+                            </div>
+
+                            {{-- Primary Color --}}
+                            <div class="col-12 form-group">
+                                {{ Form::label('payslip_primary_color', __('Payslip Color'), ['class' => 'col-form-label fw-semibold']) }}
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="color" name="payslip_primary_color"
+                                        id="payslip_primary_color"
+                                        value="{{ $_selectedColor ?: '#584ED2' }}"
+                                        oninput="updateSalarySlipPreview(); document.getElementById('payslip_color_hex').value = this.value;"
+                                        class="form-control form-control-color"
+                                        style="width:50px; height:38px; padding:2px; cursor:pointer; flex-shrink:0;">
+                                    <input type="text" readonly
+                                        id="payslip_color_hex"
+                                        value="{{ $_selectedColor ?: '#584ED2' }}"
+                                        class="form-control" style="width:100px; font-size:12px;">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                        onclick="document.getElementById('payslip_primary_color').value='#584ED2'; document.getElementById('payslip_color_hex').value='#584ED2'; updateSalarySlipPreview();"
+                                        data-bs-toggle="tooltip" title="{{ __('Reset to default') }}">
+                                        <i class="ti ti-refresh"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    <i class="ti ti-info-circle me-1"></i>
+                                    {{ __('Leave default to use the app theme color.') }}
+                                </small>
+                            </div>
+
+                            {{-- Stamp Upload --}}
+                            <div class="col-12 form-group">
+                                {{ Form::label('company_stamp', __('Authorized Stamp'), ['class' => 'col-form-label fw-semibold']) }}
+                                <div class="d-flex align-items-start gap-3">
+                                    <div class="text-center" style="flex-shrink:0;">
+                                        @if($_stampUrl)
+                                            <img id="stamp_preview" src="{{ $_stampUrl }}" alt="Stamp"
+                                                style="width:80px;height:80px;border-radius:50%;object-fit:contain;border:3px solid #e0e0e0;">
+                                        @else
+                                            <div id="stamp_preview_placeholder"
+                                                style="width:80px;height:80px;border-radius:50%;border:3px dashed #ccc;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:10px;text-align:center;padding:8px;">
+                                                {{ __('No stamp') }}
+                                            </div>
+                                            <img id="stamp_preview" src="" alt="Stamp"
+                                                style="width:80px;height:80px;border-radius:50%;object-fit:contain;border:3px solid #e0e0e0;display:none;">
+                                        @endif
+                                    </div>
+                                    <div style="flex:1;">
+                                        <input type="file" class="form-control" name="company_stamp" id="company_stamp"
+                                            accept="image/png,image/jpeg,image/jpg"
+                                            onchange="if(this.files&&this.files[0]){var src=URL.createObjectURL(this.files[0]);var p=document.getElementById('stamp_preview');var ph=document.getElementById('stamp_preview_placeholder');p.src=src;p.style.display='block';if(ph)ph.style.display='none';updateSalarySlipPreview();}">
+                                        <small class="text-muted d-block mt-1">
+                                            <i class="ti ti-info-circle me-1"></i>
+                                            {{ __('PNG with transparent background recommended.') }}
+                                        </small>
+                                        @error('company_stamp')
+                                            <span class="text-danger d-block mt-1"><small>{{ $message }}</small></span>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>{{-- /row gy-3 --}}
+
+                        <div class="mt-4">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="ti ti-device-floppy me-1"></i>{{ __('Save Changes') }}
+                            </button>
+                        </div>
+                    </div>{{-- /LEFT COL --}}
+
+                    {{-- ═══ RIGHT COLUMN: Live Preview ═══ --}}
+                    <div class="col-lg-7 col-xl-8">
+                        <div class="card border shadow-sm h-100">
+                            <div class="card-header py-2 px-3 d-flex justify-content-between align-items-center bg-light">
+                                <h6 class="mb-0" style="font-size:13px;">
+                                    <i class="ti ti-eye text-primary me-1"></i>{{ __('Live Preview') }}
+                                </h6>
+                                <div>
+                                    <span class="badge bg-success me-2" style="font-size:9px;">{{ __('LIVE') }}</span>
+                                    <small class="text-muted" style="font-size:11px;">{{ __('Changes reflect instantly') }}</small>
+                                </div>
+                            </div>
+                            <div class="card-body p-0" style="position:relative; min-height:500px; background:#f5f5f5;">
+                                <iframe id="salary-slip-preview-iframe"
+                                    src="{{ route('payslip.settings-preview', ['template' => $_selectedTemplate, 'color' => $_selectedColor ?: '']) }}"
+                                    style="width:100%; min-height:500px; border:none; display:block;"
+                                    title="{{ __('Salary Slip Preview') }}" sandbox="allow-scripts allow-same-origin"></iframe>
+                                <div id="preview-loading"
+                                    style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); display:none;">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">{{ __('Loading...') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>{{-- /RIGHT COL --}}
+
+                </div>{{-- /row g-4 --}}
+            </div>
+
+            {{-- BOTTOM bar (for small screens / fallback) --}}
+            <div class="card-footer text-end d-lg-none">
+                <button class="btn btn-primary" type="submit">
+                    <i class="ti ti-device-floppy me-1"></i>{{ __('Save Changes') }}
+                </button>
+            </div>
+            {{ Form::close() }}
         </div>
     </div>
 

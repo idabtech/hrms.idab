@@ -216,6 +216,10 @@ class Utility extends Model
             'rota_working_days' => '1,2,3,4,5',
             'saturday_pattern' => 'none',   // none | all | odd | even
             'working_hours_per_day' => '8', // default working hours per day
+
+            // ── Salary Slip / Payslip Settings ────────────────────────────────
+            'payslip_template'       => 'standard',   // standard | uk
+            'payslip_primary_color'  => '',            // overrides theme_color for payslips
         ];
 
         foreach ($data as $row) {

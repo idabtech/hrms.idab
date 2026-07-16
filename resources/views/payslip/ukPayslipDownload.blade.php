@@ -1,175 +1,8 @@
 @php
-use Carbon\Carbon;
-use Carbon\CarbonPeriod;
-
-[$slipYear, $slipMonth] = explode('-', $payslip->salary_month);
-
-// ── Theme color ───────────────────────────────────────────────────────────
-$_colorSetting = \App\Models\Utility::colorset();
-$_themeName    = $_colorSetting['theme_color'] ?? 'theme-2';
-$_themeHexMap  = [
-    'theme-1'  => '#0CAF60',
-    'theme-2'  => '#584ED2',
-    'theme-3'  => '#6FD943',
-    'theme-4'  => '#145388',
-    'theme-5'  => '#B9406B',
-    'theme-6'  => '#008ECC',
-    'theme-7'  => '#922C88',
-    'theme-8'  => '#C0A145',
-    'theme-9'  => '#48494B',
-    'theme-10' => '#0C7785',
-];
-$_themeColor = str_starts_with($_themeName, '#')
-    ? $_themeName
-    : ($_themeHexMap[$_themeName] ?? '#584ED2');
-
-// rgba page background tint (PHP-computed — works in dompdf)
-$_hex    = ltrim($_themeColor, '#');
-$_r      = hexdec(substr($_hex, 0, 2));
-$_g      = hexdec(substr($_hex, 2, 2));
-$_b      = hexdec(substr($_hex, 4, 2));
-$_bgRgba = "rgba({$_r},{$_g},{$_b},0.08)";
-
-// ── Currency ─────────────────────────────────────────────────────────────
-$_appSettings = \App\Models\Utility::settings();
-$_currSymbol  = $_appSettings['site_currency_symbol'] ?? '£';
-$_currPos     = $_appSettings['site_currency_symbol_position'] ?? 'pre';
-$_fmtMoney    = function($amount) use ($_currSymbol, $_currPos) {
-    $n = number_format((float)$amount, 2);
-    return $_currPos === 'pre' ? $_currSymbol . $n : $n . $_currSymbol;
-};
-
-// ── Month labels ─────────────────────────────────────────────────────────
-$carbonMonth = Carbon::createFromDate((int)$slipYear, (int)$slipMonth, 1);
-$slipLabel   = $carbonMonth->format('F Y');
-$slipShort   = $carbonMonth->format('M Y');
-$payDate     = $carbonMonth->copy()->endOfMonth()->format('d M Y');
-
-// ── All display values ────────────────────────────────────────────────────
-$_storedSalary        = (float) $payslipDetail['basic_salary'];  // gross snapshot
-$_basicSalary         = (float) $employee->basic_salary;          // base for % allowances
-$perDaySalary         = round((float) $payslipDetail['per_day_amount'], 2);
-$perHourSalary        = round((float) $payslipDetail['per_hour_amount'], 2);
-$officeDays           = (int)   $payslipDetail['office_days'];
-$presentDays          = $payslipDetail['present_days'];
-$approvedLeaves       = $payslipDetail['approved_leaves_month'];
-$disapprovedLeaves    = (int)   $payslipDetail['rejected_leaves_month'];
-$absentDays           = $payslipDetail['absent_days'];
-$extraDays            = $payslipDetail['extra_days'];
-$totalWorkHours       = $payslipDetail['total_work_hours'];
-$avgHrsPerDay         = $payslipDetail['avg_hrs_per_day'];
-$totalLeaveAlloc      = (int)   $payslipDetail['total_leave_alloc'];
-$remainingLeaves      = (int)   $payslipDetail['remaining_leaves'];
-$paidLeaveDays        = $payslipDetail['paid_leave_days']          ?? 0;
-$unpaidLeaveDays      = $payslipDetail['unpaid_leave_days']        ?? 0;
-$unpaidLeaveDeduction = $payslipDetail['unpaid_leave_deduction']   ?? 0;
-$daysPaid             = $payslipDetail['days_paid']                ?? ($presentDays + $paidLeaveDays);
-$isHourly             = (bool)  ($payslipDetail['is_hourly']       ?? false);
-$hoursPerDay          = (float) ($payslipDetail['hours_per_day']   ?? 8);
-$totalShiftHours      = (float) ($payslipDetail['total_shift_hours'] ?? ($officeDays * $hoursPerDay));
-$payslipTypeName      = \App\Models\PayslipType::find($employee->salary_type)?->name ?? 'Monthly';
-$isPaid               = $payslip->status == 1;
-
-$presentDisplay  = min($presentDays, $officeDays);
-$presentDaysFmt  = ($presentDisplay == floor($presentDisplay)) ? (int)$presentDisplay : $presentDisplay;
-$absentDaysFmt   = ($absentDays == floor($absentDays)) ? (int)$absentDays : $absentDays;
-$extraDaysFmt    = ($extraDays  == floor($extraDays))  ? (int)$extraDays  : $extraDays;
-
-// ── UK flag (IP-based, same as bankCodeLabel logic) ───────────────────────
-$_isUk = \App\Models\Utility::isUkRequest() || request()->boolean('uk_preview');
-
-// ── UK employee fields ────────────────────────────────────────────────────
-$taxCode       = !empty($employee->tax_payer_id)         ? $employee->tax_payer_id         : '—';
-$niNumber      = !empty($employee->ni_number)            ? $employee->ni_number            : '—';
-$niTableLetter = !empty($employee->ni_table_letter)      ? $employee->ni_table_letter      : 'A';
-$paymentMethod = !empty($employee->payment_method)       ? $employee->payment_method       : 'BACS';
-$worksNo       = !empty($employee->employee_id)          ? $employee->employee_id          : '—';
-$sortCode      = !empty($employee->bank_identifier_code) ? $employee->bank_identifier_code : '—';
-
-// ── Stamp ─────────────────────────────────────────────────────────────────
-$_stampFile = \App\Models\Utility::getValByName('company_stamp');
-$_stampUrl  = ($_stampFile && !empty($_stampFile))
-    ? \App\Models\Utility::get_file('uploads/logo/') . '/' . $_stampFile
-    : null;
-@endphp
-@php
-// ── Earnings rows ──────────────────────────────────────────────────────────
-$_basicLabel = $isHourly
-    ? 'REGULAR (' . $totalWorkHours . ' hrs @ ' . number_format($perHourSalary, 2) . ')'
-    : 'Basic Salary';
-$earRows = [['label' => $_basicLabel, 'amount' => $_storedSalary]];
-foreach ($payslipDetail['earning']['allowance'] as $_ar) {
-    foreach (json_decode($_ar->allowance) as $_a) {
-        $earRows[] = ['label' => $_a->title, 'amount' => $_a->type === 'percentage' ? round($_a->amount * $_basicSalary / 100, 2) : (float)$_a->amount];
-    }
-}
-foreach ($payslipDetail['earning']['commission'] as $_cr) {
-    foreach (json_decode($_cr->commission) as $_c) {
-        $earRows[] = ['label' => $_c->title, 'amount' => $_c->type === 'percentage' ? round($_c->amount * $_basicSalary / 100, 2) : (float)$_c->amount];
-    }
-}
-foreach ($payslipDetail['earning']['bonous'] as $_b) {
-    $earRows[] = ['label' => $_b->title ?: 'Bonus', 'amount' => $_b->type === 'percentage' ? round($_b->amount * $_basicSalary / 100, 2) : (float)$_b->amount];
-}
-foreach ($payslipDetail['earning']['otherPayment'] as $_op2) {
-    foreach (json_decode($_op2->other_payment) as $_op) {
-        $earRows[] = ['label' => $_op->title, 'amount' => $_op->type === 'percentage' ? round($_op->amount * $_basicSalary / 100, 2) : (float)$_op->amount];
-    }
-}
-foreach ($payslipDetail['earning']['overTime'] as $_ot2) {
-    foreach (json_decode($_ot2->overtime) as $_ot) {
-        $earRows[] = ['label' => $_ot->title ?: 'Overtime', 'amount' => (float)($_ot->number_of_days * $_ot->hours * $_ot->rate)];
-    }
-}
-
-// ── Deductions rows ───────────────────────────────────────────────────────
-$dedRows = [];
-// Loan Repayment (deduction)
-$totalLoanRepayment = $payslipDetail['totalLoanRepayment'] ?? 0;
-if ($totalLoanRepayment > 0) {
-    $dedRows[] = ['label' => 'Loan Repayment', 'amount' => $totalLoanRepayment];
-}
-foreach ($payslipDetail['deduction']['saturation_deduction'] as $_dr2) {
-    foreach (json_decode($_dr2->saturation_deduction) as $_dd) {
-        $_amt = $_dd->type === 'percentage' ? round($_dd->amount * $_basicSalary / 100, 2) : (float)$_dd->amount;
-        if ($_amt > 0) $dedRows[] = ['label' => $_dd->title, 'amount' => $_amt];
-    }
-}
-foreach ($payslipDetail['deduction']['pansion'] as $_p) {
-    $_amt = $_p->type === 'percentage' ? round($_p->amount * $_basicSalary / 100, 2) : (float)$_p->amount;
-    if ($_amt > 0) $dedRows[] = ['label' => $_p->title ?: 'Employee Pension', 'amount' => $_amt];
-}
-foreach ($payslipDetail['deduction']['leave'] as $_lea) {
-    if ($_lea->empleave > 0) $dedRows[] = ['label' => 'Loss Of Pay', 'amount' => (float)$_lea->empleave];
-}
-if ($unpaidLeaveDeduction > 0) {
-    $dedRows[] = ['label' => 'Unpaid Leave (' . $unpaidLeaveDays . ' days)', 'amount' => $unpaidLeaveDeduction];
-}
-
-$totalEarnings   = $payslipDetail['totalEarning'] + $_storedSalary;
-$totalDeductions = $payslipDetail['totalDeduction'];
-$netSalary       = $payslipDetail['net_salary'];
-
-// ── Year To Date ──────────────────────────────────────────────────────────
-$ytdTaxableGross         = $payslipDetail['ytd_taxable_gross']          ?? $totalEarnings;
-$ytdIncomeTax            = $payslipDetail['ytd_income_tax']             ?? 0;
-$ytdEmployeeNI           = $payslipDetail['ytd_employee_ni']            ?? 0;
-$ytdEmployerNI           = $payslipDetail['ytd_employer_ni']            ?? 0;
-$ytdStatutoryPay         = $payslipDetail['ytd_statutory_pay']          ?? 0;
-$ytdEmployeePension      = $payslipDetail['ytd_employee_pension']       ?? 0;
-$ytdEmployerPension      = $payslipDetail['ytd_employer_pension']       ?? 0;
-$ytdLabelIncomeTax       = $payslipDetail['ytd_label_income_tax']       ?? 'Income Tax';
-$ytdLabelEmployeeNI      = $payslipDetail['ytd_label_employee_ni']      ?? 'National Insurance';
-$ytdLabelEmployerNI      = $payslipDetail['ytd_label_employer_ni']      ?? 'Employer NI';
-$ytdLabelStatutoryPay    = $payslipDetail['ytd_label_statutory_pay']    ?? 'Statutory Pay';
-$ytdLabelEmployeePension = $payslipDetail['ytd_label_employee_pension'] ?? 'Employee Pension';
-$ytdLabelEmployerPension = $payslipDetail['ytd_label_employer_pension'] ?? 'Employer Pension';
-
-// ── Company ───────────────────────────────────────────────────────────────
-$companyName  = \App\Models\Utility::getValByName('company_name')      ?? '';
-$companyPhone = \App\Models\Utility::getValByName('company_telephone') ?? '';
-$companyEmail = \App\Models\Utility::getValByName('company_email')     ?? '';
-$companyWeb   = \App\Models\Utility::getValByName('company_website')   ?? '';
+    // All template data is pre-computed from
+    // App\Http\Controllers\PaySlipController::preparePayslipTemplateData().
+    // Employee and Payslip objects are also passed to the view.
+    // Variables match those listed in ukpdf.blade.php.
 @endphp
 
 <!DOCTYPE html>
@@ -431,11 +264,11 @@ body {
                                 <tr><td class="kv-label">Pay Period</td><td class="kv-value">{{ $slipShort }}</td></tr>
                                 <tr><td class="kv-label">Pay Date</td><td class="kv-value">{{ $payDate }}</td></tr>
                                 <tr><td class="kv-label">Pay Type</td><td class="kv-value">{{ $payslipTypeName }}</td></tr>
-                                @if($_isUk)
+                                @if($_isUkRequest)
                                 <tr><td class="kv-label">Payment Method</td><td class="kv-value">{{ $paymentMethod }}</td></tr>
                                 @endif
                                 <tr><td class="kv-label">Works No</td><td class="kv-value">{{ $worksNo }}</td></tr>
-                                @if($_isUk)
+                                @if($_isUkRequest)
                                 <tr><td class="kv-label">Tax Code</td><td class="kv-value">{{ $taxCode }}</td></tr>
                                 <tr><td class="kv-label">NI Number</td><td class="kv-value">{{ $niNumber }}</td></tr>
                                 <tr><td class="kv-label">NI Table Letter</td><td class="kv-value">{{ $niTableLetter }}</td></tr>
@@ -446,7 +279,7 @@ body {
                                 </tr>
                             </table>
 
-                            @if($_isUk)
+                            @if($_isUkRequest)
                             <div class="divider"></div>
 
                             <div class="sec-heading">Year To Date</div>
