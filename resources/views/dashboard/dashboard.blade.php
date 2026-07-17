@@ -1208,7 +1208,7 @@
     <script src="{{ asset('assets/js/plugins/main.min.js') }}"></script>
     <script src="{{ asset('assets/js/plugins/apexcharts.min.js') }}"></script>
 
-    @if (Auth::user()->type == 'company' || Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
+    @if (Auth::user()->type == 'company' || Auth::user()->type == 'hr'  || Auth::user()->type == 'HR')
         <script type="text/javascript">
             $(document).ready(function () {
                 get_data();
