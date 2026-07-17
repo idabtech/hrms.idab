@@ -64,7 +64,7 @@
             </div>
         @endif
 
-        @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr')
+        @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
             <a href="{{ route('send.mail.contract', $contract->id) }}" class="btn btn-sm btn-primary btn-icon m-2"
                 data-bs-toggle="tooltip" data-bs-original-title="{{ __('Send Email') }}">
                 <i class="ti ti-mail text-white"></i>
@@ -104,7 +104,7 @@
             @endif
         @endif --}}
 
-        @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr')
+        @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
             <a href="javascript:void(0)" class="btn btn-sm btn-primary btn-icon m-2"
                 data-url="{{ route('signature', $contract->id) }}" data-ajax-popup="true"
                 data-title="{{ __('Signature') }}" data-size="md" title="{{ __('Signature') }}" data-bs-toggle="tooltip"
@@ -278,7 +278,7 @@
                                             <h5>{{ __('Attachments') }}</h5>
                                         </div>
                                         <div class="card-body">
-                                            @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr')
+                                            @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
                                                 <div class=" ">
                                                     <div class="col-md-12 dropzone browse-file" id="my-dropzone"></div>
                                                 </div>
@@ -322,7 +322,7 @@
                                                                         </a>
                                                                     </div>
                                                                     @can('Delete Attachment')
-                                                                        @if (\Auth::user()->id == $file->user_id || \Auth::user()->type == 'company' || \Auth::user()->type == 'hr')
+                                                                        @if (\Auth::user()->id == $file->user_id || \Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
                                                                             <div class="action-btn bg-danger">
                                                                                 {!! Form::open(['method' => 'GET', 'route' => ['contracts.file.delete', [$contract->id, $file->id]]]) !!}
                                                                                 <a href="javascript:void(0)"
@@ -361,7 +361,7 @@
 
                                                 <div class="col-12 d-flex">
 
-                                                    @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr')
+                                                    @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
                                                         <div class="form-group mb-0 form-send w-100">
                                                             <input type="hidden" id="commenturl"
                                                                 value="{{ route('comment.store', $contract->id) }}">
@@ -451,7 +451,7 @@
                                                                     </div>
 
                                                                     @can('Delete Comment')
-                                                                        @if (\Auth::user()->id == $comment->user_id || \Auth::user()->type == 'company' || \Auth::user()->type == 'hr')
+                                                                        @if (\Auth::user()->id == $comment->user_id || \Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
                                                                             <div class="dt-buttons">
                                                                                 <span>
                                                                                     <div class="action-btn bg-danger">
@@ -492,7 +492,7 @@
                                             <div class="card-header">
                                                 <h5>{{ __('Notes') }}</h5>
                                                 @if ($plan->enable_chatgpt == 'on')
-                                                    @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr')
+                                                    @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
                                                         <div class="text-end">
                                                             <a href="javascript:void(0)" data-size="md"
                                                                 class="btn btn-primary btn-icon btn-sm"
@@ -520,7 +520,7 @@
                                                 @endif
                                             </div>
                                             <div class="card-body">
-                                                @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr')
+                                                @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
                                                     <form action=""></form>
                                                     {{ Form::open(['route' => ['contracts.note.store', $contract->id], 'class' => 'needs-validation', 'novalidate']) }}
                                                     <div class="form-group">
@@ -607,7 +607,7 @@
                                                                             class="d-block">{{ $note->created_at->diffForHumans() }}</small>
                                                                     </div>
                                                                     @can('Delete Note')
-                                                                        @if (\Auth::user()->id == $note->user_id || \Auth::user()->type == 'company' || \Auth::user()->type == 'hr')
+                                                                        @if (\Auth::user()->id == $note->user_id || \Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
                                                                             <div class="dt-buttons">
                                                                                 <span>
                                                                                     <div class="action-btn bg-danger">

@@ -16,7 +16,7 @@ class TicketController extends Controller
 {
     public function index()
     {
-        if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr') {
+        if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR') {
             $countTicket      = Ticket::where('created_by', '=', \Auth::user()->creatorId())->count();
             $countOpenTicket  = Ticket::where('status', '=', 'open')->where('created_by', '=', \Auth::user()->creatorId())->count();
             $countonholdTicket  = Ticket::where('status', '=', 'onhold')->where('created_by', '=', \Auth::user()->creatorId())->count();
@@ -156,7 +156,7 @@ class TicketController extends Controller
                 Utility::send_telegram_msg('new_ticket', $uArr);
             }
 
-            // twilio 
+            // twilio
             $setting = Utility::settings(\Auth::user()->creatorId());
             $emp = Employee::where('user_id', $request->employee_id)->first();
             if (isset($setting['twilio_ticket_notification']) && $setting['twilio_ticket_notification'] == 1) {

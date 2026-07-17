@@ -43,7 +43,7 @@
         <a href="{{ $downloadUrl }}" class="btn btn-sm btn-primary">
             <i class="fa fa-download me-1"></i>{{ __('Download PDF') }}
         </a>
-        @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr')
+        @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
             <button type="button" class="btn btn-sm btn-warning"
                 onclick="payslipEmailSend({{ $employee->id }},'{{ $payslip->salary_month }}')">
                 <i class="fa fa-paper-plane me-1"></i>{{ __('Send Email') }}

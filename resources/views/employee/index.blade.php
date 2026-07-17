@@ -81,7 +81,7 @@
                                         @if (Gate::check('Edit Employee') || Gate::check('Delete Employee'))
                                             <td class="Action">
                                                 @if ($employee?->user?->is_active == 1 && $employee?->user?->is_disable == 1)
-                                                    @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr')
+                                                    @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
                                                         @if ($employee?->user?->is_login_enable == 1)
                                                             <div class="action-btn me-2">
                                                                 <a href="{{ route('user.login', \Crypt::encrypt($employee?->user?->id)) }}"
@@ -117,7 +117,7 @@
                                                         @endif
                                                     @endif
 
-                                                    @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr')
+                                                    @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
                                                         <div class="action-btn me-2">
                                                             <a href="javascript:void(0)"
                                                                 data-url="{{ route('employee.reset', \Crypt::encrypt($employee?->user?->id)) }}"

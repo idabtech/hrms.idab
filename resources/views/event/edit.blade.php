@@ -124,7 +124,7 @@
     </div>
 @endif
 
-@if (Auth::user()->type == 'hr')
+@if (Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
     {{ Form::model($event, ['route' => ['event.update', $event->id], 'method' => 'PUT', 'class' => 'needs-validation', 'novalidate']) }}
     <div class="modal-body">
         <div class="col-form-label">
