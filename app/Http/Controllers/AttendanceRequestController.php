@@ -406,7 +406,7 @@ class AttendanceRequestController extends Controller
                         AttendanceEmployee::create([
                             'employee_id'   => $attendanceRequest->employee_id,
                             'date'          => $requestedDate,
-                            'status'        => 'Leave',
+                            'status'        => 'Present',
                             'clock_in'      => $clockInVal,
                             'clock_out'     => $clockOutVal,
                             'late'          => $lateTime,
