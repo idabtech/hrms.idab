@@ -12,6 +12,8 @@ class AttendanceRequest extends Model
         'clock_out',
         'reason',
         'status',
+        'decline_leave_type',
+        'decline_leave_type_id',
         'requested_at',
         'approved_at',
         'approved_by',

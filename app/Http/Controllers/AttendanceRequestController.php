@@ -6,6 +6,9 @@ use App\Models\AttendanceEmployee;
 use App\Models\AttendanceRequest;
 use App\Models\Employee;
 use App\Models\User;
+use App\Models\Leave;
+use App\Models\LeaveDayDetail;
+use App\Models\LeaveType;
 use App\Models\Utility;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -22,12 +25,23 @@ class AttendanceRequestController extends Controller
         $companySettings = Utility::settings();
         $type = $request->input('type', 'monthly');
 
+        // ── Load employees for the filter dropdown ────────────────────────
+        $employees = Employee::where('created_by', Auth::user()->creatorId())
+            ->orderBy('name')
+            ->get()
+            ->pluck('name', 'id');
+
         $query = AttendanceRequest::with([
             'employee.user:id,name',
             'approver:id,name'
         ])
             ->where('created_by', Auth::user()->creatorId())
             ->latest();
+
+        // ── Apply employee filter ───────────────────────────────────────────
+        if ($request->filled('employee') && $request->employee !== 'all') {
+            $query->where('employee_id', $request->employee);
+        }
 
         if ($type == 'daily' && $request->filled('date')) {
             $query->whereDate('requested_at', $request->date);
@@ -47,10 +61,17 @@ class AttendanceRequestController extends Controller
             'last_30days' => (clone $statsQuery)->where('requested_at', '>=', now()->subDays(30))->count(),
         ];
 
+        // Load leave types for the decline-as-leave modal
+        $leaveTypes = LeaveType::where('created_by', Auth::user()->creatorId())
+            ->orderBy('title')
+            ->get();
+
         return view('attendance_requests.index', [
-            'requests' => $requests,
-            'stats'    => $stats,
-            'type'     => $type,
+            'requests'   => $requests,
+            'stats'      => $stats,
+            'type'       => $type,
+            'leaveTypes' => $leaveTypes,
+            'employees'  => $employees,
         ]);
     }
 
@@ -277,7 +298,7 @@ class AttendanceRequestController extends Controller
         return redirect()->back()->with('success', __('Request approved successfully and attendance updated.'));
     }
 
-    public function decline(AttendanceRequest $attendanceRequest)
+    public function decline(Request $request, AttendanceRequest $attendanceRequest)
     {
         // Permission check
         if (!\Auth::user()->can('Decline Attendance Request')) {
@@ -290,13 +311,136 @@ class AttendanceRequestController extends Controller
             return redirect()->back()->with('error', __('You cannot decline your own attendance request.'));
         }
 
+        // ── Optional: auto-create an approved leave record ────────────────
+        $declineLeaveType   = $request->input('decline_leave_type');   // half_day | full_day
+        $declineLeaveTypeId = $request->input('decline_leave_type_id'); // FK → leave_types
+
+        $leaveCreated = false;
+        if ($declineLeaveType && $declineLeaveTypeId) {
+            $leaveTypeRecord = LeaveType::find($declineLeaveTypeId);
+            if ($leaveTypeRecord) {
+                $requestedDate = Carbon::parse($attendanceRequest->requested_at)->toDateString();
+                $isHalf        = $declineLeaveType === 'half_day';
+                $totalDays     = $isHalf ? 0.5 : 1.0;
+                $isPaid        = (bool) ($leaveTypeRecord->is_paid ?? false);
+
+                $leave = Leave::create([
+                    'employee_id'      => $attendanceRequest->employee_id,
+                    'leave_type_id'    => $declineLeaveTypeId,
+                    'applied_on'       => date('Y-m-d'),
+                    'start_date'       => $requestedDate,
+                    'end_date'         => $requestedDate,
+                    'total_leave_days' => $totalDays,
+                    'leave_duration'   => $declineLeaveType,
+                    'leave_reason'     => __('Declined attendance request') . ($attendanceRequest->reason ? ': ' . $attendanceRequest->reason : ''),
+                    'remark'           => __('Auto-created from declined attendance request #:id', ['id' => $attendanceRequest->id]),
+                    'status'           => 'Approved',
+                    'created_by'       => Auth::user()->creatorId(),
+                ]);
+
+                // Create leave_day_detail row for this single day
+                if ($leave) {
+                    LeaveDayDetail::create([
+                        'leave_id'        => $leave->id,
+                        'date'            => $requestedDate,
+                        'day_duration'    => $declineLeaveType,
+                        'half_day_period' => $isHalf ? 'morning' : null,
+                        'day_status'      => $isPaid ? 'paid' : 'unpaid',
+                    ]);
+
+                    // ── Calculate late time ──────────────────────────────────
+                    // Determine the employee's start time for late calculation
+                    $lateCalcEmp = Employee::find($attendanceRequest->employee_id);
+                    $startTimeForLate = ($lateCalcEmp && $lateCalcEmp->company_start_time)
+                        ? $lateCalcEmp->company_start_time
+                        : Utility::getValByName('company_start_time');
+
+                    $lateTime = '00:00:00';
+
+                    // Determine the actual clock-in time:
+                    //   1) If it's a clock_in request, use the request's timestamp
+                    //   2) If an existing attendance record has a real clock_in, use that instead
+                    $actualClockIn = null;
+                    if ($attendanceRequest->type === 'clock_in') {
+                        $actualClockIn = Carbon::parse($attendanceRequest->requested_at)->toTimeString();
+                    }
+
+                    // ── Check for existing attendance_employee record ───────
+                    $existingAtt = AttendanceEmployee::where('employee_id', $attendanceRequest->employee_id)
+                        ->where('date', $requestedDate)
+                        ->first();
+
+                    // If an existing record has a real clock_in time, use that
+                    // (e.g. employee clocked in via biometric before submitting the request)
+                    if ($existingAtt && $existingAtt->clock_in && $existingAtt->clock_in !== '00:00:00') {
+                        $actualClockIn = $existingAtt->clock_in;
+                    }
+
+                    // Calculate late = clock_in - expected_start_time
+                    if ($actualClockIn) {
+                        $expectedStart = $requestedDate . ' ' . $startTimeForLate;
+                        $lateSeconds   = max(0, strtotime($requestedDate . ' ' . $actualClockIn) - strtotime($expectedStart));
+                        $lateTime = sprintf('%02d:%02d:%02d',
+                            floor($lateSeconds / 3600),
+                            floor($lateSeconds / 60 % 60),
+                            floor($lateSeconds % 60)
+                        );
+                    }
+
+                    // ── Create or update attendance_employee record ─────────
+                    if (!$existingAtt) {
+                        // No existing record — create one with Leave status and real times
+                        $reqTime = Carbon::parse($attendanceRequest->requested_at)->toTimeString();
+
+                        if ($attendanceRequest->type === 'clock_in') {
+                            $clockInVal  = $reqTime;
+                            $clockOutVal = '00:00:00';
+                        } elseif ($attendanceRequest->type === 'clock_out') {
+                            $clockInVal  = '00:00:00';
+                            $clockOutVal = $attendanceRequest->clock_out ?? $reqTime;
+                        } else {
+                            $clockInVal  = '00:00:00';
+                            $clockOutVal = '00:00:00';
+                        }
+
+                        AttendanceEmployee::create([
+                            'employee_id'   => $attendanceRequest->employee_id,
+                            'date'          => $requestedDate,
+                            'status'        => 'Leave',
+                            'clock_in'      => $clockInVal,
+                            'clock_out'     => $clockOutVal,
+                            'late'          => $lateTime,
+                            'early_leaving' => '00:00:00',
+                            'overtime'      => '00:00:00',
+                            'created_by'    => Auth::id(),
+                        ]);
+                    } elseif ($lateTime !== '00:00:00') {
+                        // Existing biometric record found — update the late field
+                        // so the employee sees correct late duration on their report
+                        $existingAtt->late = $lateTime;
+                        $existingAtt->save();
+                    }
+
+                    $leaveCreated = true;
+                }
+            }
+        }
+
+        // ── Save the decline_leave_type on the request record for audit ──
         $attendanceRequest->update([
-            'status' => 'declined',
-            'approved_at' => now(),
-            'approved_by' => Auth::id(),
+            'status'               => 'declined',
+            'approved_at'          => now(),
+            'approved_by'          => Auth::id(),
+            'decline_leave_type'   => $declineLeaveType,
+            'decline_leave_type_id'=> $declineLeaveTypeId,
         ]);
 
-        return back()->with('error', __('Request declined.'));
+        $message = __('Request declined.');
+        if ($leaveCreated) {
+            $message .= ' ' . __('Leave record created and auto-approved.');
+        }
+
+        return back()->with('error', $message);
     }
 
     public function bulkApprove(Request $request)
