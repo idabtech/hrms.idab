@@ -799,6 +799,15 @@ class Utility extends Model
             // Legacy fallback: detect from name string
             $isHourly = str_contains(strtolower(trim($payslipTypeRecord?->name ?? '')), 'hour');
         }
+
+        // ★ FIX: For hourly employees, always use the LIVE hourly rate from the
+        // employee record (employees.salary). The payslip snapshot's basic_salary
+        // stores the OLD monthly gross (e.g. 32000), NOT the hourly rate — so
+        // treating that stale snapshot as the hourly rate produces wildly wrong results.
+        if ($isHourly) {
+            $salary = (float) $employess->salary;
+        }
+
         $monthlySalaryGross = $salary;
         if ($isHourly) {
             // $salary stored IS the hourly rate directly (e.g. 140)

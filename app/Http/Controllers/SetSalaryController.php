@@ -282,9 +282,26 @@ class SetSalaryController extends Controller
         $employee = Employee::findOrFail($id);
         $input = $request->all();
         $employee->fill($input);
-        $employee->account_type  = $input['from_account_type'];
-        $employee->salary        = $input['salary'];
-        $employee->basic_salary  = $input['basic_salary'] ?? $input['salary'];
+        $employee->account_type = $input['from_account_type'];
+
+        // ★ FIX: Detect if the selected payslip type is hourly.
+        // When hourly is chosen from the basic-salary modal, the 'salary' field
+        // (Gross Salary) is hidden via display:none and still submits the OLD
+        // monthly value (e.g. 32000). The actual hourly rate was entered in
+        // the 'basic_salary' field (repurposed as "Hourly Rate").
+        $payslipType = \App\Models\PayslipType::find($input['salary_type']);
+        $isHourly    = $payslipType && ($payslipType->salary_basis ?? 'monthly') === 'hourly';
+
+        if ($isHourly) {
+            // Hourly: use the basic_salary input (the hourly rate) for BOTH columns
+            $employee->salary       = $input['basic_salary'];
+            $employee->basic_salary = $input['basic_salary'];
+        } else {
+            // Monthly: standard assignment
+            $employee->salary       = $input['salary'];
+            $employee->basic_salary = $input['basic_salary'] ?? $input['salary'];
+        }
+
         //$employee->hra = $input['hra'];
         //$employee->da = $input['da'];
         $employee->save();
