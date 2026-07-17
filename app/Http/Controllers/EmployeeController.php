@@ -345,7 +345,7 @@ class EmployeeController extends Controller
 
                 return redirect()->route('employee.index')->with('success', __('Employee successfully created.') . ((!empty($resp) && $resp['is_success'] == false && !empty($resp['error'])) ? '<br> <span class="text-danger">' . $resp['error'] . '</span>' : '') . ((isset($result) && $result != 1) ? '<br> <span class="text-danger">' . $result . '</span>' : ''));
             }
-            return redirect()->route('employee.index')->with('success', __('Employee successfully created.'));
+            return redirect()->back()->with('success', __('Employee successfully created.'));
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
@@ -606,7 +606,7 @@ class EmployeeController extends Controller
             }
 
             if (Auth::user()->type != 'employee') {
-                return redirect()->route('employee.index')->with('success', __('Employee successfully updated.') . ((isset($result) && $result != 1) ? '<br> <span class="text-danger">' . $result . '</span>' : ''));
+                return redirect()->back()->with('success', __('Employee successfully updated.') . ((isset($result) && $result != 1) ? '<br> <span class="text-danger">' . $result . '</span>' : ''));
             } else {
                 return redirect()->route('employee.show', Crypt::encrypt($employee->id))->with('success', __('Employee successfully updated.') . ((isset($result) && $result != 1) ? '<br> <span class="text-danger">' . $result . '</span>' : ''));
             }

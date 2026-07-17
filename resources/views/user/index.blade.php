@@ -187,9 +187,11 @@
                         <h6 class="mt-4 mb-2">{{ __('New Company') }}</h6>
                         <p class="text-muted text-center">{{ __('Click here to add new company') }}</p>
                     </a>
-                </div>
-            @else
+                </div>                            @else
                 @foreach ($users as $user)
+                    @php
+                        $employeeRecord = \App\Models\Employee::where('user_id', $user->id)->first();
+                    @endphp
                     <div class="col-xl-3 col-lg-4 col-sm-6 col-12">
                         <div class="card  text-center">
                             <div class="card-header border-0 pb-0">
@@ -215,6 +217,15 @@
                                                                 class="ti ti-edit "></i><span
                                                                 class="ms-2">{{ __('Edit') }}</span></a>
                                                     @endcan
+
+                                                    {{-- Edit Employee Profile (to assign leave types, etc.) --}}
+                                                    @if ($employeeRecord && \Auth::user()->can('Edit Employee'))
+                                                        <a href="{{ route('employee.edit', \Illuminate\Support\Facades\Crypt::encrypt($employeeRecord->id)) }}"
+                                                            class="dropdown-item">
+                                                            <i class="ti ti-id"></i>
+                                                            <span class="ms-2">{{ __('Edit Employee Profile') }}</span>
+                                                        </a>
+                                                    @endif
 
                                                     @can('Delete User')
                                                         {!! Form::open([
