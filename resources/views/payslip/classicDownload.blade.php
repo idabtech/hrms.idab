@@ -55,30 +55,58 @@ body {
     </div>
     <div class="cls-body">
 
+        @if($_showEmployeeDetails || $_showPaymentDetails)
         <table style="width:100%;border-collapse:collapse;"><tr>
-            <td style="width:50%;vertical-align:top;padding-right:6px;">
+            @if($_showEmployeeDetails)
+            <td style="width:{{ $_showPaymentDetails ? '50%' : '100%' }};vertical-align:top;padding-right:6px;">
                 <div class="cls-sec-title">Employee</div>
                 <table class="cls-table">
+                    @if($_showName)
                     <tr><td class="cls-lbl">Name</td><td class="cls-val" style="color:{{ $_themeColor }};">{{ $employee->name }}</td></tr>
+                    @endif
+                    @if($_showDesignation)
                     <tr><td class="cls-lbl">Designation</td><td class="cls-val">{{ optional($employee->designation)->name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showEmployeeId)
                     <tr><td class="cls-lbl">Employee ID</td><td class="cls-val">{{ $employee->employee_id ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showDepartment)
                     <tr><td class="cls-lbl">Department</td><td class="cls-val">{{ optional($employee->department)->name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showDateOfJoining)
                     <tr><td class="cls-lbl">DOJ</td><td class="cls-val">{{ $employee->company_doj ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showPanNo)
                     <tr><td class="cls-lbl">PAN No.</td><td class="cls-val">{{ $employee->tax_payer_id ?? '—' }}</td></tr>
+                    @endif
                 </table>
             </td>
-            <td style="width:50%;vertical-align:top;padding-left:6px;">
+            @endif
+            @if($_showPaymentDetails)
+            <td style="width:{{ $_showEmployeeDetails ? '50%' : '100%' }};vertical-align:top;padding-left:6px;">
                 <div class="cls-sec-title">Payment</div>
                 <table class="cls-table">
+                    @if($_showBankName)
                     <tr><td class="cls-lbl">Bank Name</td><td class="cls-val">{{ $employee->bank_name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showAccountNo)
                     <tr><td class="cls-lbl">Account No.</td><td class="cls-val">{{ $employee->account_number ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showBankCode)
                     <tr><td class="cls-lbl">{{ \App\Models\Utility::bankCodeLabel() }}</td><td class="cls-val">{{ $employee->bank_identifier_code ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showAccountHolder)
                     <tr><td class="cls-lbl">Account Holder</td><td class="cls-val">{{ $employee->account_holder_name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showPayPeriod)
                     <tr><td class="cls-lbl">Pay Period</td><td class="cls-val">{{ $slipLabel }}</td></tr>
+                    @endif
                     <tr><td class="cls-lbl">Status</td><td class="cls-val"><span class="{{ $isPaid ? 'cls-paid' : 'cls-unpaid' }}">{{ $isPaid ? 'Paid' : 'Unpaid' }}</span></td></tr>
                 </table>
             </td>
+            @endif
         </tr></table>
+        @endif
 
         @if(!$isHourly)
         <table style="width:100%;border-collapse:collapse;margin-top:6px;"><tr>
@@ -182,16 +210,20 @@ body {
             <div style="font-size:6px;color:#999;margin-top:2px;">Digital Authorization</div>
         </div>
 
+        @if($_showSignatures)
         <table class="cls-sig" style="width:100%;"><tr>
             <td><div class="cls-sig-line"></div><div class="cls-sig-lbl">Employee Signature</div></td>
             <td><div class="cls-sig-line"></div><div class="cls-sig-lbl">Authorized Signatory</div></td>
         </tr></table>
+        @endif
 
+        @if($_showFooter)
         <div class="cls-footer">
             @if($companyPhone)<strong>Tel:</strong> {{ $companyPhone }} &nbsp;|&nbsp; @endif
             @if($companyWeb)<strong>Web:</strong> {{ $companyWeb }} &nbsp;|&nbsp; @endif
             @if($companyEmail)<strong>Email:</strong> {{ $companyEmail }} @endif
         </div>
+        @endif
     </div>
 </div>
 </div>

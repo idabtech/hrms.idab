@@ -56,29 +56,55 @@ body {
     </div>
     <div class="exe-body">
 
+        @if($_showEmployeeDetails || $_showPaymentDetails)
         <table style="width:100%;border-collapse:collapse;"><tr>
-            <td style="width:50%;vertical-align:top;padding-right:6px;">
+            @if($_showEmployeeDetails)
+            <td style="width:{{ $_showPaymentDetails ? '50%' : '100%' }};vertical-align:top;padding-right:6px;">
                 <div class="exe-sec-title">Employee</div>
                 <table class="exe-table">
+                    @if($_showName)
                     <tr><td class="exe-lbl">Name</td><td class="exe-val exe-mono">{{ $employee->name }}</td></tr>
+                    @endif
+                    @if($_showDesignation)
                     <tr><td class="exe-lbl">Designation</td><td class="exe-val">{{ optional($employee->designation)->name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showEmployeeId)
                     <tr><td class="exe-lbl">Employee ID</td><td class="exe-val">{{ $employee->employee_id ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showDepartment)
                     <tr><td class="exe-lbl">Department</td><td class="exe-val">{{ optional($employee->department)->name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showDateOfJoining)
                     <tr><td class="exe-lbl">DOJ</td><td class="exe-val">{{ $employee->company_doj ?? '—' }}</td></tr>
+                    @endif
                 </table>
             </td>
-            <td style="width:50%;vertical-align:top;padding-left:6px;">
+            @endif
+            @if($_showPaymentDetails)
+            <td style="width:{{ $_showEmployeeDetails ? '50%' : '100%' }};vertical-align:top;padding-left:6px;">
                 <div class="exe-sec-title">Payment</div>
                 <table class="exe-table">
+                    @if($_showBankName)
                     <tr><td class="exe-lbl">Bank Name</td><td class="exe-val">{{ $employee->bank_name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showAccountNo)
                     <tr><td class="exe-lbl">Account No.</td><td class="exe-val">{{ $employee->account_number ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showBankCode)
                     <tr><td class="exe-lbl">{{ \App\Models\Utility::bankCodeLabel() }}</td><td class="exe-val">{{ $employee->bank_identifier_code ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showAccountHolder)
                     <tr><td class="exe-lbl">Account Holder</td><td class="exe-val">{{ $employee->account_holder_name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showPayPeriod)
                     <tr><td class="exe-lbl">Pay Period</td><td class="exe-val">{{ $slipLabel }}</td></tr>
+                    @endif
                     <tr><td class="exe-lbl">Status</td><td class="exe-val"><span class="{{ $isPaid ? 'exe-paid' : 'exe-unpaid' }}">{{ $isPaid ? 'Paid' : 'Unpaid' }}</span></td></tr>
                 </table>
             </td>
+            @endif
         </tr></table>
+        @endif
 
         @if(!$isHourly)
         <table style="width:100%;border-collapse:collapse;margin-top:6px;"><tr>
@@ -179,16 +205,20 @@ body {
             <div style="font-size:6px;color:#999;margin-top:2px;">Digital Authorization</div>
         </div>
 
+        @if($_showSignatures)
         <table class="exe-sig" style="width:100%;"><tr>
             <td><div class="exe-sig-line"></div><div class="exe-sig-lbl">Employee Signature</div></td>
             <td><div class="exe-sig-line"></div><div class="exe-sig-lbl">Authorized Signatory</div></td>
         </tr></table>
+        @endif
 
+        @if($_showFooter)
         <div class="exe-footer">
             @if($companyPhone)<strong>Tel:</strong> {{ $companyPhone }} &nbsp;|&nbsp; @endif
             @if($companyWeb)<strong>Web:</strong> {{ $companyWeb }} &nbsp;|&nbsp; @endif
             @if($companyEmail)<strong>Email:</strong> {{ $companyEmail }} @endif
         </div>
+        @endif
     </div>
 </div>
 </div>

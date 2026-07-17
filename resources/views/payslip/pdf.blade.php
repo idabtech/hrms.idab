@@ -14,6 +14,11 @@
     // companyCity, companyState, companyZip, companyPhone, companyEmail,
     // companyWeb, _stampUrl, _isUkRequest, taxCode, niNumber, niTableLetter,
     // paymentMethod, worksNo, sortCode, previewMode
+    // _showEmployeeDetails, _showPaymentDetails, _showSignatures, _showFooter
+    // _showName, _showDesignation, _showEmployeeId, _showDepartment,
+    // _showPanNo, _showDateOfJoining, _showNiNumber, _showTaxCode,
+    // _showBankName, _showAccountNo, _showBankCode, _showAccountHolder,
+    // _showTransactionMode, _showPayPeriod
     // and all YTD variables.
 @endphp
 
@@ -335,78 +340,110 @@
         <div class="ps-title">PAY SLIP &mdash; {{ strtoupper($slipLabel) }}</div>
 
         {{-- A: Employee | Payment --}}
+        @if($_showEmployeeDetails || $_showPaymentDetails)
         <table class="ps-t" style="border:none;">
             <tr>
-                <td style="width:50%; padding:0; border-left:1px solid {{ $_themeColor }}55; vertical-align:top;">
+                @if($_showEmployeeDetails)
+                <td style="width:{{ $_showPaymentDetails ? '50%' : '100%' }}; padding:0; border-left:1px solid {{ $_themeColor }}55; vertical-align:top;">
                     <div class="ps-band">{{ __('Employee Details') }}</div>
                     <table class="ps-t">
+                        @if($_showName)
                         <tr>
                             <td class="lbl">{{ __('Name') }}</td>
                             <td class="val">{{ $employee->name }}</td>
                         </tr>
+                        @endif
+                        @if($_showDesignation)
                         <tr>
                             <td class="lbl">{{ __('Designation') }}</td>
                             <td class="val">{{ optional($employee->designation)->name ?? '—' }}</td>
                         </tr>
+                        @endif
+                        @if($_showEmployeeId)
                         <tr>
                             <td class="lbl">{{ __('Employee ID') }}</td>
                             <td class="val">{{ $employee->employee_id ?? '—' }}</td>
                         </tr>
+                        @endif
+                        @if($_showDepartment)
                         <tr>
                             <td class="lbl">{{ __('Department') }}</td>
                             <td class="val">{{ optional($employee->department)->name ?? '—' }}</td>
                         </tr>
+                        @endif
+                        @if($_showPanNo)
                         <tr>
                             <td class="lbl">{{ __('PAN No.') }}</td>
                             <td class="val">{{ $employee->tax_payer_id ?? '—' }}</td>
                         </tr>
-                        @if($_isUkRequest)
+                        @endif
+                        @if($_isUkRequest && $_showNiNumber)
                         <tr>
                             <td class="lbl">{{ __('NI Number') }}</td>
                             <td class="val">{{ $niNumber }}</td>
                         </tr>
+                        @endif
+                        @if($_isUkRequest && $_showTaxCode)
                         <tr>
                             <td class="lbl">{{ __('Tax Code') }}</td>
                             <td class="val">{{ $taxCode }}</td>
                         </tr>
                         @endif
+                        @if($_showDateOfJoining)
                         <tr>
                             <td class="lbl">{{ __('Date of Joining') }}
                             <td class="val">{{ $employee->company_doj ?? '—' }}</td>
                         </tr>
+                        @endif
                     </table>
                 </td>
-                <td style="width:50%; padding:0; border-left:1px solid {{ $_themeColor }}55; vertical-align:top;">
+                @endif
+                @if($_showPaymentDetails)
+                <td style="width:{{ $_showEmployeeDetails ? '50%' : '100%' }}; padding:0; border-left:1px solid {{ $_themeColor }}55; vertical-align:top;">
                     <div class="ps-band">{{ __('Payment Details') }}</div>
                     <table class="ps-t">
+                        @if($_showBankName)
                         <tr>
                             <td class="lbl">{{ __('Bank Name') }}</td>
                             <td class="val">{{ $employee->bank_name ?? '—' }}</td>
                         </tr>
+                        @endif
+                        @if($_showAccountNo)
                         <tr>
                             <td class="lbl">{{ __('Account No.') }}</td>
                             <td class="val">{{ $employee->account_number ?? '—' }}</td>
                         </tr>
+                        @endif
+                        @if($_showBankCode)
                         <tr>
                             <td class="lbl">{{ __(\App\Models\Utility::bankCodeLabel()) }}</td>
                             <td class="val">{{ $employee->bank_identifier_code ?? '—' }}</td>
                         </tr>
+                        @endif
+                        @if($_showAccountHolder)
                         <tr>
                             <td class="lbl">{{ __('Account Holder') }}</td>
                             <td class="val">{{ $employee->account_holder_name ?? '—' }}</td>
                         </tr>
+                        @endif
+                        @if($_showTransactionMode)
                         <tr>
                             <td class="lbl">{{ __('Transaction Mode') }}</td>
                             <td class="val">NEFT</td>
                         </tr>
+                        @endif
+                        @if($_showPayPeriod)
                         <tr>
                             <td class="lbl">{{ __('Pay Period') }}</td>
                             <td class="val">{{ $slipLabel }}</td>
                         </tr>
+                        @endif
                     </table>
                 </td>
+                @endif
             </tr>
         </table>
+        @endif
 
         {{-- B: Leave | Days & Work | Salary --}}
         <table class="ps-t" style="border:none; border-top:1px solid {{ $_themeColor }}55;">
@@ -638,6 +675,7 @@
         </table>
 
         {{-- E: Signatures --}}
+        @if($_showSignatures)
         <div class="ps-sig">
             <table>
                 <tr>
@@ -652,8 +690,10 @@
                 </tr>
             </table>
         </div>
+        @endif
 
         {{-- Footer --}}
+        @if($_showFooter)
         <div class="ps-footer">
             <table>
                 <tr>
@@ -675,6 +715,7 @@
                 </tr>
             </table>
         </div>
+        @endif
 
     </div>{{-- /.ps-card --}}
 </div>{{-- /.ps-modal --}}

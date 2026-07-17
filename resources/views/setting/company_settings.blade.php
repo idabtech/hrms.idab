@@ -333,6 +333,36 @@ $lang = \App\Models\Utility::getValByName('default_language');
         var baseUrl = '{{ route("payslip.settings-preview") }}';
         var previewUrl = baseUrl + '?template=' + encodeURIComponent(tpl) + '&color=' + encodeURIComponent(clr);
 
+        // Append section visibility toggles
+        var showEmp = document.getElementById('payslip_show_employee_details');
+        var showPay = document.getElementById('payslip_show_payment_details');
+        var showSig = document.getElementById('payslip_show_signatures');
+        var showFtr = document.getElementById('payslip_show_footer');
+        if (showEmp) previewUrl += '&show_employee=' + (showEmp.checked ? '1' : '0');
+        if (showPay) previewUrl += '&show_payment=' + (showPay.checked ? '1' : '0');
+        if (showSig) previewUrl += '&show_signatures=' + (showSig.checked ? '1' : '0');
+        if (showFtr) previewUrl += '&show_footer=' + (showFtr.checked ? '1' : '0');
+
+        // Append per-field visibility toggles
+        var fieldIds = [
+            ['payslip_show_name', 'show_name'],
+            ['payslip_show_designation', 'show_designation'],
+            ['payslip_show_employee_id', 'show_employee_id'],
+            ['payslip_show_department', 'show_department'],
+            ['payslip_show_pan_no', 'show_pan_no'],
+            ['payslip_show_date_of_joining', 'show_doj'],
+            ['payslip_show_bank_name', 'show_bank_name'],
+            ['payslip_show_account_no', 'show_account_no'],
+            ['payslip_show_bank_code', 'show_bank_code'],
+            ['payslip_show_account_holder', 'show_account_holder'],
+            ['payslip_show_transaction_mode', 'show_transaction_mode'],
+            ['payslip_show_pay_period', 'show_pay_period'],
+        ];
+        for (var i = 0; i < fieldIds.length; i++) {
+            var el = document.getElementById(fieldIds[i][0]);
+            if (el) previewUrl += '&' + fieldIds[i][1] + '=' + (el.checked ? '1' : '0');
+        }
+
         // Update iframe and reload
         iframe.src = previewUrl;
 
@@ -2792,6 +2822,167 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         @error('company_stamp')
                                             <span class="text-danger d-block mt-1"><small>{{ $message }}</small></span>
                                         @enderror
+                                    </div>
+                                </div>
+                            </div>                            {{-- Section Visibility Toggles --}}
+                            <div class="col-12" style="border-top:1px solid #eee; padding-top:18px; margin-top:12px;">
+                                <label class="col-form-label fw-semibold mb-2" style="font-size:13px;">
+                                    <i class="ti ti-eye-off me-1"></i>{{ __('Payslip Section Visibility') }}
+                                </label>
+                                <small class="text-muted d-block mb-2" style="font-size:11px; line-height:1.4;">
+                                    {{ __('Toggle sections & individual fields on the payslip. Unchecked = hidden.') }}
+                                </small>
+                                <div class="d-flex flex-column gap-1">
+                                    {{-- ═══ Employee Details ═══ --}}
+                                    <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem;">
+                                        <input type="hidden" name="payslip_show_employee_details" value="off">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                            name="payslip_show_employee_details" id="payslip_show_employee_details"
+                                            value="on"
+                                            {{ ($settings['payslip_show_employee_details'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                            onchange="updateSalarySlipPreview()">
+                                        <label class="form-check-label ms-2 fw-semibold" for="payslip_show_employee_details" style="font-size:12.5px; cursor:pointer;">
+                                            <i class="ti ti-user me-1 text-muted"></i>{{ __('Employee Details') }}
+                                        </label>
+                                    </div>
+                                    {{-- Sub-fields for Employee Details --}}
+                                    <div class="d-flex flex-wrap gap-x-3 gap-y-1 ps-5 ms-1" style="border-left:2px solid #e5e7eb;">
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_name" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_name" id="payslip_show_name" value="on"
+                                                {{ ($settings['payslip_show_name'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_name" style="font-size:11.5px; cursor:pointer;">{{ __('Name') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_designation" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_designation" id="payslip_show_designation" value="on"
+                                                {{ ($settings['payslip_show_designation'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_designation" style="font-size:11.5px; cursor:pointer;">{{ __('Designation') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_employee_id" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_employee_id" id="payslip_show_employee_id" value="on"
+                                                {{ ($settings['payslip_show_employee_id'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_employee_id" style="font-size:11.5px; cursor:pointer;">{{ __('Employee ID') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_department" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_department" id="payslip_show_department" value="on"
+                                                {{ ($settings['payslip_show_department'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_department" style="font-size:11.5px; cursor:pointer;">{{ __('Department') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_pan_no" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_pan_no" id="payslip_show_pan_no" value="on"
+                                                {{ ($settings['payslip_show_pan_no'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_pan_no" style="font-size:11.5px; cursor:pointer;">{{ __('PAN No.') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_date_of_joining" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_date_of_joining" id="payslip_show_date_of_joining" value="on"
+                                                {{ ($settings['payslip_show_date_of_joining'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_date_of_joining" style="font-size:11.5px; cursor:pointer;">{{ __('Date of Joining') }}</label>
+                                        </div>
+                                    </div>
+
+                                    {{-- ═══ Payment Details ═══ --}}
+                                    <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem;" class="mt-2">
+                                        <input type="hidden" name="payslip_show_payment_details" value="off">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                            name="payslip_show_payment_details" id="payslip_show_payment_details"
+                                            value="on"
+                                            {{ ($settings['payslip_show_payment_details'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                            onchange="updateSalarySlipPreview()">
+                                        <label class="form-check-label ms-2 fw-semibold" for="payslip_show_payment_details" style="font-size:12.5px; cursor:pointer;">
+                                            <i class="ti ti-credit-card me-1 text-muted"></i>{{ __('Payment Details') }}
+                                        </label>
+                                    </div>
+                                    {{-- Sub-fields for Payment Details --}}
+                                    <div class="d-flex flex-wrap gap-x-3 gap-y-1 ps-5 ms-1" style="border-left:2px solid #e5e7eb;">
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_bank_name" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_bank_name" id="payslip_show_bank_name" value="on"
+                                                {{ ($settings['payslip_show_bank_name'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_bank_name" style="font-size:11.5px; cursor:pointer;">{{ __('Bank Name') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_account_no" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_account_no" id="payslip_show_account_no" value="on"
+                                                {{ ($settings['payslip_show_account_no'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_account_no" style="font-size:11.5px; cursor:pointer;">{{ __('Account No.') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_bank_code" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_bank_code" id="payslip_show_bank_code" value="on"
+                                                {{ ($settings['payslip_show_bank_code'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_bank_code" style="font-size:11.5px; cursor:pointer;">{{ __('Bank Code') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_account_holder" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_account_holder" id="payslip_show_account_holder" value="on"
+                                                {{ ($settings['payslip_show_account_holder'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_account_holder" style="font-size:11.5px; cursor:pointer;">{{ __('Account Holder') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_transaction_mode" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_transaction_mode" id="payslip_show_transaction_mode" value="on"
+                                                {{ ($settings['payslip_show_transaction_mode'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_transaction_mode" style="font-size:11.5px; cursor:pointer;">{{ __('Transaction Mode') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_pay_period" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_pay_period" id="payslip_show_pay_period" value="on"
+                                                {{ ($settings['payslip_show_pay_period'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_pay_period" style="font-size:11.5px; cursor:pointer;">{{ __('Pay Period') }}</label>
+                                        </div>
+                                    </div>
+
+                                    {{-- ═══ Signatures & Footer ═══ --}}
+                                    <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem;">
+                                        <input type="hidden" name="payslip_show_signatures" value="off">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                            name="payslip_show_signatures" id="payslip_show_signatures"
+                                            value="on"
+                                            {{ ($settings['payslip_show_signatures'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                            onchange="updateSalarySlipPreview()">
+                                        <label class="form-check-label ms-2 fw-semibold" for="payslip_show_signatures" style="font-size:12.5px; cursor:pointer;">
+                                            <i class="ti ti-signature me-1 text-muted"></i>{{ __('Signatures') }}
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem;">
+                                        <input type="hidden" name="payslip_show_footer" value="off">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                            name="payslip_show_footer" id="payslip_show_footer"
+                                            value="on"
+                                            {{ ($settings['payslip_show_footer'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                            onchange="updateSalarySlipPreview()">
+                                        <label class="form-check-label ms-2 fw-semibold" for="payslip_show_footer" style="font-size:12.5px; cursor:pointer;">
+                                            <i class="ti ti-article me-1 text-muted"></i>{{ __('Footer') }}
+                                        </label>
                                     </div>
                                 </div>
                             </div>

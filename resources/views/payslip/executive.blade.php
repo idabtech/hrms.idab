@@ -64,33 +64,61 @@
         <div class="exe-body">
 
             {{-- Employee + Payment Grid --}}
+            @if($_showEmployeeDetails || $_showPaymentDetails)
             <div class="exe-grid" style="margin-bottom:10px;">
+                @if($_showEmployeeDetails)
                 <div>
                     <div class="exe-sec-title">{{ __('Employee') }}</div>
                     <table class="exe-table">
+                        @if($_showName)
                         <tr><td class="exe-lbl">{{ __('Name') }}</td><td class="exe-val exe-mono">{{ $employee->name }}</td></tr>
+                        @endif
+                        @if($_showDesignation)
                         <tr><td class="exe-lbl">{{ __('Designation') }}</td><td class="exe-val">{{ optional($employee->designation)->name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showEmployeeId)
                         <tr><td class="exe-lbl">{{ __('Employee ID') }}</td><td class="exe-val">{{ $employee->employee_id ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showDepartment)
                         <tr><td class="exe-lbl">{{ __('Department') }}</td><td class="exe-val">{{ optional($employee->department)->name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showDateOfJoining)
                         <tr><td class="exe-lbl">{{ __('DOJ') }}</td><td class="exe-val">{{ $employee->company_doj ?? '—' }}</td></tr>
-                        @if($_isUkRequest)
+                        @endif
+                        @if($_isUkRequest && $_showNiNumber)
                         <tr><td class="exe-lbl">{{ __('NI Number') }}</td><td class="exe-val">{{ $niNumber }}</td></tr>
+                        @endif
+                        @if($_isUkRequest && $_showTaxCode)
                         <tr><td class="exe-lbl">{{ __('Tax Code') }}</td><td class="exe-val">{{ $taxCode }}</td></tr>
                         @endif
                     </table>
                 </div>
+                @endif
+                @if($_showPaymentDetails)
                 <div>
                     <div class="exe-sec-title">{{ __('Payment') }}</div>
                     <table class="exe-table">
+                        @if($_showBankName)
                         <tr><td class="exe-lbl">{{ __('Bank Name') }}</td><td class="exe-val">{{ $employee->bank_name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showAccountNo)
                         <tr><td class="exe-lbl">{{ __('Account No.') }}</td><td class="exe-val">{{ $employee->account_number ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showBankCode)
                         <tr><td class="exe-lbl">{{ __(\App\Models\Utility::bankCodeLabel()) }}</td><td class="exe-val">{{ $employee->bank_identifier_code ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showAccountHolder)
                         <tr><td class="exe-lbl">{{ __('Account Holder') }}</td><td class="exe-val">{{ $employee->account_holder_name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showPayPeriod)
                         <tr><td class="exe-lbl">{{ __('Pay Period') }}</td><td class="exe-val">{{ $slipLabel }}</td></tr>
+                        @endif
                         <tr><td class="exe-lbl">{{ __('Status') }}</td><td class="exe-val"><span class="exe-badge {{ $isPaid ? 'exe-paid' : 'exe-unpaid' }}">{{ $isPaid ? __('Paid') : __('Unpaid') }}</span></td></tr>
                     </table>
                 </div>
+                @endif
             </div>
+            @endif
 
             @if(!$isHourly)
             {{-- Monthly: Days & Work + Leave + Salary --}}
@@ -194,16 +222,20 @@
             </div>
 
             {{-- Signatures --}}
+            @if($_showSignatures)
             <div class="exe-sig">
                 <div class="exe-sig-item"><div class="exe-sig-line"></div><div class="exe-sig-lbl">{{ __('Employee Signature') }}</div></div>
                 <div class="exe-sig-item"><div class="exe-sig-line"></div><div class="exe-sig-lbl">{{ __('Authorized Signatory') }}</div></div>
             </div>
+            @endif
         </div>
+        @if($_showFooter)
         <div class="exe-footer">
             @if($companyPhone)<strong>{{ __('Tel') }}:</strong> {{ $companyPhone }} &nbsp;|&nbsp; @endif
             @if($companyWeb)<strong>{{ __('Web') }}:</strong> {{ $companyWeb }} &nbsp;|&nbsp; @endif
             @if($companyEmail)<strong>{{ __('Email') }}:</strong> {{ $companyEmail }} @endif
         </div>
+        @endif
     </div>
 </div>
 <script>

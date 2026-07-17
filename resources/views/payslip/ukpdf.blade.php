@@ -161,10 +161,16 @@
     @endif
 
     {{-- ═══ Standalone: Employee name + Dept ═══ --}}
+    @if($_showEmployeeDetails)
     <div class="ukp-emp-box">
+        @if($_showName)
         <div class="ukp-emp-name">{{ $employee->name }}</div>
+        @endif
+        @if($_showDepartment)
         <div class="ukp-emp-dept">{{ __('Department') }}: {{ optional($employee->department)->name ?? '' }}</div>
+        @endif
     </div>
+    @endif
 
     {{-- ═══ Outer box ═══ --}}
     <table class="ukp-outer" cellpadding="0" cellspacing="0">
@@ -183,26 +189,43 @@
                             <tr>
 
                                 {{-- LEFT: employee details + YTD --}}
+                                @if($_showEmployeeDetails)
                                 <td class="ukp-left">
 
+                                    @if($_showName)
                                     <span class="kv-name">{{ $employee->name }}</span>
+                                    @endif
                                     <table class="kv-tbl">
+                                        @if($_showDesignation)
                                         <tr><td class="k">{{ __('Designation') }}</td><td class="v">{{ optional($employee->designation)->name ?? '—' }}</td></tr>
+                                        @endif
+                                        @if($_showDepartment)
                                         <tr><td class="k">{{ __('Department') }}</td><td class="v">{{ optional($employee->department)->name ?? '—' }}</td></tr>
+                                        @endif
+                                        @if($_showPayPeriod)
                                         <tr><td class="k">{{ __('Pay Period') }}</td><td class="v">{{ $slipShort }}</td></tr>
+                                        @endif
                                         <tr><td class="k">{{ __('Pay Date') }}</td><td class="v">{{ $payDate }}</td></tr>
                                         <tr><td class="k">{{ __('Pay Type') }}</td><td class="v">{{ $payslipTypeName }}</td></tr>
                                         @if($_isUkRequest)
                                         <tr><td class="k">{{ __('Payment Method') }}</td><td class="v">{{ $paymentMethod }}</td></tr>
                                         @endif
                                         <tr><td class="k">{{ __('Works No') }}</td><td class="v">{{ $worksNo }}</td></tr>
-                                        @if($_isUkRequest)
+                                        @if($_isUkRequest && $_showTaxCode)
                                         <tr><td class="k">{{ __('Tax Code') }}</td><td class="v">{{ $taxCode }}</td></tr>
+                                        @endif
+                                        @if($_isUkRequest && $_showNiNumber)
                                         <tr><td class="k">{{ __('NI Number') }}</td><td class="v">{{ $niNumber }}</td></tr>
+                                        @endif
+                                        @if($_isUkRequest)
                                         <tr><td class="k">{{ __('NI Table Letter') }}</td><td class="v">{{ $niTableLetter }}</td></tr>
                                         @endif
+                                        @if($_showPanNo)
                                         <tr><td class="k">{{ __('PAN / Tax ID') }}</td><td class="v">{{ $employee->tax_payer_id ?? '—' }}</td></tr>
+                                        @endif
+                                        @if($_showDateOfJoining)
                                         <tr><td class="k">{{ __('Date of Joining') }}</td><td class="v">{{ $employee->company_doj ?? '—' }}</td></tr>
+                                        @endif
                                         <tr>
                                             <td class="k">{{ __('Pay Status') }}</td>
                                             <td class="v">
@@ -240,6 +263,9 @@
                                     @endif
 
                                 </td>{{-- /left --}}
+                                @else
+                                <td style="display:none;"></td>
+                                @endif
 
                                 {{-- RIGHT: income + deductions + net pay --}}
                                 <td class="ukp-right">
@@ -322,16 +348,30 @@
                     <table style="width:100%; border-collapse:collapse;">
                         <tr>
                             {{-- Payment Details --}}
+                            @if($_showPaymentDetails)
                             <td style="width:50%; vertical-align:top; padding-right:10px;">
                                 <span class="sec-title" style="font-size:11px; text-align:left; margin-bottom:4px;">{{ __('Payment Details') }}</span>
                                 <table class="kv-tbl" style="font-size:10.5px;">
+                                    @if($_showBankName)
                                     <tr><td class="k">{{ __('Bank Name') }}</td><td class="v">{{ $employee->bank_name ?? '—' }}</td></tr>
+                                    @endif
+                                    @if($_showAccountNo)
                                     <tr><td class="k">{{ __('Account No.') }}</td><td class="v">{{ $employee->account_number ?? '—' }}</td></tr>
+                                    @endif
+                                    @if($_showBankCode)
                                     <tr><td class="k">{{ __(\App\Models\Utility::bankCodeLabel()) }}</td><td class="v">{{ $employee->bank_identifier_code ?? '—' }}</td></tr>
+                                    @endif
+                                    @if($_showAccountHolder)
                                     <tr><td class="k">{{ __('Account Holder') }}</td><td class="v">{{ $employee->account_holder_name ?? '—' }}</td></tr>
+                                    @endif
+                                    @if($_showTransactionMode)
                                     <tr><td class="k">{{ __('Transaction Mode') }}</td><td class="v">NEFT</td></tr>
+                                    @endif
                                 </table>
                             </td>
+                            @else
+                            <td style="width:50%; vertical-align:top; padding-right:10px;"></td>
+                            @endif
                             {{-- Attendance Summary --}}
                             <td style="width:50%; vertical-align:top; padding-left:10px;">
                                 <span class="sec-title" style="font-size:11px; text-align:left; margin-bottom:4px;">{{ __('Attendance Summary') }}</span>
@@ -395,6 +435,7 @@
     </table>
 
     {{-- ═══ Signatures ═══ --}}
+    @if($_showSignatures)
     <div style="display:flex; justify-content:space-between; padding:14px 30px 6px; margin-top:6px;">
         <div style="text-align:center; min-width:140px;">
             <div style="border-top:1.5px solid #999; width:120px; margin:12px auto 4px;"></div>
@@ -405,8 +446,10 @@
             <div style="font-size:10px; color:#888;">{{ __('Authorized Signatory') }}</div>
         </div>
     </div>
+    @endif
 
     {{-- ═══ Footer ═══ --}}
+    @if($_showFooter)
     <div class="ukp-footer">
         <table class="ukp-footer-row">
             <tr>
@@ -416,6 +459,7 @@
             </tr>
         </table>
     </div>
+    @endif
 
 </div>{{-- /.ukp-wrap --}}
 

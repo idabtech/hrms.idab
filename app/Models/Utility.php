@@ -218,8 +218,32 @@ class Utility extends Model
             'working_hours_per_day' => '8', // default working hours per day
 
             // ── Salary Slip / Payslip Settings ────────────────────────────────
-            'payslip_template'       => 'standard',   // standard | uk
-            'payslip_primary_color'  => '',            // overrides theme_color for payslips
+            'payslip_template'              => 'standard',   // standard | uk
+            'payslip_primary_color'         => '',            // overrides theme_color for payslips
+
+            // ── Payslip Section Visibility ─────────────────────────────────────
+            'payslip_show_employee_details' => 'on',   // Employee Details block
+            'payslip_show_payment_details'  => 'on',   // Payment Details block
+            'payslip_show_signatures'       => 'on',   // Signature lines
+            'payslip_show_footer'           => 'on',   // Company tel / web / email footer
+
+            // ── Per-field visibility (Employee Details) ───────────────────────
+            'payslip_show_name'             => 'on',
+            'payslip_show_designation'      => 'on',
+            'payslip_show_employee_id'      => 'on',
+            'payslip_show_department'       => 'on',
+            'payslip_show_pan_no'           => 'on',
+            'payslip_show_date_of_joining'  => 'on',
+            'payslip_show_ni_number'        => 'on',
+            'payslip_show_tax_code'         => 'on',
+
+            // ── Per-field visibility (Payment Details) ───────────────────────
+            'payslip_show_bank_name'        => 'on',
+            'payslip_show_account_no'       => 'on',
+            'payslip_show_bank_code'        => 'on',
+            'payslip_show_account_holder'   => 'on',
+            'payslip_show_transaction_mode' => 'on',
+            'payslip_show_pay_period'       => 'on',
         ];
 
         foreach ($data as $row) {

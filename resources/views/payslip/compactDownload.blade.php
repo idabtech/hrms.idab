@@ -112,17 +112,19 @@ body {
         </div>
     </div>
 
+    @if($_showEmployeeDetails)
     <div class="cpt-employee">
         <div>
-            <strong>{{ $employee->name }}</strong><br>
-            {{ optional($employee->designation)->name ?? '—' }}
-            @if ($employee->employee_id) #{{ $employee->employee_id }} @endif
+            @if($_showName)<strong>{{ $employee->name }}</strong><br>@endif
+            @if($_showDesignation){{ optional($employee->designation)->name ?? '—' }}@endif
+            @if($_showEmployeeId && $employee->employee_id) #{{ $employee->employee_id }} @endif
         </div>
         <div class="e-right">
             {{ $payslipTypeName }}<br>
             Status: <span class="{{ $isPaid ? 'cpt-paid' : 'cpt-unpaid' }}">{{ $isPaid ? 'Paid' : 'Unpaid' }}</span>
         </div>
     </div>
+    @endif
 
     <div class="cpt-section">
         <table class="cpt-table">
@@ -182,7 +184,9 @@ body {
         @endif
     </div>
 
+    @if($_showFooter)
     <div class="cpt-footer">This is a computer-generated payslip. No signature is required.</div>
+    @endif
 
 </div>
 </body>

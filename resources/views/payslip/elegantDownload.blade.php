@@ -52,27 +52,49 @@ body { font-family:'DejaVu Sans','Trebuchet MS',Arial,sans-serif; font-size:9px;
     </div>
     <div class="elg-body">
 
+        @if($_showEmployeeDetails || $_showPaymentDetails)
         <table style="width:100%;border-collapse:collapse;"><tr>
-            <td style="width:50%;vertical-align:top;padding-right:5px;">
+            @if($_showEmployeeDetails)
+            <td style="width:{{ $_showPaymentDetails ? '50%' : '100%' }};vertical-align:top;padding-right:5px;">
                 <div class="elg-title">Employee</div>
                 <table class="elg-table">
+                    @if($_showName)
                     <tr><td class="elg-lbl">Name</td><td class="elg-val" style="color:{{ $_themeColor }};">{{ $employee->name }}</td></tr>
+                    @endif
+                    @if($_showDesignation)
                     <tr><td class="elg-lbl">Designation</td><td class="elg-val">{{ optional($employee->designation)->name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showEmployeeId)
                     <tr><td class="elg-lbl">ID</td><td class="elg-val">{{ $employee->employee_id ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showDepartment)
                     <tr><td class="elg-lbl">Department</td><td class="elg-val">{{ optional($employee->department)->name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showDateOfJoining)
                     <tr><td class="elg-lbl">DOJ</td><td class="elg-val">{{ $employee->company_doj ?? '—' }}</td></tr>
+                    @endif
                 </table>
             </td>
-            <td style="width:50%;vertical-align:top;padding-left:5px;">
+            @endif
+            @if($_showPaymentDetails)
+            <td style="width:{{ $_showEmployeeDetails ? '50%' : '100%' }};vertical-align:top;padding-left:5px;">
                 <div class="elg-title">Payment</div>
                 <table class="elg-table">
+                    @if($_showBankName)
                     <tr><td class="elg-lbl">Bank</td><td class="elg-val">{{ $employee->bank_name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showAccountNo)
                     <tr><td class="elg-lbl">Account</td><td class="elg-val">{{ $employee->account_number ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showPayPeriod)
                     <tr><td class="elg-lbl">Pay Period</td><td class="elg-val">{{ $slipLabel }}</td></tr>
+                    @endif
                     <tr><td class="elg-lbl">Status</td><td class="elg-val"><span class="{{ $isPaid ? 'elg-paid' : 'elg-unpaid' }}" style="padding:1px 8px;border-radius:8px;font-size:8px;">{{ $isPaid ? 'Paid' : 'Unpaid' }}</span></td></tr>
                 </table>
             </td>
+            @endif
         </tr></table>
+        @endif
 
         @if(!$isHourly)
         <table style="width:100%;border-collapse:collapse;margin-top:5px;"><tr>
@@ -174,16 +196,20 @@ body { font-family:'DejaVu Sans','Trebuchet MS',Arial,sans-serif; font-size:9px;
             <div style="font-size:6px;color:#999;margin-top:2px;">Digital Authorization</div>
         </div>
 
+        @if($_showSignatures)
         <table class="elg-sig" style="width:100%;"><tr>
             <td><div class="elg-sig-line"></div><div class="elg-sig-lbl">Employee Signature</div></td>
             <td><div class="elg-sig-line"></div><div class="elg-sig-lbl">Authorized Signatory</div></td>
         </tr></table>
+        @endif
 
+        @if($_showFooter)
         <div class="elg-footer">
             @if($companyPhone)<strong>Tel:</strong> {{ $companyPhone }} &nbsp;|&nbsp; @endif
             @if($companyWeb)<strong>Web:</strong> {{ $companyWeb }} &nbsp;|&nbsp; @endif
             @if($companyEmail)<strong>Email:</strong> {{ $companyEmail }} @endif
         </div>
+        @endif
     </div>
 </div>
 </div>

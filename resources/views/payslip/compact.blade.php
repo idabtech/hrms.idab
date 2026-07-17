@@ -162,20 +162,28 @@
     </div>
 
     {{-- Employee summary --}}
+    @if($_showEmployeeDetails)
     <div class="cpt-employee">
         <div>
-            <strong>{{ $employee->name }}</strong><br>
-            {{ optional($employee->designation)->name ?? '—' }}
-            @if ($employee->employee_id) &middot; #{{ $employee->employee_id }} @endif
+            @if($_showName)<strong>{{ $employee->name }}</strong><br>@endif
+            @if($_showDesignation){{ optional($employee->designation)->name ?? '—' }}@endif
+            @if($_showEmployeeId && $employee->employee_id) &middot; #{{ $employee->employee_id }} @endif
             <br>
-            <span style="font-size:10px; color:#888;">{{ __('Department') }}: {{ optional($employee->department)->name ?? '—' }} | {{ __('DOJ') }}: {{ $employee->company_doj ?? '—' }}</span>
+            @if($_showDepartment || $_showDateOfJoining)
+            <span style="font-size:10px; color:#888;">
+                @if($_showDepartment){{ __('Department') }}: {{ optional($employee->department)->name ?? '—' }}@endif
+                @if($_showDepartment && $_showDateOfJoining) | @endif
+                @if($_showDateOfJoining){{ __('DOJ') }}: {{ $employee->company_doj ?? '—' }}@endif
+            </span>
+            @endif
         </div>
         <div class="e-right">
             {{ $payslipTypeName }}<br>
             Status: <span class="cpt-status {{ $isPaid ? 'cpt-paid' : 'cpt-unpaid' }}">{{ $isPaid ? __('Paid') : __('Unpaid') }}</span><br>
-            @if($employee->tax_payer_id)<span style="font-size:10px; color:#666;">{{ __('PAN') }}: {{ $employee->tax_payer_id }}</span>@endif
+            @if($_showPanNo && $employee->tax_payer_id)<span style="font-size:10px; color:#666;">{{ __('PAN') }}: {{ $employee->tax_payer_id }}</span>@endif
         </div>
     </div>
+    @endif
 
     {{-- Quick info row --}}
     <div class="cpt-section">
@@ -274,16 +282,28 @@
     </div>
 
     {{-- Payment Details --}}
+    @if($_showPaymentDetails)
     <div class="cpt-section" style="padding-top:4px;">
         <div class="cpt-section-title">{{ __('Payment Details') }}</div>
         <table class="cpt-table">
+            @if($_showBankName)
             <tr><td class="cpt-label">{{ __('Bank Name') }}</td><td class="cpt-value">{{ $employee->bank_name ?? '—' }}</td></tr>
+            @endif
+            @if($_showAccountNo)
             <tr><td class="cpt-label">{{ __('Account No.') }}</td><td class="cpt-value">{{ $employee->account_number ?? '—' }}</td></tr>
+            @endif
+            @if($_showBankCode)
             <tr><td class="cpt-label">{{ __(\App\Models\Utility::bankCodeLabel()) }}</td><td class="cpt-value">{{ $employee->bank_identifier_code ?? '—' }}</td></tr>
+            @endif
+            @if($_showAccountHolder)
             <tr><td class="cpt-label">{{ __('Account Holder') }}</td><td class="cpt-value">{{ $employee->account_holder_name ?? '—' }}</td></tr>
+            @endif
+            @if($_showTransactionMode)
             <tr><td class="cpt-label">{{ __('Transaction') }}</td><td class="cpt-value">NEFT</td></tr>
+            @endif
         </table>
     </div>
+    @endif
 
     {{-- Salary Details --}}
     <div class="cpt-section" style="padding-top:4px;">
@@ -315,6 +335,7 @@
     </div>
 
     {{-- Signatures --}}
+    @if($_showSignatures)
     <div style="display:flex; justify-content:space-between; padding:12px 16px 4px;">
         <div style="text-align:center; min-width:120px;">
             <div style="border-top:1.5px solid #999; width:100px; margin:10px auto 3px;"></div>
@@ -325,13 +346,16 @@
             <div style="font-size:9px; color:#888;">{{ __('Authorized Signatory') }}</div>
         </div>
     </div>
+    @endif
 
     {{-- Footer --}}
+    @if($_showFooter)
     <div style="background:{{ $_themeColor }}; color:#fff; text-align:center; padding:6px 16px; font-size:9px; line-height:1.6; margin-top:6px;">
         @if($companyPhone)<strong>{{ __('Tel') }}:</strong> {{ $companyPhone }} &nbsp;|&nbsp; @endif
         @if($companyWeb)<strong>{{ __('Web') }}:</strong> {{ $companyWeb }} &nbsp;|&nbsp; @endif
         @if($companyEmail)<strong>{{ __('Email') }}:</strong> {{ $companyEmail }} @endif
     </div>
+    @endif
 
 </div>
 

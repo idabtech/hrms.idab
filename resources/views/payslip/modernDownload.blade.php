@@ -51,28 +51,52 @@ body {
     </div>
     <div class="mod-body">
 
+        @if($_showEmployeeDetails || $_showPaymentDetails)
         <table style="width:100%;border-collapse:collapse;"><tr>
-            <td style="width:50%;vertical-align:top;padding-right:6px;">
+            @if($_showEmployeeDetails)
+            <td style="width:{{ $_showPaymentDetails ? '50%' : '100%' }};vertical-align:top;padding-right:6px;">
                 <div class="mod-section-title">Employee</div>
                 <table class="mod-table">
+                    @if($_showName)
                     <tr><td class="mod-lbl">Name</td><td class="mod-val" style="color:{{ $_themeColor }};">{{ $employee->name }}</td></tr>
+                    @endif
+                    @if($_showDesignation)
                     <tr><td class="mod-lbl">Designation</td><td class="mod-val">{{ optional($employee->designation)->name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showEmployeeId)
                     <tr><td class="mod-lbl">Employee ID</td><td class="mod-val">{{ $employee->employee_id ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showDepartment)
                     <tr><td class="mod-lbl">Department</td><td class="mod-val">{{ optional($employee->department)->name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showDateOfJoining)
                     <tr><td class="mod-lbl">DOJ</td><td class="mod-val">{{ $employee->company_doj ?? '—' }}</td></tr>
+                    @endif
                 </table>
             </td>
-            <td style="width:50%;vertical-align:top;padding-left:6px;">
+            @endif
+            @if($_showPaymentDetails)
+            <td style="width:{{ $_showEmployeeDetails ? '50%' : '100%' }};vertical-align:top;padding-left:6px;">
                 <div class="mod-section-title">Payment</div>
                 <table class="mod-table">
+                    @if($_showBankName)
                     <tr><td class="mod-lbl">Bank Name</td><td class="mod-val">{{ $employee->bank_name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showAccountNo)
                     <tr><td class="mod-lbl">Account No.</td><td class="mod-val">{{ $employee->account_number ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showBankCode)
                     <tr><td class="mod-lbl">{{ \App\Models\Utility::bankCodeLabel() }}</td><td class="mod-val">{{ $employee->bank_identifier_code ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showPayPeriod)
                     <tr><td class="mod-lbl">Pay Period</td><td class="mod-val">{{ $slipLabel }}</td></tr>
+                    @endif
                     <tr><td class="mod-lbl">Status</td><td class="mod-val"><span class="{{ $isPaid ? 'mod-paid' : 'mod-unpaid' }}">{{ $isPaid ? 'Paid' : 'Unpaid' }}</span></td></tr>
                 </table>
             </td>
+            @endif
         </tr></table>
+        @endif
 
         @if(!$isHourly)
         <table style="width:100%;border-collapse:collapse;margin-top:6px;"><tr>
@@ -157,16 +181,20 @@ body {
             <div style="font-size:6px;color:#999;margin-top:2px;">Digital Authorization</div>
         </div>
 
+        @if($_showSignatures)
         <table class="mod-sig" style="width:100%;"><tr>
             <td><div class="mod-sig-line"></div><div class="mod-sig-lbl">Employee Signature</div></td>
             <td><div class="mod-sig-line"></div><div class="mod-sig-lbl">Authorized Signatory</div></td>
         </tr></table>
+        @endif
 
+        @if($_showFooter)
         <div class="mod-footer">
             @if($companyPhone)<strong>Tel:</strong> {{ $companyPhone }} &nbsp;|&nbsp; @endif
             @if($companyWeb)<strong>Web:</strong> {{ $companyWeb }} &nbsp;|&nbsp; @endif
             @if($companyEmail)<strong>Email:</strong> {{ $companyEmail }} @endif
         </div>
+        @endif
     </div>
 </div>
 </div>

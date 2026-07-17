@@ -61,34 +61,64 @@
         <div class="bld-body">
 
             {{-- Employee + Payment Grid --}}
+            @if($_showEmployeeDetails || $_showPaymentDetails)
             <div class="bld-grid">
+                @if($_showEmployeeDetails)
                 <div>
                     <div class="bld-title">{{ __('Employee') }}</div>
                     <table class="bld-table">
+                        @if($_showName)
                         <tr><td class="bld-lbl">{{ __('Name') }}</td><td class="bld-val" style="color:{{ $_themeColor }};">{{ $employee->name }}</td></tr>
+                        @endif
+                        @if($_showDesignation)
                         <tr><td class="bld-lbl">{{ __('Designation') }}</td><td class="bld-val">{{ optional($employee->designation)->name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showEmployeeId)
                         <tr><td class="bld-lbl">{{ __('Employee ID') }}</td><td class="bld-val">{{ $employee->employee_id ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showDepartment)
                         <tr><td class="bld-lbl">{{ __('Department') }}</td><td class="bld-val">{{ optional($employee->department)->name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showDateOfJoining)
                         <tr><td class="bld-lbl">{{ __('DOJ') }}</td><td class="bld-val">{{ $employee->company_doj ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showPanNo)
                         <tr><td class="bld-lbl">{{ __('PAN No.') }}</td><td class="bld-val">{{ $employee->tax_payer_id ?? '—' }}</td></tr>
-                        @if($_isUkRequest)
+                        @endif
+                        @if($_isUkRequest && $_showNiNumber)
                         <tr><td class="bld-lbl">{{ __('NI Number') }}</td><td class="bld-val">{{ $niNumber }}</td></tr>
+                        @endif
+                        @if($_isUkRequest && $_showTaxCode)
                         <tr><td class="bld-lbl">{{ __('Tax Code') }}</td><td class="bld-val">{{ $taxCode }}</td></tr>
                         @endif
                     </table>
                 </div>
+                @endif
+                @if($_showPaymentDetails)
                 <div>
                     <div class="bld-title">{{ __('Payment') }}</div>
                     <table class="bld-table">
+                        @if($_showBankName)
                         <tr><td class="bld-lbl">{{ __('Bank Name') }}</td><td class="bld-val">{{ $employee->bank_name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showAccountNo)
                         <tr><td class="bld-lbl">{{ __('Account No.') }}</td><td class="bld-val">{{ $employee->account_number ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showBankCode)
                         <tr><td class="bld-lbl">{{ __(\App\Models\Utility::bankCodeLabel()) }}</td><td class="bld-val">{{ $employee->bank_identifier_code ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showAccountHolder)
                         <tr><td class="bld-lbl">{{ __('Account Holder') }}</td><td class="bld-val">{{ $employee->account_holder_name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showPayPeriod)
                         <tr><td class="bld-lbl">{{ __('Pay Period') }}</td><td class="bld-val">{{ $slipLabel }}</td></tr>
+                        @endif
                         <tr><td class="bld-lbl">{{ __('Status') }}</td><td class="bld-val"><span class="bld-badge {{ $isPaid ? 'bld-paid' : 'bld-unpaid' }}">{{ $isPaid ? __('Paid') : __('Unpaid') }}</span></td></tr>
                     </table>
                 </div>
+                @endif
             </div>
+            @endif
 
             {{-- Monthly/Hourly conditional section --}}
             @if(!$isHourly)
@@ -214,16 +244,20 @@
             </div>
 
             {{-- Signatures --}}
+            @if($_showSignatures)
             <div class="bld-sig">
                 <div class="bld-sig-item"><div class="bld-sig-line"></div><div class="bld-sig-lbl">{{ __('Employee') }}</div></div>
                 <div class="bld-sig-item"><div class="bld-sig-line"></div><div class="bld-sig-lbl">{{ __('Authorized') }}</div></div>
             </div>
+            @endif
         </div>
+        @if($_showFooter)
         <div class="bld-footer">
             @if($companyPhone)<strong>{{ __('Tel') }}:</strong> {{ $companyPhone }} &nbsp;|&nbsp; @endif
             @if($companyWeb)<strong>{{ __('Web') }}:</strong> {{ $companyWeb }} &nbsp;|&nbsp; @endif
             @if($companyEmail)<strong>{{ __('Email') }}:</strong> {{ $companyEmail }} @endif
         </div>
+        @endif
     </div>
 </div>
 <script>

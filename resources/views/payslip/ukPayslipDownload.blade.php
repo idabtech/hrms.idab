@@ -238,10 +238,16 @@ body {
 <div class="page">
 
     {{-- ═══ Employee Name + Department (standalone box) ═══ --}}
+    @if($_showEmployeeDetails)
     <div class="emp-box">
+        @if($_showName)
         <div class="emp-name">{{ $employee->name }}</div>
+        @endif
+        @if($_showDepartment)
         <div class="emp-dept">Department: {{ optional($employee->department)->name ?? '' }}</div>
+        @endif
     </div>
+    @endif
 
     {{-- ═══ Main outer bordered box ═══ --}}
     <table class="outer-box" cellpadding="0" cellspacing="0">
@@ -256,21 +262,30 @@ body {
                     <tr>
 
                         {{-- ══ LEFT COLUMN: Employee Details + Year To Date ══ --}}
+                        @if($_showEmployeeDetails)
                         <td class="left-col">
 
+                            @if($_showName)
                             <div class="emp-heading">{{ $employee->name }}</div>
+                            @endif
 
                             <table class="kv-table">
+                                @if($_showPayPeriod)
                                 <tr><td class="kv-label">Pay Period</td><td class="kv-value">{{ $slipShort }}</td></tr>
+                                @endif
                                 <tr><td class="kv-label">Pay Date</td><td class="kv-value">{{ $payDate }}</td></tr>
                                 <tr><td class="kv-label">Pay Type</td><td class="kv-value">{{ $payslipTypeName }}</td></tr>
                                 @if($_isUkRequest)
                                 <tr><td class="kv-label">Payment Method</td><td class="kv-value">{{ $paymentMethod }}</td></tr>
                                 @endif
                                 <tr><td class="kv-label">Works No</td><td class="kv-value">{{ $worksNo }}</td></tr>
-                                @if($_isUkRequest)
+                                @if($_isUkRequest && $_showTaxCode)
                                 <tr><td class="kv-label">Tax Code</td><td class="kv-value">{{ $taxCode }}</td></tr>
+                                @endif
+                                @if($_isUkRequest && $_showNiNumber)
                                 <tr><td class="kv-label">NI Number</td><td class="kv-value">{{ $niNumber }}</td></tr>
+                                @endif
+                                @if($_isUkRequest)
                                 <tr><td class="kv-label">NI Table Letter</td><td class="kv-value">{{ $niTableLetter }}</td></tr>
                                 @endif
                                 <tr>
@@ -307,6 +322,9 @@ body {
                             @endif
 
                         </td>{{-- /left-col --}}
+                        @else
+                        <td style="display:none;"></td>
+                        @endif
 
                         {{-- ══ RIGHT COLUMN: Income | Deductions | Net Pay | Stamp ══ --}}
                         <td class="right-col">
@@ -389,6 +407,7 @@ body {
     </table>{{-- /.outer-box --}}
 
     {{-- ═══ Footer ═══ --}}
+    @if($_showFooter)
     <table class="footer-bar" cellpadding="0" cellspacing="0">
         <tr>
             <td style="width:33%;">@if($companyPhone)<strong>Tel:</strong> {{ $companyPhone }}@endif</td>
@@ -396,6 +415,7 @@ body {
             <td style="width:33%; text-align:right;">@if($companyEmail)<strong>Email:</strong> {{ $companyEmail }}@endif</td>
         </tr>
     </table>
+    @endif
 
 </div>{{-- /.page --}}
 </body>

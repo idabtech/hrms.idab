@@ -690,6 +690,30 @@ class PaySlipController extends Controller
             ? \App\Models\Utility::get_file('uploads/logo/') . '/' . $_stampFile . '?' . time()
             : null;
 
+        // ── Payslip Section Visibility Flags ───────────────────────────────────
+        $_showEmployeeDetails = ($_appSettings['payslip_show_employee_details'] ?? 'on') === 'on';
+        $_showPaymentDetails  = ($_appSettings['payslip_show_payment_details']  ?? 'on') === 'on';
+        $_showSignatures      = ($_appSettings['payslip_show_signatures']       ?? 'on') === 'on';
+        $_showFooter          = ($_appSettings['payslip_show_footer']           ?? 'on') === 'on';
+
+        // ── Per-field visibility (Employee Details) ───────────────────────────
+        $_showName            = ($_appSettings['payslip_show_name']             ?? 'on') === 'on';
+        $_showDesignation     = ($_appSettings['payslip_show_designation']      ?? 'on') === 'on';
+        $_showEmployeeId      = ($_appSettings['payslip_show_employee_id']      ?? 'on') === 'on';
+        $_showDepartment      = ($_appSettings['payslip_show_department']       ?? 'on') === 'on';
+        $_showPanNo           = ($_appSettings['payslip_show_pan_no']           ?? 'on') === 'on';
+        $_showDateOfJoining   = ($_appSettings['payslip_show_date_of_joining']  ?? 'on') === 'on';
+        $_showNiNumber        = ($_appSettings['payslip_show_ni_number']        ?? 'on') === 'on';
+        $_showTaxCode         = ($_appSettings['payslip_show_tax_code']         ?? 'on') === 'on';
+
+        // ── Per-field visibility (Payment Details) ────────────────────────────
+        $_showBankName        = ($_appSettings['payslip_show_bank_name']        ?? 'on') === 'on';
+        $_showAccountNo       = ($_appSettings['payslip_show_account_no']       ?? 'on') === 'on';
+        $_showBankCode        = ($_appSettings['payslip_show_bank_code']        ?? 'on') === 'on';
+        $_showAccountHolder   = ($_appSettings['payslip_show_account_holder']   ?? 'on') === 'on';
+        $_showTransactionMode = ($_appSettings['payslip_show_transaction_mode'] ?? 'on') === 'on';
+        $_showPayPeriod       = ($_appSettings['payslip_show_pay_period']       ?? 'on') === 'on';
+
         // ── UK fields ────────────────────────────────────────────────────────
         $_isUkRequest = \App\Models\Utility::isUkRequest() || request()->boolean('uk_preview');
         $taxCode        = !empty($employee->tax_payer_id)      ? $employee->tax_payer_id      : '—';
@@ -737,6 +761,11 @@ class PaySlipController extends Controller
             'companyName', 'companyAddr', 'companyCity', 'companyState', 'companyZip',
             'companyPhone', 'companyEmail', 'companyWeb',
             '_stampUrl',
+            '_showEmployeeDetails', '_showPaymentDetails', '_showSignatures', '_showFooter',
+            '_showName', '_showDesignation', '_showEmployeeId', '_showDepartment',
+            '_showPanNo', '_showDateOfJoining', '_showNiNumber', '_showTaxCode',
+            '_showBankName', '_showAccountNo', '_showBankCode', '_showAccountHolder',
+            '_showTransactionMode', '_showPayPeriod',
             '_isUkRequest',
             'taxCode', 'niNumber', 'niTableLetter', 'paymentMethod', 'worksNo', 'sortCode',
             'ytdTaxableGross', 'ytdIncomeTax', 'ytdEmployeeNI', 'ytdEmployerNI',
@@ -1045,6 +1074,41 @@ class PaySlipController extends Controller
         $templateData = self::preparePayslipTemplateData(
             $demoEmployee, $demoPayslip, $demoDetail, $color, true, false
         );
+
+        // ── Accept visibility overrides from live preview toggles ──────
+        $showEmployee  = $request->get('show_employee');
+        $showPayment   = $request->get('show_payment');
+        $showSignature = $request->get('show_signatures');
+        $showFoot      = $request->get('show_footer');
+
+        if ($showEmployee !== null)  $templateData['_showEmployeeDetails'] = $showEmployee === '1';
+        if ($showPayment !== null)   $templateData['_showPaymentDetails']  = $showPayment === '1';
+        if ($showSignature !== null) $templateData['_showSignatures']      = $showSignature === '1';
+        if ($showFoot !== null)      $templateData['_showFooter']          = $showFoot === '1';
+
+        // ── Accept per-field visibility overrides from live preview ────────
+        $fieldMap = [
+            'show_name'             => '_showName',
+            'show_designation'      => '_showDesignation',
+            'show_employee_id'      => '_showEmployeeId',
+            'show_department'       => '_showDepartment',
+            'show_pan_no'           => '_showPanNo',
+            'show_doj'              => '_showDateOfJoining',
+            'show_ni_number'        => '_showNiNumber',
+            'show_tax_code'         => '_showTaxCode',
+            'show_bank_name'        => '_showBankName',
+            'show_account_no'       => '_showAccountNo',
+            'show_bank_code'        => '_showBankCode',
+            'show_account_holder'   => '_showAccountHolder',
+            'show_transaction_mode' => '_showTransactionMode',
+            'show_pay_period'       => '_showPayPeriod',
+        ];
+        foreach ($fieldMap as $param => $key) {
+            $val = $request->get($param);
+            if ($val !== null) {
+                $templateData[$key] = $val === '1';
+            }
+        }
 
         $map  = self::payslipViewMap('view');
         $view = $map[$template] ?? 'payslip.pdf';

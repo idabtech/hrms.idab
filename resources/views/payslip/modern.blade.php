@@ -54,33 +54,61 @@
         </div>
         <div class="mod-body">
             {{-- Employee + Payment Grid --}}
+            @if($_showEmployeeDetails || $_showPaymentDetails)
             <div class="mod-grid" style="margin-bottom:10px;">
+                @if($_showEmployeeDetails)
                 <div>
                     <div class="mod-grid-title">{{ __('Employee') }}</div>
                     <table class="mod-table">
+                        @if($_showName)
                         <tr><td class="mod-lbl">{{ __('Name') }}</td><td class="mod-val" style="color:{{ $_themeColor }};">{{ $employee->name }}</td></tr>
+                        @endif
+                        @if($_showDesignation)
                         <tr><td class="mod-lbl">{{ __('Designation') }}</td><td class="mod-val">{{ optional($employee->designation)->name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showEmployeeId)
                         <tr><td class="mod-lbl">{{ __('Employee ID') }}</td><td class="mod-val">{{ $employee->employee_id ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showDepartment)
                         <tr><td class="mod-lbl">{{ __('Department') }}</td><td class="mod-val">{{ optional($employee->department)->name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showDateOfJoining)
                         <tr><td class="mod-lbl">{{ __('DOJ') }}</td><td class="mod-val">{{ $employee->company_doj ?? '—' }}</td></tr>
-                        @if($_isUkRequest)
+                        @endif
+                        @if($_isUkRequest && $_showNiNumber)
                         <tr><td class="mod-lbl">{{ __('NI Number') }}</td><td class="mod-val">{{ $niNumber }}</td></tr>
+                        @endif
+                        @if($_isUkRequest && $_showTaxCode)
                         <tr><td class="mod-lbl">{{ __('Tax Code') }}</td><td class="mod-val">{{ $taxCode }}</td></tr>
                         @endif
                     </table>
                 </div>
+                @endif
+                @if($_showPaymentDetails)
                 <div>
                     <div class="mod-grid-title">{{ __('Payment') }}</div>
                     <table class="mod-table">
+                        @if($_showBankName)
                         <tr><td class="mod-lbl">{{ __('Bank Name') }}</td><td class="mod-val">{{ $employee->bank_name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showAccountNo)
                         <tr><td class="mod-lbl">{{ __('Account No.') }}</td><td class="mod-val">{{ $employee->account_number ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showBankCode)
                         <tr><td class="mod-lbl">{{ __(\App\Models\Utility::bankCodeLabel()) }}</td><td class="mod-val">{{ $employee->bank_identifier_code ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showAccountHolder)
                         <tr><td class="mod-lbl">{{ __('Account Holder') }}</td><td class="mod-val">{{ $employee->account_holder_name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showPayPeriod)
                         <tr><td class="mod-lbl">{{ __('Pay Period') }}</td><td class="mod-val">{{ $slipLabel }}</td></tr>
+                        @endif
                         <tr><td class="mod-lbl">{{ __('Status') }}</td><td class="mod-val"><span class="mod-badge {{ $isPaid ? 'mod-paid' : 'mod-unpaid' }}">{{ $isPaid ? __('Paid') : __('Unpaid') }}</span></td></tr>
                     </table>
                 </div>
+                @endif
             </div>
+            @endif
 
             {{-- Monthly: Attendance + Leave Grid | Hourly: Attendance only --}}
             @if(!$isHourly)
@@ -197,16 +225,20 @@
             </div>
 
             {{-- Signatures --}}
+            @if($_showSignatures)
             <div class="mod-sig">
                 <div class="mod-sig-item"><div class="mod-sig-line"></div><div class="mod-sig-lbl">{{ __('Employee Signature') }}</div></div>
                 <div class="mod-sig-item"><div class="mod-sig-line"></div><div class="mod-sig-lbl">{{ __('Authorized Signatory') }}</div></div>
             </div>
+            @endif
         </div>
+        @if($_showFooter)
         <div style="background:{{ $_themeColor }}; color:#fff; text-align:center; padding:6px 18px; font-size:9px; line-height:1.6;">
             @if($companyPhone)<strong>{{ __('Tel') }}:</strong> {{ $companyPhone }} &nbsp;|&nbsp; @endif
             @if($companyWeb)<strong>{{ __('Web') }}:</strong> {{ $companyWeb }} &nbsp;|&nbsp; @endif
             @if($companyEmail)<strong>{{ __('Email') }}:</strong> {{ $companyEmail }} @endif
         </div>
+        @endif
     </div>
 </div>
 <script>

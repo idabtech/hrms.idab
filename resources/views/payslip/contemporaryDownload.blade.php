@@ -52,27 +52,49 @@ body { font-family:'DejaVu Sans',Arial,sans-serif; font-size:9px; color:#222; ba
     </div>
     <div class="ctp-body">
 
+        @if($_showEmployeeDetails || $_showPaymentDetails)
         <table style="width:100%;border-collapse:collapse;"><tr>
-            <td style="width:50%;vertical-align:top;padding-right:5px;">
+            @if($_showEmployeeDetails)
+            <td style="width:{{ $_showPaymentDetails ? '50%' : '100%' }};vertical-align:top;padding-right:5px;">
                 <div class="ctp-title">Employee</div>
                 <table class="ctp-table">
+                    @if($_showName)
                     <tr><td class="ctp-lbl">Name</td><td class="ctp-val" style="color:{{ $_themeColor }};">{{ $employee->name }}</td></tr>
+                    @endif
+                    @if($_showDesignation)
                     <tr><td class="ctp-lbl">Designation</td><td class="ctp-val">{{ optional($employee->designation)->name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showEmployeeId)
                     <tr><td class="ctp-lbl">ID</td><td class="ctp-val">{{ $employee->employee_id ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showDepartment)
                     <tr><td class="ctp-lbl">Department</td><td class="ctp-val">{{ optional($employee->department)->name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showDateOfJoining)
                     <tr><td class="ctp-lbl">DOJ</td><td class="ctp-val">{{ $employee->company_doj ?? '—' }}</td></tr>
+                    @endif
                 </table>
             </td>
-            <td style="width:50%;vertical-align:top;padding-left:5px;">
+            @endif
+            @if($_showPaymentDetails)
+            <td style="width:{{ $_showEmployeeDetails ? '50%' : '100%' }};vertical-align:top;padding-left:5px;">
                 <div class="ctp-title">Payment</div>
                 <table class="ctp-table">
+                    @if($_showBankName)
                     <tr><td class="ctp-lbl">Bank</td><td class="ctp-val">{{ $employee->bank_name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showAccountNo)
                     <tr><td class="ctp-lbl">Account</td><td class="ctp-val">{{ $employee->account_number ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showPayPeriod)
                     <tr><td class="ctp-lbl">Pay Period</td><td class="ctp-val">{{ $slipLabel }}</td></tr>
+                    @endif
                     <tr><td class="ctp-lbl">Status</td><td class="ctp-val"><span class="{{ $isPaid ? 'ctp-paid' : 'ctp-unpaid' }}" style="padding:1px 8px;border-radius:2px;font-size:8px;">{{ $isPaid ? 'Paid' : 'Unpaid' }}</span></td></tr>
                 </table>
             </td>
+            @endif
         </tr></table>
+        @endif
 
         @if(!$isHourly)
         <table style="width:100%;border-collapse:collapse;margin-top:5px;"><tr>
@@ -174,16 +196,20 @@ body { font-family:'DejaVu Sans',Arial,sans-serif; font-size:9px; color:#222; ba
             <div style="font-size:6px;color:#999;margin-top:2px;">Digital Authorization</div>
         </div>
 
+        @if($_showSignatures)
         <table class="ctp-sig" style="width:100%;"><tr>
             <td><div class="ctp-sig-line"></div><div class="ctp-sig-lbl">Employee</div></td>
             <td><div class="ctp-sig-line"></div><div class="ctp-sig-lbl">Authorized</div></td>
         </tr></table>
+        @endif
 
+        @if($_showFooter)
         <div class="ctp-footer">
             @if($companyPhone)<strong>Tel:</strong> {{ $companyPhone }} &nbsp;|&nbsp; @endif
             @if($companyWeb)<strong>Web:</strong> {{ $companyWeb }} &nbsp;|&nbsp; @endif
             @if($companyEmail)<strong>Email:</strong> {{ $companyEmail }} @endif
         </div>
+        @endif
     </div>
 </div>
 </div>

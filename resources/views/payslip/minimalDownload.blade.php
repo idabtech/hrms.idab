@@ -50,31 +50,53 @@ body {
     </div>
 
     <div class="min-pad">
+        @if($_showEmployeeDetails)
         <div style="display:flex;justify-content:space-between;background:#fafafa;padding:6px 10px;margin-bottom:6px;">
-            <div><strong style="font-size:10px;">{{ $employee->name }}</strong><br><span style="font-size:8px;color:#777;">{{ optional($employee->designation)->name ?? '—' }}</span></div>
+            <div>
+                @if($_showName)<strong style="font-size:10px;">{{ $employee->name }}</strong><br>@endif
+                @if($_showDesignation)<span style="font-size:8px;color:#777;">{{ optional($employee->designation)->name ?? '—' }}</span>@endif
+            </div>
             <div style="text-align:right;font-size:8px;color:#777;">
-                ID: {{ $employee->employee_id ?? '—' }}<br>
+                @if($_showEmployeeId)ID: {{ $employee->employee_id ?? '—' }}<br>@endif
                 <span style="font-weight:600;{{ $isPaid ? 'color:#198754;' : 'color:#dc3545;' }}">{{ $isPaid ? 'Paid' : 'Unpaid' }}</span>
             </div>
         </div>
+        @endif
 
+        @if($_showEmployeeDetails || $_showPaymentDetails)
         <table style="width:100%;border-collapse:collapse;"><tr>
+            @if($_showEmployeeDetails)
             <td style="width:33%;vertical-align:top;padding-right:5px;">
                 <div class="min-grid-title">Employee</div>
                 <table class="min-table">
+                    @if($_showDepartment)
                     <tr><td class="min-lbl">Department</td><td class="min-val">{{ optional($employee->department)->name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showDateOfJoining)
                     <tr><td class="min-lbl">DOJ</td><td class="min-val">{{ $employee->company_doj ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showPanNo)
                     <tr><td class="min-lbl">PAN No.</td><td class="min-val">{{ $employee->tax_payer_id ?? '—' }}</td></tr>
+                    @endif
                 </table>
             </td>
+            @endif
+            @if($_showPaymentDetails)
             <td style="width:33%;vertical-align:top;padding:0 5px;">
                 <div class="min-grid-title">Payment</div>
                 <table class="min-table">
+                    @if($_showBankName)
                     <tr><td class="min-lbl">Bank</td><td class="min-val">{{ $employee->bank_name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showAccountNo)
                     <tr><td class="min-lbl">Account</td><td class="min-val">{{ $employee->account_number ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showBankCode)
                     <tr><td class="min-lbl">{{ \App\Models\Utility::bankCodeLabel() }}</td><td class="min-val">{{ $employee->bank_identifier_code ?? '—' }}</td></tr>
+                    @endif
                 </table>
             </td>
+            @endif
             <td style="width:33%;vertical-align:top;padding-left:5px;">
                 <div class="min-grid-title">Salary</div>
                 <table class="min-table">
@@ -85,6 +107,7 @@ body {
                 </table>
             </td>
         </tr></table>
+        @endif
 
         @if(!$isHourly)
         <table style="width:100%;border-collapse:collapse;margin-top:5px;"><tr>
@@ -186,17 +209,21 @@ body {
             <div style="font-size:6px;color:#999;margin-top:2px;">Digital Authorization</div>
         </div>
 
+        @if($_showSignatures)
         <table class="min-sig" style="width:100%;"><tr>
             <td><div class="min-sig-line"></div><div class="min-sig-lbl">Employee</div></td>
             <td><div class="min-sig-line"></div><div class="min-sig-lbl">Authorized</div></td>
         </tr></table>
+        @endif
     </div>
 
+    @if($_showFooter)
     <div class="min-footer">
         @if($companyPhone)<strong>Tel:</strong> {{ $companyPhone }} &nbsp;|&nbsp; @endif
         @if($companyWeb)<strong>Web:</strong> {{ $companyWeb }} &nbsp;|&nbsp; @endif
         @if($companyEmail)<strong>Email:</strong> {{ $companyEmail }} @endif
     </div>
+    @endif
 </div>
 </div>
 </body>

@@ -57,37 +57,63 @@
 
         <div class="min-pad">
             {{-- Employee Info Bar --}}
+            @if($_showEmployeeDetails)
             <div style="display:flex; justify-content:space-between; align-items:center; background:#fafafa; padding:8px 12px; margin-bottom:8px;">
-                <div><strong style="font-size:12px;">{{ $employee->name }}</strong><br><span style="font-size:9px; color:#777;">{{ optional($employee->designation)->name ?? '—' }}</span></div>
+                <div>
+                    @if($_showName)<strong style="font-size:12px;">{{ $employee->name }}</strong><br>@endif
+                    @if($_showDesignation)<span style="font-size:9px; color:#777;">{{ optional($employee->designation)->name ?? '—' }}</span>@endif
+                </div>
                 <div style="text-align:right; font-size:9px; color:#777;">
-                    <div>{{ __('ID') }}: {{ $employee->employee_id ?? '—' }}</div>
+                    @if($_showEmployeeId)<div>{{ __('ID') }}: {{ $employee->employee_id ?? '—' }}</div>@endif
                     <div>{{ $payslipTypeName }} &mdash; <span style="font-weight:600;{{ $isPaid ? 'color:#198754;' : 'color:#dc3545;' }}">{{ $isPaid ? __('Paid') : __('Unpaid') }}</span></div>
                 </div>
             </div>
+            @endif
 
             {{-- Grid: Employee + Payment + Salary --}}
+            @if($_showEmployeeDetails || $_showPaymentDetails)
             <div class="min-flex" style="margin-bottom:6px;">
+                @if($_showEmployeeDetails)
                 <div>
                     <div class="min-grid-title">{{ __('Employee') }}</div>
                     <table class="min-table">
+                        @if($_showDepartment)
                         <tr><td class="min-lbl">{{ __('Department') }}</td><td class="min-val">{{ optional($employee->department)->name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showDateOfJoining)
                         <tr><td class="min-lbl">{{ __('DOJ') }}</td><td class="min-val">{{ $employee->company_doj ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showPanNo)
                         <tr><td class="min-lbl">{{ __('PAN No.') }}</td><td class="min-val">{{ $employee->tax_payer_id ?? '—' }}</td></tr>
-                        @if($_isUkRequest)
+                        @endif
+                        @if($_isUkRequest && $_showNiNumber)
                         <tr><td class="min-lbl">{{ __('NI Number') }}</td><td class="min-val">{{ $niNumber }}</td></tr>
+                        @endif
+                        @if($_isUkRequest && $_showTaxCode)
                         <tr><td class="min-lbl">{{ __('Tax Code') }}</td><td class="min-val">{{ $taxCode }}</td></tr>
                         @endif
                     </table>
                 </div>
+                @endif
+                @if($_showPaymentDetails)
                 <div>
                     <div class="min-grid-title">{{ __('Payment') }}</div>
                     <table class="min-table">
+                        @if($_showBankName)
                         <tr><td class="min-lbl">{{ __('Bank') }}</td><td class="min-val">{{ $employee->bank_name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showAccountNo)
                         <tr><td class="min-lbl">{{ __('Account') }}</td><td class="min-val">{{ $employee->account_number ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showBankCode)
                         <tr><td class="min-lbl">{{ __(\App\Models\Utility::bankCodeLabel()) }}</td><td class="min-val">{{ $employee->bank_identifier_code ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showAccountHolder)
                         <tr><td class="min-lbl">{{ __('Holder') }}</td><td class="min-val">{{ $employee->account_holder_name ?? '—' }}</td></tr>
+                        @endif
                     </table>
                 </div>
+                @endif
                 <div>
                     <div class="min-grid-title">{{ __('Salary') }}</div>
                     <table class="min-table">
@@ -98,6 +124,7 @@
                     </table>
                 </div>
             </div>
+            @endif
 
             {{-- Monthly: Attendance + Leave Grid | Hourly: Attendance + Rate --}}
             @if(!$isHourly)
@@ -201,17 +228,21 @@
             </div>
 
             {{-- Signatures --}}
+            @if($_showSignatures)
             <div class="min-sig">
                 <div class="min-sig-item"><div class="min-sig-line"></div><div class="min-sig-lbl">{{ __('Employee') }}</div></div>
                 <div class="min-sig-item"><div class="min-sig-line"></div><div class="min-sig-lbl">{{ __('Authorized') }}</div></div>
             </div>
+            @endif
         </div>
 
+        @if($_showFooter)
         <div style="background:#fafafa; padding:6px 18px; font-size:8px; text-align:center; color:#999; border-top:1px solid #e8e8e8;">
             @if($companyPhone)<strong>{{ __('Tel') }}:</strong> {{ $companyPhone }} &nbsp;|&nbsp; @endif
             @if($companyWeb)<strong>{{ __('Web') }}:</strong> {{ $companyWeb }} &nbsp;|&nbsp; @endif
             @if($companyEmail)<strong>{{ __('Email') }}:</strong> {{ $companyEmail }} @endif
         </div>
+        @endif
     </div>
 </div>
 <script>

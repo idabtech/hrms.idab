@@ -136,67 +136,127 @@ body {
 
     <div class="prof-body">
 
+        @if($_showEmployeeDetails)
         <div class="prof-employee-box">
             <table>
                 <tr>
                     <td class="prof-emp-label">Employee</td>
+                    @if($_showName)
                     <td class="prof-emp-name">{{ $employee->name }}</td>
+                    @else
+                    <td>—</td>
+                    @endif
+                    @if($_showEmployeeId)
                     <td class="prof-emp-label">Employee ID</td>
                     <td>{{ $employee->employee_id ?? '—' }}</td>
+                    @else
+                    <td></td><td></td>
+                    @endif
                 </tr>
                 <tr>
+                    @if($_showDesignation)
                     <td class="prof-emp-label">Designation</td>
                     <td>{{ optional($employee->designation)->name ?? '—' }}</td>
+                    @else
+                    <td></td><td></td>
+                    @endif
+                    @if($_showDepartment)
                     <td class="prof-emp-label">Department</td>
                     <td>{{ optional($employee->department)->name ?? '—' }}</td>
+                    @else
+                    <td></td><td></td>
+                    @endif
                 </tr>
                 <tr>
+                    @if($_showPayPeriod)
                     <td class="prof-emp-label">Pay Period</td>
                     <td>{{ $slipLabel }}</td>
+                    @else
+                    <td></td><td></td>
+                    @endif
                     <td class="prof-emp-label">Pay Type</td>
                     <td>{{ $payslipTypeName }}</td>
                 </tr>
                 <tr>
                     <td class="prof-emp-label">Pay Status</td>
                     <td><span class="{{ $isPaid ? 'prof-paid' : 'prof-unpaid' }}">{{ $isPaid ? 'Paid' : 'Unpaid' }}</span></td>
+                    @if($_showDateOfJoining)
                     <td class="prof-emp-label">Date of Joining</td>
                     <td>{{ $employee->company_doj ?? '—' }}</td>
+                    @else
+                    <td></td><td></td>
+                    @endif
                 </tr>
-                @if($_isUkRequest)
+                @if($_isUkRequest && ($_showNiNumber || $_showTaxCode))
                 <tr>
+                    @if($_showNiNumber)
                     <td class="prof-emp-label">NI Number</td>
                     <td>{{ $niNumber }}</td>
+                    @else
+                    <td></td><td></td>
+                    @endif
+                    @if($_showTaxCode)
                     <td class="prof-emp-label">Tax Code</td>
                     <td>{{ $taxCode }}</td>
+                    @else
+                    <td></td><td></td>
+                    @endif
                 </tr>
                 @endif
             </table>
         </div>
+        @endif
 
         {{-- Payment Details --}}
+        @if($_showPaymentDetails)
         <div class="prof-employee-box" style="margin-bottom:8px;">
             <table>
                 <tr><td class="prof-emp-label" colspan="4" style="font-size:10px; font-weight:bold; color:{{ $_themeColor }}; padding-bottom:4px;">Payment Details</td></tr>
                 <tr>
+                    @if($_showBankName)
                     <td class="prof-emp-label">Bank Name</td>
                     <td>{{ $employee->bank_name ?? '—' }}</td>
+                    @else
+                    <td></td><td></td>
+                    @endif
+                    @if($_showAccountNo)
                     <td class="prof-emp-label">Account No.</td>
                     <td>{{ $employee->account_number ?? '—' }}</td>
+                    @else
+                    <td></td><td></td>
+                    @endif
                 </tr>
                 <tr>
+                    @if($_showBankCode)
                     <td class="prof-emp-label">{{ \App\Models\Utility::bankCodeLabel() }}</td>
                     <td>{{ $employee->bank_identifier_code ?? '—' }}</td>
+                    @else
+                    <td></td><td></td>
+                    @endif
+                    @if($_showAccountHolder)
                     <td class="prof-emp-label">Account Holder</td>
                     <td>{{ $employee->account_holder_name ?? '—' }}</td>
+                    @else
+                    <td></td><td></td>
+                    @endif
                 </tr>
                 <tr>
+                    @if($_showTransactionMode)
                     <td class="prof-emp-label">Transaction</td>
                     <td>NEFT</td>
+                    @else
+                    <td></td><td></td>
+                    @endif
+                    @if($_showPayPeriod)
                     <td class="prof-emp-label">Pay Period</td>
                     <td>{{ $slipLabel }}</td>
+                    @else
+                    <td></td><td></td>
+                    @endif
                 </tr>
             </table>
         </div>
+        @endif
 
         @if(!$isHourly)
         {{-- Leave Details --}}
@@ -260,6 +320,7 @@ body {
             @endif
         </div>
 
+        @if($_showSignatures)
         <div class="prof-signatures">
             <div class="prof-sig-item">
                 <div class="prof-sig-line"></div>
@@ -274,15 +335,18 @@ body {
                 <div class="prof-sig-label">Authorized Signatory</div>
             </div>
         </div>
+        @endif
 
     </div>
 
+    @if($_showFooter)
     <div class="prof-footer">
         @if ($companyPhone)<strong>Tel:</strong> {{ $companyPhone }} &nbsp;|&nbsp; @endif
         @if ($companyWeb)<strong>Web:</strong> {{ $companyWeb }} &nbsp;|&nbsp; @endif
         @if ($companyEmail)<strong>Email:</strong> {{ $companyEmail }} @endif
         &nbsp;&mdash;&nbsp; This is a computer-generated document
     </div>
+    @endif
 
 </div>
 </body>

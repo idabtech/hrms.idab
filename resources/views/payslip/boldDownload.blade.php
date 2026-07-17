@@ -52,27 +52,49 @@ body { font-family: 'DejaVu Sans', Arial, sans-serif; font-size: 9px; color:#1a1
     </div>
     <div class="bld-body">
 
+        @if($_showEmployeeDetails || $_showPaymentDetails)
         <table style="width:100%;border-collapse:collapse;"><tr>
-            <td style="width:50%;vertical-align:top;padding-right:5px;">
+            @if($_showEmployeeDetails)
+            <td style="width:{{ $_showPaymentDetails ? '50%' : '100%' }};vertical-align:top;padding-right:5px;">
                 <div class="bld-title">Employee</div>
                 <table class="bld-table">
+                    @if($_showName)
                     <tr><td class="bld-lbl">Name</td><td class="bld-val" style="color:{{ $_themeColor }};">{{ $employee->name }}</td></tr>
+                    @endif
+                    @if($_showDesignation)
                     <tr><td class="bld-lbl">Designation</td><td class="bld-val">{{ optional($employee->designation)->name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showEmployeeId)
                     <tr><td class="bld-lbl">ID</td><td class="bld-val">{{ $employee->employee_id ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showDepartment)
                     <tr><td class="bld-lbl">Department</td><td class="bld-val">{{ optional($employee->department)->name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showDateOfJoining)
                     <tr><td class="bld-lbl">DOJ</td><td class="bld-val">{{ $employee->company_doj ?? '—' }}</td></tr>
+                    @endif
                 </table>
             </td>
-            <td style="width:50%;vertical-align:top;padding-left:5px;">
+            @endif
+            @if($_showPaymentDetails)
+            <td style="width:{{ $_showEmployeeDetails ? '50%' : '100%' }};vertical-align:top;padding-left:5px;">
                 <div class="bld-title">Payment</div>
                 <table class="bld-table">
+                    @if($_showBankName)
                     <tr><td class="bld-lbl">Bank</td><td class="bld-val">{{ $employee->bank_name ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showAccountNo)
                     <tr><td class="bld-lbl">Account</td><td class="bld-val">{{ $employee->account_number ?? '—' }}</td></tr>
+                    @endif
+                    @if($_showPayPeriod)
                     <tr><td class="bld-lbl">Pay Period</td><td class="bld-val">{{ $slipLabel }}</td></tr>
+                    @endif
                     <tr><td class="bld-lbl">Status</td><td class="bld-val"><span class="{{ $isPaid ? 'bld-paid' : 'bld-unpaid' }}" style="padding:1px 8px;font-size:8px;">{{ $isPaid ? 'Paid' : 'Unpaid' }}</span></td></tr>
                 </table>
             </td>
+            @endif
         </tr></table>
+        @endif
 
         @if(!$isHourly)
         <table style="width:100%;border-collapse:collapse;margin-top:5px;"><tr>
@@ -174,16 +196,20 @@ body { font-family: 'DejaVu Sans', Arial, sans-serif; font-size: 9px; color:#1a1
             <div style="font-size:6px;color:#999;margin-top:2px;">Digital Authorization</div>
         </div>
 
+        @if($_showSignatures)
         <table class="bld-sig" style="width:100%;"><tr>
             <td><div class="bld-sig-line"></div><div class="bld-sig-lbl">Employee</div></td>
             <td><div class="bld-sig-line"></div><div class="bld-sig-lbl">Authorized</div></td>
         </tr></table>
+        @endif
 
+        @if($_showFooter)
         <div class="bld-footer">
             @if($companyPhone)<strong>Tel:</strong> {{ $companyPhone }} &nbsp;|&nbsp; @endif
             @if($companyWeb)<strong>Web:</strong> {{ $companyWeb }} &nbsp;|&nbsp; @endif
             @if($companyEmail)<strong>Email:</strong> {{ $companyEmail }} @endif
         </div>
+        @endif
     </div>
 </div>
 </div>

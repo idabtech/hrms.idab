@@ -64,34 +64,64 @@
         <div class="cls-body">
 
             {{-- Employee + Payment Grid --}}
+            @if($_showEmployeeDetails || $_showPaymentDetails)
             <div class="cls-two-col" style="margin-bottom:10px;">
+                @if($_showEmployeeDetails)
                 <div>
                     <div class="cls-section-title">{{ __('Employee') }}</div>
                     <table class="cls-table">
+                        @if($_showName)
                         <tr><td class="cls-lbl">{{ __('Name') }}</td><td class="cls-val" style="color:{{ $_themeColor }};">{{ $employee->name }}</td></tr>
+                        @endif
+                        @if($_showDesignation)
                         <tr><td class="cls-lbl">{{ __('Designation') }}</td><td class="cls-val">{{ optional($employee->designation)->name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showEmployeeId)
                         <tr><td class="cls-lbl">{{ __('Employee ID') }}</td><td class="cls-val">{{ $employee->employee_id ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showDepartment)
                         <tr><td class="cls-lbl">{{ __('Department') }}</td><td class="cls-val">{{ optional($employee->department)->name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showDateOfJoining)
                         <tr><td class="cls-lbl">{{ __('DOJ') }}</td><td class="cls-val">{{ $employee->company_doj ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showPanNo)
                         <tr><td class="cls-lbl">{{ __('PAN No.') }}</td><td class="cls-val">{{ $employee->tax_payer_id ?? '—' }}</td></tr>
-                        @if($_isUkRequest)
+                        @endif
+                        @if($_isUkRequest && $_showNiNumber)
                         <tr><td class="cls-lbl">{{ __('NI Number') }}</td><td class="cls-val">{{ $niNumber }}</td></tr>
+                        @endif
+                        @if($_isUkRequest && $_showTaxCode)
                         <tr><td class="cls-lbl">{{ __('Tax Code') }}</td><td class="cls-val">{{ $taxCode }}</td></tr>
                         @endif
                     </table>
                 </div>
+                @endif
+                @if($_showPaymentDetails)
                 <div>
                     <div class="cls-section-title">{{ __('Payment') }}</div>
                     <table class="cls-table">
+                        @if($_showBankName)
                         <tr><td class="cls-lbl">{{ __('Bank Name') }}</td><td class="cls-val">{{ $employee->bank_name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showAccountNo)
                         <tr><td class="cls-lbl">{{ __('Account No.') }}</td><td class="cls-val">{{ $employee->account_number ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showBankCode)
                         <tr><td class="cls-lbl">{{ __(\App\Models\Utility::bankCodeLabel()) }}</td><td class="cls-val">{{ $employee->bank_identifier_code ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showAccountHolder)
                         <tr><td class="cls-lbl">{{ __('Account Holder') }}</td><td class="cls-val">{{ $employee->account_holder_name ?? '—' }}</td></tr>
+                        @endif
+                        @if($_showTransactionMode)
                         <tr><td class="cls-lbl">{{ __('Transaction') }}</td><td class="cls-val">NEFT</td></tr>
+                        @endif
                         <tr><td class="cls-lbl">{{ __('Status') }}</td><td class="cls-val"><span class="cls-badge {{ $isPaid ? 'cls-paid' : 'cls-unpaid' }}">{{ $isPaid ? __('Paid') : __('Unpaid') }}</span></td></tr>
                     </table>
                 </div>
+                @endif
             </div>
+            @endif
 
             @if(!$isHourly)
             {{-- Monthly: Days & Work + Leave Grid --}}
@@ -199,16 +229,20 @@
             </div>
 
             {{-- Signatures --}}
+            @if($_showSignatures)
             <div class="cls-sig">
                 <div class="cls-sig-item"><div class="cls-sig-line"></div><div class="cls-sig-lbl">{{ __('Employee Signature') }}</div></div>
                 <div class="cls-sig-item"><div class="cls-sig-line"></div><div class="cls-sig-lbl">{{ __('Authorized Signatory') }}</div></div>
             </div>
+            @endif
         </div>
+        @if($_showFooter)
         <div class="cls-footer">
             @if($companyPhone)<strong>{{ __('Tel') }}:</strong> {{ $companyPhone }} &nbsp;|&nbsp; @endif
             @if($companyWeb)<strong>{{ __('Web') }}:</strong> {{ $companyWeb }} &nbsp;|&nbsp; @endif
             @if($companyEmail)<strong>{{ __('Email') }}:</strong> {{ $companyEmail }} @endif
         </div>
+        @endif
     </div>
 </div>
 <script>
