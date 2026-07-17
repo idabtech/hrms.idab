@@ -24,6 +24,13 @@
     </div>
 @endsection
 
+@push('css-page')
+<style>
+    .decline-leave-options { display:none; }
+    .decline-leave-options.active { display:block; }
+</style>
+@endpush
+
 @section('content')
     <div class="row">
         {{-- Stats Cards --}}
@@ -65,8 +72,8 @@
             <form method="POST" action="{{ route('attendance-requests.bulk-approve') }}" id="bulk-approve-form" class="d-none">
                 @csrf
                 <input type="hidden" name="type"  value="{{ request('type', 'monthly') }}">
-                <input type="hidden" name="month" value="{{ request('month', date('Y-m')) }}">
-                <input type="hidden" name="date"  value="{{ request('date', '') }}">
+                <input type="hidden" name="month" value="{{ request('month', date('Y-m')) }}">                <input type="hidden" name="date"  value="{{ request('date', '') }}">
+                <input type="hidden" name="employee" value="{{ request('employee', '') }}">
             </form>
         @endcan
 
@@ -76,6 +83,7 @@
                 <input type="hidden" name="type"  value="{{ request('type', 'monthly') }}">
                 <input type="hidden" name="month" value="{{ request('month', date('Y-m')) }}">
                 <input type="hidden" name="date"  value="{{ request('date', '') }}">
+                <input type="hidden" name="employee" value="{{ request('employee', '') }}">
             </form>
         @endcan
 
@@ -118,6 +126,15 @@
                                             {{ Form::date('date', isset($_GET['date']) ? $_GET['date'] : '', ['class' => 'form-control month-btn datepicker w-100']) }}
                                         </div>
                                     </div>
+
+                                    @if (\Auth::user()->type != 'employee')
+                                    <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
+                                        <div class="btn-box">
+                                            {{ Form::label('employee', __('Employee'), ['class' => 'form-label']) }}
+                                            {{ Form::select('employee', $employees, request('employee'), ['class' => 'form-control select', 'id' => 'employee_id', 'placeholder' => __('All Employees')]) }}
+                                        </div>
+                                    </div>
+                                    @endif
 
                                 </div>
                             </div>
@@ -232,14 +249,11 @@
                                                                 {{ __('Approve') }}
                                                             </button>
                                                         </form>
-                                                        <form method="POST"
-                                                            action="{{ route('attendance-requests.decline', $req) }}"
-                                                            style="display:inline;">
-                                                            @csrf
-                                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                                {{ __('Decline') }}
-                                                            </button>
-                                                        </form>
+                                                        <button type="button" class="btn btn-sm btn-danger"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#declineModal-{{ $req->id }}">
+                                                            {{ __('Decline') }}
+                                                        </button>
                                                     @endif
                                                 @else
                                                     -
@@ -247,6 +261,98 @@
                                             @endcan
                                         </td>
                                     </tr>
+
+                                    {{-- ═══ Decline Modal per request ═══ --}}
+                                    @if ($isPending && !$isOwnRequest)
+                                    <div class="modal fade" id="declineModal-{{ $req->id }}" tabindex="-1"
+                                        aria-labelledby="declineModalLabel-{{ $req->id }}" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="declineModalLabel-{{ $req->id }}">
+                                                        {{ __('Decline Request') }} — {{ $req->employee?->name }}
+                                                    </h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form method="POST" action="{{ route('attendance-requests.decline', $req) }}" id="decline-form-{{ $req->id }}">
+                                                    @csrf
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-semibold">{{ __('Decline Type') }}</label>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input decline-type-radio" type="radio"
+                                                                    name="decline_action" id="declineOnly-{{ $req->id }}"
+                                                                    value="decline_only" checked
+                                                                    data-target="leaveOptions-{{ $req->id }}">
+                                                                <label class="form-check-label" for="declineOnly-{{ $req->id }}">
+                                                                    <i class="ti ti-x text-danger me-1"></i>
+                                                                    {{ __('Just Decline (no leave)') }}
+                                                                </label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input decline-type-radio" type="radio"
+                                                                    name="decline_action" id="declineAsLeave-{{ $req->id }}"
+                                                                    value="decline_as_leave"
+                                                                    data-target="leaveOptions-{{ $req->id }}">
+                                                                <label class="form-check-label" for="declineAsLeave-{{ $req->id }}">
+                                                                    <i class="ti ti-calendar-off text-warning me-1"></i>
+                                                                    {{ __('Decline as Leave (auto-create approved leave)') }}
+                                                                </label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="decline-leave-options ps-4 border-start border-2 border-warning" id="leaveOptions-{{ $req->id }}">
+                                                            <div class="mb-3">
+                                                                <label for="declineLeaveTypeId-{{ $req->id }}" class="form-label">
+                                                                    {{ __('Leave Type') }} <span class="text-danger">*</span>
+                                                                </label>
+                                                                <select name="decline_leave_type_id" id="declineLeaveTypeId-{{ $req->id }}"
+                                                                    class="form-control form-control-sm">
+                                                                    <option value="">{{ __('Select leave type') }}</option>
+                                                                    @foreach ($leaveTypes as $lt)
+                                                                        <option value="{{ $lt->id }}">{{ $lt->title }}</option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </div>
+                                                            <div class="mb-0">
+                                                                <label class="form-label">{{ __('Duration') }} <span class="text-danger">*</span></label>
+                                                                <div class="d-flex gap-3">
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input" type="radio"
+                                                                            name="decline_leave_type"
+                                                                            id="declineFullDay-{{ $req->id }}"
+                                                                            value="full_day" checked>
+                                                                        <label class="form-check-label" for="declineFullDay-{{ $req->id }}">
+                                                                            {{ __('Full Day') }}
+                                                                        </label>
+                                                                    </div>
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input" type="radio"
+                                                                            name="decline_leave_type"
+                                                                            id="declineHalfDay-{{ $req->id }}"
+                                                                            value="half_day">
+                                                                        <label class="form-check-label" for="declineHalfDay-{{ $req->id }}">
+                                                                            {{ __('Half Day') }}
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                                                            {{ __('Cancel') }}
+                                                        </button>
+                                                        <button type="submit" class="btn btn-danger" id="declineSubmit-{{ $req->id }}">
+                                                            <i class="ti ti-x"></i> {{ __('Decline') }}
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endif
+
                                 @endforeach
                             </tbody>
                         </table>
@@ -278,14 +384,56 @@
             $('#bulk-approve-form input[name="type"], #bulk-decline-form input[name="type"]').val(type);
         });
 
-        // Sync month/date inputs into the bulk forms whenever they change
+        // Sync month/date/employee inputs into the bulk forms whenever they change
         $('input[name="month"]').on('change', function() {
             $('#bulk-approve-form input[name="month"], #bulk-decline-form input[name="month"]').val($(this).val());
         });
         $('input[name="date"]').on('change', function() {
             $('#bulk-approve-form input[name="date"], #bulk-decline-form input[name="date"]').val($(this).val());
         });
+        $('select[name="employee"]').on('change', function() {
+            $('#bulk-approve-form input[name="employee"], #bulk-decline-form input[name="employee"]').val($(this).val());
+        });
+
+        // Initialize select2 for employee dropdown
+        if ($.fn.select2) {
+            $('#employee_id').select2({
+                width: '100%'
+            });
+        }
 
         $('input[name="type"]:radio:checked').trigger('change');
+
+        // ── Decline Modal: toggle leave options visibility ────────────────
+        $(document).on('change', '.decline-type-radio', function() {
+            var targetId = $(this).data('target');
+            var $options = $('#' + targetId);
+            var $submitBtn = $options.closest('form').find('button[type="submit"]');
+            var isLeave = $(this).val() === 'decline_as_leave';
+
+            $options.toggleClass('active', isLeave);
+
+            if (isLeave) {
+                $submitBtn.html('<i class="ti ti-calendar-off"></i> {{ __("Decline as Leave") }}');
+                $submitBtn.removeClass('btn-danger').addClass('btn-warning');
+            } else {
+                $submitBtn.html('<i class="ti ti-x"></i> {{ __("Decline") }}');
+                $submitBtn.removeClass('btn-warning').addClass('btn-danger');
+            }
+        });
+
+        // ── Decline Modal: client-side validation ─────────────────────────
+        $(document).on('submit', 'form[id^="decline-form-"]', function(e) {
+            var form = $(this);
+            var isLeave = form.find('input[name="decline_action"]:checked').val() === 'decline_as_leave';
+            if (isLeave) {
+                var leaveType = form.find('select[name="decline_leave_type_id"]').val();
+                if (!leaveType) {
+                    e.preventDefault();
+                    alert('{{ __("Please select a leave type.") }}');
+                    return false;
+                }
+            }
+        });
     </script>
 @endpush
