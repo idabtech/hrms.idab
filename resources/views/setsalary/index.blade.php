@@ -24,7 +24,7 @@
                                     <th>{{ __('Employee Id') }}</th>
                                     <th>{{ __('Name') }}</th>
                                     <th>{{ __('Payroll Type') }}</th>
-                                    <th>{{ __('Salary') }}</th>
+                                    <th>{{ __('Gross Salary') }}</th>
                                     <th>{{ __('Basic Salary') }}</th>
                                     {{-- <th>{{ __('Loan/Advance') }}</th> --}}
                                     <th>{{ __('Net Salary') }}</th>
@@ -49,7 +49,7 @@
                                         <td>{{ $employee->name }}</td>
                                         <td>{{ !empty($employee->salary_type()) ? $employee->salary_type() : '-' }}</td>
 
-                                        {{-- Salary: show hourly rate label for hourly employees --}}
+                                        {{-- Gross Salary column --}}
                                         <td>
                                             @if ($_empIsHourly)
                                                 {{ \Auth::user()->priceFormat($employee->salary) }}
@@ -59,7 +59,7 @@
                                             @endif
                                         </td>
 
-                                        {{-- Basic Salary: not applicable for hourly employees --}}
+                                        {{-- Basic Salary column (not applicable for hourly) --}}
                                         <td>
                                             @if ($_empIsHourly)
                                                 <span class="text-muted">—</span>

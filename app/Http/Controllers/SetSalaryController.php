@@ -95,7 +95,7 @@ class SetSalaryController extends Controller
                 abort(404, 'Employee not found');
             }
 
-            $employeeSalary = $employee->salary;
+            $employeeSalary = $employee->basic_salary;  // percentage allowances based on basic_salary
 
             $allowances = Allowance::where('employee_id', $employee->id)->get();
             $commissions = Commission::where('employee_id', $employee->id)->get();
@@ -165,7 +165,7 @@ class SetSalaryController extends Controller
             foreach ($allowances as $value) {
                 if ($value->type == 'percentage') {
                     $employee = Employee::find($value->employee_id);
-                    $empsal = $value->amount * $employee->salary / 100;
+                    $empsal = $value->amount * $employee->basic_salary / 100;
                     $value->tota_allow = $empsal;
                 }
             }
@@ -173,7 +173,7 @@ class SetSalaryController extends Controller
             foreach ($commissions as $value) {
                 if ($value->type == 'percentage') {
                     $employee = Employee::find($value->employee_id);
-                    $empsal = $value->amount * $employee->salary / 100;
+                    $empsal = $value->amount * $employee->basic_salary / 100;
                     $value->tota_allow = $empsal;
                 }
             }
@@ -181,24 +181,22 @@ class SetSalaryController extends Controller
             foreach ($loans as $value) {
                 if ($value->type == 'percentage') {
                     $employee = Employee::find($value->employee_id);
-                    $empsal = $value->amount * $employee->salary / 100;
+                    $empsal = $value->amount * $employee->basic_salary / 100;
                     $value->tota_allow = $empsal;
                 }
             }
 
             foreach ($saturationdeductions as $value) {
-
                 if ($value->type == 'percentage') {
                     $employee = Employee::find($value->employee_id);
                     $deduction_options = DeductionOption::where('id', $value->deduction_option)->first();
                     if (strtolower($deduction_options->name) == 'epf') {
-                        $empsal = ($employee->get_net_da() + $employee->basic_salary)*12/ 100;
+                        $empsal = $employee->basic_salary * 12 / 100;
                     } elseif (strtolower($deduction_options->name) == 'gpf') {
-                        $empsal = ($employee->get_net_da() + $employee->basic_salary) * 6  / 100;
+                        $empsal = $employee->basic_salary * 6 / 100;
                     } else {
-                        $empsal = $value->amount * $employee->salary / 100;
+                        $empsal = $value->amount * $employee->basic_salary / 100;
                     }
-                    // $empsal = $value->amount * $employee->salary / 100;
                     $value->tota_allow = $empsal;
                 }
             }
@@ -206,7 +204,7 @@ class SetSalaryController extends Controller
             foreach ($otherpayments as $value) {
                 if ($value->type == 'percentage') {
                     $employee = Employee::find($value->employee_id);
-                    $empsal = $value->amount * $employee->salary / 100;
+                    $empsal = $value->amount * $employee->basic_salary / 100;
                     $value->tota_allow = $empsal;
                 }
             }
@@ -216,9 +214,8 @@ class SetSalaryController extends Controller
             $gross_salary = 0;
 
             foreach ($allowances as $item) {
-
                 if ($item->type == 'percentage') {
-                    $allow = ($item->amount * $employee->salary) / 100;
+                    $allow = ($item->amount * $employee->basic_salary) / 100;
                     $gross_salary = $gross_salary + $allow;
                 } else {
                     $gross_salary = $gross_salary + $item->amount;
@@ -226,9 +223,8 @@ class SetSalaryController extends Controller
             }
 
             foreach ($commissions as $item) {
-
                 if ($item->type == 'percentage') {
-                    $comm = ($item->amount * $employee->salary) / 100;
+                    $comm = ($item->amount * $employee->basic_salary) / 100;
                     $gross_salary = $gross_salary + $comm;
                 } else {
                     $gross_salary = $gross_salary + $item->amount;
@@ -236,26 +232,24 @@ class SetSalaryController extends Controller
             }
 
             foreach ($bonous as $item) {
-
                 if ($item->type == 'percentage') {
-                    $bonous = ($item->amount * $employee->salary) / 100;
-                    $gross_salary = $gross_salary + $bonous;
+                    $bon = ($item->amount * $employee->basic_salary) / 100;
+                    $gross_salary = $gross_salary + $bon;
                 } else {
                     $gross_salary = $gross_salary + $item->amount;
                 }
             }
 
             foreach ($overtimes as $item) {
-
                 if ($item->type == 'percentage') {
-                    $over = ($item->rate * $employee->salary) / 100;
+                    $over = ($item->rate * $employee->basic_salary) / 100;
                     $gross_salary = $gross_salary + $over;
                 } else {
                     $gross_salary = $gross_salary + $item->rate;
                 }
             }
 
-            $gross_salary = $gross_salary + $employee->salary;
+            $gross_salary = $gross_salary + $employee->basic_salary;
 
             $salaryRevisions = SalaryRevision::where('employee_id', $employee->id)
                 ->orderBy('effective_from', 'desc')
@@ -275,8 +269,8 @@ class SetSalaryController extends Controller
             [
                 'salary_type' => 'required',
                 'salary' => 'required',
-                'hra' => 'required',
-                'da' => 'required',
+                //'hra' => 'required',
+                //'da' => 'required',
                 'from_account_type' => 'nullable',
             ]
         );
@@ -288,10 +282,11 @@ class SetSalaryController extends Controller
         $employee = Employee::findOrFail($id);
         $input = $request->all();
         $employee->fill($input);
-        $employee->account_type = $input['from_account_type'];
-        $employee->basic_salary = $input['salary'] / 2;
-        $employee->hra = $input['hra'];
-        $employee->da = $input['da'];
+        $employee->account_type  = $input['from_account_type'];
+        $employee->salary        = $input['salary'];
+        $employee->basic_salary  = $input['basic_salary'] ?? $input['salary'];
+        //$employee->hra = $input['hra'];
+        //$employee->da = $input['da'];
         $employee->save();
 
         return redirect()->back()->with('success', 'Employee Salary Updated.');

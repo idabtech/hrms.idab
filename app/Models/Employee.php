@@ -227,17 +227,19 @@ class Employee extends Model
             $salary = $storedSalary;
         }
 
-        // Percentage-based allowances/deductions are calculated against the
-        // resolved monthly gross ($salary), not the raw stored value.
-        $calcTotal = function ($items) use ($salary) {
-            return $items->sum(function ($item) use ($salary) {
+        // Percentage-based allowances/deductions are calculated against basic_salary
+        $basicSalary = (float) $employee->basic_salary;
+        $calcTotal = function ($items) use ($basicSalary) {
+            return $items->sum(function ($item) use ($basicSalary) {
                 if ($item->type === 'percentage') {
                     if (strtolower($item->title) == 'epf') {
-                        $empdeduction = ($this->get_net_da() +  $salary) *12 /  (2 * 100);
+                        // EPF = 12% of basic_salary
+                        $empdeduction = $basicSalary * 12 / 100;
                     } elseif (strtolower($item->title) == 'gpf') {
-                        $empdeduction = ($this->get_net_da() +  $salary) * 6   /  (2 * 100);
+                        // GPF = 6% of basic_salary
+                        $empdeduction = $basicSalary * 6 / 100;
                     } else {
-                        $empdeduction = $item->amount * $salary / 100;
+                        $empdeduction = $item->amount * $basicSalary / 100;
                     }
                     return $empdeduction;
                 } else {
@@ -259,19 +261,10 @@ class Employee extends Model
             return $ot->number_of_days * $ot->hours * $ot->rate;
         });
 
-        // ── Preview: full-month net salary assuming no absences ───────────────
-        // No LOP deduction here — absence deduction only applies on the
-        // actual payslip (employeePayslipDetail) after the month is complete.
-        // $adjustments = $total_allowance + $total_commission + $total_bonus + $total_pearks
-        //     + $total_other_payment + $total_overtime
-        //     - $total_loan - $total_saturation_deduction - $total_pension;
-        // dd('salary: ' . $employee->salary . "\n" . ' total_allowance: ' . $total_a?llowance . "\n" . ' total_pension: ' . $total_pension . "\n" . ' total_commission: ' . $total_commission . "\n" . ' total_loan: ' . $total_loan . "\n" . ' total_saturation_deduction: ' . $total_saturation_deduction . "\n" . ' total_bonus: ' . $total_bonus);
-        $basic_salary = $employee->basic_salary;
-        //         dump($total_loan
-        // - $total_pension
-        // - $total_saturation_deduction);
-
-        $netSalary = $employee->basic_salary + $this->get_net_hra()+$this->get_net_da() + $total_allowance + $total_other_payment + $total_commission - $total_loan - $total_pension + $total_bonus - $total_saturation_deduction;
+        // Net Pay = basic_salary + allowances − deductions (no HRA/DA — stored as allowances)
+        $netSalary = $basicSalary
+            + $total_allowance + $total_other_payment + $total_commission + $total_bonus
+            - $total_loan - $total_pension - $total_saturation_deduction;
 
         // return round($salary + $adjustments, 2);
         return round($netSalary, 2);
