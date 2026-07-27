@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('page-title')
-    {{ __('Manage Event') }}
+    {{ __('Manage Event/Task') }}
 @endsection
 
 @php
@@ -10,13 +10,13 @@
 
 @section('breadcrumb')
     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">{{ __('Home') }}</a></li>
-    <li class="breadcrumb-item">{{ __('Event') }}</li>
+    <li class="breadcrumb-item">{{ __('Event/Task') }}</li>
 @endsection
 
 @section('action-button')
     @can('Create Event')
         <a href="javascript:void(0)" data-url="{{ route('event.create') }}" data-ajax-popup="true" data-size="lg"
-            data-title="{{ __('Create New Event') }}" data-bs-toggle="tooltip" title="{{ __('Create') }}"
+            data-title="{{ __('Add Event/Task') }}" data-bs-toggle="tooltip" title="{{ __('Create') }}"
             class="btn btn-sm btn-primary">
             <i class="ti ti-plus"></i>
         </a>
@@ -57,7 +57,7 @@
         <div class="col-lg-4">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="mb-4">{{ __('Upcoming Events') }}</h4>
+                    <h4 class="mb-4">{{ __('Upcoming Events/Task') }}</h4>
                     <ul class="event-cards list-group list-group-flush mt-3 w-100">
                         <li class="list-group-item card mb-3">
                             <div class="row align-items-center justify-content-between">
@@ -73,7 +73,7 @@
                                                                 <a href="javascript:void(0)" data-size="lg"
                                                                     data-url="{{ route('event.edit', $event->id) }}"
                                                                     data-ajax-popup="true"
-                                                                    data-title="{{ __('Edit Event') }}"
+                                                                    data-title="{{ __('Edit Event/Task') }}"
                                                                     class="fc-event-title text-primary">
                                                                     {{ $event->title }}
                                                                 </a>
@@ -95,7 +95,7 @@
                                                                             data-url="{{ route('event.edit', $event->id) }}"
                                                                             data-ajax-popup="true" data-size="md"
                                                                             data-bs-toggle="tooltip" title=""
-                                                                            data-title="{{ __('Edit Event') }}"
+                                                                            data-title="{{ __('Edit Event/Task') }}"
                                                                             data-bs-original-title="{{ __('Edit') }}">
                                                                             <span class="text-white"><i class="ti ti-pencil"></i></span>
                                                                         </a>
