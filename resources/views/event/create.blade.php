@@ -64,8 +64,8 @@
 
         <div class="col-md-12 col-sm-12 col-lg-12 col-xl-12">
             <div class="form-group">
-                {{ Form::label('title', __('Event Title'), ['class' => 'col-form-label']) }}<x-required></x-required>
-                {{ Form::text('title', null, ['class' => 'form-control ', 'required' => 'required', 'placeholder' => __('Enter Event Title')]) }}
+                {{ Form::label('title', __('Event/Task Title'), ['class' => 'col-form-label']) }}<x-required></x-required>
+                {{ Form::text('title', null, ['class' => 'form-control ', 'required' => 'required', 'placeholder' => __('Enter Event/Task Title')]) }}
             </div>
         </div>
         <div class="col-md-6 col-sm-12 col-lg-6 col-xl-6">

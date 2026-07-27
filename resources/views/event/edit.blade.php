@@ -24,8 +24,8 @@
 
         <div class="row">
             <div class="form-group">
-                {{ Form::label('title', __('Event Title'), ['class' => 'col-form-label']) }}<x-required></x-required>
-                {{ Form::text('title', null, ['class' => 'form-control', 'required' => 'required', 'placeholder' => __('Enter Event Title')]) }}
+                {{ Form::label('title', __('Event/Task Title'), ['class' => 'col-form-label']) }}<x-required></x-required>
+                {{ Form::text('title', null, ['class' => 'form-control', 'required' => 'required', 'placeholder' => __('Enter Event/Task Title')]) }}
             </div>
             <div class="col-md-6">
                 <div class="form-group">
@@ -131,8 +131,8 @@
             <div class="row">
                 <div class="col-md-12">
                     <div class="form-group">
-                        {{ Form::label('title', __('Event Title'), ['class' => 'col-form-label']) }}
-                        {{ Form::text('title', null, ['class' => 'form-control', 'placeholder' => __('Enter Event Title')]) }}
+                        {{ Form::label('title', __('Event/Task Title'), ['class' => 'col-form-label']) }}
+                        {{ Form::text('title', null, ['class' => 'form-control', 'placeholder' => __('Enter Event/Task Title')]) }}
                     </div>
                 </div>
             </div>
