@@ -620,7 +620,7 @@
                     <ul class="dash-submenu">
                         @can('Manage Event')
                             <li class="dash-item {{ Request::segment(1) == 'event' ? 'active' : '' }}">
-                                <a class="dash-link" href="{{ route('event.index') }}">{{ __('Event') }}</a>
+                                <a class="dash-link" href="{{ route('event.index') }}">{{ __('Event/Task') }}</a>
                             </li>
                         @endcan
                         @can('Manage Meeting')
