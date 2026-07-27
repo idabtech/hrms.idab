@@ -1200,6 +1200,14 @@
             </div>
         </div>
     </div>
+    {{-- Right-click context menu for calendar --}}
+    @can('Create Leave')
+        <div id="calendarContextMenu" class="dropdown-menu shadow" style="display:none; position:fixed; z-index:10000;">
+            <a href="javascript:void(0);" id="ctxCreateLeave" class="dropdown-item">
+                <i class="ti ti-calendar-plus me-2"></i> {{ __('Create New Leave') }}
+            </a>
+        </div>
+    @endcan
 @endsection
 
 
@@ -1267,6 +1275,85 @@
                             // timeFormat: 'H(:mm)',
                         });
                         calendar.render();
+
+                        // Right-click context menu for company/HR calendar
+                        @can('Create Leave')
+                        (function() {
+                            var calEl = document.getElementById('calendar');
+                            var ctxMenu = document.getElementById('calendarContextMenu');
+                            var selectedDate = null;
+
+                            if (!calEl || !ctxMenu) return;
+
+                            calEl.addEventListener('contextmenu', function(e) {
+                                // Find the closest date cell
+                                var dayCell = e.target.closest('[data-date]');
+                                if (!dayCell) return;
+
+                                e.preventDefault();
+                                selectedDate = dayCell.getAttribute('data-date');
+
+                                // Position the context menu
+                                ctxMenu.style.left = e.clientX + 'px';
+                                ctxMenu.style.top = e.clientY + 'px';
+                                ctxMenu.style.display = 'block';
+
+                                // Adjust position if menu goes off screen
+                                var menuRect = ctxMenu.getBoundingClientRect();
+                                if (menuRect.right > window.innerWidth) {
+                                    ctxMenu.style.left = (e.clientX - menuRect.width) + 'px';
+                                }
+                                if (menuRect.bottom > window.innerHeight) {
+                                    ctxMenu.style.top = (e.clientY - menuRect.height) + 'px';
+                                }
+                            });
+
+                            document.addEventListener('click', function() {
+                                ctxMenu.style.display = 'none';
+                            });
+
+                            document.addEventListener('contextmenu', function(e) {
+                                if (!calEl.contains(e.target)) {
+                                    ctxMenu.style.display = 'none';
+                                }
+                            });
+
+                            document.getElementById('ctxCreateLeave').addEventListener('click', function(e) {
+                                e.preventDefault();
+                                ctxMenu.style.display = 'none';
+
+                                // Open the Create New Leave modal (same as data-ajax-popup)
+                                var url = '{{ route("leave.create") }}';
+                                var title = '{{ __("Create New Leave") }}';
+                                var size = 'lg';
+
+                                $("#commonModal .modal-title").html(title);
+                                $("#commonModal .modal-dialog").addClass('modal-' + size);
+                                $.ajax({
+                                    url: url,
+                                    success: function(data) {
+                                        $('#commonModal .body').html(data);
+                                        $("#commonModal").modal('show');
+                                        // Pre-fill date from right-click
+                                        if (selectedDate) {
+                                            $('#commonModal #start_date').val(selectedDate);
+                                            $('#commonModal #end_date').val(selectedDate);
+                                        }
+                                        taskCheckbox();
+                                        common_bind("#commonModal");
+                                        commonLoader();
+                                        select2();
+                                        cancelButtonCss();
+                                        if (typeof validation === 'function') validation();
+                                    },
+                                    error: function(data) {
+                                        data = data.responseJSON;
+                                        toastrs('Error', data.error, 'error');
+                                    }
+                                });
+                            });
+                        })();
+                        @endcan
                     }
                 });
             };
@@ -1327,10 +1414,83 @@
                             events: data,
                             // height: 'auto',
                             // timeFormat: 'H(:mm)',
-
                         });
 
                         calendar.render();
+
+                        // Right-click context menu for employee calendar
+                        @can('Create Leave')
+                        (function() {
+                            var calEl = document.getElementById('event_calendar');
+                            var ctxMenu = document.getElementById('calendarContextMenu');
+                            var selectedDate = null;
+
+                            if (!calEl || !ctxMenu) return;
+
+                            calEl.addEventListener('contextmenu', function(e) {
+                                var dayCell = e.target.closest('[data-date]');
+                                if (!dayCell) return;
+
+                                e.preventDefault();
+                                selectedDate = dayCell.getAttribute('data-date');
+
+                                ctxMenu.style.left = e.clientX + 'px';
+                                ctxMenu.style.top = e.clientY + 'px';
+                                ctxMenu.style.display = 'block';
+
+                                var menuRect = ctxMenu.getBoundingClientRect();
+                                if (menuRect.right > window.innerWidth) {
+                                    ctxMenu.style.left = (e.clientX - menuRect.width) + 'px';
+                                }
+                                if (menuRect.bottom > window.innerHeight) {
+                                    ctxMenu.style.top = (e.clientY - menuRect.height) + 'px';
+                                }
+                            });
+
+                            document.addEventListener('click', function() {
+                                ctxMenu.style.display = 'none';
+                            });
+
+                            document.addEventListener('contextmenu', function(e) {
+                                if (!calEl.contains(e.target)) {
+                                    ctxMenu.style.display = 'none';
+                                }
+                            });
+
+                            document.getElementById('ctxCreateLeave').addEventListener('click', function(e) {
+                                e.preventDefault();
+                                ctxMenu.style.display = 'none';
+
+                                var url = '{{ route("leave.create") }}';
+                                var title = '{{ __("Create New Leave") }}';
+                                var size = 'lg';
+
+                                $("#commonModal .modal-title").html(title);
+                                $("#commonModal .modal-dialog").addClass('modal-' + size);
+                                $.ajax({
+                                    url: url,
+                                    success: function(data) {
+                                        $('#commonModal .body').html(data);
+                                        $("#commonModal").modal('show');
+                                        if (selectedDate) {
+                                            $('#commonModal #start_date').val(selectedDate);
+                                            $('#commonModal #end_date').val(selectedDate);
+                                        }
+                                        taskCheckbox();
+                                        common_bind("#commonModal");
+                                        commonLoader();
+                                        select2();
+                                        cancelButtonCss();
+                                        if (typeof validation === 'function') validation();
+                                    },
+                                    error: function(data) {
+                                        data = data.responseJSON;
+                                        toastrs('Error', data.error, 'error');
+                                    }
+                                });
+                            });
+                        })();
+                        @endcan
                     }
                 });
             };

@@ -486,11 +486,14 @@
         $(document).on('click', '.local_calender .fc-daygrid-event', function(e) {
             // if (!$(this).hasClass('project')) {
             e.preventDefault();
+            var url = $(this).attr('href');
+            if (!url || url === '0' || url === '#' || url === 'javascript:void(0);') {
+                return false;
+            }
             var event = $(this);
             var title = $(this).find('.fc-event-title').html();
 
             var size = 'md';
-            var url = $(this).attr('href');
             $("#commonModal .modal-title ").html(title);
             $("#commonModal .modal-dialog").addClass('modal-' + size);
             $.ajax({

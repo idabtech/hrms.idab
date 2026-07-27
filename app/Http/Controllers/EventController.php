@@ -15,6 +15,7 @@ use App\Models\Utility;
 use App\Imports\EventImport;
 use App\Exports\EventExport;
 use App\Models\Holiday;
+use App\Models\Leave;
 use App\Models\Webhook;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
@@ -469,6 +470,36 @@ if (Auth::user()->type == 'employee') {
                     "className" => "event-primary",
                     "allDay"    => true,
                     "url"       => route('holiday.edit', $holiday->id),
+                ];
+            }
+
+            // Approved Leaves (visible to everyone: Employee, HR, Company)
+            $leaves = Leave::where('created_by', '=', \Auth::user()->creatorId())
+                ->whereIn('status', ['Approved', 'approved'])
+                ->with(['employees', 'leaveType'])
+                ->get();
+
+            foreach ($leaves as $leave) {
+                $empName    = $leave->employees ? $leave->employees->name : __('Employee');
+                $leaveTitle = $leave->leaveType ? $leave->leaveType->title : __('Leave');
+                $title      = $empName . ' - ' . $leaveTitle;
+
+                $startRaw = $leave->start_date instanceof Carbon ? $leave->start_date->format('Y-m-d') : $leave->start_date;
+                $endRaw   = $leave->end_date instanceof Carbon ? $leave->end_date->format('Y-m-d') : $leave->end_date;
+
+                $end_date = date_create($endRaw);
+                date_add($end_date, date_interval_create_from_date_string("1 days"));
+
+                $leaveUrl = \Auth::user()->type != 'employee' ? route('leave.action', $leave->id) : '0';
+
+                $arrayJson[] = [
+                    "id"        => "leave_" . $leave->id,
+                    "title"     => $title,
+                    "start"     => $startRaw,
+                    "end"       => date_format($end_date, "Y-m-d H:i:s"),
+                    "className" => "event-warning",
+                    "allDay"    => true,
+                    "url"       => $leaveUrl,
                 ];
             }
         }
