@@ -256,7 +256,7 @@ class AttendanceEmployeeController extends Controller
 
     public function update(Request $request, $id)
     {
-        if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr') {
+        if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR') {
 
             $employeeId      = AttendanceEmployee::where('employee_id', $request->employee_id)->first();
             $check = AttendanceEmployee::where('id', '=', $id)->where('employee_id', '=', $request->employee_id)->where('date',  $request->date)->first();

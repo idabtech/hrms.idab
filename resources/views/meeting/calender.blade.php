@@ -19,7 +19,7 @@
         <i class="ti ti-list"></i>
     </a>
 
-    @if (Auth::user()->type == 'company' || Auth::user()->type == 'hr')
+    @if (Auth::user()->type == 'company' || Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
 	    @can('Create Leave')
 		<a href="javascript:void(0)" data-url="{{ route('meeting.create') }}" data-ajax-popup="true"
 		    data-title="{{ __('Create New Meeting') }}" data-size="lg" data-bs-toggle="tooltip" title=""

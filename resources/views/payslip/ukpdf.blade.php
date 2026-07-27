@@ -1,184 +1,24 @@
 @php
-use Carbon\Carbon;
-
-[$slipYear, $slipMonth] = explode('-', $payslip->salary_month);
-
-$downloadUrl  = route('payslip.uk.download', [$employee->id, $payslip->salary_month]);
-
-// ── Dynamic theme color ───────────────────────────────────────────────────
-$_colorSetting = \App\Models\Utility::colorset();
-$_themeName    = $_colorSetting['theme_color'] ?? 'theme-2';
-$_themeHexMap  = [
-    'theme-1'  => '#0CAF60',
-    'theme-2'  => '#584ED2',
-    'theme-3'  => '#6FD943',
-    'theme-4'  => '#145388',
-    'theme-5'  => '#B9406B',
-    'theme-6'  => '#008ECC',
-    'theme-7'  => '#922C88',
-    'theme-8'  => '#C0A145',
-    'theme-9'  => '#48494B',
-    'theme-10' => '#0C7785',
-];
-$_themeColor = str_starts_with($_themeName, '#')
-    ? $_themeName
-    : ($_themeHexMap[$_themeName] ?? '#584ED2');
-
-// Proper rgba tint for page background
-$_hex = ltrim($_themeColor, '#');
-$_r   = hexdec(substr($_hex, 0, 2));
-$_g   = hexdec(substr($_hex, 2, 2));
-$_b   = hexdec(substr($_hex, 4, 2));
-$_bgRgba  = "rgba({$_r},{$_g},{$_b},0.10)";
-
-// ── Currency ──────────────────────────────────────────────────────────────
-$_appSettings = \App\Models\Utility::settings();
-$_currSymbol  = $_appSettings['site_currency_symbol'] ?? '£';
-$_currPos     = $_appSettings['site_currency_symbol_position'] ?? 'pre';
-$_fmtMoney    = function($amount) use ($_currSymbol, $_currPos) {
-    $n = number_format((float)$amount, 2);
-    return $_currPos === 'pre' ? $_currSymbol . $n : $n . $_currSymbol;
-};
-
-// ── Month labels ──────────────────────────────────────────────────────────
-$carbonMonth = Carbon::createFromDate((int)$slipYear, (int)$slipMonth, 1);
-$slipLabel   = $carbonMonth->format('F Y');
-$slipShort   = $carbonMonth->format('M Y');
-$payDate     = $carbonMonth->copy()->endOfMonth()->format('d M Y');
-
-// ── All display values ────────────────────────────────────────────────────
-$_storedSalary        = (float) $payslipDetail['basic_salary'];  // gross snapshot
-$_basicSalary         = (float) $employee->basic_salary;          // base for % allowances
-$perDaySalary         = round((float) $payslipDetail['per_day_amount'], 2);
-$perHourSalary        = round((float) $payslipDetail['per_hour_amount'], 2);
-$officeDays           = (int)   $payslipDetail['office_days'];
-$presentDays          = $payslipDetail['present_days'];
-$approvedLeaves       = $payslipDetail['approved_leaves_month'];
-$disapprovedLeaves    = (int)   $payslipDetail['rejected_leaves_month'];
-$absentDays           = $payslipDetail['absent_days'];
-$extraDays            = $payslipDetail['extra_days'];
-$totalWorkHours       = $payslipDetail['total_work_hours'];
-$avgHrsPerDay         = $payslipDetail['avg_hrs_per_day'];
-$totalLeaveAlloc      = (int)   $payslipDetail['total_leave_alloc'];
-$remainingLeaves      = (int)   $payslipDetail['remaining_leaves'];
-$paidLeaveDays        = $payslipDetail['paid_leave_days']          ?? 0;
-$unpaidLeaveDays      = $payslipDetail['unpaid_leave_days']        ?? 0;
-$unpaidLeaveDeduction = $payslipDetail['unpaid_leave_deduction']   ?? 0;
-$daysPaid             = $payslipDetail['days_paid']                ?? ($presentDays + $paidLeaveDays);
-$isHourly             = (bool)  ($payslipDetail['is_hourly']       ?? false);
-$hoursPerDay          = (float) ($payslipDetail['hours_per_day']   ?? 8);
-$payslipTypeName      = \App\Models\PayslipType::find($employee->salary_type)?->name ?? 'Monthly';
-$isPaid               = $payslip->status == 1;
-
-$presentDisplay  = min($presentDays, $officeDays);
-$presentDaysFmt  = ($presentDisplay == floor($presentDisplay)) ? (int)$presentDisplay : $presentDisplay;
-$absentDaysFmt   = ($absentDays == floor($absentDays)) ? (int)$absentDays : $absentDays;
-$extraDaysFmt    = ($extraDays  == floor($extraDays))  ? (int)$extraDays  : $extraDays;
-
-// ── UK-specific flag — drives conditional display in the payslip ─────────
-// Uses same IP detection as Utility::bankCodeLabel(). Cached per IP 24h.
-// On localhost/private IPs returns false — use ?uk_preview=1 in URL to override
-// during local development.
-$_isUkRequest = \App\Models\Utility::isUkRequest()
-    || request()->boolean('uk_preview');
-// tax_payer_id  → Tax Code (e.g. 1257L)
-// ni_number     → NI Number (e.g. JS877742C) — new dedicated column
-// ni_table_letter → NI Table Letter (e.g. A) — new column, default A
-// payment_method  → BACS/CHAPS/Cash/Cheque — new column, default BACS
-// employee_id   → Works No
-// bank_identifier_code → Sort Code (correct use of this field)
-$taxCode        = !empty($employee->tax_payer_id)      ? $employee->tax_payer_id      : '—';
-$niNumber       = !empty($employee->ni_number)         ? $employee->ni_number         : '—';
-$niTableLetter  = !empty($employee->ni_table_letter)   ? $employee->ni_table_letter   : 'A';
-$paymentMethod  = !empty($employee->payment_method)    ? $employee->payment_method    : 'BACS';
-$worksNo        = !empty($employee->employee_id)       ? $employee->employee_id       : '—';
-$sortCode       = !empty($employee->bank_identifier_code) ? $employee->bank_identifier_code : '—';
-@endphp
-@php
-// ── Earnings rows ─────────────────────────────────────────────────────────
-$_basicLabel = $isHourly
-    ? 'REGULAR (' . $totalWorkHours . ' hrs @ ' . number_format($perHourSalary, 2) . ')'
-    : __('Basic Salary');
-$earRows = [['label' => $_basicLabel, 'amount' => $_storedSalary]];
-foreach ($payslipDetail['earning']['allowance'] as $_ar) {
-    foreach (json_decode($_ar->allowance) as $_a) {
-        $earRows[] = ['label' => $_a->title, 'amount' => $_a->type === 'percentage' ? round($_a->amount * $_basicSalary / 100, 2) : (float)$_a->amount];
-    }
-}
-foreach ($payslipDetail['earning']['commission'] as $_cr) {
-    foreach (json_decode($_cr->commission) as $_c) {
-        $earRows[] = ['label' => $_c->title, 'amount' => $_c->type === 'percentage' ? round($_c->amount * $_basicSalary / 100, 2) : (float)$_c->amount];
-    }
-}
-foreach ($payslipDetail['earning']['bonous'] as $_b) {
-    $earRows[] = ['label' => $_b->title ?: __('Bonus'), 'amount' => $_b->type === 'percentage' ? round($_b->amount * $_basicSalary / 100, 2) : (float)$_b->amount];
-}
-foreach ($payslipDetail['earning']['otherPayment'] as $_op2) {
-    foreach (json_decode($_op2->other_payment) as $_op) {
-        $earRows[] = ['label' => $_op->title, 'amount' => $_op->type === 'percentage' ? round($_op->amount * $_basicSalary / 100, 2) : (float)$_op->amount];
-    }
-}
-foreach ($payslipDetail['earning']['overTime'] as $_ot2) {
-    foreach (json_decode($_ot2->overtime) as $_ot) {
-        $earRows[] = ['label' => $_ot->title ?: __('Overtime'), 'amount' => (float)($_ot->number_of_days * $_ot->hours * $_ot->rate)];
-    }
-}
-
-// ── Deductions rows ───────────────────────────────────────────────────────
-$dedRows = [];
-// Loan Repayment (deduction)
-$totalLoanRepayment = $payslipDetail['totalLoanRepayment'] ?? 0;
-if ($totalLoanRepayment > 0) {
-    $dedRows[] = ['label' => __('Loan Repayment'), 'amount' => $totalLoanRepayment];
-}
-foreach ($payslipDetail['deduction']['saturation_deduction'] as $_dr2) {
-    foreach (json_decode($_dr2->saturation_deduction) as $_dd) {
-        $_amt = $_dd->type === 'percentage' ? round($_dd->amount * $_basicSalary / 100, 2) : (float)$_dd->amount;
-        if ($_amt > 0) $dedRows[] = ['label' => $_dd->title, 'amount' => $_amt];
-    }
-}
-foreach ($payslipDetail['deduction']['pansion'] as $_p) {
-    $_amt = $_p->type === 'percentage' ? round($_p->amount * $_basicSalary / 100, 2) : (float)$_p->amount;
-    if ($_amt > 0) $dedRows[] = ['label' => $_p->title ?: __('Employee Pension'), 'amount' => $_amt];
-}
-foreach ($payslipDetail['deduction']['leave'] as $_lea) {
-    if ($_lea->empleave > 0) $dedRows[] = ['label' => __('Loss Of Pay'), 'amount' => (float)$_lea->empleave];
-}
-if ($unpaidLeaveDeduction > 0) {
-    $dedRows[] = ['label' => __('Unpaid Leave') . ' (' . $unpaidLeaveDays . ' ' . __('days') . ')', 'amount' => $unpaidLeaveDeduction];
-}
-
-$totalEarnings   = $payslipDetail['totalEarning'] + $_storedSalary;
-$totalDeductions = $payslipDetail['totalDeduction'];
-$netSalary       = $payslipDetail['net_salary'];
-
-// ── Year To Date ──────────────────────────────────────────────────────────
-$ytdTaxableGross         = $payslipDetail['ytd_taxable_gross']          ?? $totalEarnings;
-$ytdIncomeTax            = $payslipDetail['ytd_income_tax']             ?? 0;
-$ytdEmployeeNI           = $payslipDetail['ytd_employee_ni']            ?? 0;
-$ytdEmployerNI           = $payslipDetail['ytd_employer_ni']            ?? 0;
-$ytdStatutoryPay         = $payslipDetail['ytd_statutory_pay']          ?? 0;
-$ytdEmployeePension      = $payslipDetail['ytd_employee_pension']       ?? 0;
-$ytdEmployerPension      = $payslipDetail['ytd_employer_pension']       ?? 0;
-// Dynamic labels — match exactly what appears in the deductions list
-$ytdLabelIncomeTax       = $payslipDetail['ytd_label_income_tax']       ?? __('Income Tax');
-$ytdLabelEmployeeNI      = $payslipDetail['ytd_label_employee_ni']      ?? __('National Insurance');
-$ytdLabelEmployerNI      = $payslipDetail['ytd_label_employer_ni']      ?? __('Employer NI');
-$ytdLabelStatutoryPay    = $payslipDetail['ytd_label_statutory_pay']    ?? __('Statutory Pay');
-$ytdLabelEmployeePension = $payslipDetail['ytd_label_employee_pension'] ?? __('Employee Pension');
-$ytdLabelEmployerPension = $payslipDetail['ytd_label_employer_pension'] ?? __('Employer Pension');
-
-// ── Company ───────────────────────────────────────────────────────────────
-$companyName  = \App\Models\Utility::getValByName('company_name')      ?? '';
-$companyPhone = \App\Models\Utility::getValByName('company_telephone') ?? '';
-$companyEmail = \App\Models\Utility::getValByName('company_email')     ?? '';
-$companyWeb   = \App\Models\Utility::getValByName('company_website')   ?? '';
-
-// ── Stamp ─────────────────────────────────────────────────────────────────
-$_stampFile = \App\Models\Utility::getValByName('company_stamp');
-$_stampUrl  = ($_stampFile && !empty($_stampFile))
-    ? \App\Models\Utility::get_file('uploads/logo/') . '/' . $_stampFile
-    : null;
+    // All template data is pre-computed from
+    // App\Http\Controllers\PaySlipController::preparePayslipTemplateData().
+    // Employee and Payslip objects are also passed to the view.
+    // Variables available: slipYear, slipMonth, slipLabel, slipShort, payDate,
+    // logoUrl, downloadUrl, _themeColor, _bgRgba, _bgLight, _bgMed,
+    // _currSymbol, _currPos, _fmtMoney, _storedSalary, _basicSalary, _salary,
+    // perDaySalary, perHourSalary, officeDays, presentDays, presentDaysFmt,
+    // approvedLeaves, absentDays, absentDaysFmt, extraDays, extraDaysFmt,
+    // totalWorkHours, avgHrsPerDay, totalLeaveAlloc, remainingLeaves, usedLeaves,
+    // paidLeaveDays, unpaidLeaveDays, unpaidLeaveDeduction, daysPaid, isHourly,
+    // hoursPerDay, payslipTypeName, isPaid, earRows, dedRows,
+    // totalEarnings, totalDeductions, netSalary, companyName, companyAddr,
+    // companyCity, companyState, companyZip, companyPhone, companyEmail,
+    // companyWeb, _stampUrl, _isUkRequest, taxCode, niNumber, niTableLetter,
+    // paymentMethod, worksNo, sortCode,
+    // ytdTaxableGross, ytdIncomeTax, ytdEmployeeNI, ytdEmployerNI,
+    // ytdStatutoryPay, ytdEmployeePension, ytdEmployerPension,
+    // ytdLabelIncomeTax, ytdLabelEmployeeNI, ytdLabelEmployerNI,
+    // ytdLabelStatutoryPay, ytdLabelEmployeePension, ytdLabelEmployerPension,
+    // ytdPensionRows, previewMode
 @endphp
 
 <style>
@@ -306,23 +146,31 @@ $_stampUrl  = ($_stampFile && !empty($_stampFile))
 <div class="ukp-wrap">
 
     {{-- Action bar --}}
+    @if(!($previewMode ?? false))
     <div class="ukp-bar">
         <a href="{{ $downloadUrl }}" class="btn btn-sm btn-primary p-1">
             <i class="fa fa-download me-1"></i>{{ __('Download PDF') }}
         </a>
-        @if(\Auth::user()->type == 'company' || \Auth::user()->type == 'hr')
+        @if(\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
         <button type="button" class="btn btn-sm btn-warning p-1"
                 onclick="payslipEmailSendUk({{ $employee->id }},'{{ $payslip->salary_month }}')">
             <i class="fa fa-paper-plane me-1"></i>{{ __('Send Email') }}
         </button>
         @endif
     </div>
+    @endif
 
     {{-- ═══ Standalone: Employee name + Dept ═══ --}}
+    @if($_showEmployeeDetails)
     <div class="ukp-emp-box">
+        @if($_showName)
         <div class="ukp-emp-name">{{ $employee->name }}</div>
+        @endif
+        @if($_showDepartment)
         <div class="ukp-emp-dept">{{ __('Department') }}: {{ optional($employee->department)->name ?? '' }}</div>
+        @endif
     </div>
+    @endif
 
     {{-- ═══ Outer box ═══ --}}
     <table class="ukp-outer" cellpadding="0" cellspacing="0">
@@ -341,21 +189,42 @@ $_stampUrl  = ($_stampFile && !empty($_stampFile))
                             <tr>
 
                                 {{-- LEFT: employee details + YTD --}}
+                                @if($_showEmployeeDetails)
                                 <td class="ukp-left">
 
+                                    @if($_showName)
                                     <span class="kv-name">{{ $employee->name }}</span>
+                                    @endif
                                     <table class="kv-tbl">
+                                        @if($_showDesignation)
+                                        <tr><td class="k">{{ __('Designation') }}</td><td class="v">{{ optional($employee->designation)->name ?? '—' }}</td></tr>
+                                        @endif
+                                        @if($_showDepartment)
+                                        <tr><td class="k">{{ __('Department') }}</td><td class="v">{{ optional($employee->department)->name ?? '—' }}</td></tr>
+                                        @endif
+                                        @if($_showPayPeriod)
                                         <tr><td class="k">{{ __('Pay Period') }}</td><td class="v">{{ $slipShort }}</td></tr>
+                                        @endif
                                         <tr><td class="k">{{ __('Pay Date') }}</td><td class="v">{{ $payDate }}</td></tr>
                                         <tr><td class="k">{{ __('Pay Type') }}</td><td class="v">{{ $payslipTypeName }}</td></tr>
                                         @if($_isUkRequest)
                                         <tr><td class="k">{{ __('Payment Method') }}</td><td class="v">{{ $paymentMethod }}</td></tr>
                                         @endif
                                         <tr><td class="k">{{ __('Works No') }}</td><td class="v">{{ $worksNo }}</td></tr>
-                                        @if($_isUkRequest)
+                                        @if($_isUkRequest && $_showTaxCode)
                                         <tr><td class="k">{{ __('Tax Code') }}</td><td class="v">{{ $taxCode }}</td></tr>
+                                        @endif
+                                        @if($_isUkRequest && $_showNiNumber)
                                         <tr><td class="k">{{ __('NI Number') }}</td><td class="v">{{ $niNumber }}</td></tr>
+                                        @endif
+                                        @if($_isUkRequest)
                                         <tr><td class="k">{{ __('NI Table Letter') }}</td><td class="v">{{ $niTableLetter }}</td></tr>
+                                        @endif
+                                        @if($_showPanNo)
+                                        <tr><td class="k">{{ __('PAN / Tax ID') }}</td><td class="v">{{ $employee->tax_payer_id ?? '—' }}</td></tr>
+                                        @endif
+                                        @if($_showDateOfJoining)
+                                        <tr><td class="k">{{ __('Date of Joining') }}</td><td class="v">{{ $employee->company_doj ?? '—' }}</td></tr>
                                         @endif
                                         <tr>
                                             <td class="k">{{ __('Pay Status') }}</td>
@@ -394,6 +263,9 @@ $_stampUrl  = ($_stampFile && !empty($_stampFile))
                                     @endif
 
                                 </td>{{-- /left --}}
+                                @else
+                                <td style="display:none;"></td>
+                                @endif
 
                                 {{-- RIGHT: income + deductions + net pay --}}
                                 <td class="ukp-right">
@@ -445,9 +317,10 @@ $_stampUrl  = ($_stampFile && !empty($_stampFile))
 
                                     {{-- ── Stamp (below Net Pay) ── --}}
                                     <div class="stamp-wrap">
-                                        @if($_stampUrl)
-                                            <img src="{{ $_stampUrl }}" alt="Stamp" class="stamp-img">
-                                        @else
+                                        {{-- Always render the img so postMessage can update it dynamically --}}
+                                        <img src="{{ $_stampUrl ?? '' }}" alt="Stamp" class="stamp-img"
+                                             style="{{ $_stampUrl ? '' : 'display:none;' }}">
+                                        @if(!$_stampUrl)
                                             <div class="stamp-ring">
                                                 {{ $companyName }}<br>
                                                 <span style="font-size:6px; letter-spacing:0.8px;">{{ strtoupper($slipShort) }}</span>
@@ -467,7 +340,116 @@ $_stampUrl  = ($_stampFile && !empty($_stampFile))
         </tbody>
     </table>{{-- /.ukp-outer --}}
 
+    {{-- ═══ Additional Sections (Payment, Attendance, Salary) ═══ --}}
+    <table class="ukp-outer" cellpadding="0" cellspacing="0" style="margin-top:6px;">
+        <tbody>
+            <tr>
+                <td style="padding:10px 12px;">
+                    <table style="width:100%; border-collapse:collapse;">
+                        <tr>
+                            {{-- Payment Details --}}
+                            @if($_showPaymentDetails)
+                            <td style="width:50%; vertical-align:top; padding-right:10px;">
+                                <span class="sec-title" style="font-size:11px; text-align:left; margin-bottom:4px;">{{ __('Payment Details') }}</span>
+                                <table class="kv-tbl" style="font-size:10.5px;">
+                                    @if($_showBankName)
+                                    <tr><td class="k">{{ __('Bank Name') }}</td><td class="v">{{ $employee->bank_name ?? '—' }}</td></tr>
+                                    @endif
+                                    @if($_showAccountNo)
+                                    <tr><td class="k">{{ __('Account No.') }}</td><td class="v">{{ $employee->account_number ?? '—' }}</td></tr>
+                                    @endif
+                                    @if($_showBankCode)
+                                    <tr><td class="k">{{ __(\App\Models\Utility::bankCodeLabel()) }}</td><td class="v">{{ $employee->bank_identifier_code ?? '—' }}</td></tr>
+                                    @endif
+                                    @if($_showAccountHolder)
+                                    <tr><td class="k">{{ __('Account Holder') }}</td><td class="v">{{ $employee->account_holder_name ?? '—' }}</td></tr>
+                                    @endif
+                                    @if($_showTransactionMode)
+                                    <tr><td class="k">{{ __('Transaction Mode') }}</td><td class="v">NEFT</td></tr>
+                                    @endif
+                                </table>
+                            </td>
+                            @else
+                            <td style="width:50%; vertical-align:top; padding-right:10px;"></td>
+                            @endif
+                            {{-- Attendance Summary --}}
+                            <td style="width:50%; vertical-align:top; padding-left:10px;">
+                                <span class="sec-title" style="font-size:11px; text-align:left; margin-bottom:4px;">{{ __('Attendance Summary') }}</span>
+                                <table class="kv-tbl" style="font-size:10.5px;">
+                                    <tr><td class="k">{{ __('Working Days') }}</td><td class="v">{{ $officeDays }}</td></tr>
+                                    <tr><td class="k">{{ __('Present Days') }}</td><td class="v" style="color:#198754;">{{ $presentDaysFmt }}</td></tr>
+                                    <tr><td class="k">{{ __('Paid Leave') }}</td><td class="v" style="color:#0d6efd;">{{ $paidLeaveDays }}</td></tr>
+                                    <tr><td class="k">{{ __('Unpaid Leave') }}</td><td class="v" style="color:#e07900;">{{ $unpaidLeaveDays }}</td></tr>
+                                    <tr><td class="k">{{ __('Absent Days') }}</td><td class="v" style="color:#dc3545;">{{ $absentDaysFmt }}</td></tr>
+                                    @if ($extraDays > 0)
+                                    <tr><td class="k" style="color:#856404;">{{ __('Extra / OT Days') }}</td><td class="v" style="color:#856404;">+{{ $extraDaysFmt }}</td></tr>
+                                    @endif
+                                    <tr><td class="k">{{ __('Days Paid') }}</td><td class="v" style="font-weight:700;">{{ $daysPaid }}</td></tr>
+                                    <tr><td class="k">{{ __('Total Hours') }}</td><td class="v">{{ $totalWorkHours }} hrs</td></tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <span class="ukp-hr" style="margin:10px 0;"></span>
+
+                    {{-- Salary Details --}}
+                    <span class="sec-title" style="font-size:11px; text-align:left; margin-bottom:4px;">{{ __('Salary Details') }}</span>
+                    <table class="kv-tbl" style="font-size:10.5px;">
+                        <tr><td class="k">{{ __('Gross Salary') }}</td><td class="v" style="font-weight:700; color:{{ $_themeColor }};">{{ $_fmtMoney($_storedSalary) }}</td></tr>
+                        @if (!$isHourly)
+                        <tr><td class="k">{{ __('Per Day Rate') }}</td><td class="v">{{ $_fmtMoney($perDaySalary) }}</td></tr>
+                        <tr><td class="k">{{ __('Per Hour Rate') }}</td><td class="v">{{ $_fmtMoney($perHourSalary) }}</td></tr>
+                        @else
+                        <tr><td class="k">{{ __('Hourly Rate') }}</td><td class="v">{{ $_fmtMoney($perHourSalary) }}</td></tr>
+                        @endif
+                    </table>
+
+                    {{-- Leave Details (monthly vs overall) --}}
+                    @if (!$isHourly)
+                    <span class="ukp-hr" style="margin:8px 0;"></span>
+                    <table style="width:100%; border-collapse:collapse;">
+                        <tr>
+                            <td style="width:50%; vertical-align:top; padding-right:10px;">
+                                <span class="sec-title" style="font-size:10px; text-align:left; margin-bottom:3px;">{{ __('This Month') }}</span>
+                                <table class="kv-tbl" style="font-size:9.5px;">
+                                    <tr><td class="k">{{ __('Total Leave') }}</td><td class="v"><strong style="color:#198754;">{{ $approvedLeaves }}</strong></td></tr>
+                                    <tr><td class="k">{{ __('Paid Leave') }}</td><td class="v" style="color:#0d6efd;">{{ $paidLeaveDays }}</td></tr>
+                                    <tr><td class="k">{{ __('Unpaid Leave') }}</td><td class="v" style="color:#dc3545;">{{ $unpaidLeaveDays }}</td></tr>
+                                </table>
+                            </td>
+                            <td style="width:50%; vertical-align:top; padding-left:10px;">
+                                <span class="sec-title" style="font-size:10px; text-align:left; margin-bottom:3px;">{{ __('Overall') }}</span>
+                                <table class="kv-tbl" style="font-size:9.5px;">
+                                    <tr><td class="k">{{ __('Allocated') }}</td><td class="v">{{ $totalLeaveAlloc }}</td></tr>
+                                    <tr><td class="k">{{ __('Used') }}</td><td class="v"><strong>{{ $usedLeaves }}</strong></td></tr>
+                                    <tr><td class="k">{{ __('Remaining') }}</td><td class="v" style="color:#0056b3; font-weight:700;">{{ $remainingLeaves }}</td></tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                    @endif
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    {{-- ═══ Signatures ═══ --}}
+    @if($_showSignatures)
+    <div style="display:flex; justify-content:space-between; padding:14px 30px 6px; margin-top:6px;">
+        <div style="text-align:center; min-width:140px;">
+            <div style="border-top:1.5px solid #999; width:120px; margin:12px auto 4px;"></div>
+            <div style="font-size:10px; color:#888;">{{ __('Employee Signature') }}</div>
+        </div>
+        <div style="text-align:center; min-width:140px;">
+            <div style="border-top:1.5px solid #999; width:120px; margin:12px auto 4px;"></div>
+            <div style="font-size:10px; color:#888;">{{ __('Authorized Signatory') }}</div>
+        </div>
+    </div>
+    @endif
+
     {{-- ═══ Footer ═══ --}}
+    @if($_showFooter)
     <div class="ukp-footer">
         <table class="ukp-footer-row">
             <tr>
@@ -477,10 +459,24 @@ $_stampUrl  = ($_stampFile && !empty($_stampFile))
             </tr>
         </table>
     </div>
+    @endif
 
 </div>{{-- /.ukp-wrap --}}
 
 <script>
+/**
+ * Listen for stamp data URL from the parent settings page (postMessage).
+ * Updates the stamp image src dynamically for the live preview.
+ */
+window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'payslip-stamp' && e.data.dataUrl) {
+        var img = document.querySelector('.stamp-img');
+        if (img) { img.src = e.data.dataUrl; img.style.display = ''; }
+        var ring = document.querySelector('.stamp-ring');
+        if (ring) ring.style.display = 'none';
+    }
+});
+
 window.payslipEmailSendUk = function (eid, month) {
     $.ajax({
         url:  '{{ url("payslip/send") }}/' + eid + '/' + month,

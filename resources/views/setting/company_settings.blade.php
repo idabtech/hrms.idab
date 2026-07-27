@@ -50,6 +50,72 @@ $lang = \App\Models\Utility::getValByName('default_language');
 .shift-table td {
     padding: 10px;
 }
+
+/* ── Salary Slip Settings ─────────────────────────────────────────── */
+/* Color picker styling */
+.form-control-color {
+    cursor: pointer;
+    border-radius: 6px;
+}
+.form-control-color::-webkit-color-swatch-wrapper { padding: 0; }
+.form-control-color::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+}
+
+/* Live preview iframe */
+#salary-slip-preview-iframe {
+    transition: opacity 0.3s ease;
+}
+
+/* Stamp preview styling */
+#stamp_preview {
+    transition: all 0.2s ease;
+}
+
+/* Two-column layout for settings */
+#salary-slip-settings .card-body .row.g-4 {
+    min-height: 520px;
+}
+
+/* ── Payslip Color Swatches (brand-settings style) ──────────────── */
+.payslip-color-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    width: 200px;
+    margin: 0;
+    padding: 0;
+}
+.payslip-swatch {
+    width: 35px;
+    height: 25px;
+    border-radius: 3px;
+    display: inline-block;
+    cursor: pointer;
+    border: 2px solid transparent;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+.payslip-swatch:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+}
+/* Relies on brand-settings .active_color (border: 2px solid #000 !important) */
+
+/* Custom color input — same visual as brand-settings .color-wrp .color-picker-wrp input[type="color"] */
+.payslip-custom-picker {
+    background-color: #fff;
+    height: 55px;
+    cursor: pointer;
+    border-radius: 3px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    width: 50px;
+    flex-shrink: 0;
+}
 </style>
 @push('script-page')
 <script src="{{ asset('css/summernote/summernote-bs4.js') }}"></script>
@@ -207,6 +273,9 @@ $lang = \App\Models\Utility::getValByName('default_language');
     }
 </script>
 <script>
+    // ── Stamp data URL cache (for live preview via postMessage) ────────
+    var _cachedStampDataUrl = '';
+
     document.getElementById('company_stamp').onchange = function() {
         if (this.files && this.files[0]) {
             var src = URL.createObjectURL(this.files[0]);
@@ -215,11 +284,211 @@ $lang = \App\Models\Utility::getValByName('default_language');
             preview.src = src;
             preview.style.display = 'block';
             if (placeholder) placeholder.style.display = 'none';
+
+            // Read the file as a base64 data URL for the live preview iframe
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                _cachedStampDataUrl = e.target.result;
+                updateSalarySlipPreview();
+            };
+            reader.readAsDataURL(this.files[0]);
+        } else {
+            // File was cleared — revert to server-stored stamp
+            _cachedStampDataUrl = '';
+            var preview = document.getElementById('stamp_preview');
+            if (preview) preview.style.display = 'none';
+            var ph = document.getElementById('stamp_preview_placeholder');
+            if (ph) ph.style.display = 'flex';
+            updateSalarySlipPreview();
         }
     }
 </script>
 
 <script>
+    /**
+     * Live preview for salary slip settings.
+     * Reads the dropdown + color picker and reloads the preview iframe.
+     */
+    function updateSalarySlipPreview() {
+        var templateEl = document.getElementById('payslip_template');
+        var colorInput = document.getElementById('payslip_primary_color');
+        var hexDisplay = document.getElementById('payslip_color_hex');
+        var iframe = document.getElementById('salary-slip-preview-iframe');
+        var loading = document.getElementById('preview-loading');
+
+        if (!templateEl || !iframe) return;
+
+        var tpl = templateEl.value;
+        var clr = colorInput ? colorInput.value : '';
+
+        // Update hex display
+        if (hexDisplay) {
+            hexDisplay.value = clr;
+        }
+
+        // Show loading spinner
+        if (loading) loading.style.display = 'block';
+
+        // Build preview URL (no stamp param — use postMessage to avoid URL length issues)
+        var baseUrl = '{{ route("payslip.settings-preview") }}';
+        var previewUrl = baseUrl + '?template=' + encodeURIComponent(tpl) + '&color=' + encodeURIComponent(clr);
+
+        // Append section visibility toggles
+        var showEmp = document.getElementById('payslip_show_employee_details');
+        var showPay = document.getElementById('payslip_show_payment_details');
+        var showSig = document.getElementById('payslip_show_signatures');
+        var showFtr = document.getElementById('payslip_show_footer');
+        if (showEmp) previewUrl += '&show_employee=' + (showEmp.checked ? '1' : '0');
+        if (showPay) previewUrl += '&show_payment=' + (showPay.checked ? '1' : '0');
+        if (showSig) previewUrl += '&show_signatures=' + (showSig.checked ? '1' : '0');
+        if (showFtr) previewUrl += '&show_footer=' + (showFtr.checked ? '1' : '0');
+
+        // Append per-field visibility toggles
+        var fieldIds = [
+            ['payslip_show_name', 'show_name'],
+            ['payslip_show_designation', 'show_designation'],
+            ['payslip_show_employee_id', 'show_employee_id'],
+            ['payslip_show_department', 'show_department'],
+            ['payslip_show_pan_no', 'show_pan_no'],
+            ['payslip_show_date_of_joining', 'show_doj'],
+            ['payslip_show_bank_name', 'show_bank_name'],
+            ['payslip_show_account_no', 'show_account_no'],
+            ['payslip_show_bank_code', 'show_bank_code'],
+            ['payslip_show_account_holder', 'show_account_holder'],
+            ['payslip_show_transaction_mode', 'show_transaction_mode'],
+            ['payslip_show_pay_period', 'show_pay_period'],
+        ];
+        for (var i = 0; i < fieldIds.length; i++) {
+            var el = document.getElementById(fieldIds[i][0]);
+            if (el) previewUrl += '&' + fieldIds[i][1] + '=' + (el.checked ? '1' : '0');
+        }
+
+        // Update iframe and reload
+        iframe.src = previewUrl;
+
+        // Hide loading when iframe loads, then send stamp via postMessage
+        // Reuse the shared resizer function
+        attachPreviewResizer(iframe);
+    }
+
+    /**
+     * Payslip preset color swatch click handler.
+     * When a preset is clicked, highlight it, update the hidden color input, and refresh preview.
+     */
+    $(document).on('click', '.payslip-swatch', function() {
+        var color = $(this).data('color');
+        $('.payslip-swatch').removeClass('active_color');
+        $(this).addClass('active_color');
+
+        // Update the native color input and hex display
+        var colorInput = document.getElementById('payslip_primary_color');
+        var hexDisplay = document.getElementById('payslip_color_hex');
+        if (colorInput) colorInput.value = color;
+        if (hexDisplay) hexDisplay.value = color;
+
+        // Update the preview
+        updateSalarySlipPreview();
+    });
+
+    /**
+     * When the custom color picker changes, deselect all presets and update preview.
+     */
+    function onPayslipCustomColorChange(color) {
+        $('.payslip-swatch').removeClass('active_color');
+        var hexDisplay = document.getElementById('payslip_color_hex');
+        if (hexDisplay) hexDisplay.value = color;
+        updateSalarySlipPreview();
+    }
+
+    /**
+     * Reset payslip color to the default preset (#584ED2).
+     */
+    function resetPayslipColor() {
+        var defaultColor = '#584ED2';
+        var colorInput = document.getElementById('payslip_primary_color');
+        var hexDisplay = document.getElementById('payslip_color_hex');
+        if (colorInput) colorInput.value = defaultColor;
+        if (hexDisplay) hexDisplay.value = defaultColor;
+
+        // Highlight the default swatch
+        $('.payslip-swatch').removeClass('active_color');
+        $('.payslip-swatch[data-color="' + defaultColor + '"]').addClass('active_color');
+
+        updateSalarySlipPreview();
+    }
+
+    /**
+     * Attach dynamic height resizer to the preview iframe.
+     */
+    function attachPreviewResizer(iframe) {
+        if (!iframe) return;
+        iframe.onload = function() {
+            var loading = document.getElementById('preview-loading');
+            if (loading) loading.style.display = 'none';
+
+            // Dynamically resize iframe to match content height
+            try {
+                var doc = iframe.contentDocument || iframe.contentWindow.document;
+                if (doc && doc.body) {
+                    var h = doc.body.scrollHeight;
+                    if (h > 100) {
+                        iframe.style.height = h + 'px';
+                        iframe.style.minHeight = 'auto';
+                    }
+                }
+            } catch(e) {
+                iframe.style.height = 'auto';
+            }
+
+            if (window._cachedStampDataUrl) {
+                iframe.contentWindow.postMessage({
+                    type: 'payslip-stamp',
+                    dataUrl: window._cachedStampDataUrl
+                }, '*');
+            }
+        };
+    }
+
+    /**
+     * Sync the custom color picker and swatch UI on page load.
+     */
+    $(document).ready(function() {
+        // If no preset is selected but a custom color is saved, ensure presets are deselected
+        var savedColor = document.getElementById('payslip_primary_color')?.value || '';
+        if (savedColor) {
+            var matchingSwatch = $('.payslip-swatch[data-color="' + savedColor + '"]');
+            if (matchingSwatch.length === 0) {
+                $('.payslip-swatch').removeClass('active_color');
+            }
+        }
+
+        // Attach dynamic height resizer to the initial iframe
+        var previewIframe = document.getElementById('salary-slip-preview-iframe');
+        attachPreviewResizer(previewIframe);
+        // Trigger initial resize once iframe loads (if already loaded, it won't fire)
+        if (previewIframe && previewIframe.contentDocument && previewIframe.contentDocument.body) {
+            var h = previewIframe.contentDocument.body.scrollHeight;
+            if (h > 100) {
+                previewIframe.style.height = h + 'px';
+                previewIframe.style.minHeight = 'auto';
+            }
+        }
+        // Also try after a small delay for async rendering
+        setTimeout(function() {
+            try {
+                var iframe = document.getElementById('salary-slip-preview-iframe');
+                var doc = iframe.contentDocument || iframe.contentWindow.document;
+                if (doc && doc.body) {
+                    var h = doc.body.scrollHeight;
+                    if (h > 100) {
+                        iframe.style.height = h + 'px';
+                        iframe.style.minHeight = 'auto';
+                    }
+                }
+            } catch(e) {}
+        }, 600);
+    });
+
     function toggleTimeFields() {
         for (let i = 0; i < 4; i++) {
             let start = document.querySelector(`[name="company_start_time${i === 0 ? '' : i}"]`);
@@ -355,6 +624,11 @@ $lang = \App\Models\Utility::getValByName('default_language');
 
                         <a href="#webhook-settings" id="webhook-tab"
                             class="list-group-item list-group-item-action border-0">{{ __('Webhook Settings') }}
+                            <div class="float-end"><i class="ti ti-chevron-right"></i></div>
+                        </a>
+
+                        <a href="#salary-slip-settings" id="salary-slip-tab"
+                            class="list-group-item list-group-item-action border-0">{{ __('Salary Slip Settings') }}
                             <div class="float-end"><i class="ti ti-chevron-right"></i></div>
                         </a>
 
@@ -1229,42 +1503,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                     </div>
                                 </div>
                             </div>
-                            <div class="row align-items-center mt-3">
-                                <div class="col-md-3 text-center">
-                                    @php
-                                        $stampFile = \App\Models\Utility::getValByName('company_stamp');
-                                        $stampUrl  = $stampFile
-                                            ? \App\Models\Utility::get_file('uploads/logo/') . $stampFile . '?' . time()
-                                            : null;
-                                    @endphp
-                                    @if($stampUrl)
-                                        <img id="stamp_preview" src="{{ $stampUrl }}" alt="Stamp"
-                                            style="width:100px;height:100px;border-radius:50%;object-fit:contain;border:3px solid #ccc;">
-                                    @else
-                                        <div id="stamp_preview_placeholder"
-                                            style="width:100px;height:100px;border-radius:50%;border:3px dashed #aaa;display:flex;align-items:center;justify-content:center;margin:0 auto;color:#aaa;font-size:11px;text-align:center;padding:10px;">
-                                            {{ __('No stamp') }}
-                                        </div>
-                                        <img id="stamp_preview" src="" alt="Stamp"
-                                            style="width:100px;height:100px;border-radius:50%;object-fit:contain;border:3px solid #ccc;display:none;">
-                                    @endif
-                                </div>
-                                <div class="col-md-5">
-                                    <b><label for="company_stamp" class="col-form-label">{{ __('Upload Stamp Image') }}</label></b>
-                                    <input type="file" class="form-control" name="company_stamp" id="company_stamp"
-                                        accept="image/png,image/jpeg,image/jpg">
-                                    <small class="text-muted">{{ __('PNG/JPG recommended. Use a transparent-background PNG for best results on payslips.') }}</small>
-                                    @error('company_stamp')
-                                        <span class="text-danger d-block mt-1"><small>{{ $message }}</small></span>
-                                    @enderror
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="alert alert-info p-2 mb-0" style="font-size:12px;">
-                                        <i class="ti ti-info-circle me-1"></i>
-                                        {{ __('If a stamp image is uploaded, it will appear as the authorized seal on all payslips. If no image is uploaded, the company name text ring will be shown instead.') }}
-                                    </div>
-                                </div>
-                            </div>
+                            {{-- Stamp upload moved to Salary Slip Settings section --}}
                         </div>
 
                         <div class="card-footer text-end">
@@ -2448,6 +2687,352 @@ $lang = \App\Models\Utility::getValByName('default_language');
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+
+    {{-- ── Salary Slip Settings (Payslip Template & Color) ─────────────────────── --}}
+    <div class="" id="salary-slip-settings">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="ti ti-receipt me-1"></i>{{ __('Salary Slip Settings') }}</h5>
+                <small class="text-secondary font-weight-bold">
+                    {{ __('Configure the payslip template, color, and stamp for all salary slips.') }}
+                </small>
+            </div>
+
+            {{ Form::model($settings, ['route' => 'company.settings', 'method' => 'post', 'enctype' => 'multipart/form-data', 'id' => 'salary-slip-form']) }}
+            @csrf
+            @php
+                $_selectedTemplate = $settings['payslip_template'] ?? 'standard';
+                $_selectedColor    = $settings['payslip_primary_color'] ?? '';
+                $_stampFile        = \App\Models\Utility::getValByName('company_stamp');
+                $_stampUrl         = $_stampFile
+                    ? \App\Models\Utility::get_file('uploads/logo/') . '/' . $_stampFile . '?' . time()
+                    : null;
+            @endphp
+
+            <div class="card-body">
+                <div class="row g-4">
+                    {{-- ═══ LEFT COLUMN: Form Fields ═══ --}}
+                    <div class="col-lg-5 col-xl-4">
+                        <div class="row gy-3">
+
+                            {{-- Template Format (Dropdown) --}}
+                            <div class="col-12 form-group">
+                                {{ Form::label('payslip_template', __('Payslip Template'), ['class' => 'col-form-label fw-semibold']) }}
+                                {{ Form::select('payslip_template', [
+                                    'standard'       => __('Standard — India / US / International'),
+                                    'uk'             => __('UK — Tax Code, NI, YTD'),
+                                    'compact'        => __('Compact — Minimalist Style'),
+                                    'professional'   => __('Professional — Corporate Formal'),
+                                    'modern'         => __('Modern — Card Based Design'),
+                                    'classic'        => __('Classic — Elegant Serif Style'),
+                                    'minimal'        => __('Minimal — Clean Monochrome'),
+                                    'executive'      => __('Executive — Premium Dark Theme'),
+                                    'bold'           => __('Bold — Striking High Contrast'),
+                                    'elegant'        => __('Elegant — Refined Sophisticated'),
+                                    'contemporary'   => __('Contemporary — Trendy Asymmetric'),
+                                ], $_selectedTemplate, [
+                                    'class' => 'form-control select2',
+                                    'id' => 'payslip_template',
+                                    'onchange' => 'updateSalarySlipPreview()',
+                                ]) }}
+                                <small class="text-muted d-block mt-1">
+                                    <i class="ti ti-info-circle me-1"></i>
+                                    {{ __('Determines the payslip layout for PDF downloads & previews.') }}
+                                </small>
+                            </div>                                {{-- Primary Color --}}
+                            <div class="col-12 form-group">
+                                {{ Form::label('payslip_primary_color', __('Payslip Color'), ['class' => 'col-form-label fw-semibold']) }}
+                                @php
+                                    $payslipPresets = [
+                                        '#584ED2' => __('Default Purple'),
+                                        '#4F46E5' => __('Indigo'),
+                                        '#2563EB' => __('Blue'),
+                                        '#0891B2' => __('Teal'),
+                                        '#059669' => __('Green'),
+                                        '#D97706' => __('Amber'),
+                                        '#DC2626' => __('Red'),
+                                        '#9333EA' => __('Purple'),
+                                        '#BE185D' => __('Pink'),
+                                        '#1E293B' => __('Slate'),
+                                    ];
+                                    $_defaultHex = '#584ED2';
+                                @endphp                                    {{-- Row 1 & 2: 10 Preset color swatches (5 per row, auto-wraps) --}}
+                                    <div class="payslip-color-swatches">
+                                        @foreach($payslipPresets as $hex => $label)
+                                            <a href="javascript:void(0)"
+                                                class="payslip-swatch {{ ($_selectedColor === $hex) || (empty($_selectedColor) && $hex === $_defaultHex) ? 'active_color' : '' }}"
+                                                data-color="{{ $hex }}"
+                                                data-bs-toggle="tooltip"
+                                                title="{{ $label }}"
+                                                style="background: {{ $hex }};"></a>
+                                        @endforeach
+                                    </div>
+                                    {{-- Row 3: Custom color picker + hex display + reset --}}
+                                    <div class="d-flex align-items-center gap-2 mt-2">
+                                        <div class="color-picker-wrp">
+                                            <input type="color" name="payslip_primary_color"
+                                                id="payslip_primary_color"
+                                                value="{{ $_selectedColor ?: $_defaultHex }}"
+                                                oninput="onPayslipCustomColorChange(this.value)"
+                                                class="payslip-custom-picker">
+                                        </div>
+                                        <input type="text" readonly
+                                            id="payslip_color_hex"
+                                            value="{{ $_selectedColor ?: $_defaultHex }}"
+                                            class="form-control" style="width:85px; font-size:12px;">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            onclick="resetPayslipColor()"
+                                            data-bs-toggle="tooltip" title="{{ __('Reset to default') }}">
+                                            <i class="ti ti-refresh"></i>
+                                        </button>
+                                    </div>
+                                <small class="text-muted d-block mt-1">
+                                    <i class="ti ti-info-circle me-1"></i>
+                                    {{ __('Choose a preset color or pick a custom one.') }}
+                                </small>
+                            </div>
+
+                            {{-- Stamp Upload --}}
+                            <div class="col-12 form-group">
+                                {{ Form::label('company_stamp', __('Authorized Stamp'), ['class' => 'col-form-label fw-semibold']) }}
+                                <div class="d-flex align-items-start gap-3">
+                                    <div class="text-center" style="flex-shrink:0;">
+                                        @if($_stampUrl)
+                                            <img id="stamp_preview" src="{{ $_stampUrl }}" alt="Stamp"
+                                                style="width:80px;height:80px;border-radius:50%;object-fit:contain;border:3px solid #e0e0e0;">
+                                        @else
+                                            <div id="stamp_preview_placeholder"
+                                                style="width:80px;height:80px;border-radius:50%;border:3px dashed #ccc;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:10px;text-align:center;padding:8px;">
+                                                {{ __('No stamp') }}
+                                            </div>
+                                            <img id="stamp_preview" src="" alt="Stamp"
+                                                style="width:80px;height:80px;border-radius:50%;object-fit:contain;border:3px solid #e0e0e0;display:none;">
+                                        @endif
+                                    </div>
+                                    <div style="flex:1;">
+                                        <input type="file" class="form-control" name="company_stamp" id="company_stamp"
+                                            accept="image/png,image/jpeg,image/jpg"
+                                            onchange="if(this.files&&this.files[0]){var src=URL.createObjectURL(this.files[0]);var p=document.getElementById('stamp_preview');var ph=document.getElementById('stamp_preview_placeholder');p.src=src;p.style.display='block';if(ph)ph.style.display='none';updateSalarySlipPreview();}">
+                                        <small class="text-muted d-block mt-1">
+                                            <i class="ti ti-info-circle me-1"></i>
+                                            {{ __('PNG with transparent background recommended.') }}
+                                        </small>
+                                        @error('company_stamp')
+                                            <span class="text-danger d-block mt-1"><small>{{ $message }}</small></span>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>                            {{-- Section Visibility Toggles --}}
+                            <div class="col-12" style="border-top:1px solid #eee; padding-top:18px; margin-top:12px;">
+                                <label class="col-form-label fw-semibold mb-2" style="font-size:13px;">
+                                    <i class="ti ti-eye-off me-1"></i>{{ __('Payslip Section Visibility') }}
+                                </label>
+                                <small class="text-muted d-block mb-2" style="font-size:11px; line-height:1.4;">
+                                    {{ __('Toggle sections & individual fields on the payslip. Unchecked = hidden.') }}
+                                </small>
+                                <div class="d-flex flex-column gap-1">
+                                    {{-- ═══ Employee Details ═══ --}}
+                                    <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem;">
+                                        <input type="hidden" name="payslip_show_employee_details" value="off">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                            name="payslip_show_employee_details" id="payslip_show_employee_details"
+                                            value="on"
+                                            {{ ($settings['payslip_show_employee_details'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                            onchange="updateSalarySlipPreview()">
+                                        <label class="form-check-label ms-2 fw-semibold" for="payslip_show_employee_details" style="font-size:12.5px; cursor:pointer;">
+                                            <i class="ti ti-user me-1 text-muted"></i>{{ __('Employee Details') }}
+                                        </label>
+                                    </div>
+                                    {{-- Sub-fields for Employee Details --}}
+                                    <div class="d-flex flex-wrap gap-x-3 gap-y-1 ps-5 ms-1" style="border-left:2px solid #e5e7eb;">
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_name" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_name" id="payslip_show_name" value="on"
+                                                {{ ($settings['payslip_show_name'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_name" style="font-size:11.5px; cursor:pointer;">{{ __('Name') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_designation" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_designation" id="payslip_show_designation" value="on"
+                                                {{ ($settings['payslip_show_designation'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_designation" style="font-size:11.5px; cursor:pointer;">{{ __('Designation') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_employee_id" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_employee_id" id="payslip_show_employee_id" value="on"
+                                                {{ ($settings['payslip_show_employee_id'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_employee_id" style="font-size:11.5px; cursor:pointer;">{{ __('Employee ID') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_department" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_department" id="payslip_show_department" value="on"
+                                                {{ ($settings['payslip_show_department'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_department" style="font-size:11.5px; cursor:pointer;">{{ __('Department') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_pan_no" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_pan_no" id="payslip_show_pan_no" value="on"
+                                                {{ ($settings['payslip_show_pan_no'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_pan_no" style="font-size:11.5px; cursor:pointer;">{{ __('PAN No.') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_date_of_joining" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_date_of_joining" id="payslip_show_date_of_joining" value="on"
+                                                {{ ($settings['payslip_show_date_of_joining'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_date_of_joining" style="font-size:11.5px; cursor:pointer;">{{ __('Date of Joining') }}</label>
+                                        </div>
+                                    </div>
+
+                                    {{-- ═══ Payment Details ═══ --}}
+                                    <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem;" class="mt-2">
+                                        <input type="hidden" name="payslip_show_payment_details" value="off">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                            name="payslip_show_payment_details" id="payslip_show_payment_details"
+                                            value="on"
+                                            {{ ($settings['payslip_show_payment_details'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                            onchange="updateSalarySlipPreview()">
+                                        <label class="form-check-label ms-2 fw-semibold" for="payslip_show_payment_details" style="font-size:12.5px; cursor:pointer;">
+                                            <i class="ti ti-credit-card me-1 text-muted"></i>{{ __('Payment Details') }}
+                                        </label>
+                                    </div>
+                                    {{-- Sub-fields for Payment Details --}}
+                                    <div class="d-flex flex-wrap gap-x-3 gap-y-1 ps-5 ms-1" style="border-left:2px solid #e5e7eb;">
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_bank_name" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_bank_name" id="payslip_show_bank_name" value="on"
+                                                {{ ($settings['payslip_show_bank_name'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_bank_name" style="font-size:11.5px; cursor:pointer;">{{ __('Bank Name') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_account_no" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_account_no" id="payslip_show_account_no" value="on"
+                                                {{ ($settings['payslip_show_account_no'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_account_no" style="font-size:11.5px; cursor:pointer;">{{ __('Account No.') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_bank_code" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_bank_code" id="payslip_show_bank_code" value="on"
+                                                {{ ($settings['payslip_show_bank_code'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_bank_code" style="font-size:11.5px; cursor:pointer;">{{ __('Bank Code') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_account_holder" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_account_holder" id="payslip_show_account_holder" value="on"
+                                                {{ ($settings['payslip_show_account_holder'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_account_holder" style="font-size:11.5px; cursor:pointer;">{{ __('Account Holder') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_transaction_mode" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_transaction_mode" id="payslip_show_transaction_mode" value="on"
+                                                {{ ($settings['payslip_show_transaction_mode'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_transaction_mode" style="font-size:11.5px; cursor:pointer;">{{ __('Transaction Mode') }}</label>
+                                        </div>
+                                        <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem; min-width:130px;">
+                                            <input type="hidden" name="payslip_show_pay_period" value="off">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                name="payslip_show_pay_period" id="payslip_show_pay_period" value="on"
+                                                {{ ($settings['payslip_show_pay_period'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                                onchange="updateSalarySlipPreview()">
+                                            <label class="form-check-label ms-2" for="payslip_show_pay_period" style="font-size:11.5px; cursor:pointer;">{{ __('Pay Period') }}</label>
+                                        </div>
+                                    </div>
+
+                                    {{-- ═══ Signatures & Footer ═══ --}}
+                                    <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem;">
+                                        <input type="hidden" name="payslip_show_signatures" value="off">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                            name="payslip_show_signatures" id="payslip_show_signatures"
+                                            value="on"
+                                            {{ ($settings['payslip_show_signatures'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                            onchange="updateSalarySlipPreview()">
+                                        <label class="form-check-label ms-2 fw-semibold" for="payslip_show_signatures" style="font-size:12.5px; cursor:pointer;">
+                                            <i class="ti ti-signature me-1 text-muted"></i>{{ __('Signatures') }}
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch d-flex align-items-center" style="padding-left:2.5rem;">
+                                        <input type="hidden" name="payslip_show_footer" value="off">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                            name="payslip_show_footer" id="payslip_show_footer"
+                                            value="on"
+                                            {{ ($settings['payslip_show_footer'] ?? 'on') === 'on' ? 'checked' : '' }}
+                                            onchange="updateSalarySlipPreview()">
+                                        <label class="form-check-label ms-2 fw-semibold" for="payslip_show_footer" style="font-size:12.5px; cursor:pointer;">
+                                            <i class="ti ti-article me-1 text-muted"></i>{{ __('Footer') }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>{{-- /row gy-3 --}}
+
+                        <div class="mt-4">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="ti ti-device-floppy me-1"></i>{{ __('Save Changes') }}
+                            </button>
+                        </div>
+                    </div>{{-- /LEFT COL --}}
+
+                    {{-- ═══ RIGHT COLUMN: Live Preview ═══ --}}
+                    <div class="col-lg-7 col-xl-8">
+                        <div class="card border shadow-sm h-100">
+                            <div class="card-header py-2 px-3 d-flex justify-content-between align-items-center bg-light">
+                                <h6 class="mb-0" style="font-size:13px;">
+                                    <i class="ti ti-eye text-primary me-1"></i>{{ __('Live Preview') }}
+                                </h6>
+                                <div>
+                                    <span class="badge bg-success me-2" style="font-size:9px;">{{ __('LIVE') }}</span>
+                                    <small class="text-muted" style="font-size:11px;">{{ __('Changes reflect instantly') }}</small>
+                                </div>
+                            </div>
+                            <div class="card-body p-0" style="position:relative; min-height:400px; background:#f5f5f5;">
+                                <iframe id="salary-slip-preview-iframe"
+                                    src="{{ route('payslip.settings-preview', ['template' => $_selectedTemplate, 'color' => $_selectedColor ?: '']) }}"
+                                    style="width:100%; height:400px; border:none; display:block;"
+                                    title="{{ __('Salary Slip Preview') }}" sandbox="allow-scripts allow-same-origin"></iframe>
+                                <div id="preview-loading"
+                                    style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); display:none;">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">{{ __('Loading...') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>{{-- /RIGHT COL --}}
+
+                </div>{{-- /row g-4 --}}
+            </div>
+
+            {{-- BOTTOM bar (for small screens / fallback) --}}
+            <div class="card-footer text-end d-lg-none">
+                <button class="btn btn-primary" type="submit">
+                    <i class="ti ti-device-floppy me-1"></i>{{ __('Save Changes') }}
+                </button>
+            </div>
+            {{ Form::close() }}
         </div>
     </div>
 

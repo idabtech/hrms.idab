@@ -216,6 +216,34 @@ class Utility extends Model
             'rota_working_days' => '1,2,3,4,5',
             'saturday_pattern' => 'none',   // none | all | odd | even
             'working_hours_per_day' => '8', // default working hours per day
+
+            // ── Salary Slip / Payslip Settings ────────────────────────────────
+            'payslip_template'              => 'standard',   // standard | uk
+            'payslip_primary_color'         => '',            // overrides theme_color for payslips
+
+            // ── Payslip Section Visibility ─────────────────────────────────────
+            'payslip_show_employee_details' => 'on',   // Employee Details block
+            'payslip_show_payment_details'  => 'on',   // Payment Details block
+            'payslip_show_signatures'       => 'on',   // Signature lines
+            'payslip_show_footer'           => 'on',   // Company tel / web / email footer
+
+            // ── Per-field visibility (Employee Details) ───────────────────────
+            'payslip_show_name'             => 'on',
+            'payslip_show_designation'      => 'on',
+            'payslip_show_employee_id'      => 'on',
+            'payslip_show_department'       => 'on',
+            'payslip_show_pan_no'           => 'on',
+            'payslip_show_date_of_joining'  => 'on',
+            'payslip_show_ni_number'        => 'on',
+            'payslip_show_tax_code'         => 'on',
+
+            // ── Per-field visibility (Payment Details) ───────────────────────
+            'payslip_show_bank_name'        => 'on',
+            'payslip_show_account_no'       => 'on',
+            'payslip_show_bank_code'        => 'on',
+            'payslip_show_account_holder'   => 'on',
+            'payslip_show_transaction_mode' => 'on',
+            'payslip_show_pay_period'       => 'on',
         ];
 
         foreach ($data as $row) {
@@ -771,6 +799,15 @@ class Utility extends Model
             // Legacy fallback: detect from name string
             $isHourly = str_contains(strtolower(trim($payslipTypeRecord?->name ?? '')), 'hour');
         }
+
+        // ★ FIX: For hourly employees, always use the LIVE hourly rate from the
+        // employee record (employees.salary). The payslip snapshot's basic_salary
+        // stores the OLD monthly gross (e.g. 32000), NOT the hourly rate — so
+        // treating that stale snapshot as the hourly rate produces wildly wrong results.
+        if ($isHourly) {
+            $salary = (float) $employess->salary;
+        }
+
         $monthlySalaryGross = $salary;
         if ($isHourly) {
             // $salary stored IS the hourly rate directly (e.g. 140)

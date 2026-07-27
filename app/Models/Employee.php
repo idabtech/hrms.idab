@@ -229,6 +229,15 @@ class Employee extends Model
 
         // Percentage-based allowances/deductions are calculated against basic_salary
         $basicSalary = (float) $employee->basic_salary;
+
+        // ★ FIX: For hourly employees, use the projected monthly gross
+        // (hourly_rate × hours_per_day × working_days) as the base
+        // instead of the stale employees.basic_salary column.
+        // $salary was already projected above in the hourly block.
+        if ($isHourly) {
+            $basicSalary = $salary;
+        }
+
         $calcTotal = function ($items) use ($basicSalary) {
             return $items->sum(function ($item) use ($basicSalary) {
                 if ($item->type === 'percentage') {

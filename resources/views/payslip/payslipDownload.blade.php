@@ -1,230 +1,7 @@
 @php
-    use Carbon\Carbon;
-    use Carbon\CarbonPeriod;
-
-    [$slipYear, $slipMonth] = explode('-', $payslip->salary_month);
-
-    $logo = \App\Models\Utility::get_file('uploads/logo/');
-    $company_logo = \App\Models\Utility::get_company_logo();
-    $logoUrl = $logo . '/' . (isset($company_logo) && !empty($company_logo) ? $company_logo : 'logo-dark.png');
-    $downloadUrl = route('payslip.download', [$employee->id, $payslip->salary_month]);
-
-    // ── Theme color ───────────────────────────────────────────────────────────
-    // theme_color holds either a named theme ('theme-1' … 'theme-10') or a custom
-    // hex directly (e.g. '#51459d') when the user picks a custom color.
-    $_colorSetting = \App\Models\Utility::colorset();
-    $_themeName = $_colorSetting['theme_color'] ?? 'theme-2';
-    $_themeHexMap = [
-        'theme-1' => '#0CAF60',
-        'theme-2' => '#584ED2',
-        'theme-3' => '#6FD943',
-        'theme-4' => '#145388',
-        'theme-5' => '#B9406B',
-        'theme-6' => '#008ECC',
-        'theme-7' => '#922C88',
-        'theme-8' => '#C0A145',
-        'theme-9' => '#48494B',
-        'theme-10' => '#0C7785',
-    ];
-    // If theme_color starts with '#' it is already a hex (custom color)
-    $_themeColor = str_starts_with($_themeName, '#') ? $_themeName : $_themeHexMap[$_themeName] ?? '#584ED2';
-    // dd($payslipDetail);
-
-    // ── Currency ──────────────────────────────────────────────────────────────
-    $_appSettings = \App\Models\Utility::settings();
-    $_currSymbol = $_appSettings['site_currency_symbol'] ?? '';
-    $_currPos = $_appSettings['site_currency_symbol_position'] ?? 'pre';
-    $_fmtMoney = function ($amount) use ($_currSymbol, $_currPos) {
-        $n = number_format((float) $amount, 2);
-        return $_currPos === 'pre' ? $_currSymbol . $n : $n . $_currSymbol;
-    };
-
-    // ── Month ──────────────────────────────────────────────────────────────────
-    $carbonMonth = Carbon::createFromDate((int) $slipYear, (int) $slipMonth, 1);
-    $slipLabel = $carbonMonth->format('F Y');
-
-    // ── All display values come directly from Utility::employeePayslipDetail ──
-    // No duplicate calculation here — single source of truth.
-    $_storedSalary = (float) $payslipDetail['basic_salary'];  // gross salary snapshot
-    $_basicSalary  = (float) $employee->basic_salary;          // basic salary — base for % allowances
-    $_netSalary = (float) $payslipDetail['net_salary'];
-    $_salary = (float) $payslipDetail['salary'];
-    $_hra = (float) $payslipDetail['hra'];
-    $_da = (float) $payslipDetail['da'];
-    $perDaySalary = round((float) $payslipDetail['per_day_amount'], 2);
-    $perHourSalary = round((float) $payslipDetail['per_hour_amount'], 2);
-    $officeDays = (int) $payslipDetail['office_days'];
-    $presentDays = $payslipDetail['present_days'];
-    $approvedLeaves = $payslipDetail['approved_leaves_month'];
-    $disapprovedLeaves = (int) $payslipDetail['rejected_leaves_month'];
-    $absentDays = $payslipDetail['absent_days'];
-    $extraDays = $payslipDetail['extra_days'];
-    $totalWorkHours = $payslipDetail['total_work_hours'];
-    $avgHrsPerDay = $payslipDetail['avg_hrs_per_day'];
-    $totalLeaveAlloc = (int) $payslipDetail['total_leave_alloc'];
-    $remainingLeaves = (int) $payslipDetail['remaining_leaves'];
-    $usedLeaves = $approvedLeaves;
-    $paidLeaveDays = $payslipDetail['paid_leave_days'] ?? 0;
-    $unpaidLeaveDays = $payslipDetail['unpaid_leave_days'] ?? 0;
-    $unpaidLeaveDeduction = $payslipDetail['unpaid_leave_deduction'] ?? 0;
-    $daysPaid = $payslipDetail['days_paid'] ?? $presentDays + $paidLeaveDays;
-    $leaveBreakdown = $payslipDetail['leave_breakdown'] ?? [];
-
-    // Hourly flag — drives conditional display in Salary Details section
-    $isHourly = (bool) ($payslipDetail['is_hourly'] ?? false);
-    $hoursPerDay = (float) ($payslipDetail['hours_per_day'] ?? 8);
-    $totalShiftHours = (float) ($payslipDetail['total_shift_hours'] ?? $officeDays * $hoursPerDay);
-    $salaryRate = (float) ($payslipDetail['salary_rate'] ?? $_storedSalary);
-
-    // Format for display
-    $presentDisplay = min($presentDays, $officeDays);
-    $presentDaysFmt = $presentDisplay == floor($presentDisplay) ? (int) $presentDisplay : $presentDisplay;
-    $absentDaysFmt = $absentDays == floor($absentDays) ? (int) $absentDays : $absentDays;
-    $extraDaysFmt = $extraDays == floor($extraDays) ? (int) $extraDays : $extraDays;
-
-    // Payslip type label
-    $payslipTypeName = \App\Models\PayslipType::find($employee->salary_type)?->name ?? 'Monthly';
-
-    // ── Earnings ──────────────────────────────────────────────────────────────
-    $_basicLabel = $isHourly ? __('Gross Earned') : __('Basic Salary');
-    $earRows = [
-        ['label' => $_basicLabel, 'amount' => $_salary],
-    ];
-    // HRA and DA are now stored as allowances — skip separate rows to avoid double-counting
-    // if ($_hra > 0) {
-    //     $earRows[] = ['label' => 'HRA', 'amount' => $_hra];
-    // }
-    // if ($_da > 0) {
-    //     $earRows[] = ['label' => 'DA', 'amount' => $_da];
-    // }
-    foreach ($payslipDetail['earning']['allowance'] as $_ar) {
-        foreach (json_decode($_ar->allowance) as $_a) {
-            $earRows[] = [
-                'label'  => $_a->title,
-                'amount' => $_a->type === 'percentage' ? round(($_a->amount * $_basicSalary) / 100, 2) : (float) $_a->amount,
-            ];
-        }
-    }
-    foreach ($payslipDetail['earning']['commission'] as $_cr) {
-        foreach (json_decode($_cr->commission) as $_c) {
-            $earRows[] = [
-                'label'  => $_c->title,
-                'amount' => $_c->type === 'percentage' ? round(($_c->amount * $_basicSalary) / 100, 2) : (float) $_c->amount,
-            ];
-        }
-    }
-    foreach ($payslipDetail['earning']['bonous'] as $_b) {
-        $earRows[] = [
-            'label'  => $_b->title ?: __('Bonus'),
-            'amount' => $_b->type === 'percentage' ? round(($_b->amount * $_basicSalary) / 100, 2) : (float) $_b->amount,
-        ];
-    }
-    foreach ($payslipDetail['earning']['otherPayment'] as $_op2) {
-        foreach (json_decode($_op2->other_payment) as $_op) {
-            $earRows[] = [
-                'label'  => $_op->title,
-                'amount' => $_op->type === 'percentage' ? round(($_op->amount * $_basicSalary) / 100, 2) : (float) $_op->amount,
-            ];
-        }
-    }
-    // foreach ($payslipDetail['earning']['overTime'] as $_ot2) {
-    //     foreach (json_decode($_ot2->overtime) as $_ot) {
-    //         $earRows[] = ['label' => $_ot->title ?: __('Overtime'), 'amount' => (float)($_ot->number_of_days * $_ot->hours * $_ot->rate)];
-    //     }
-    // }
-    // Extra days are informational only — not added to earnings
-
-    // Loan/Advance (earning — money given to employee)
-    foreach ($payslipDetail['earning']['loan'] as $_lr) {
-        foreach (json_decode($_lr->loan) as $_ln) {
-            $_amt = $_ln->type === 'percentage'
-                ? round(($_ln->amount * $_basicSalary) / 100, 2)
-                : (float) $_ln->amount;
-            if ($_amt > 0) {
-                $earRows[] = ['label' => $_ln->title ?: __('Loan/Advance'), 'amount' => $_amt];
-            }
-        }
-    }
-
-    // ── Deductions ────────────────────────────────────────────────────────────
-    $dedRows = [];
-
-    // Loan Repayment (deduction — money employee pays back)
-    $totalLoanRepayment = $payslipDetail['totalLoanRepayment'] ?? 0;
-    if ($totalLoanRepayment > 0) {
-        $dedRows[] = ['label' => __('Loan Repayment'), 'amount' => $totalLoanRepayment];
-    }
-
-    foreach ($payslipDetail['deduction']['saturation_deduction'] as $_dr2) {
-        foreach (json_decode($_dr2->saturation_deduction) as $_dd) {
-            if (strtolower($_dd->title) == 'epf') {
-                $_amt = ($_basicSalary * 12) / 100;
-            } elseif (strtolower($_dd->title) == 'gpf') {
-                $_amt = ($_basicSalary * 6) / 100;
-            } else {
-                $_amt = $_dd->type === 'percentage'
-                    ? round(($_dd->amount * $_basicSalary) / 100, 2)
-                    : (float) $_dd->amount;
-            }
-            if ($_amt > 0) {
-                $dedRows[] = ['label' => $_dd->title, 'amount' => $_amt];
-            }
-        }
-    }
-
-    foreach ($payslipDetail['deduction']['pansion'] as $_p) {
-        $_amt = $_p->type === 'percentage' ? round(($_p->amount * $_basicSalary) / 100, 2) : (float) $_p->amount;
-        if ($_amt > 0) {
-            $dedRows[] = ['label' => $_p->title ?: __('Provident Fund'), 'amount' => $_amt];
-        }
-    }
-    // ── LOP (Loss of Pay) — absent days deduction ────────────────────────────
-    // Only shown for monthly employees; hourly employees never have LOP (zeroed in Utility).
-    foreach ($payslipDetail['deduction']['leave'] as $_lea) {
-        if ($_lea->empleave > 0) {
-            $lopDaysLabel = is_numeric($payslipDetail['lop_days'] ?? null)
-                ? ' (' . $payslipDetail['lop_days'] . ' ' . __('days') . ')'
-                : '';
-            $dedRows[] = ['label' => __('Loss Of Pay') . $lopDaysLabel, 'amount' => (float) $_lea->empleave];
-        }
-    }
-    // Unpaid leave deduction — shown as a separate line when > 0
-    if ($unpaidLeaveDeduction > 0) {
-        $dedRows[] = [
-            'label'  => __('Unpaid Leave') . ' (' . $unpaidLeaveDays . ' ' . __('days') . ')',
-            'amount' => $unpaidLeaveDeduction,
-        ];
-    }
-
-    // No extra day payment added — extra days are informational only
-    $totalDeductions = $payslipDetail['totalDeduction'];
-    $amt = $_salary - $totalDeductions;
-    $totalEarnings = $payslipDetail['totalEarning'] + $_salary;
-    $netSalary = max(0, $payslipDetail['totalEarning'] + $amt);
-
-    $_maxED = max(count($earRows), count($dedRows));
-    while (count($earRows) < $_maxED) {
-        $earRows[] = ['label' => '', 'amount' => null];
-    }
-    while (count($dedRows) < $_maxED) {
-        $dedRows[] = ['label' => '', 'amount' => null];
-    }
-
-    // ── Company ───────────────────────────────────────────────────────────────
-    $companyName = \App\Models\Utility::getValByName('company_name') ?? '';
-    $companyAddr = \App\Models\Utility::getValByName('company_address') ?? '';
-    $companyCity = \App\Models\Utility::getValByName('company_city') ?? '';
-    $companyState = \App\Models\Utility::getValByName('company_state') ?? '';
-    $companyZip = \App\Models\Utility::getValByName('company_zipcode') ?? '';
-    $companyPhone = \App\Models\Utility::getValByName('company_telephone') ?? '';
-    $companyEmail = \App\Models\Utility::getValByName('company_email') ?? '';
-    $companyWeb = \App\Models\Utility::getValByName('company_website') ?? '';
-    $isPaid = $payslip->status == 1;
-
-    // ── Stamp ──────────────────────────────────────────────────────────────────
-    $_stampFile = \App\Models\Utility::getValByName('company_stamp');
-    $_stampUrl =
-        $_stampFile && !empty($_stampFile) ? \App\Models\Utility::get_file('uploads/logo/') . '/' . $_stampFile : null;
+    // All template data is pre-computed from
+    // App\Http\Controllers\PaySlipController::preparePayslipTemplateData().
+    // Employee and Payslip objects are also passed to the view.
 @endphp
 
 <!DOCTYPE html>
@@ -531,68 +308,98 @@
             <div class="slip-title">PAY SLIP &mdash; {{ strtoupper($slipLabel) }}</div>
 
             {{-- ══ A: Employee | Payment ══ --}}
+            @if($_showEmployeeDetails || $_showPaymentDetails)
             <table class="bt" style="border:none;">
                 <tr>
-                    <td style="width:50%; padding:0; border:none; vertical-align:top;">
+                    @if($_showEmployeeDetails)
+                    <td style="width:{{ $_showPaymentDetails ? '50%' : '100%' }}; padding:0; border:none; vertical-align:top;">
                         <div class="band">Employee Details</div>
                         <table class="bt">
+                            @if($_showName)
                             <tr>
                                 <td class="lbl" style="width:45%;">Name</td>
                                 <td class="val">{{ $employee->name }}</td>
                             </tr>
+                            @endif
+                            @if($_showDesignation)
                             <tr>
                                 <td class="lbl">Designation</td>
                                 <td class="val">{{ optional($employee->designation)->name ?? '—' }}</td>
                             </tr>
+                            @endif
+                            @if($_showEmployeeId)
                             <tr>
                                 <td class="lbl">Employee ID</td>
                                 <td class="val">{{ $employee->employee_id ?? '—' }}</td>
                             </tr>
+                            @endif
+                            @if($_showDepartment)
                             <tr>
                                 <td class="lbl">Department</td>
                                 <td class="val">{{ optional($employee->department)->name ?? '—' }}</td>
                             </tr>
+                            @endif
+                            @if($_showPanNo)
                             <tr>
                                 <td class="lbl">PAN No.</td>
                                 <td class="val">{{ $employee->tax_payer_id ?? '—' }}</td>
                             </tr>
+                            @endif
+                            @if($_showDateOfJoining)
                             <tr>
                                 <td class="lbl">Date of Joining</td>
                                 <td class="val">{{ $employee->company_doj ?? '—' }}</td>
                             </tr>
+                            @endif
                         </table>
                     </td>
-                    <td style="width:50%; padding:0; border-left:1px solid {{ $_themeColor }}55; vertical-align:top;">
+                    @endif
+                    @if($_showPaymentDetails)
+                    <td style="width:{{ $_showEmployeeDetails ? '50%' : '100%' }}; padding:0; border-left:1px solid {{ $_themeColor }}55; vertical-align:top;">
                         <div class="band">Payment Details</div>
                         <table class="bt">
+                            @if($_showBankName)
                             <tr>
                                 <td class="lbl" style="width:45%;">Bank Name</td>
                                 <td class="val">{{ $employee->bank_name ?? '—' }}</td>
                             </tr>
+                            @endif
+                            @if($_showAccountNo)
                             <tr>
                                 <td class="lbl">Account No.</td>
                                 <td class="val">{{ $employee->account_number ?? '—' }}</td>
                             </tr>
+                            @endif
+                            @if($_showBankCode)
                             <tr>
                                 <td class="lbl">{{ \App\Models\Utility::bankCodeLabel() }}</td>
                                 <td class="val">{{ $employee->bank_identifier_code ?? '—' }}</td>
                             </tr>
+                            @endif
+                            @if($_showAccountHolder)
                             <tr>
                                 <td class="lbl">Account Holder</td>
                                 <td class="val">{{ $employee->account_holder_name ?? '—' }}</td>
                             </tr>
+                            @endif
+                            @if($_showTransactionMode)
                             <tr>
                                 <td class="lbl">Transaction</td>
                                 <td class="val">NEFT</td>
                             </tr>
+                            @endif
+                            @if($_showPayPeriod)
                             <tr>
                                 <td class="lbl">Pay Period</td>
                                 <td class="val">{{ $slipLabel }}</td>
                             </tr>
+                            @endif
                         </table>
                     </td>
+                    @endif
                 </tr>
             </table>
+            @endif
 
             {{-- ══ B: Leave | Days & Work | Salary ══ --}}
             <table class="bt" style="border:none; border-top:1px solid {{ $_themeColor }}55;">
@@ -813,6 +620,7 @@
             </table>
 
             {{-- ══ E: Signatures ══ --}}
+            @if($_showSignatures)
             <table class="sig">
                 <tr>
                     <td style="width:50%;">
@@ -825,8 +633,10 @@
                     </td>
                 </tr>
             </table>
+            @endif
 
             {{-- ══ Footer ══ --}}
+            @if($_showFooter)
             <div class="foot" style="margin-top:10px;">
                 <table class="foot-tbl">
                     <tr>
@@ -848,6 +658,7 @@
                     </tr>
                 </table>
             </div>
+            @endif
 
         </div>{{-- /.slip --}}
     </div>{{-- /.page --}}
