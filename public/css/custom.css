@@ -1433,3 +1433,96 @@ body.theme-10 .information-tab {
 }
 
 /* Payslip design css */
+
+/* Calendar Controls & Fullscreen Styles */
+.clock-action {
+    margin: 0 !important;
+}
+.btn-warning {
+    background: #ffc107 !important;
+}
+.btn-danger {
+    background: #dc3545 !important;
+}
+.calendar-controls-wrapper .btn {
+    font-size: 13px;
+    line-height: 1.2;
+    padding: 0.3rem 0.55rem;
+    background-color: #ffffff;
+    color: #495057;
+    border-color: #ced4da !important;
+    transition: all 0.15s ease-in-out;
+}
+.calendar-controls-wrapper .btn:hover {
+    background-color: #e9ecef !important;
+    color: #212529 !important;
+}
+.card-635 {
+    height: auto !important;
+    min-height: 0 !important;
+}
+.card-body-calendar {
+    overflow: auto;
+    position: relative;
+    transition: max-height 0.25s ease-in-out;
+}
+.calendar-zoom-wrapper {
+    transform-origin: top left;
+    transition: transform 0.2s ease-in-out, width 0.2s ease-in-out, height 0.2s ease-in-out;
+    width: 100%;
+    min-width: 100%;
+}
+.calendar-col-expanded {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    transition: all 0.3s ease-in-out;
+}
+.calendar-sibling-hidden {
+    display: none !important;
+}
+.calendar-card-inline-expanded {
+    width: 100% !important;
+    margin-bottom: 30px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
+}
+.calendar-card-inline-expanded .card-body-calendar {
+    min-height: 500px;
+}
+#calendarContextMenu {
+    z-index: 999999 !important;
+}
+.modal.show {
+    z-index: 999999 !important;
+}
+.modal-backdrop.show {
+    z-index: 999998 !important;
+}
+:fullscreen .card-body-calendar,
+:-webkit-full-screen .card-body-calendar,
+.is-browser-fullscreen .card-body-calendar {
+    height: calc(100vh - 80px);
+    overflow: auto !important;
+}
+:fullscreen .calendar-zoom-wrapper,
+:-webkit-full-screen .calendar-zoom-wrapper,
+.is-browser-fullscreen .calendar-zoom-wrapper {
+    height: 100% !important;
+    min-height: calc(100vh - 100px) !important;
+}
+:fullscreen .calendar,
+:-webkit-full-screen .calendar,
+.is-browser-fullscreen .calendar {
+    min-height: calc(100vh - 120px) !important;
+    height: 100% !important;
+}
+:fullscreen .fc,
+:-webkit-full-screen .fc,
+.is-browser-fullscreen .fc {
+    height: 100% !important;
+}
+:fullscreen .fc-view-harness,
+:-webkit-full-screen .fc-view-harness,
+.is-browser-fullscreen .fc-view-harness {
+    height: calc(100vh - 200px) !important;
+}

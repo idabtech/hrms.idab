@@ -11,18 +11,6 @@
     $icons = \App\Models\Utility::get_file('uploads/job/icons/');
 @endphp
 @section('content')
-    <style>
-        .clock-action {
-            margin: 0 !important;
-        }
-        .btn-warning {
-            background: #ffc107 !important;
-        }
-
-        .btn-danger {
-            background: #dc3545 !important;
-        }
-    </style>
     <div class="row">
         @if (session('status'))
             <div class="alert alert-success" role="alert">
@@ -698,30 +686,72 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <div class="row">
-                            <div class="col-lg-6">
-                                <h5>{{ __('Calendar') }}</h5>
+                        <div class="row align-items-center">
+                            <div class="col-md-4 col-12">
+                                <h5 class="mb-0">{{ __('Calendar') }}</h5>
                                 <input type="hidden" id="path_admin" value="{{ url('/') }}">
                             </div>
-                            <div class="col-lg-6">
-                                {{-- <div class="form-group"> --}}
-                                    <label for=""></label>
-                                    @if (isset($setting['is_enabled']) && $setting['is_enabled'] == 'on')
-                                        <select class="form-control" name="calender_type" id="calender_type"
-                                            style="float: right;width: 155px;" onchange="get_data()">
-                                            <option value="google_calender">{{ __('Google Calendar') }}</option>
-                                            <option value="local_calender" selected="true">
-                                                {{ __('Local Calendar') }}
-                                            </option>
-                                        </select>
-                                    @endif
-                                    {{--
-                                </div> --}}
+                            <div class="col-md-8 col-12 mt-2 mt-md-0 d-flex align-items-center justify-content-end gap-2 flex-wrap">
+                                @if (isset($setting['is_enabled']) && $setting['is_enabled'] == 'on')
+                                    <select class="form-control me-2" name="calender_type" id="calender_type"
+                                        style="width: 145px; display:inline-block;" onchange="get_data()">
+                                        <option value="google_calender">{{ __('Google Calendar') }}</option>
+                                        <option value="local_calender" selected="true">
+                                            {{ __('Local Calendar') }}
+                                        </option>
+                                    </select>
+                                @endif
+                                <div class="calendar-controls-wrapper d-inline-flex align-items-center gap-1">
+                                    <div class="btn-group btn-group-sm border rounded bg-white shadow-sm" role="group" aria-label="Calendar Zoom Controls">
+                                        <button type="button" class="btn btn-outline-secondary btn-cal-zoom-out py-1 px-2" onclick="dashboardCalZoomOut(this, event)" title="{{ __('Zoom Out') }}">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#495057" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            </svg>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-cal-zoom-reset fw-bold py-1 px-2 text-primary" onclick="dashboardCalZoomReset(this, event)" title="{{ __('Reset Zoom') }}">
+                                            <span class="cal-zoom-level">100%</span>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-cal-zoom-in py-1 px-2" onclick="dashboardCalZoomIn(this, event)" title="{{ __('Zoom In') }}">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#495057" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            </svg>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-cal-fit-height py-1 px-2" onclick="dashboardCalVerticalResize(this, event)" title="{{ __('Vertical Resize / Scroll Toggle') }}">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#495057" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="7 8 12 3 17 8"></polyline>
+                                                <polyline points="7 16 12 21 17 16"></polyline>
+                                                <line x1="12" y1="3" x2="12" y2="21"></line>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary border shadow-sm btn-cal-card-fullscreen py-1 px-2 me-1" onclick="dashboardCalExpandDashboard(this, event)" title="{{ __('Dashboard Fullscreen View') }}">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#495057" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="15 3 21 3 21 9"></polyline>
+                                            <polyline points="9 21 3 21 3 15"></polyline>
+                                            <line x1="21" y1="3" x2="14" y2="10"></line>
+                                            <line x1="3" y1="21" x2="10" y2="14"></line>
+                                        </svg>
+                                    </button>
+                                     <button type="button" class="btn btn-sm btn-outline-secondary border shadow-sm btn-cal-page-fullscreen py-1 px-2 me-1" onclick="dashboardCalBrowserFullscreen(this, event)" title="{{ __('Browser Fullscreen Mode') }}">
+                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#495057" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                                         </svg>
+                                     </button>
+                                     <button type="button" class="btn btn-sm btn-outline-secondary border shadow-sm btn-cal-reset-all py-1 px-2" onclick="dashboardCalResetAll(this, event)" title="{{ __('Reset Real Position') }}">
+                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                             <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                             <path d="M3 3v5h5"></path>
+                                         </svg>
+                                     </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <div id='event_calendar' class='calendar'></div>
+                    <div class="card-body card-body-calendar overflow-auto">
+                        <div class="calendar-zoom-wrapper">
+                            <div id='event_calendar' class='calendar'></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1048,30 +1078,72 @@
                     <div class="col-xl-7">
                         <div class="card">
                             <div class="card-header">
-                                <div class="row">
-                                    <div class="col-lg-6">
-                                        <h5>{{ __('Calendar') }}</h5>
+                                <div class="row align-items-center">
+                                    <div class="col-md-4 col-12">
+                                        <h5 class="mb-0">{{ __('Calendar') }}</h5>
                                         <input type="hidden" id="path_admin" value="{{ url('/') }}">
                                     </div>
-                                    <div class="col-lg-6">
-                                        {{-- <div class="form-group"> --}}
-                                            <label for=""></label>
-                                            @if (isset($setting['is_enabled']) && $setting['is_enabled'] == 'on')
-                                                <select class="form-control" name="calender_type" id="calender_type"
-                                                    style="float: right;width: 155px;" onchange="get_data()">
-                                                    <option value="google_calender">{{ __('Google Calendar') }}</option>
-                                                    <option value="local_calender" selected="true">
-                                                        {{ __('Local Calendar') }}
-                                                    </option>
-                                                </select>
-                                            @endif
-                                            {{--
-                                        </div> --}}
+                                    <div class="col-md-8 col-12 mt-2 mt-md-0 d-flex align-items-center justify-content-end gap-2 flex-wrap">
+                                        @if (isset($setting['is_enabled']) && $setting['is_enabled'] == 'on')
+                                            <select class="form-control me-2" name="calender_type" id="calender_type"
+                                                style="width: 145px; display:inline-block;" onchange="get_data()">
+                                                <option value="google_calender">{{ __('Google Calendar') }}</option>
+                                                <option value="local_calender" selected="true">
+                                                    {{ __('Local Calendar') }}
+                                                </option>
+                                            </select>
+                                        @endif
+                                        <div class="calendar-controls-wrapper d-inline-flex align-items-center gap-1">
+                                            <div class="btn-group btn-group-sm border rounded bg-white shadow-sm" role="group" aria-label="Calendar Zoom Controls">
+                                                <button type="button" class="btn btn-outline-secondary btn-cal-zoom-out py-1 px-2" onclick="dashboardCalZoomOut(this, event)" title="{{ __('Zoom Out') }}">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#495057" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                                    </svg>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary btn-cal-zoom-reset fw-bold py-1 px-2 text-primary" onclick="dashboardCalZoomReset(this, event)" title="{{ __('Reset Zoom') }}">
+                                                    <span class="cal-zoom-level">100%</span>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary btn-cal-zoom-in py-1 px-2" onclick="dashboardCalZoomIn(this, event)" title="{{ __('Zoom In') }}">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#495057" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                                    </svg>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary btn-cal-fit-height py-1 px-2" onclick="dashboardCalVerticalResize(this, event)" title="{{ __('Vertical Resize / Scroll Toggle') }}">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#495057" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                        <polyline points="7 8 12 3 17 8"></polyline>
+                                                        <polyline points="7 16 12 21 17 16"></polyline>
+                                                        <line x1="12" y1="3" x2="12" y2="21"></line>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary border shadow-sm btn-cal-card-fullscreen py-1 px-2 me-1" onclick="dashboardCalExpandDashboard(this, event)" title="{{ __('Dashboard Fullscreen View') }}">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#495057" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polyline points="15 3 21 3 21 9"></polyline>
+                                                    <polyline points="9 21 3 21 3 15"></polyline>
+                                                    <line x1="21" y1="3" x2="14" y2="10"></line>
+                                                    <line x1="3" y1="21" x2="10" y2="14"></line>
+                                                </svg>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary border shadow-sm btn-cal-page-fullscreen py-1 px-2 me-1" onclick="dashboardCalBrowserFullscreen(this, event)" title="{{ __('Browser Fullscreen Mode') }}">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#495057" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                                                </svg>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary border shadow-sm btn-cal-reset-all py-1 px-2" onclick="dashboardCalResetAll(this, event)" title="{{ __('Reset Real Position') }}">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                                    <path d="M3 3v5h5"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="card-body card-635 ">
-                                <div id='calendar' class='calendar'></div>
+                            <div class="card-body card-635 card-body-calendar overflow-auto">
+                                <div class="calendar-zoom-wrapper">
+                                    <div id='calendar' class='calendar'></div>
+                                </div>
                             </div>
                         </div>
 
@@ -1316,6 +1388,7 @@
                             },
                         });
                         calendar.render();
+                        window.currentFullCalendar = calendar;
 
                         // Right-click context menu for company/HR calendar
                         @if (\Auth::user()->can('Create Leave') || \Auth::user()->can('Create Holiday') || \Auth::user()->can('Create Interview Schedule') || \Auth::user()->can('Create Event'))
@@ -1509,6 +1582,7 @@
                         });
 
                         calendar.render();
+                        window.currentFullCalendar = calendar;
 
                         // Right-click context menu for employee calendar
                         @if (\Auth::user()->can('Create Leave') || \Auth::user()->can('Create Holiday') || \Auth::user()->can('Create Interview Schedule') || \Auth::user()->can('Create Event'))
@@ -1618,6 +1692,7 @@
                     }
                 });
             };
+        </script>
         </script>
     @endif
 
@@ -1991,3 +2066,219 @@
         });
     });
 </script>
+
+@push('script-page')
+<script>
+    // Global Calendar Control Functions
+    window.dashboardCalZoomIn = function(btn, e) {
+        if (e) e.preventDefault();
+        var card = btn ? btn.closest('.card') : null;
+        var zoomText = card ? card.querySelector('.cal-zoom-level') : null;
+        var currentZoom = parseInt(zoomText ? zoomText.textContent : '100') || 100;
+        if (currentZoom < 180) {
+            currentZoom += 10;
+            window.dashboardCalApplyZoom(card, currentZoom, zoomText);
+        }
+    };
+
+    window.dashboardCalZoomOut = function(btn, e) {
+        if (e) e.preventDefault();
+        var card = btn ? btn.closest('.card') : null;
+        var zoomText = card ? card.querySelector('.cal-zoom-level') : null;
+        var currentZoom = parseInt(zoomText ? zoomText.textContent : '100') || 100;
+        if (currentZoom > 50) {
+            currentZoom -= 10;
+            window.dashboardCalApplyZoom(card, currentZoom, zoomText);
+        }
+    };
+
+    window.dashboardCalZoomReset = function(btn, e) {
+        if (e) e.preventDefault();
+        var card = btn ? btn.closest('.card') : null;
+        var zoomText = card ? card.querySelector('.cal-zoom-level') : null;
+        window.dashboardCalApplyZoom(card, 100, zoomText);
+    };
+
+    window.dashboardCalApplyZoom = function(card, zoomPercent, zoomText) {
+        if (zoomText) zoomText.textContent = zoomPercent + '%';
+        var scale = zoomPercent / 100;
+        var zoomWrapper = card ? card.querySelector('.calendar-zoom-wrapper') : null;
+        if (zoomWrapper) {
+            if (zoomPercent === 100) {
+                zoomWrapper.style.transform = '';
+                zoomWrapper.style.transformOrigin = '';
+                zoomWrapper.style.width = '';
+                zoomWrapper.style.height = '';
+            } else {
+                zoomWrapper.style.transform = 'scale(' + scale + ')';
+                zoomWrapper.style.transformOrigin = 'top left';
+                zoomWrapper.style.width = (100 / scale) + '%';
+                var calEl = card.querySelector('.calendar');
+                if (calEl) {
+                    var h = calEl.offsetHeight || 550;
+                    zoomWrapper.style.height = (h * scale) + 'px';
+                }
+            }
+        }
+        window.dashboardCalTriggerUpdateSize();
+    };
+
+    window.dashboardCalVerticalResize = function(btn, e) {
+        if (e) e.preventDefault();
+        var card = btn ? btn.closest('.card') : null;
+        var bodyCal = card ? card.querySelector('.card-body-calendar') : null;
+        if (bodyCal) {
+            var currentState = bodyCal.getAttribute('data-height-state') || 'default';
+            if (currentState === 'default') {
+                bodyCal.setAttribute('data-height-state', 'expanded');
+                bodyCal.style.setProperty('max-height', '850px', 'important');
+            } else if (currentState === 'expanded') {
+                bodyCal.setAttribute('data-height-state', 'compact');
+                bodyCal.style.setProperty('max-height', '400px', 'important');
+            } else {
+                bodyCal.setAttribute('data-height-state', 'default');
+                bodyCal.style.setProperty('max-height', '600px', 'important');
+            }
+            window.dashboardCalTriggerUpdateSize();
+        }
+    };
+
+    window.dashboardCalExpandDashboard = function(btn, e) {
+        if (e) e.preventDefault();
+        var card = btn ? btn.closest('.card') : null;
+        if (!card) return;
+
+        var parentCol = card.closest('.col-xl-7, .col-lg-7, .col-md-12, .col-12');
+        var row = card.closest('.row');
+
+        if (row && parentCol) {
+            var siblings = Array.from(row.children).filter(function(child) {
+                return child !== parentCol;
+            });
+            var isExpanded = parentCol.classList.contains('calendar-col-expanded');
+            if (!isExpanded) {
+                parentCol.classList.add('calendar-col-expanded');
+                siblings.forEach(function(sib) {
+                    sib.classList.add('calendar-sibling-hidden');
+                });
+                card.classList.add('calendar-card-inline-expanded');
+            } else {
+                parentCol.classList.remove('calendar-col-expanded');
+                siblings.forEach(function(sib) {
+                    sib.classList.remove('calendar-sibling-hidden');
+                });
+                card.classList.remove('calendar-card-inline-expanded');
+            }
+        } else {
+            card.classList.toggle('calendar-card-inline-expanded');
+        }
+
+        window.dashboardCalTriggerUpdateSize();
+    };
+
+    window.dashboardCalResetAll = function(btn, e) {
+        if (e) e.preventDefault();
+        var card = btn ? btn.closest('.card') : null;
+        if (!card) return;
+
+        var zoomText = card.querySelector('.cal-zoom-level');
+        window.dashboardCalApplyZoom(card, 100, zoomText);
+
+        var bodyCal = card.querySelector('.card-body-calendar');
+        if (bodyCal) {
+            bodyCal.removeAttribute('data-height-state');
+            bodyCal.style.removeProperty('max-height');
+            bodyCal.style.height = '';
+        }
+
+        var parentCol = card.closest('.col-xl-7, .col-lg-7, .col-md-12, .col-12');
+        var row = card.closest('.row');
+        if (row && parentCol) {
+            parentCol.classList.remove('calendar-col-expanded');
+            var siblings = Array.from(row.children).filter(function(child) {
+                return child !== parentCol;
+            });
+            siblings.forEach(function(sib) {
+                sib.classList.remove('calendar-sibling-hidden');
+            });
+        }
+        card.classList.remove('calendar-card-inline-expanded');
+
+        if (document.fullscreenElement) {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
+
+        window.dashboardCalTriggerUpdateSize();
+    };
+
+    window.dashboardCalBrowserFullscreen = function(btn, e) {
+        if (e) e.preventDefault();
+        var card = btn ? btn.closest('.card') : null;
+        if (!card) return;
+
+        if (!document.fullscreenElement) {
+            var modal = document.getElementById('commonModal');
+            var ctxMenu = document.getElementById('calendarContextMenu');
+            if (modal && !card.contains(modal)) card.appendChild(modal);
+            if (ctxMenu && !card.contains(ctxMenu)) card.appendChild(ctxMenu);
+
+            if (card.requestFullscreen) {
+                card.requestFullscreen();
+            } else if (card.webkitRequestFullscreen) {
+                card.webkitRequestFullscreen();
+            } else if (card.msRequestFullscreen) {
+                card.msRequestFullscreen();
+            }
+            card.classList.add('is-browser-fullscreen');
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
+        window.dashboardCalTriggerUpdateSize();
+    };
+
+    window.dashboardCalTriggerUpdateSize = function() {
+        setTimeout(function() {
+            if (window.currentFullCalendar && typeof window.currentFullCalendar.updateSize === 'function') {
+                window.currentFullCalendar.updateSize();
+            }
+            window.dispatchEvent(new Event('resize'));
+        }, 50);
+    };
+
+    document.addEventListener('fullscreenchange', function() {
+        var activeCalCard = document.querySelector('.card.is-browser-fullscreen');
+        var modal = document.getElementById('commonModal');
+        var ctxMenu = document.getElementById('calendarContextMenu');
+
+        if (!document.fullscreenElement) {
+            if (activeCalCard) activeCalCard.classList.remove('is-browser-fullscreen');
+            if (modal && modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
+            if (ctxMenu && ctxMenu.parentElement !== document.body) {
+                document.body.appendChild(ctxMenu);
+            }
+            if (window.currentFullCalendar && typeof window.currentFullCalendar.setOption === 'function') {
+                window.currentFullCalendar.setOption('height', 'auto');
+            }
+        } else {
+            if (window.currentFullCalendar && typeof window.currentFullCalendar.setOption === 'function') {
+                window.currentFullCalendar.setOption('height', 'calc(100vh - 120px)');
+            }
+        }
+        window.dashboardCalTriggerUpdateSize();
+    });
+</script>
+@endpush
