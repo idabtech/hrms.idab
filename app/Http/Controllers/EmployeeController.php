@@ -48,9 +48,21 @@ class EmployeeController extends Controller
 
         if (Auth::user()->can('Manage Employee')) {
             if (Auth::user()->type == 'employee') {
-                $employees = Employee::where('user_id', '=', Auth::user()->id)->get();
+                $employees = Employee::where('user_id', '=', Auth::user()->id)
+                    ->where('is_active', 1)
+                    ->whereHas('user', function ($q) {
+                        $q->where('is_active', 1);
+                    })
+                    ->get();
             } else {
-                $employees = Employee::where('created_by', Auth::user()->creatorId())->where('is_admin_staff', 0)->with(['branch', 'department', 'designation', 'user'])->get();
+                $employees = Employee::where('created_by', Auth::user()->creatorId())
+                    ->where('is_admin_staff', 0)
+                    ->where('is_active', 1)
+                    ->whereHas('user', function ($q) {
+                        $q->where('is_active', 1);
+                    })
+                    ->with(['branch', 'department', 'designation', 'user'])
+                    ->get();
             }
 
             return view('employee.index', compact('employees'));
@@ -1390,15 +1402,24 @@ class EmployeeController extends Controller
     public function getEmployeesApi(Request $request)
     {
         if ($request->employee_id == 0) {
-            $employees = Employee::where('created_by', '=', Auth::user()->creatorId())->get();
+            $employees = Employee::where('created_by', '=', Auth::user()->creatorId())
+                ->where('is_active', 1)
+                ->whereHas('user', function ($q) {
+                    $q->where('is_active', 1);
+                })
+                ->get();
         } else {
-            $employees = Employee::where('user_id', '=', $request->employee_id)->get();
+            $employees = Employee::where('user_id', '=', $request->employee_id)
+                ->where('is_active', 1)
+                ->whereHas('user', function ($q) {
+                    $q->where('is_active', 1);
+                })
+                ->get();
         }
         return response()->json([
             'status' => 'success',
             'message' => __('Employee list get successfully.'),
             'employee' => $employees
         ]);
-        // return response()->json($employees);
     }
 }
