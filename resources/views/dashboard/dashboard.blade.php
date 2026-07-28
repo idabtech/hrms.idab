@@ -663,7 +663,7 @@
                                         @elseif($employeeAttendance)
                                             {{-- User clocked in normally --}}
                                             {{ Form::model($employeeAttendance, ['route' => ['attendanceemployee.update', $employeeAttendance->id], 'method' => 'PUT']) }}
-                                            <button type="submit" class="btn btn-danger clock-action" data-action="clock_out"
+                                            <button type="button" class="btn btn-danger clock-action" data-action="clock_out"
                                                 title="Clock out normally">
                                                 {{ __('CLOCK OUT') }}
                                             </button>
