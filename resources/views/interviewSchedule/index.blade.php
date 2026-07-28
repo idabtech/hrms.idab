@@ -190,8 +190,32 @@
                             dayMaxEvents: true,
                             handleWindowResize: true,
                             events: data,
-                            height: 'auto',
-                            timeFormat: 'H(:mm)',
+                            eventClick: function(info) {
+                                if (info.event.url && info.event.url !== '0' && info.event.url !== '#') {
+                                    info.jsEvent.preventDefault();
+                                    var title = info.event.title;
+                                    var url = info.event.url;
+                                    $("#commonModal .modal-title").html(title);
+                                    $("#commonModal .modal-dialog").removeClass('modal-md modal-lg modal-sm modal-xl').addClass('modal-md');
+                                    $.ajax({
+                                        url: url,
+                                        success: function(data) {
+                                            $('#commonModal .body').html(data);
+                                            $("#commonModal").modal('show');
+                                            taskCheckbox();
+                                            common_bind("#commonModal");
+                                            commonLoader();
+                                            select2();
+                                            cancelButtonCss();
+                                            if (typeof validation === 'function') validation();
+                                        },
+                                        error: function(data) {
+                                            data = data.responseJSON;
+                                            toastrs('Error', (data && data.error) ? data.error : 'Something went wrong', 'error');
+                                        }
+                                    });
+                                }
+                            },
                         });
                         calendar.render();
                     })();

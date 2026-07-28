@@ -128,17 +128,89 @@
         if (month < 10) month = "0" + month;
         if (day < 10) day = "0" + day;
         var today = now.getFullYear() + '-' + month + '-' + day;
-        $('.current_date').val(today);
+        if (!$('.current_date').val()) {
+            $('.current_date').val(today);
+        }
     });
-</script>
 
-<script>
     $(document).ready(function() {
         $('.btn-group-colors label').click(function() {
-            $('.btn-group-colors label').removeClass('active-border'); // Remove active border from all labels
-            $(this).addClass('active-border'); // Add active border to the clicked label
+            $('.btn-group-colors label').removeClass('active-border');
+            $(this).addClass('active-border');
         });
     });
+
+    $(document).off('change', 'select[name=branch_id]').on('change', 'select[name=branch_id]', function() {
+        var branch_id = $(this).val();
+        getDepartment(branch_id);
+    });
+
+    function getDepartment(bid) {
+        $.ajax({
+            url: '{{ route('event.getdepartment') }}',
+            type: 'POST',
+            data: {
+                "branch_id": bid,
+                "_token": "{{ csrf_token() }}",
+            },
+            success: function(data) {
+                $('.department_id').empty();
+                var emp_selct = ` <select class="form-control department_id" name="department_id[]" id="choices-multiple"
+                                        placeholder="{{ __('Select Department') }}" multiple required>
+                                        </select>`;
+                $('.department_div').html(emp_selct);
+
+                $('.department_id').append('<option value=""> {{ __('Select Department') }} </option>');
+                $.each(data, function(key, value) {
+                    $('.department_id').append('<option value="' + key + '">' + value + '</option>');
+                });
+
+                if (typeof Choices !== 'undefined') {
+                    new Choices('#choices-multiple', {
+                        removeItemButton: true,
+                    });
+                } else if (typeof select2 === 'function') {
+                    select2();
+                }
+            }
+        });
+    }
+
+    $(document).off('change', '.department_id').on('change', '.department_id', function() {
+        var department_id = $(this).val();
+        getEmployee(department_id);
+    });
+
+    function getEmployee(did) {
+        $.ajax({
+            url: '{{ route('event.getemployee') }}',
+            type: 'POST',
+            data: {
+                "department_id": did,
+                "_token": "{{ csrf_token() }}",
+            },
+            success: function(data) {
+                $('.employee_id').empty();
+                var emp_selct = ` <select class="form-control employee_id" name="employee_id[]" id="choices-multiple1"
+                                        placeholder="{{ __('Select Employee') }}" multiple required>
+                                        </select>`;
+                $('.employee_div').html(emp_selct);
+
+                $('.employee_id').append('<option value=""> {{ __('Select Employee') }} </option>');
+                $.each(data, function(key, value) {
+                    $('.employee_id').append('<option value="' + key + '">' + value + '</option>');
+                });
+
+                if (typeof Choices !== 'undefined') {
+                    new Choices('#choices-multiple1', {
+                        removeItemButton: true,
+                    });
+                } else if (typeof select2 === 'function') {
+                    select2();
+                }
+            }
+        });
+    }
 </script>
 
 <style>
