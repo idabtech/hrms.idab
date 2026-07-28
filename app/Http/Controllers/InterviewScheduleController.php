@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Employee;
 use App\Models\InterviewSchedule as LocalInterviewSchedule;
 use App\Models\JobApplication;
 use App\Models\JobStage;
@@ -15,25 +16,25 @@ class InterviewScheduleController extends Controller
 
     public function index()
     {
-        $sdf ='';
-        $schedules   = LocalInterviewSchedule::where('created_by', \Auth::user()->creatorId())->get();
+        $sdf = '';
+        $schedules = LocalInterviewSchedule::where('created_by', \Auth::user()->creatorId())->with(['applications.jobs'])->get();
         $arrSchedule = [];
         $today_date = date('m');
         $current_month_event = LocalInterviewSchedule::select('id', 'candidate', 'date', 'employee', 'time', 'comment')->whereNotNull(['date'])->whereMonth('date', $today_date)->where('created_by', \Auth::user()->creatorId())->get();
         foreach ($schedules as $key => $schedule) {
-            $arr['id']     = $schedule['id'];
-            $arr['title']  = !empty($schedule->applications) ? !empty($schedule->applications->jobs) ? $schedule->applications->jobs->title : '' : '';
-            $arr['start']  = $schedule['date'];
-            $arr['url']    = route('interview-schedule.show', $schedule['id']);
-            $arr['className'] = ' event-primary';
-            $arrSchedule[] = $arr;
-            $sdf = !empty($current_month_event[$key]->applications) ? (!empty($current_month_event[$key]->applications->jobs) ? $current_month_event[$key]->applications->jobs->title : '') : '';
+            $jobTitle = (!empty($schedule->applications) && !empty($schedule->applications->jobs)) ? $schedule->applications->jobs->title : (!empty($schedule->applications) ? $schedule->applications->name : __('Interview'));
 
+            $arr['id']        = $schedule['id'];
+            $arr['title']     = $jobTitle;
+            $arr['start']     = $schedule['date'];
+            $arr['url']       = route('interview-schedule.show', $schedule['id']);
+            $arr['className'] = 'event-primary';
+            $arrSchedule[]    = $arr;
         }
 
         $arrSchedule = json_encode($arrSchedule);
 
-        return view('interviewSchedule.index', compact('arrSchedule', 'schedules', 'current_month_event','sdf'));
+        return view('interviewSchedule.index', compact('arrSchedule', 'schedules', 'current_month_event', 'sdf'));
     }
 
     public function create($candidate = 0)
@@ -173,22 +174,62 @@ class InterviewScheduleController extends Controller
         $arrayJson = [];
         if ($request->get('calender_type') == 'google_calender') {
             $type = 'interview_schedule';
-            $arrayJson =  Utility::getCalendarData($type);
+            $arrayJson = Utility::getCalendarData($type);
         } else {
-            $data = LocalInterviewSchedule::where('created_by', \Auth::user()->creatorId())->get();
+            if (\Auth::user()->type == 'employee') {
+                $user = \Auth::user();
+                $companyId = $user->creatorId();
+                $firstName = explode(' ', trim($user->name))[0];
+
+                $relatedUserIds = User::where('created_by', $companyId)
+                    ->where(function($q) use ($user, $firstName) {
+                        $q->where('id', $user->id)
+                          ->orWhere('email', $user->email)
+                          ->orWhere('name', 'LIKE', $firstName . '%');
+                    })
+                    ->pluck('id')
+                    ->toArray();
+
+                $relatedEmpIds = Employee::where('created_by', $companyId)
+                    ->where(function($q) use ($user, $firstName, $relatedUserIds) {
+                        $q->whereIn('user_id', $relatedUserIds)
+                          ->orWhere('email', $user->email)
+                          ->orWhere('name', 'LIKE', $firstName . '%');
+                    })
+                    ->pluck('id')
+                    ->toArray();
+
+                $allMatchingIds = array_unique(array_filter(array_merge(
+                    [$user->id],
+                    $relatedUserIds,
+                    $relatedEmpIds
+                )));
+
+                $data = LocalInterviewSchedule::where(function ($q) use ($allMatchingIds) {
+                        $q->whereIn('employee', $allMatchingIds)
+                          ->orWhereIn('employee', array_map('strval', $allMatchingIds));
+                    })
+                    ->with(['applications.jobs'])
+                    ->get();
+            } else {
+                $data = LocalInterviewSchedule::where('created_by', \Auth::user()->creatorId())
+                    ->with(['applications.jobs'])
+                    ->get();
+            }
 
             foreach ($data as $val) {
-                $end_date = date_create($val->end_date);
+                $jobTitle = (!empty($val->applications) && !empty($val->applications->jobs)) ? $val->applications->jobs->title : (!empty($val->applications) ? $val->applications->name : __('Interview'));
+
+                $end_date = date_create($val->date);
                 date_add($end_date, date_interval_create_from_date_string("1 days"));
                 $arrayJson[] = [
                     "id" => $val->id,
-                    "title" => Self::index()->sdf,
+                    "title" => $jobTitle,
                     "start" => $val->date,
                     "end" => date_format($end_date, "Y-m-d H:i:s"),
-                    "className" => $val->color,
-                    "textColor" => '#FFF',
+                    "className" => "event-primary",
                     "allDay" => true,
-                    "url" => route('interview-schedule.show', $val['id']),
+                    "url" => route('interview-schedule.show', $val->id),
                 ];
             }
         }

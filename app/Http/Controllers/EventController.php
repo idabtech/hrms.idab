@@ -16,6 +16,8 @@ use App\Imports\EventImport;
 use App\Exports\EventExport;
 use App\Models\Holiday;
 use App\Models\Leave;
+use App\Models\InterviewSchedule as LocalInterviewSchedule;
+use App\Models\User;
 use App\Models\Webhook;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
@@ -399,9 +401,23 @@ if (Auth::user()->type == 'employee') {
     public function getemployee(Request $request)
     {
         if ($request->department_id == 0) {
-            $employees = Employee::where('created_by', '=', \Auth::user()->creatorId())->get()->pluck('name', 'id');
+            $employees = Employee::where('created_by', '=', \Auth::user()->creatorId())
+                ->where('is_active', 1)
+                ->whereHas('user', function ($q) {
+                    $q->where('is_active', 1);
+                })
+                ->get()
+                ->pluck('name', 'id');
         } else {
-            $employees = Employee::where('created_by', '=', \Auth::user()->creatorId())->whereIn('department_id',$request->department_id)->get()->pluck('name', 'id')->toArray();
+            $employees = Employee::where('created_by', '=', \Auth::user()->creatorId())
+                ->where('is_active', 1)
+                ->whereHas('user', function ($q) {
+                    $q->where('is_active', 1);
+                })
+                ->whereIn('department_id', $request->department_id)
+                ->get()
+                ->pluck('name', 'id')
+                ->toArray();
         }
 
         return response()->json($employees);
@@ -418,74 +434,107 @@ if (Auth::user()->type == 'employee') {
     public function get_event_data(Request $request)
     {
         $arrayJson = [];
-        if($request->get('calender_type') == 'google_calender')
-        {
-            $type ='event';
-            $arrayJson =  Utility::getCalendarData($type);
-        }
-        else
-        {
-
+        if ($request->get('calender_type') == 'google_calender') {
+            $type = 'event';
+            $arrayJson = Utility::getCalendarData($type);
+        } else {
+            // 1. Local Events Query
             if (Auth::user()->type == 'employee') {
-                $current_employee = Employee::where('user_id', '=', \Auth::user()->id)->first();
-                $data         = LocalEvent::orderBy('events.id', 'desc')
-                    ->leftjoin('event_employees', 'events.id', '=', 'event_employees.event_id')
-                    ->where('event_employees.employee_id', '=', $current_employee->id)
-                    ->orWhere(function ($q) {
-                        $q->where('events.department_id', '["0"]')
-                            ->where('events.employee_id', '["0"]');
+                $user = Auth::user();
+                $companyId = $user->creatorId();
+                $firstName = explode(' ', trim($user->name))[0];
+
+                $relatedUserIds = User::where('created_by', $companyId)
+                    ->where(function($q) use ($user, $firstName) {
+                        $q->where('id', $user->id)
+                          ->orWhere('email', $user->email)
+                          ->orWhere('name', 'LIKE', $firstName . '%');
                     })
+                    ->pluck('id')
+                    ->toArray();
+
+                $relatedEmpIds = Employee::where('created_by', $companyId)
+                    ->where(function($q) use ($user, $firstName, $relatedUserIds) {
+                        $q->whereIn('user_id', $relatedUserIds)
+                          ->orWhere('email', $user->email)
+                          ->orWhere('name', 'LIKE', $firstName . '%');
+                    })
+                    ->pluck('id')
+                    ->toArray();
+
+                $allMatchingIds = array_unique(array_filter(array_merge(
+                    [$user->id],
+                    $relatedUserIds,
+                    $relatedEmpIds
+                )));
+
+                $current_employee = Employee::where('user_id', '=', $user->id)->first();
+                $deptId = $current_employee ? $current_employee->department_id : 0;
+
+                $data = LocalEvent::select('events.*')
+                    ->leftJoin('event_employees', 'events.id', '=', 'event_employees.event_id')
+                    ->where(function ($q) use ($allMatchingIds, $deptId) {
+                        $q->whereIn('event_employees.employee_id', $allMatchingIds)
+                          ->orWhereJsonContains('events.employee_id', '0')
+                          ->orWhereJsonContains('events.department_id', '0')
+                          ->orWhereJsonContains('events.department_id', (string)$deptId)
+                          ->orWhereJsonContains('events.department_id', (int)$deptId);
+
+                        foreach ($allMatchingIds as $mId) {
+                            $q->orWhereJsonContains('events.employee_id', (string)$mId)
+                              ->orWhereJsonContains('events.employee_id', (int)$mId);
+                        }
+                    })
+                    ->distinct()
                     ->get();
             } else {
                 $data = LocalEvent::where('created_by', '=', \Auth::user()->creatorId())->get();
             }
 
-            foreach($data as $val)
-            {
-                $end_date=date_create($val->end_date);
-                date_add($end_date,date_interval_create_from_date_string("1 days"));
+            foreach ($data as $val) {
+                $end_date = date_create($val->end_date);
+                date_add($end_date, date_interval_create_from_date_string("1 days"));
                 $arrayJson[] = [
-                    "id"=> $val->id,
+                    "id" => $val->id,
                     "title" => $val->title,
                     "start" => $val->start_date,
-                    "end" => date_format($end_date,"Y-m-d H:i:s"),
+                    "end" => date_format($end_date, "Y-m-d H:i:s"),
                     "className" => $val->color,
                     "allDay" => true,
-                    "url"=> route('event.edit', $val['id']),
-
+                    "url" => route('event.edit', $val['id']),
                 ];
             }
 
+            // 2. Holidays Query
             $holidays = Holiday::where('created_by', \Auth::user()->creatorId())->get();
-
             foreach ($holidays as $holiday) {
                 $end_date = date_create($holiday->end_date);
                 date_add($end_date, date_interval_create_from_date_string("1 days"));
 
                 $arrayJson[] = [
-                    "id"        => "holiday_" . $holiday->id,
-                    "title"     => $holiday->occasion,
-                    "start"     => $holiday->start_date,
-                    "end"       => date_format($end_date, "Y-m-d H:i:s"),
+                    "id" => "holiday_" . $holiday->id,
+                    "title" => $holiday->occasion,
+                    "start" => $holiday->start_date,
+                    "end" => date_format($end_date, "Y-m-d H:i:s"),
                     "className" => "event-primary",
-                    "allDay"    => true,
-                    "url"       => route('holiday.edit', $holiday->id),
+                    "allDay" => true,
+                    "url" => route('holiday.edit', $holiday->id),
                 ];
             }
 
-            // Approved Leaves (visible to everyone: Employee, HR, Company)
+            // 3. Approved Leaves Query
             $leaves = Leave::where('created_by', '=', \Auth::user()->creatorId())
                 ->whereIn('status', ['Approved', 'approved'])
                 ->with(['employees', 'leaveType'])
                 ->get();
 
             foreach ($leaves as $leave) {
-                $empName    = $leave->employees ? $leave->employees->name : __('Employee');
+                $empName = $leave->employees ? $leave->employees->name : __('Employee');
                 $leaveTitle = $leave->leaveType ? $leave->leaveType->title : __('Leave');
-                $title      = $empName . ' - ' . $leaveTitle;
+                $title = $empName . ' - ' . $leaveTitle;
 
                 $startRaw = $leave->start_date instanceof Carbon ? $leave->start_date->format('Y-m-d') : $leave->start_date;
-                $endRaw   = $leave->end_date instanceof Carbon ? $leave->end_date->format('Y-m-d') : $leave->end_date;
+                $endRaw = $leave->end_date instanceof Carbon ? $leave->end_date->format('Y-m-d') : $leave->end_date;
 
                 $end_date = date_create($endRaw);
                 date_add($end_date, date_interval_create_from_date_string("1 days"));
@@ -493,13 +542,81 @@ if (Auth::user()->type == 'employee') {
                 $leaveUrl = \Auth::user()->type != 'employee' ? route('leave.action', $leave->id) : '0';
 
                 $arrayJson[] = [
-                    "id"        => "leave_" . $leave->id,
-                    "title"     => $title,
-                    "start"     => $startRaw,
-                    "end"       => date_format($end_date, "Y-m-d H:i:s"),
+                    "id" => "leave_" . $leave->id,
+                    "title" => $title,
+                    "start" => $startRaw,
+                    "end" => date_format($end_date, "Y-m-d H:i:s"),
                     "className" => "event-warning",
-                    "allDay"    => true,
-                    "url"       => $leaveUrl,
+                    "allDay" => true,
+                    "url" => $leaveUrl,
+                ];
+            }
+
+            // 4. Interview Schedule Query
+            if (Auth::user()->type == 'employee') {
+                $user = Auth::user();
+                $companyId = $user->creatorId();
+                $firstName = explode(' ', trim($user->name))[0];
+
+                $relatedUserIds = User::where('created_by', $companyId)
+                    ->where(function($q) use ($user, $firstName) {
+                        $q->where('id', $user->id)
+                          ->orWhere('email', $user->email)
+                          ->orWhere('name', 'LIKE', $firstName . '%');
+                    })
+                    ->pluck('id')
+                    ->toArray();
+
+                $relatedEmpIds = Employee::where('created_by', $companyId)
+                    ->where(function($q) use ($user, $firstName, $relatedUserIds) {
+                        $q->whereIn('user_id', $relatedUserIds)
+                          ->orWhere('email', $user->email)
+                          ->orWhere('name', 'LIKE', $firstName . '%');
+                    })
+                    ->pluck('id')
+                    ->toArray();
+
+                $allMatchingIds = array_unique(array_filter(array_merge(
+                    [$user->id],
+                    $relatedUserIds,
+                    $relatedEmpIds
+                )));
+
+                $interviews = LocalInterviewSchedule::where(function ($q) use ($allMatchingIds) {
+                        $q->whereIn('employee', $allMatchingIds)
+                          ->orWhereIn('employee', array_map('strval', $allMatchingIds));
+                    })
+                    ->with(['applications.jobs'])
+                    ->get();
+            } else {
+                if (\Auth::user()->can('Manage Interview Schedule') || Auth::user()->type == 'company' || Auth::user()->type == 'hr' || Auth::user()->type == 'HR') {
+                    $interviews = LocalInterviewSchedule::where('created_by', '=', \Auth::user()->creatorId())
+                        ->with(['applications.jobs'])
+                        ->get();
+                } else {
+                    $interviews = collect();
+                }
+            }
+
+            foreach ($interviews as $interview) {
+                $jobTitle = (!empty($interview->applications) && !empty($interview->applications->jobs)) ? $interview->applications->jobs->title : '';
+                $candName = !empty($interview->applications) ? $interview->applications->name : __('Interview');
+                $title = $candName . ($jobTitle ? ' (' . $jobTitle . ')' : '') . ' - ' . __('Interview');
+
+                $startRaw = $interview->date;
+                $end_date = date_create($startRaw);
+                date_add($end_date, date_interval_create_from_date_string("1 days"));
+
+                $interviewUrl = route('interview-schedule.show', $interview->id);
+
+                $arrayJson[] = [
+                    "id" => "interview_" . $interview->id,
+                    "title" => $title,
+                    "start" => $startRaw,
+                    "end" => date_format($end_date, "Y-m-d H:i:s"),
+                    "className" => "event-info",
+                    "allDay" => true,
+                    "url" => $interviewUrl,
                 ];
             }
         }
