@@ -135,7 +135,80 @@ class ReportController extends Controller
             $filterYear['department']    = __('All');
             $filterYear['type']          = __('Monthly');
             $filterYear['dateYearRange'] = date('M-Y');
-            $employees                   = Employee::where('created_by', \Auth::user()->creatorId());
+
+            // ── Resolve date range for valid employees filtering ──────────────────
+            if ($request->type == 'yearly' && !empty($request->year)) {
+                $startRange = $request->year . '-01-01';
+                $endRange   = $request->year . '-12-31';
+                $filterYear['dateYearRange'] = $request->year;
+                $filterYear['type']          = __('Yearly');
+            } elseif ($request->type == 'monthly' && !empty($request->month)) {
+                $month       = date('m', strtotime($request->month));
+                $year        = date('Y', strtotime($request->month));
+                $num_of_days = date('t', mktime(0, 0, 0, $month, 1, $year));
+                $startRange  = $year . '-' . sprintf('%02d', $month) . '-01';
+                $endRange    = $year . '-' . sprintf('%02d', $month) . '-' . sprintf('%02d', $num_of_days);
+                $filterYear['dateYearRange'] = date('M-Y', strtotime($request->month));
+                $filterYear['type']          = __('Monthly');
+            } else {
+                $month       = date('m');
+                $year        = date('Y');
+                $monthYear   = date('Y-m');
+                $num_of_days = date('t', mktime(0, 0, 0, $month, 1, $year));
+                $startRange  = $year . '-' . sprintf('%02d', $month) . '-01';
+                $endRange    = $year . '-' . sprintf('%02d', $month) . '-' . sprintf('%02d', $num_of_days);
+                $filterYear['dateYearRange'] = date('M-Y', strtotime($monthYear));
+                $filterYear['type']          = __('Monthly');
+            }
+
+            $creatorId = \Auth::user()->creatorId();
+
+            // 1) Active employees joined on or before $endRange
+            $activeEmpIds = Employee::where('created_by', $creatorId)
+                ->where('is_admin_staff', 0)
+                ->where('is_active', 1)
+                ->whereHas('user', function ($q) {
+                    $q->where('is_active', 1);
+                })
+                ->where(function ($q) use ($endRange) {
+                    $q->whereNull('company_doj')
+                      ->orWhere('company_doj', '<=', $endRange);
+                })
+                ->pluck('id')
+                ->toArray();
+
+            // 2) Inactive/terminated employees who have leaves or attendance in this date range,
+            //    or whose termination/resignation date is on/after $startRange
+            $leaveEmpIds = Leave::where('created_by', $creatorId)
+                ->where('start_date', '<=', $endRange)
+                ->where('end_date', '>=', $startRange)
+                ->pluck('employee_id')
+                ->toArray();
+
+            $attendanceEmpIds = \App\Models\AttendanceEmployee::where('created_by', $creatorId)
+                ->whereBetween('date', [$startRange, $endRange])
+                ->pluck('employee_id')
+                ->toArray();
+
+            $terminatedEmpIds = \App\Models\Termination::where('created_by', $creatorId)
+                ->where('termination_date', '>=', $startRange)
+                ->pluck('employee_id')
+                ->toArray();
+
+            $resignedEmpIds = \App\Models\Resignation::where('created_by', $creatorId)
+                ->where('resignation_date', '>=', $startRange)
+                ->pluck('employee_id')
+                ->toArray();
+
+            $validEmpIds = array_unique(array_merge(
+                $activeEmpIds,
+                $leaveEmpIds,
+                $attendanceEmpIds,
+                $terminatedEmpIds,
+                $resignedEmpIds
+            ));
+
+            $employees = Employee::whereIn('id', $validEmpIds)->where('created_by', $creatorId);
             if (!empty($request->branch)) {
                 $employees->where('branch_id', $request->branch);
                 $filterYear['branch'] = !empty(Branch::find($request->branch)) ? Branch::find($request->branch)->name : '';
@@ -163,31 +236,20 @@ class ReportController extends Controller
                     $approved->whereYear('start_date', $request->year);
                     $reject->whereYear('start_date', $request->year);
                     $pending->whereYear('start_date', $request->year);
-
-                    $filterYear['dateYearRange'] = $request->year;
-                    $filterYear['type']          = __('Yearly');
                 } elseif ($request->type == 'monthly' && !empty($request->month)) {
-                    $month = date('m', strtotime($request->month));
-                    $year  = date('Y', strtotime($request->month));
+                    $mVal = date('m', strtotime($request->month));
+                    $yVal = date('Y', strtotime($request->month));
 
-                    $approved->whereMonth('start_date', $month)->whereYear('start_date', $year);
-                    $reject->whereMonth('start_date', $month)->whereYear('start_date', $year);
-                    $pending->whereMonth('start_date', $month)->whereYear('start_date', $year);
-
-                    $filterYear['dateYearRange'] = date('M-Y', strtotime($request->month));
-                    $filterYear['type']          = __('Monthly');
+                    $approved->whereMonth('start_date', $mVal)->whereYear('start_date', $yVal);
+                    $reject->whereMonth('start_date', $mVal)->whereYear('start_date', $yVal);
+                    $pending->whereMonth('start_date', $mVal)->whereYear('start_date', $yVal);
                 } else {
-                    // Default: current month
-                    $month     = date('m');
-                    $year      = date('Y');
-                    $monthYear = date('Y-m');
+                    $mVal = date('m');
+                    $yVal = date('Y');
 
-                    $approved->whereMonth('start_date', $month)->whereYear('start_date', $year);
-                    $reject->whereMonth('start_date', $month)->whereYear('start_date', $year);
-                    $pending->whereMonth('start_date', $month)->whereYear('start_date', $year);
-
-                    $filterYear['dateYearRange'] = date('M-Y', strtotime($monthYear));
-                    $filterYear['type']          = __('Monthly');
+                    $approved->whereMonth('start_date', $mVal)->whereYear('start_date', $yVal);
+                    $reject->whereMonth('start_date', $mVal)->whereYear('start_date', $yVal);
+                    $pending->whereMonth('start_date', $mVal)->whereYear('start_date', $yVal);
                 }
 
                 $approved = $approved->count();
@@ -508,12 +570,81 @@ class ReportController extends Controller
             $data['branch']     = __('All');
             $data['department'] = __('All');
 
-            $employees = Employee::select('id', 'name');
+            if (!empty($request->month)) {
+                $currentdate = strtotime($request->month);
+                $month       = date('m', $currentdate);
+                $year        = date('Y', $currentdate);
+                $curMonth    = date('M-Y', strtotime($request->month));
+            } else {
+                $month    = date('m');
+                $year     = date('Y');
+                $curMonth = date('M-Y', strtotime($year . '-' . $month));
+            }
+
+            $num_of_days = date('t', mktime(0, 0, 0, $month, 1, $year));
+            $dates = [];
+            for ($i = 1; $i <= $num_of_days; $i++) {
+                $dates[] = str_pad($i, 2, '0', STR_PAD_LEFT);
+            }
+
+            $monthStart = $year . '-' . sprintf('%02d', $month) . '-01';
+            $monthEnd   = $year . '-' . sprintf('%02d', $month) . '-' . sprintf('%02d', $num_of_days);
+            $creatorId  = \Auth::user()->creatorId();
+
+            // ── Resolve valid employees for this month ────────────────────────────
+            // 1) Active employees whose user is active and who joined on/before $monthEnd
+            $activeEmpIds = Employee::where('created_by', $creatorId)
+                ->where('is_admin_staff', 0)
+                ->where('is_active', 1)
+                ->whereHas('user', function ($q) {
+                    $q->where('is_active', 1);
+                })
+                ->where(function ($q) use ($monthEnd) {
+                    $q->whereNull('company_doj')
+                      ->orWhere('company_doj', '<=', $monthEnd);
+                })
+                ->pluck('id')
+                ->toArray();
+
+            // 2) Inactive/terminated/deleted employees who have attendance or leave in THIS report month,
+            //    or whose termination/resignation date is on or after $monthStart
+            $attendanceEmpIds = \App\Models\AttendanceEmployee::where('created_by', $creatorId)
+                ->whereBetween('date', [$monthStart, $monthEnd])
+                ->pluck('employee_id')
+                ->toArray();
+
+            $leaveEmpIds = Leave::where('created_by', $creatorId)
+                ->where('status', 'Approved')
+                ->where('start_date', '<=', $monthEnd)
+                ->where('end_date', '>=', $monthStart)
+                ->pluck('employee_id')
+                ->toArray();
+
+            $terminatedEmpIds = \App\Models\Termination::where('created_by', $creatorId)
+                ->where('termination_date', '>=', $monthStart)
+                ->pluck('employee_id')
+                ->toArray();
+
+            $resignedEmpIds = \App\Models\Resignation::where('created_by', $creatorId)
+                ->where('resignation_date', '>=', $monthStart)
+                ->pluck('employee_id')
+                ->toArray();
+
+            $validEmpIds = array_unique(array_merge(
+                $activeEmpIds,
+                $attendanceEmpIds,
+                $leaveEmpIds,
+                $terminatedEmpIds,
+                $resignedEmpIds
+            ));
+
+            $employees = Employee::select('id', 'name')
+                ->whereIn('id', $validEmpIds)
+                ->where('created_by', $creatorId);
+
             if (!empty($request->employee_id) && $request->employee_id[0] != 0) {
                 $employees->whereIn('id', $request->employee_id);
             }
-
-            $employees = $employees->where('created_by', \Auth::user()->creatorId());
 
             if (!empty($request->branch_id)) {
                 $employees->where('branch_id', $request->branch_id);
@@ -531,25 +662,6 @@ class ReportController extends Controller
             }
 
             $employees = $employees->get()->pluck('name', 'id');
-
-            if (!empty($request->month)) {
-                $currentdate = strtotime($request->month);
-                $month       = date('m', $currentdate);
-                $year        = date('Y', $currentdate);
-                $curMonth    = date('M-Y', strtotime($request->month));
-            } else {
-                $month    = date('m');
-                $year     = date('Y');
-                $curMonth = date('M-Y', strtotime($year . '-' . $month));
-            }
-
-
-            //            $num_of_days = cal_days_in_month(CAL_GREGORIAN, $month, $year);
-            $num_of_days = date('t', mktime(0, 0, 0, $month, 1, $year));
-            $dates = [];
-            for ($i = 1; $i <= $num_of_days; $i++) {
-                $dates[] = str_pad($i, 2, '0', STR_PAD_LEFT);
-            }
 
             $employeesAttendance = [];
             $totalPresent        = $totalLeave = 0;
