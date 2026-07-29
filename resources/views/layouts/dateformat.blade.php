@@ -2,6 +2,11 @@
 $company_settings = \App\Models\Utility::settings();
 @endphp
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .flatpickr-calendar {
+        z-index: 999999 !important;
+    }
+</style>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
     var laravelFormat = "{{ $company_settings['site_date_format'] }}";
