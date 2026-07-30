@@ -75,7 +75,7 @@ class Employee extends Model
 
     public function documents()
     {
-        return $this->hasMany(EmployeeDocument::class, 'employee_id', 'employee_id')->get();
+        return $this->hasMany(EmployeeDocument::class, 'employee_id', 'employee_id');
     }
 
     public function salary_type()

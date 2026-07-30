@@ -316,7 +316,11 @@
                                         <td class="{{ $attendance->isManualBy ? 'text-primary' : '' }}">{{ $attendance->status }}</td>
                                         <td class="{{ $attendance->isManualBy ? 'text-primary' : '' }}">{{ $attendance->clock_in != '00:00:00' ? \Auth::user()->timeFormat($attendance->clock_in) : '00:00' }}
                                         </td>
-                                        <td class="{{ $attendance->isManualBy ? 'text-primary' : '' }}">{{ $attendance->clock_out != '00:00:00' ? \Auth::user()->timeFormat($attendance->clock_out) : '00:00' }}
+                                        <td class="{{ $attendance->isManualBy ? 'text-primary' : '' }}">
+                                            {{ $attendance->clock_out != '00:00:00' ? \Auth::user()->timeFormat($attendance->clock_out) : '00:00' }}
+                                            @if (!empty($attendance->is_auto_clock_out))
+                                                <span class="badge bg-warning text-dark ms-1" style="font-size: 0.7rem;" title="{{ __('Auto Clock Out') }}">{{ __('Auto') }}</span>
+                                            @endif
                                         </td>
                                         <td class="{{ $attendance->isManualBy ? 'text-primary' : '' }}">{{ $attendance->total_break ?? '00:00:00' }}</td>
                                         <td class="{{ $attendance->isManualBy ? 'text-primary' : '' }}">{{ $attendance->total_lunch_time ?? '00:00:00' }}</td>

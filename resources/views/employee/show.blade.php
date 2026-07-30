@@ -142,8 +142,8 @@
                 </div>
                 <div class="col-sm-12 col-md-6">
 
-                    <div class="card ">
-                        <div class="card-body employee-detail-body fulls-card emp-card">
+                    <div class="card h-100">
+                        <div class="card-body employee-detail-body fulls-card" style="height: auto !important;">
                             <h5>{{ __('Company Detail') }}</h5>
                             <hr>
                             <div class="row">
@@ -190,11 +190,11 @@
             <div class="row">
                 <div class="col-sm-12 col-md-6">
 
-                    <div class="card ">
-                        <div class="card-body employee-detail-body fulls-card ">
+                    <div class="card h-100">
+                        <div class="card-body employee-detail-body fulls-card">
                             <h5>{{ __('Document Detail') }}</h5>
                             <hr>
-                            <div class="row">
+                            <div class="row g-3">
                                 @php
                                     $employeedoc = $employee->documents()->pluck('document_value', 'document_id');
                                     $logo = \App\Models\Utility::get_file('uploads/document');
@@ -212,28 +212,36 @@
                                         $textValue = $docType === 'text'  ? ($parsed['text'] ?? $rawValue) : ($parsed['text'] ?? null);
                                         $fileValue = $docType === 'file'  ? ($parsed['file'] ?? $rawValue) : ($parsed['file'] ?? ($parsed === null && $docType === 'both' ? $rawValue : null));
                                     @endphp
-                                        <div class="col-md-6">
-                                            <div class="info text-sm">
-                                                <strong class="font-bold">{{ $document->name }} : </strong>
+                                        <div class="col-md-6 col-12">
+                                            <div class="info text-sm text-break" style="word-break: break-all; overflow-wrap: anywhere;">
+                                                <strong class="font-bold d-block mb-1">{{ $document->name }} : </strong>
                                                 @if ($docType === 'text')
-                                                    <span>{{ $textValue }}</span>
+                                                    <span class="text-muted">{{ $textValue }}</span>
                                                 @elseif ($docType === 'both')
-                                                    @if ($textValue) <span>{{ $textValue }}</span> @endif
+                                                    @if ($textValue) <span class="d-block text-muted">{{ $textValue }}</span> @endif
                                                     @if ($fileValue)
-                                                        <span><a href="{{ $logo . '/' . $fileValue }}" target="_blank">{{ $fileValue }}</a></span>
+                                                        <span class="d-block text-break">
+                                                            <a href="{{ $logo . '/' . $fileValue }}" target="_blank" class="text-primary text-decoration-underline" style="word-break: break-all;">
+                                                                <i class="ti ti-file me-1"></i>{{ $fileValue }}
+                                                            </a>
+                                                        </span>
                                                     @endif
                                                 @else
-                                                    <span>
-                                                        <a href="{{ !empty($fileValue) ? $logo . '/' . $fileValue : '' }}" target="_blank">
-                                                            {{ $fileValue ?? '' }}
-                                                        </a>
+                                                    <span class="d-block text-break">
+                                                        @if(!empty($fileValue))
+                                                            <a href="{{ $logo . '/' . $fileValue }}" target="_blank" class="text-primary text-decoration-underline" style="word-break: break-all;">
+                                                                <i class="ti ti-file me-1"></i>{{ $fileValue }}
+                                                            </a>
+                                                        @else
+                                                            <span class="text-muted">-</span>
+                                                        @endif
                                                     </span>
                                                 @endif
                                             </div>
                                         </div>
                                     @endforeach
                                 @else
-                                    <div class="text-center">
+                                    <div class="text-center text-muted">
                                         No Document Type Added.!
                                     </div>
                                 @endif
@@ -244,49 +252,49 @@
                 </div>
                 <div class="col-sm-12 col-md-6">
 
-                    <div class="card ">
-                        <div class="card-body employee-detail-body fulls-card emp-card">
+                    <div class="card h-100">
+                        <div class="card-body employee-detail-body fulls-card" style="height: auto !important;">
                             <h5>{{ __('Bank Account Detail') }}</h5>
                             <hr>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="info text-sm">
-                                        <strong class="font-bold">{{ __('Account Holder Name') }} : </strong>
-                                        <span>{{ $employee->account_holder_name }}</span>
+                            <div class="row g-3">
+                                <div class="col-md-6 col-12">
+                                    <div class="info text-sm text-break" style="word-break: break-word;">
+                                        <strong class="font-bold d-block mb-1">{{ __('Account Holder Name') }} : </strong>
+                                        <span class="text-muted">{{ $employee->account_holder_name ?: '-' }}</span>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="info text-sm font-style">
-                                        <strong class="font-bold">{{ __('Account Number') }} :</strong>
-                                        <span>{{ $employee->account_number }}</span>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <div class="info text-sm">
-                                        <strong class="font-bold">{{ __('Bank Name') }} :</strong>
-                                        <span>{{ $employee->bank_name }}</span>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="info text-sm">
-                                        <strong class="font-bold">{{ __(\App\Models\Utility::bankCodeLabel()) }} :</strong>
-                                        <span>{{ $employee->bank_identifier_code }}</span>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="info text-sm">
-                                        <strong class="font-bold">{{ __('Branch Location') }} :</strong>
-                                        <span>{{ $employee->branch_location }}</span>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="info text-sm">
-                                        <strong class="font-bold">{{ __('Tax Payer Id') }} :</strong>
-                                        <span>{{ $employee->tax_payer_id }}</span>
+                                <div class="col-md-6 col-12">
+                                    <div class="info text-sm font-style text-break" style="word-break: break-word;">
+                                        <strong class="font-bold d-block mb-1">{{ __('Account Number') }} :</strong>
+                                        <span class="text-muted">{{ $employee->account_number ?: '-' }}</span>
                                     </div>
                                 </div>
 
+                                <div class="col-md-6 col-12">
+                                    <div class="info text-sm text-break" style="word-break: break-word;">
+                                        <strong class="font-bold d-block mb-1">{{ __('Bank Name') }} :</strong>
+                                        <span class="text-muted">{{ $employee->bank_name ?: '-' }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-12">
+                                    <div class="info text-sm text-break" style="word-break: break-word;">
+                                        <strong class="font-bold d-block mb-1">{{ __(\App\Models\Utility::bankCodeLabel()) }} :</strong>
+                                        <span class="text-muted">{{ $employee->bank_identifier_code ?: '-' }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-12">
+                                    <div class="info text-sm text-break" style="word-break: break-word;">
+                                        <strong class="font-bold d-block mb-1">{{ __('Tax Payer Id') }} :</strong>
+                                        <span class="text-muted">{{ $employee->tax_payer_id ?: '-' }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="info text-sm text-break" style="word-break: break-word;">
+                                        <strong class="font-bold d-block mb-1">{{ __('Branch Location') }} :</strong>
+                                        <span class="text-muted">{{ $employee->branch_location ?: '-' }}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

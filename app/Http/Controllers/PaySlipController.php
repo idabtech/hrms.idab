@@ -96,10 +96,20 @@ class PaySlipController extends Controller
                 $chek = PaySlip::where(['employee_id' => $employee->id, 'salary_month' => $formate_month_year])->first();
                 $terminationDate = Termination::where('employee_id', $employee->id)
                     ->whereDate('termination_date', '<=', Carbon::create($year, $month)->endOfMonth())
+                    ->where(function ($q) use ($employee) {
+                        if (!empty($employee->company_doj)) {
+                            $q->whereDate('termination_date', '>=', $employee->company_doj);
+                        }
+                    })
                     ->exists();
 
                 $resignationDate = Resignation::where('employee_id', $employee->id)
                     ->whereDate('resignation_date', '<=', Carbon::create($year, $month)->endOfMonth())
+                    ->where(function ($q) use ($employee) {
+                        if (!empty($employee->company_doj)) {
+                            $q->whereDate('resignation_date', '>=', $employee->company_doj);
+                        }
+                    })
                     ->exists();
 
                 // payslip generate employee salary is less then 0 code

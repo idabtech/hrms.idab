@@ -41,6 +41,11 @@ class Utility extends Model
         return self::$settings[$key];
     }
 
+    public static function getCompanySettings($creatorId = 0)
+    {
+        return self::fetchSettings($creatorId);
+    }
+
     /**
      * Bust the in-process static cache for the current user so the next
      * call to settings() re-reads fresh rows from the database.
@@ -216,6 +221,8 @@ class Utility extends Model
             'rota_working_days' => '1,2,3,4,5',
             'saturday_pattern' => 'none',   // none | all | odd | even
             'working_hours_per_day' => '8', // default working hours per day
+            'auto_clock_out' => 'off',       // off | on
+            'auto_clock_out_time' => '30',   // minutes after shift end time
 
             // ── Salary Slip / Payslip Settings ────────────────────────────────
             'payslip_template'              => 'standard',   // standard | uk

@@ -23,7 +23,8 @@ class AttendanceEmployee extends Model
         'company_shift_time',
         'passcode',
         'created_by',
-        'is_manual_by'
+        'is_manual_by',
+        'is_auto_clock_out'
     ];
 
     public function employees()
