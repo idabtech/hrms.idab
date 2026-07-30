@@ -727,6 +727,7 @@ class AttendanceRequestController extends Controller
     public function clockOut(Request $request, $id)
     {
         $attendanceRequestData = AttendanceRequest::where('id', $id)->first();
+
         if ($attendanceRequestData) {
             $employee = Employee::find($attendanceRequestData->employee_id);
             $reqDate = \Carbon\Carbon::parse($attendanceRequestData->requested_at)->format('Y-m-d');
@@ -752,9 +753,9 @@ class AttendanceRequestController extends Controller
                 ->orderByDesc('date')
                 ->first();
 
-            // 1. If clock_in request was APPROVED or open AttendanceEmployee row exists:
-            // Directly update attendance_employees table! Do NOT corrupt/modify the approved clock_in request in attendance_requests.
-            if ($attendanceRequestData->status === 'approved' || $attEmp) {
+            // 1. If employee ALREADY has an active record in attendance_employees table or request is approved:
+            // Directly update attendance_employees table!
+            if ($attEmp || $attendanceRequestData->status === 'approved') {
                 if ($attEmp) {
                     $shiftEndTimeStr = $employee->company_end_time ?? '18:00';
                     if (strlen($shiftEndTimeStr) == 5) $shiftEndTimeStr .= ':00';

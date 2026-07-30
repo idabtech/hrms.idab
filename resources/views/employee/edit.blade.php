@@ -430,9 +430,7 @@
                         </div>
                         <div class="card-body">
                             @php
-                            $employeedoc = !empty($employee->documents)
-                                ? $employee->documents()->pluck('document_value', 'document_id')
-                                : [];
+                            $employeedoc = $employee->documents()->pluck('document_value', 'document_id')->toArray();
                             @endphp
 
                             @foreach ($documents as $key => $document)
