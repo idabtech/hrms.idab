@@ -728,10 +728,97 @@ class AttendanceRequestController extends Controller
     {
         $attendanceRequestData = AttendanceRequest::where('id', $id)->first();
         if ($attendanceRequestData) {
-            AttendanceRequest::where('id', $attendanceRequestData->id)->update(['clock_out' => date("H:i:s")]);
-            return redirect()->route('dashboard')->with('success', __('Employee successfully clock Out.'));
+            $employee = Employee::find($attendanceRequestData->employee_id);
+            $reqDate = \Carbon\Carbon::parse($attendanceRequestData->requested_at)->format('Y-m-d');
+
+            $settings = Utility::getCompanySettings($attendanceRequestData->created_by);
+            $tz = (!empty($settings['timezone']) && $settings['timezone'] !== 'UTC')
+                ? $settings['timezone']
+                : 'Asia/Kolkata';
+            date_default_timezone_set($tz);
+            $currentTime = date("H:i:s");
+
+            // Check if employee has an open attendance_employees record for today
+            $attEmp = AttendanceEmployee::where('employee_id', $attendanceRequestData->employee_id)
+                ->where(function ($q) {
+                    $q->whereNull('clock_out')
+                      ->orWhere('clock_out', '')
+                      ->orWhere('clock_out', '00:00:00');
+                })
+                ->where(function ($q) use ($reqDate) {
+                    $q->where('date', $reqDate)
+                      ->orWhere('date', \Carbon\Carbon::parse($reqDate)->subDay()->toDateString());
+                })
+                ->orderByDesc('date')
+                ->first();
+
+            // 1. If clock_in request was APPROVED or open AttendanceEmployee row exists:
+            // Directly update attendance_employees table! Do NOT corrupt/modify the approved clock_in request in attendance_requests.
+            if ($attendanceRequestData->status === 'approved' || $attEmp) {
+                if ($attEmp) {
+                    $shiftEndTimeStr = $employee->company_end_time ?? '18:00';
+                    if (strlen($shiftEndTimeStr) == 5) $shiftEndTimeStr .= ':00';
+
+                    $shiftEndTimestamp = strtotime($attEmp->date . ' ' . $shiftEndTimeStr);
+                    $clockOutTimestamp = strtotime($attEmp->date . ' ' . $currentTime);
+
+                    $earlyLeaving = '00:00:00';
+                    $overtime     = '00:00:00';
+
+                    if ($clockOutTimestamp < $shiftEndTimestamp) {
+                        $diff  = $shiftEndTimestamp - $clockOutTimestamp;
+                        $hours = floor($diff / 3600);
+                        $mins  = floor(($diff / 60) % 60);
+                        $secs  = floor($diff % 60);
+                        $earlyLeaving = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
+                    } elseif ($clockOutTimestamp > $shiftEndTimestamp) {
+                        $diff  = $clockOutTimestamp - $shiftEndTimestamp;
+                        $hours = floor($diff / 3600);
+                        $mins  = floor(($diff / 60) % 60);
+                        $secs  = floor($diff % 60);
+                        $overtime = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
+                    }
+
+                    $attEmp->clock_out     = $currentTime;
+                    $attEmp->early_leaving = $earlyLeaving;
+                    $attEmp->overtime      = $overtime;
+                    $attEmp->save();
+                } else {
+                    AttendanceEmployee::create([
+                        'employee_id'   => $attendanceRequestData->employee_id,
+                        'date'          => $reqDate,
+                        'status'        => 'Present',
+                        'clock_in'      => $attendanceRequestData->requested_at ? \Carbon\Carbon::parse($attendanceRequestData->requested_at)->format('H:i:s') : '09:00:00',
+                        'clock_out'     => $currentTime,
+                        'late'          => '00:00:00',
+                        'early_leaving' => '00:00:00',
+                        'overtime'      => '00:00:00',
+                        'created_by'    => $attendanceRequestData->created_by,
+                    ]);
+                }
+
+                return redirect()->route('dashboard')->with('success', __('Employee successfully clocked out.'));
+            }
+
+            // 2. If clock_in request is STILL PENDING:
+            // Create a new separate clock_out AttendanceRequest instead of modifying the clock_in request line
+            if ($attendanceRequestData->status === 'pending') {
+                AttendanceRequest::create([
+                    'employee_id'  => $attendanceRequestData->employee_id,
+                    'type'         => 'clock_out',
+                    'clock_out'    => $currentTime,
+                    'reason'       => $request->reason ?? 'Clock Out Request',
+                    'status'       => 'pending',
+                    'requested_at' => $reqDate . ' ' . $currentTime,
+                    'created_by'   => $attendanceRequestData->created_by,
+                ]);
+
+                return redirect()->route('dashboard')->with('success', __('Clock out request submitted successfully.'));
+            }
+
+            return redirect()->route('dashboard')->with('success', __('Employee successfully clocked out.'));
         }
-        return redirect()->route('dashboard')->with('success', __('Request Not Found.'));
+        return redirect()->route('dashboard')->with('error', __('Request Not Found.'));
     }
 
     // public function storeFromAnotherPlatform(Request $request)

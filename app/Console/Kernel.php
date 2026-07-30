@@ -20,6 +20,9 @@ class Kernel extends ConsoleKernel
 
         // Auto-generate payslips for previous month on the 6th of each month at 2:00 AM
         $schedule->command('payslip:generate-monthly')->monthlyOn(6, '02:00');
+
+        // Automatically clock out employees every minute based on shift end time + auto_clock_out_time
+        $schedule->command('auto:clock-out')->everyMinute();
     }
 
     /**

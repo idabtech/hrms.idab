@@ -436,6 +436,10 @@ class SettingsController extends Controller
                 $post['shift_change'] = 'off';
             }
 
+            if (!isset($request->auto_clock_out)) {
+                $post['auto_clock_out'] = 'off';
+            }
+
             if (!isset($post['login_deley_min'])) {
                 $post['login_deley_min'] = 0;
             }
