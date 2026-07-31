@@ -256,10 +256,11 @@ class AttendanceEmployeeController extends Controller
 
     public function update(Request $request, $id)
     {
-        if (\Auth::user()->type == 'company') {
 
-            $employeeId      = AttendanceEmployee::where('employee_id', $request->employee_id)->first();
-            $check = AttendanceEmployee::where('id', '=', $id)->where('employee_id', '=', $request->employee_id)->where('date',  $request->date)->first();
+        if ($request->has('employee_id')) {
+            // Admin/HR editing attendance from management list
+            $employeeId = AttendanceEmployee::where('employee_id', $request->employee_id)->first();
+            $check = AttendanceEmployee::where('id', '=', $id)->where('employee_id', '=', $request->employee_id)->where('date', $request->date)->first();
 
             if (!empty($employeeId) || !empty($check)) {
                 $employee = Employee::find($request->employee_id);
@@ -304,7 +305,7 @@ class AttendanceEmployeeController extends Controller
                 } else {
                     $overtime = '00:00:00';
                 }
-                if ($check->date == date('Y-m-d')) {
+                if ($check && $check->date == date('Y-m-d')) {
                     $check->update([
                         'late' => $late,
                         'early_leaving' => ($earlyLeaving > 0) ? $earlyLeaving : '00:00:00',
@@ -323,6 +324,10 @@ class AttendanceEmployeeController extends Controller
         }
 
         $employeeId      = !empty(\Auth::user()->employee) ? \Auth::user()->employee->id : 0;
+        if ($employeeId == 0) {
+            $empUser = Employee::where('user_id', Auth::user()->id)->first();
+            $employeeId = $empUser ? $empUser->id : 0;
+        }
         $todayAttendance = AttendanceEmployee::where('employee_id', '=', $employeeId)->where('date', date('Y-m-d'))->first();
 
         $employee = Employee::find($employeeId);
