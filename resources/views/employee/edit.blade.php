@@ -424,7 +424,7 @@
                 <div class="row">
 
                 <div class="col-md-6 ">
-                    <div class="card em-card">
+                    <div class="card em-card" id="document-card">
                         <div class="card-header">
                             <h5>{{ __('Document') }}</h5>
                         </div>
@@ -438,6 +438,8 @@
                                 $logo        = \App\Models\Utility::get_file('uploads/document');
                                 $docType     = $document->document_type ?? 'file';
                                 $rawValue    = $employeedoc[$document->id] ?? null;
+                                $docRecord   = $employeeDocuments[$document->id] ?? null;
+                                $isRequested = $docRecord ? (int)$docRecord->is_requested : 0;
 
                                 // Safe decode: supports old plain-path records, plain-text records, and new JSON records
                                 $parsed    = null;
@@ -480,14 +482,26 @@
                                     ? $fileIconMap[$ext]
                                     : ['icon' => 'ti ti-file', 'color' => '#95a5a6', 'label' => strtoupper($ext ?? 'FILE')];
                             @endphp
-                            <div class="row mb-2">
+                            <div class="row mb-3 pb-2 border-bottom">
                                 <div class="form-group col-12">
-                                    <label class="form-label">
-                                        {{ $document->name }}
-                                        @if ($document->is_required == 1)
-                                            <span class="text-danger">*</span>
-                                        @endif
-                                    </label>
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <label class="form-label mb-0 fw-bold">
+                                            {{ $document->name }}
+                                            @if ($document->is_required == 1)
+                                                <span class="text-danger">*</span>
+                                            @endif
+                                            <span class="badge bg-warning text-dark ms-2 req-doc-badge req-doc-badge-{{ $document->id }} {{ $isRequested ? '' : 'd-none' }}">
+                                                <i class="ti ti-alert-circle me-1"></i>please upload your document
+                                            </span>
+                                        </label>
+                                        <button type="button" 
+                                                class="btn btn-sm {{ $isRequested ? 'btn-warning' : 'btn-primary' }} request-doc-btn" 
+                                                data-doc-id="{{ $document->id }}" 
+                                                data-emp-id="{{ $employee->employee_id }}" 
+                                                data-is-requested="{{ $isRequested }}">
+                                            <i class="ti ti-send me-1"></i><span class="btn-text">{{ $isRequested ? __('Requested') : __('Request Document') }}</span>
+                                        </button>
+                                    </div>
                                     <input type="hidden" name="emp_doc_id[{{ $document->id }}]" value="{{ $document->id }}">
 
                                     {{-- TEXT field — shown for 'text' and 'both' types --}}
@@ -597,7 +611,7 @@
                 <div class="row">
                     <div class="col-md-6 ">
                         <div class="employee-detail-wrap">
-                            <div class="card em-card">
+                            <div class="card em-card" id="document-card">
                                 <div class="card-header">
                                     <h5>{{ __('Document Detail') }}</h5>
                                 </div>
@@ -608,36 +622,147 @@
                                         ->documents()
                                         ->pluck('document_value', 'document_id');
                                         $logo = \App\Models\Utility::get_file('uploads/document/');
+                                        $hasAnyRequested = false;
                                         @endphp
                                         @foreach ($documents as $key => $document)
                                         @php
-                                            $docType  = $document->document_type ?? 'file';
-                                            $rawValue = $employeedoc[$document->id] ?? null;
-                                            $parsed   = null;
+                                            $docType     = $document->document_type ?? 'file';
+                                            $rawValue    = $employeedoc[$document->id] ?? null;
+                                            $docRecord   = $employeeDocuments[$document->id] ?? null;
+                                            $isRequested = $docRecord ? (int)$docRecord->is_requested : 0;
+                                            if ($isRequested) { $hasAnyRequested = true; }
+                                            $parsed      = null;
                                             if ($rawValue && $rawValue[0] === '{') {
                                                 $dec = json_decode($rawValue, true);
                                                 if (json_last_error() === JSON_ERROR_NONE) { $parsed = $dec; }
                                             }
-                                            $textValue = $docType === 'text'  ? ($parsed['text'] ?? $rawValue) : ($parsed['text'] ?? null);
-                                            $fileValue = $docType === 'file'  ? ($parsed['file'] ?? $rawValue) : ($parsed['file'] ?? ($parsed === null && $docType === 'both' ? $rawValue : null));
+                                            $textValue   = $docType === 'text'  ? ($parsed['text'] ?? $rawValue) : ($parsed['text'] ?? null);
+                                            $fileValue   = $docType === 'file'  ? ($parsed['file'] ?? $rawValue) : ($parsed['file'] ?? ($parsed === null && $docType === 'both' ? $rawValue : null));
+
+                                            $ext         = $fileValue ? strtolower(pathinfo($fileValue, PATHINFO_EXTENSION)) : null;
+                                            $isImage     = in_array($ext, ['jpg','jpeg','png','gif','webp','bmp','svg']);
+                                            $previewId   = 'emp_prev_' . $document->id . '_' . $key;
+                                            $fileUrl     = $fileValue ? $logo . '/' . $fileValue : null;
+
+                                            $fileIconMap = [
+                                                'pdf'  => ['icon' => 'ti ti-file-type-pdf',  'color' => '#e74c3c', 'label' => 'PDF'],
+                                                'doc'  => ['icon' => 'ti ti-file-type-doc',  'color' => '#2980b9', 'label' => 'DOC'],
+                                                'docx' => ['icon' => 'ti ti-file-type-docx', 'color' => '#2980b9', 'label' => 'DOCX'],
+                                                'xls'  => ['icon' => 'ti ti-file-type-xls',  'color' => '#27ae60', 'label' => 'XLS'],
+                                                'xlsx' => ['icon' => 'ti ti-file-type-xlsx', 'color' => '#27ae60', 'label' => 'XLSX'],
+                                                'csv'  => ['icon' => 'ti ti-file-spreadsheet','color'=> '#27ae60', 'label' => 'CSV'],
+                                                'txt'  => ['icon' => 'ti ti-file-text',       'color' => '#7f8c8d', 'label' => 'TXT'],
+                                                'zip'  => ['icon' => 'ti ti-file-zip',        'color' => '#8e44ad', 'label' => 'ZIP'],
+                                                'rar'  => ['icon' => 'ti ti-file-zip',        'color' => '#8e44ad', 'label' => 'RAR'],
+                                            ];
+                                            $iconInfo = $ext && isset($fileIconMap[$ext])
+                                                ? $fileIconMap[$ext]
+                                                : ['icon' => 'ti ti-file', 'color' => '#95a5a6', 'label' => strtoupper($ext ?? 'FILE')];
                                         @endphp
-                                        <div class="col-md-12">
-                                            <div class="info">
-                                                <strong>{{ $document->name }}</strong>
-                                                @if ($docType === 'text')
-                                                    <span>{{ $textValue }}</span>
-                                                @elseif ($docType === 'both')
-                                                    @if ($textValue) <span>{{ $textValue }}</span> @endif
-                                                    @if ($fileValue)
-                                                        <span><a href="{{ $logo . '/' . $fileValue }}" target="_blank">{{ $fileValue }}</a></span>
+                                        <div class="col-md-12 mb-3 pb-2 border-bottom">
+                                            <div class="form-group">
+                                                <label class="form-label font-weight-bold">
+                                                    {{ $document->name }}
+                                                    @if ($document->is_required == 1)
+                                                        <span class="text-danger">*</span>
+                                                    @endif
+                                                    @if ($isRequested)
+                                                        <span class="badge bg-warning text-dark ms-2">
+                                                            <i class="ti ti-alert-circle me-1"></i>please upload your document
+                                                        </span>
+                                                    @endif
+                                                </label>
+                                                <input type="hidden" name="emp_doc_id[{{ $document->id }}]" value="{{ $document->id }}">
+
+                                                @if ($isRequested)
+                                                    {{-- Requested document: Show upload input options --}}
+                                                    @if ($docType === 'text' || $docType === 'both')
+                                                        <input type="text"
+                                                            class="form-control mb-2"
+                                                            name="document_text[{{ $document->id }}]"
+                                                            id="document_text_{{ $document->id }}"
+                                                            value="{{ $textValue ?? '' }}"
+                                                            placeholder="{{ __('Enter') }} {{ $document->name }}">
+                                                    @endif
+
+                                                    @if ($docType === 'file' || $docType === 'both')
+                                                        <div class="choose-files">
+                                                            <label for="document[{{ $document->id }}]">
+                                                                <div class="bg-primary document">
+                                                                    <i class="ti ti-upload px-1"></i>{{ __('Choose file here') }}
+                                                                </div>
+                                                                <input type="file"
+                                                                    class="form-control file d-none @error('document') is-invalid @enderror"
+                                                                    name="document[{{ $document->id }}]"
+                                                                    id="document[{{ $document->id }}]"
+                                                                    data-filename="{{ $document->id . '_filename' }}"
+                                                                    data-preview-id="{{ $previewId }}"
+                                                                    onchange="handleDocPreview(this)">
+                                                            </label>
+
+                                                            <div id="{{ $previewId }}" class="doc-preview-area mt-2">
+                                                                @if ($fileValue)
+                                                                    @if ($isImage)
+                                                                        <a href="{{ $fileUrl }}" target="_blank">
+                                                                            <img src="{{ $fileUrl }}"
+                                                                                 class="img-thumbnail doc-preview-img"
+                                                                                 style="max-height:80px; max-width:120px; object-fit:cover;"
+                                                                                 alt="{{ $document->name }}">
+                                                                        </a>
+                                                                    @else
+                                                                        <a href="{{ $fileUrl }}" target="_blank"
+                                                                           class="doc-file-icon-link d-inline-flex align-items-center gap-1 text-decoration-none"
+                                                                           data-bs-toggle="tooltip" title="{{ $fileValue }}">
+                                                                            <i class="{{ $iconInfo['icon'] }} doc-file-icon"
+                                                                               style="font-size:2.2rem; color:{{ $iconInfo['color'] }};"></i>
+                                                                            <span class="badge"
+                                                                                  style="background:{{ $iconInfo['color'] }}; font-size:0.7rem;">
+                                                                                {{ $iconInfo['label'] }}
+                                                                            </span>
+                                                                        </a>
+                                                                    @endif
+                                                                @endif
+                                                            </div>
+                                                        </div>
                                                     @endif
                                                 @else
-                                                    <span><a href="{{ !empty($fileValue) ? $logo . '/' . $fileValue : '' }}"
-                                                            target="_blank">{{ $fileValue ?? '' }}</a></span>
+                                                    {{-- Not requested: Show read-only display --}}
+                                                    <div class="info mt-1">
+                                                        @if ($docType === 'text')
+                                                            <span>{{ !empty($textValue) ? $textValue : '-' }}</span>
+                                                        @elseif ($docType === 'both')
+                                                            @if ($textValue) <div><span>{{ $textValue }}</span></div> @endif
+                                                            @if ($fileValue)
+                                                                <div><span><a href="{{ $fileUrl }}" target="_blank">{{ $fileValue }}</a></span></div>
+                                                            @elseif (!$textValue)
+                                                                <span>-</span>
+                                                            @endif
+                                                        @else
+                                                            @if ($fileValue)
+                                                                @if ($isImage)
+                                                                    <a href="{{ $fileUrl }}" target="_blank">
+                                                                        <img src="{{ $fileUrl }}" class="img-thumbnail doc-preview-img" style="max-height:80px; max-width:120px; object-fit:cover;" alt="{{ $document->name }}">
+                                                                    </a>
+                                                                @else
+                                                                    <a href="{{ $fileUrl }}" target="_blank" class="doc-file-icon-link d-inline-flex align-items-center gap-1 text-decoration-none">
+                                                                        <i class="{{ $iconInfo['icon'] }} doc-file-icon" style="font-size:2.2rem; color:{{ $iconInfo['color'] }};"></i>
+                                                                        <span class="badge" style="background:{{ $iconInfo['color'] }}; font-size:0.7rem;">{{ $iconInfo['label'] }}</span>
+                                                                    </a>
+                                                                @endif
+                                                            @else
+                                                                <span>-</span>
+                                                            @endif
+                                                        @endif
+                                                    </div>
                                                 @endif
                                             </div>
                                         </div>
                                         @endforeach
+                                        @if ($hasAnyRequested)
+                                            <div class="col-md-12 text-end mt-2">
+                                                <input type="submit" value="{{ __('Save Documents') }}" class="btn btn-primary">
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -1228,6 +1353,53 @@
             var leaveTypeId = id.replace('is_paid_', '');
             var $label = $('#is_paid_label_' + leaveTypeId);
             $label.text($(this).prop('checked') ? '{{ __("Paid") }}' : '{{ __("Unpaid") }}');
+        });
+
+        // AJAX Request Document toggle
+        $(document).on('click', '.request-doc-btn', function(e) {
+            e.preventDefault();
+            var $btn = $(this);
+            var docId = $btn.data('doc-id');
+            var empId = $btn.data('emp-id');
+            var currentStatus = parseInt($btn.data('is-requested')) || 0;
+            var newStatus = currentStatus === 1 ? 0 : 1;
+
+            $btn.prop('disabled', true);
+
+            $.ajax({
+                url: "{{ route('employee.request-document') }}",
+                type: 'POST',
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    employee_id: empId,
+                    document_id: docId,
+                    is_requested: newStatus
+                },
+                success: function(response) {
+                    $btn.prop('disabled', false);
+                    if (response.success) {
+                        $btn.data('is-requested', newStatus);
+                        var $badge = $('.req-doc-badge-' + docId);
+                        if (newStatus === 1) {
+                            $badge.removeClass('d-none');
+                            $btn.removeClass('btn-primary').addClass('btn-warning');
+                            $btn.find('.btn-text').text("{{ __('Requested') }}");
+                            show_toastr('Success', response.message, 'success');
+                        } else {
+                            $badge.addClass('d-none');
+                            $btn.removeClass('btn-warning').addClass('btn-primary');
+                            $btn.find('.btn-text').text("{{ __('Request Document') }}");
+                            show_toastr('Success', response.message, 'success');
+                        }
+                    } else {
+                        show_toastr('Error', response.message, 'error');
+                    }
+                },
+                error: function(xhr) {
+                    $btn.prop('disabled', false);
+                    show_toastr('Error', '{{ __("Something went wrong. Please try again.") }}', 'error');
+                }
+            });
         });
     </script>
     @endpush

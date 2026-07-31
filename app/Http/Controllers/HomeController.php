@@ -22,6 +22,8 @@ use AWS\CRT\HTTP\Request;
 use Illuminate\Support\Facades\Auth;
 
 
+use App\Models\EmployeeDocument;
+
 class HomeController extends Controller
 {
 
@@ -53,6 +55,12 @@ class HomeController extends Controller
             }
             if ($user->type == 'employee') {
                 $emp = Employee::where('user_id', '=', $user->id)->first();
+                $hasRequestedDocs = false;
+                if ($emp) {
+                    $hasRequestedDocs = EmployeeDocument::where('employee_id', $emp->employee_id)
+                        ->where('is_requested', 1)
+                        ->exists();
+                }
                 $today = (date('Y-m-d', time()));
                 $announcements = Announcement::where('end_date', '>=', $today)->orderBy('announcements.id', 'desc')->take(5)->leftjoin('announcement_employees', 'announcements.id', '=', 'announcement_employees.announcement_id')->where('announcement_employees.employee_id', '=', $emp->id)->orWhere(
                     function ($q) {
@@ -97,7 +105,7 @@ class HomeController extends Controller
                 $officeTime['startTime'] = !empty(\Auth::user()->employee) && !empty(\Auth::user()->employee->company_start_time) ? \Auth::user()->employee->company_start_time : Utility::getValByName('company_start_time');
                 $officeTime['endTime']   = !empty(\Auth::user()->employee) && !empty(\Auth::user()->employee->company_end_time) ? \Auth::user()->employee->company_end_time : Utility::getValByName('company_end_time');
 
-                return view('dashboard.dashboard', compact('allCalendarEvents', 'arrHolidays', 'arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime'));
+                return view('dashboard.dashboard', compact('allCalendarEvents', 'arrHolidays', 'arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime', 'hasRequestedDocs', 'emp'));
             } else if ($user->type == 'super admin') {
                 $user                       = \Auth::user();
                 $user['total_user']         = $user->countCompany();

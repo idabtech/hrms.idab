@@ -10,6 +10,7 @@ class EmployeeDocument extends Model
         'employee_id',
         'document_id',
         'document_value',
+        'is_requested',
         'created_by'
     ];
 
