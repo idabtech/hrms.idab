@@ -185,46 +185,55 @@ Route::get('/app', function (Request $request) {
 Route::get('/external-login', function (Request $request) {
     $payload = $request->query('payload');
     $signature = $request->query('signature');
-
+ 
     if (! $payload || ! $signature) {
         abort(403, 'Missing SSO data');
     }
-
+ 
     $expectedSignature = hash_hmac(
         'sha256',
         $payload,
         config('services.sso.secret')
     );
-
+ 
     if (! hash_equals($expectedSignature, $signature)) {
         abort(403, 'Invalid signature');
     }
-
+ 
     $data = json_decode(base64_decode($payload), true);
-
+ 
     if (! is_array($data) || ! isset($data['email'], $data['ts'])) {
         abort(403, 'Invalid payload');
     }
-
+ 
     // Expire after 5 minutes
     if (now()->timestamp - $data['ts'] > 300) {
         abort(403, 'SSO link expired');
     }
-
+ 
     // Force logout
     Auth::logout();
     session()->invalidate();
     session()->regenerateToken();
-
+ 
     // Store email lock
     session([
         'external_login_email' => $data['email'],
         'external_login_active' => true,
     ]);
-
-    // ✅ THIS IS CRITICAL (NO WHITE PAGE)
-    return redirect()->route('login');
-
+ 
+    // Find user
+    $user = \App\Models\User::where('email', $data['email'])->first();
+    if (!$user) {
+        // THIS IS CRITICAL (NO WHITE PAGE)
+        return redirect()->route('login');
+    }
+ 
+    // Login user
+    Auth::login($user);
+    // Regenerate session after login
+    $request->session()->regenerate();
+    return redirect()->intended('/dashboard');
 })->name('external.login');
 
 Route::get('/check', [HomeController::class, 'check'])->middleware(
