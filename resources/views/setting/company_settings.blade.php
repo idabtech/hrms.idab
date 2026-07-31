@@ -1466,13 +1466,21 @@ $lang = \App\Models\Utility::getValByName('default_language');
 
                             @push('script-page')
                             <script>
-                                // Show/hide Saturday pattern row based on Sat checkbox
+                                // Show/hide Saturday pattern row based on Sat checkbox & Auto Clock Out row
                                 document.addEventListener('DOMContentLoaded', function () {
                                     var satCheck = document.getElementById('wd_6');
                                     var patRow   = document.getElementById('saturday_pattern_row');
                                     if (satCheck && patRow) {
                                         satCheck.addEventListener('change', function () {
                                             patRow.style.display = this.checked ? '' : 'none';
+                                        });
+                                    }
+
+                                    var autoClockOutCheck = document.getElementById('auto_clock_out');
+                                    var autoClockOutRow   = document.getElementById('auto_clock_out_minutes_row');
+                                    if (autoClockOutCheck && autoClockOutRow) {
+                                        autoClockOutCheck.addEventListener('change', function () {
+                                            autoClockOutRow.style.display = this.checked ? '' : 'none';
                                         });
                                     }
                                 });
@@ -1499,6 +1507,48 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                                 <small class="text-danger">{{ $message }}</small>
                                             </span>
                                             @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- ── Auto Clock Out Settings ────────────────────────────────────── --}}
+                            <div class="col-12 mt-4 pt-3 border-top">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div>
+                                        <label class="col-form-label fw-semibold mb-0">{{ __('Auto Clock Out') }}</label>
+                                        <small class="text-muted d-block">{{ __('Enable to automatically clock out employees after shift end time.') }}</small>
+                                    </div>
+                                    <div class="form-check form-switch custom-switch-v1">
+                                        <input type="hidden" name="auto_clock_out" value="off">
+                                        <input class="form-check-input input-primary"
+                                               type="checkbox"
+                                               name="auto_clock_out"
+                                               id="auto_clock_out"
+                                               value="on"
+                                               style="cursor:pointer; width: 44px; height: 22px;"
+                                               {{ ($settings['auto_clock_out'] ?? 'off') == 'on' ? 'checked' : '' }}>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3 p-3 bg-light rounded border" id="auto_clock_out_minutes_row" style="{{ ($settings['auto_clock_out'] ?? 'off') == 'on' ? '' : 'display:none;' }}">
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                        <div>
+                                            <label class="col-form-label fw-semibold mb-0">{{ __('Auto Clock Out After (Minutes)') }}</label>
+                                            <small class="text-muted d-block">{{ __('Automatically clock out employee after this many minutes from shift end time if not clocked out.') }}</small>
+                                        </div>
+                                        <div style="width: 150px;">
+                                            <div class="input-group">
+                                                <input type="number"
+                                                       name="auto_clock_out_time"
+                                                       id="auto_clock_out_time"
+                                                       class="form-control text-center"
+                                                       value="{{ old('auto_clock_out_time', $settings['auto_clock_out_time'] ?? 30) }}"
+                                                       min="0"
+                                                       step="1"
+                                                       placeholder="30">
+                                                <span class="input-group-text bg-white text-muted">min</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

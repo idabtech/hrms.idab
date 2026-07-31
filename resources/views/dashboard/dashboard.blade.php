@@ -24,6 +24,27 @@
         </div>
         @endif --}}
 
+        @if (!empty($hasRequestedDocs) && $hasRequestedDocs && !empty($emp))
+            <div class="col-12 mb-3">
+                <div class="alert alert-warning d-flex align-items-center justify-content-between p-3 rounded" style="background-color: #fff8e1; border: 1px solid #ffe082; color: #856404; box-shadow: 0 2px 6px rgba(255, 193, 7, 0.2);">
+                    <div class="d-flex align-items-center">
+                        <i class="ti ti-file-alert fs-1 me-3 text-warning"></i>
+                        <div>
+                            <h6 class="alert-heading mb-1 text-dark font-weight-bold" style="font-size: 1rem;">
+                                {{ __('Document Request') }}
+                            </h6>
+                            <span class="fw-bold" style="font-size: 0.95rem; color: #795548;">
+                                {{ __('Please upload your document here') }}
+                            </span>
+                        </div>
+                    </div>
+                    <a href="{{ route('employee.edit', \Crypt::encrypt($emp->id)) }}#document-card" class="btn btn-warning text-dark font-weight-bold shadow-sm">
+                        <i class="ti ti-upload me-1"></i> {{ __('Upload Document') }}
+                    </a>
+                </div>
+            </div>
+        @endif
+
         @if (\Auth::user()->type == 'employee' || (\Auth::user()->type != 'company' && \Auth::user()->employee))
             <div class="col-xxl-12">
                 <div class="card" style="min-height: 230px;">

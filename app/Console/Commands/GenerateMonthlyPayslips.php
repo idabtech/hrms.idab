@@ -87,14 +87,24 @@ class GenerateMonthlyPayslips extends Command
             }
 
             foreach ($employees as $employee) {
-                // Skip terminated employees
+                // Skip terminated employees (only if termination occurred on or after current company_doj)
                 $isTerminated = Termination::where('employee_id', $employee->id)
                     ->whereDate('termination_date', '<=', Carbon::create($year, $month)->endOfMonth())
+                    ->where(function ($q) use ($employee) {
+                        if (!empty($employee->company_doj)) {
+                            $q->whereDate('termination_date', '>=', $employee->company_doj);
+                        }
+                    })
                     ->exists();
 
-                // Skip resigned employees
+                // Skip resigned employees (only if resignation occurred on or after current company_doj)
                 $isResigned = Resignation::where('employee_id', $employee->id)
                     ->whereDate('resignation_date', '<=', Carbon::create($year, $month)->endOfMonth())
+                    ->where(function ($q) use ($employee) {
+                        if (!empty($employee->company_doj)) {
+                            $q->whereDate('resignation_date', '>=', $employee->company_doj);
+                        }
+                    })
                     ->exists();
 
                 // Skip employees with zero salary
