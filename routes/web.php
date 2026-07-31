@@ -475,6 +475,13 @@ Route::group(['middleware' => ['verified']], function () {
         ]
     );
 
+    Route::post('employee/request-document', [EmployeeController::class, 'requestDocument'])->name('employee.request-document')->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+
     Route::post('employee/getemployee', [EmployeeController::class, 'getEmployees'])->name('employee.getemployees')->middleware(
         [
             'auth',
