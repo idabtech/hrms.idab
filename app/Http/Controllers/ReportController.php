@@ -165,7 +165,6 @@ class ReportController extends Controller
 
             // 1) Active employees joined on or before $endRange
             $activeEmpIds = Employee::where('created_by', $creatorId)
-                ->where('is_admin_staff', 0)
                 ->where('is_active', 1)
                 ->whereHas('user', function ($q) {
                     $q->where('is_active', 1);
@@ -594,7 +593,6 @@ class ReportController extends Controller
             // ── Resolve valid employees for this month ────────────────────────────
             // 1) Active employees whose user is active and who joined on/before $monthEnd
             $activeEmpIds = Employee::where('created_by', $creatorId)
-                ->where('is_admin_staff', 0)
                 ->where('is_active', 1)
                 ->whereHas('user', function ($q) {
                     $q->where('is_active', 1);
@@ -1065,8 +1063,20 @@ class ReportController extends Controller
                             }
                         } else {
                             // Attendance record exists but status is not Present
-                            $cellStatus = $isOnLeave ? ($leaveIsHalf ? 'HD' : 'L') : 'A';
-                            $cellLabel  = $isOnLeave ? $leaveCellLabel : 'Absent';
+                            $cellStatus = match($attendance->status) {
+                                'Day Off', 'DO' => 'DO',
+                                'Public Holiday', 'PH' => 'PH',
+                                'Leave', 'L' => 'L',
+                                'Absent', 'A' => 'A',
+                                default => ($isOnLeave ? ($leaveIsHalf ? 'HD' : 'L') : 'A'),
+                            };
+                            $cellLabel  = match($cellStatus) {
+                                'DO' => 'Day Off',
+                                'PH' => 'Public Holiday',
+                                'L'  => 'Leave',
+                                'A'  => 'Absent',
+                                default => ($isOnLeave ? $leaveCellLabel : 'Absent'),
+                            };
                             $attendanceStatus[$date] = [
                                 'status'            => $cellStatus,
                                 'label'             => $cellLabel,
@@ -1075,9 +1085,14 @@ class ReportController extends Controller
                                 'clock_out'         => '',
                                 'company_shift_time'=> $shiftDisplay,
                             ];
-                            if ($isOnLeave) {
-                                $recordLeave();
-                            } else {
+                            if ($cellStatus === 'DO') {
+                                $totalDayOffs++;
+                            } elseif ($cellStatus === 'PH') {
+                                $totalHolidays++;
+                            } elseif ($cellStatus === 'L') {
+                                $totalLeaves++;
+                                $totalLeave++;
+                            } else { // 'A'
                                 $totalAbsents++;
                                 $totalLeave++;
                             }
@@ -1194,8 +1209,8 @@ class ReportController extends Controller
         $request->validate([
             'employee_id' => 'required|integer|exists:employees,id',
             'date' => 'required|date',
-            'status' => 'required|in:P,A',
-            'company_shift_time' => 'required|string|max:255',
+            'status' => 'required|in:P,A,HD,L,DO,PH',
+            'company_shift_time' => 'nullable|string|max:255',
             'passcode' => 'required|string|max:255',
         ]);
         $employee = Employee::find($request->employee_id);
@@ -1209,15 +1224,25 @@ class ReportController extends Controller
             ], 500);
         }
 
-        $status = $request->status === 'P' ? 'Present' : 'Leave';
+        $statusVal = $request->status;
+
+        $dbStatusMap = [
+            'P'  => 'Present',
+            'HD' => 'Present',
+            'A'  => 'Absent',
+            'L'  => 'Leave',
+            'DO' => 'Day Off',
+            'PH' => 'Public Holiday',
+        ];
+        $status = $dbStatusMap[$statusVal] ?? 'Present';
 
         $attendance = AttendanceEmployee::firstOrNew([
             'employee_id' => $request->employee_id,
             'date' => Carbon::parse($request->date)->format('Y-m-d'),
         ]);
 
-        $company_start_time = explode(' - ', $request->company_shift_time)[0] ?? null;
-        $company_end_time = explode(' - ', $request->company_shift_time)[1] ?? null;
+        $company_start_time = !empty($request->company_shift_time) ? (explode(' - ', $request->company_shift_time)[0] ?? null) : null;
+        $company_end_time   = !empty($request->company_shift_time) ? (explode(' - ', $request->company_shift_time)[1] ?? null) : null;
 
         $attendance->status = $status;
         $attendance->company_shift_time = $request->company_shift_time;
@@ -1225,14 +1250,33 @@ class ReportController extends Controller
         $attendance->is_manual = true;
         $attendance->is_manual_by = \Auth::user()->id;
 
-        if ($status === 'Present') {
+        if ($statusVal === 'P') {
             // Use manually entered clock_in/clock_out if provided, otherwise fall back to shift times
             $clockIn  = !empty($request->clock_in)  ? $request->clock_in  : $company_start_time;
             $clockOut = !empty($request->clock_out) ? $request->clock_out : $company_end_time;
             $attendance->clock_in  = $clockIn  ? Carbon::parse($request->date . ' ' . $clockIn)->format('H:i:s')  : null;
             $attendance->clock_out = $clockOut ? Carbon::parse($request->date . ' ' . $clockOut)->format('H:i:s') : null;
+        } elseif ($statusVal === 'HD') {
+            // Half Day: worked duration between 2h and 6h
+            $clockIn  = !empty($request->clock_in)  ? $request->clock_in  : ($company_start_time ?: '09:00');
+            $clockOut = !empty($request->clock_out) ? $request->clock_out : null;
+
+            if (!$clockOut) {
+                $clockOut = Carbon::parse($request->date . ' ' . $clockIn)->addHours(4)->format('H:i');
+            } else {
+                $inTime  = Carbon::parse($request->date . ' ' . $clockIn);
+                $outTime = Carbon::parse($request->date . ' ' . $clockOut);
+                if ($outTime->lessThan($inTime)) $outTime->addDay();
+                $workedSecs = $inTime->diffInSeconds($outTime);
+                if ($workedSecs >= (6 * 3600)) {
+                    $clockOut = $inTime->copy()->addHours(4)->format('H:i');
+                }
+            }
+
+            $attendance->clock_in  = Carbon::parse($request->date . ' ' . $clockIn)->format('H:i:s');
+            $attendance->clock_out = Carbon::parse($request->date . ' ' . $clockOut)->format('H:i:s');
         } else {
-            $attendance->clock_in = '00:00:00';
+            $attendance->clock_in  = '00:00:00';
             $attendance->clock_out = '00:00:00';
         }
 
@@ -1368,13 +1412,24 @@ class ReportController extends Controller
 
         foreach ($monthAttendances as $rec) {
             $recDate = is_string($rec->date) ? $rec->date : $rec->date->format('Y-m-d');
+            if (in_array($rec->status, ['Day Off', 'DO'])) {
+                $totalDayOffs++;
+                continue;
+            }
+            if (in_array($rec->status, ['Public Holiday', 'PH'])) {
+                $totalHolidays++;
+                continue;
+            }
             if (!in_array($rec->status, ['present', 'Present'])) {
+                if (in_array($rec->status, ['Leave', 'L'])) {
+                    $totalLeaves++;
+                } else {
+                    $totalAbsents++;
+                }
                 // Count as leave if approved leave exists for this date
                 if (isset($leaveDates[$recDate])) {
                     $ld       = $leaveDates[$recDate];
                     $ldays    = ($ld['duration'] === 'half_day') ? 0.5 : 1.0;
-                    $totalLeaves += $ldays;
-                    if ($ld['duration'] === 'half_day') { $totalHalfDays++; $leaveHalfDays++; }
                     if ($ld['status'] === 'paid') $totalPaidLeave += $ldays; else $totalUnpaidLeave += $ldays;
                 }
                 continue;
@@ -1466,6 +1521,7 @@ class ReportController extends Controller
                 'total_leave'        => $totalLeaves,
                 'total_paid_leave'   => $totalPaidLeave,
                 'total_unpaid_leave' => $totalUnpaidLeave,
+                'total_absent'       => $totalAbsents,
                 'total_half_day'     => $totalHalfDays,
                 'total_day_off'      => $totalDayOffs,
                 'total_holiday'      => $totalHolidays,

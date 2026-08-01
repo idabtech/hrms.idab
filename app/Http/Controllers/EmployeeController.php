@@ -56,7 +56,6 @@ class EmployeeController extends Controller
                     ->get();
             } else {
                 $employees = Employee::where('created_by', Auth::user()->creatorId())
-                    ->where('is_admin_staff', 0)
                     ->where('is_active', 1)
                     ->whereHas('user', function ($q) {
                         $q->where('is_active', 1);
@@ -716,10 +715,17 @@ class EmployeeController extends Controller
                 $employee->leaveTypes()->sync($syncData);
             }
 
-            if (!empty($request->email)) {
+            if (!empty($employee->user_id)) {
                 $user = User::find($employee->user_id);
-                $user->email = $request->email;
-                $user->save();
+                if ($user) {
+                    if (!empty($request->email)) {
+                        $user->email = $request->email;
+                    }
+                    if ($request->has('passcode')) {
+                        $user->passcode = $request->passcode;
+                    }
+                    $user->save();
+                }
             }
 
             if ($request->salary) {
@@ -1100,7 +1106,7 @@ class EmployeeController extends Controller
     public function profile(Request $request)
     {
         if (Auth::user()->can('Manage Employee Profile')) {
-            $employees = Employee::where('created_by', Auth::user()->creatorId())->where('is_admin_staff', 0)->with(['designation', 'user']);
+            $employees = Employee::where('created_by', Auth::user()->creatorId())->with(['designation', 'user']);
             if (!empty($request->branch_id)) {
                 $employees->where('branch_id', $request->branch_id);
             }

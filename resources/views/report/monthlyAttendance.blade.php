@@ -558,8 +558,8 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                                                         'NA' => 'not-added',
                                                         default => 'absent',
                                                     };
-                                                    // Day-off, holiday, and future NA cells are not editable
-                                                    $isClickable = !in_array($statusVal, ['DO', 'PH', 'NA']);
+                                                    // Any cell on/before today is editable (future cells are read-only)
+                                                    $isClickable = !$isFutureCell;
                                                 @endphp
                                                 <span class="status-dot {{ $dotClass }} {{ $isClickable ? 'attendance-status-cell' : '' }}"
                                                     @if($isClickable)
@@ -626,8 +626,12 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                     <div class="mb-3">
                         <label for="attendance-status" class="form-label">{{ __('Status') }}</label>
                         <select class="form-control" id="attendance-status" name="status">
-                            <option value="P">{{ __('Present') }}</option>
-                            <option value="A">{{ __('Absent') }}</option>
+                            <option value="P">{{ __('Present (P)') }}</option>
+                            <option value="A">{{ __('Absent (A)') }}</option>
+                            <option value="HD">{{ __('Half Day (HD)') }}</option>
+                            <option value="L">{{ __('Leave (L)') }}</option>
+                            <option value="DO">{{ __('Day Off (DO)') }}</option>
+                            <option value="PH">{{ __('Public Holiday (PH)') }}</option>
                         </select>
                     </div>
 
@@ -844,10 +848,19 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
             },
             success: function(response) {
                 if (response.success) {
-                    var newClass = status === 'P' ? 'present' : 'absent';
+                    var dotClassMap = {
+                        'P': 'present',
+                        'HD': 'half-day',
+                        'L': 'on-leave',
+                        'DO': 'day-off',
+                        'PH': 'public-holiday',
+                        'A': 'absent'
+                    };
+                    var newClass = dotClassMap[status] || 'absent';
 
                     // Update the clicked cell dot
-                    $cell.removeClass('present absent').addClass(newClass)
+                    $cell.removeClass('present half-day on-leave day-off public-holiday absent not-added')
+                         .addClass(newClass)
                          .data('status', status)
                          .data('clock-in', response.clock_in || '')
                          .data('clock-out', response.clock_out || '')
@@ -867,6 +880,7 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                         $row.find('.emp-total-leave').text(rs.total_leave);
                         $row.find('.emp-total-paid-leave').text(rs.total_paid_leave ?? 0);
                         $row.find('.emp-total-unpaid-leave').text(rs.total_unpaid_leave ?? 0);
+                        $row.find('.emp-total-absent').text(rs.total_absent ?? 0);
                         $row.find('.emp-total-halfday').text(rs.total_half_day);
                         $row.find('.emp-total-dayoff').text(rs.total_day_off);
                         $row.find('.emp-total-holiday').text(rs.total_holiday);
