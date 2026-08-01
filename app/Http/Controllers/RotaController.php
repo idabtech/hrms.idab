@@ -209,13 +209,17 @@ class RotaController extends Controller
             $dayShifts = [];
 
             foreach ($employees as $emp) {
-                // Check for a date-specific override (active or deleted marker)
-                $override = $rotaEntries->first(fn($r) =>
+                // Fetch ALL date-specific shift records for this employee on this date
+                $employeeOverrides = $rotaEntries->filter(fn($r) =>
                     $r->employee_id === $emp->id &&
-                    $r->date->format('Y-m-d') === $dateStr
+                    $r->date && $r->date->format('Y-m-d') === $dateStr
                 );
 
-                // Leave check (needed for both shift and leave-only entries)
+                $activeOverrides        = $employeeOverrides->reject(fn($r) => $r->is_deleted);
+                $hasRegularDeleteMarker = $employeeOverrides->contains(fn($r) => $r->is_deleted && ($r->type === 'regular' || is_null($r->type)));
+                $activeRegularOverride  = $activeOverrides->first(fn($r) => ($r->type === 'regular' || is_null($r->type)));
+
+                // Leave check
                 $onLeave = $leaves->first(fn($l) =>
                     $l->employee_id === $emp->id &&
                     $dateStr >= $l->start_date &&
@@ -227,23 +231,112 @@ class RotaController extends Controller
                     $a->employee_id === $emp->id && $a->date === $dateStr
                 );
 
-                // If there's an approved leave on this day, always show it —
-                // even if no shift is assigned.
-                if ($onLeave && !$override) {
-                    // Show leave entry without a shift backing it
+                // 1. Output Default Shift IF no regular delete marker and no active regular override
+                if (!$hasRegularDeleteMarker && !$activeRegularOverride) {
+                    $defaultShift = $defaultShifts->first(fn($d) => $d->employee_id === $emp->id) ?? $emp->shift;
+                    if ($defaultShift) {
+                        $isWorkingDay = empty($workingDays) || in_array((int) $day->dayOfWeek, $workingDays);
+                        $isHoliday    = !empty($holidayDates) && isset($holidayDates[$dateStr]);
+
+                        $shiftKey = ($defaultShift->company_start_time ?? '') . '|' . ($defaultShift->company_end_time ?? '');
+                        $isHidden = ($defaultShift->id === optional($emp->shift)->id) && array_key_exists($shiftKey, $hiddenFromRota);
+
+                        if ($isWorkingDay && !$isHoliday && !$isHidden) {
+                            $type = $defaultShift->type ?? 'regular';
+                            if ($onLeave) {
+                                $type = 'leave';
+                            }
+
+                            $shiftName = !empty($defaultShift->name) ? $defaultShift->name : (optional($emp->shift)->name ?? '');
+
+                            $dayShifts[] = [
+                                'id'          => $defaultShift->id,
+                                'shiftId'     => $defaultShift->id,
+                                'userId'      => 'user_' . $emp->user_id,
+                                'employeeId'  => $emp->id,
+                                'type'        => $type,
+                                'startTime'   => $defaultShift->company_start_time,
+                                'endTime'     => $defaultShift->company_end_time,
+                                'shiftName'   => $shiftName,
+                                'notes'       => $defaultShift->notes,
+                                'isDefault'   => true,
+                                'isLeaveOnly' => false,
+                                'leave'       => $onLeave ? [
+                                    'id'         => $onLeave->id,
+                                    'type'       => optional($onLeave->leaveType)->title ?? 'Leave',
+                                    'start_date' => $onLeave->start_date,
+                                    'end_date'   => $onLeave->end_date,
+                                    'reason'     => $onLeave->leave_reason,
+                                    'days'       => $onLeave->total_leave_days,
+                                ] : null,
+                                'attendance'  => $attendance ? [
+                                    'clock_in'         => $attendance->clock_in,
+                                    'clock_out'        => $attendance->clock_out,
+                                    'total_break'      => $attendance->total_break,
+                                    'total_lunch_time' => $attendance->total_lunch_time,
+                                    'total_tea_time'   => $attendance->total_tea_time,
+                                    'status'           => $attendance->status,
+                                ] : null,
+                            ];
+                        }
+                    }
+                }
+
+                // 2. Output ALL active date-specific shifts (Overtime, Emergency, Date Regular, etc.)
+                foreach ($activeOverrides as $shift) {
+                    $type = $shift->type ?? 'regular';
+                    if ($onLeave) {
+                        $type = 'leave';
+                    }
+
+                    $shiftName = !empty($shift->name) ? $shift->name : (optional($emp->shift)->name ?? '');
+
                     $dayShifts[] = [
-                        'id'         => null,
-                        'shiftId'    => null,
-                        'userId'     => 'user_' . $emp->user_id,
-                        'employeeId' => $emp->id,
-                        'type'       => 'leave',
-                        'startTime'  => null,
-                        'endTime'    => null,
-                        'shiftName'  => optional($onLeave->leaveType)->title ?? 'Leave',
-                        'notes'      => $onLeave->leave_reason,
-                        'isDefault'  => false,
+                        'id'          => $shift->id,
+                        'shiftId'     => $shift->id,
+                        'userId'      => 'user_' . $emp->user_id,
+                        'employeeId'  => $emp->id,
+                        'type'        => $type,
+                        'startTime'   => $shift->company_start_time,
+                        'endTime'     => $shift->company_end_time,
+                        'shiftName'   => $shiftName,
+                        'notes'       => $shift->notes,
+                        'isDefault'   => false,
+                        'isLeaveOnly' => false,
+                        'leave'       => $onLeave ? [
+                            'id'         => $onLeave->id,
+                            'type'       => optional($onLeave->leaveType)->title ?? 'Leave',
+                            'start_date' => $onLeave->start_date,
+                            'end_date'   => $onLeave->end_date,
+                            'reason'     => $onLeave->leave_reason,
+                            'days'       => $onLeave->total_leave_days,
+                        ] : null,
+                        'attendance'  => $attendance ? [
+                            'clock_in'         => $attendance->clock_in,
+                            'clock_out'        => $attendance->clock_out,
+                            'total_break'      => $attendance->total_break,
+                            'total_lunch_time' => $attendance->total_lunch_time,
+                            'total_tea_time'   => $attendance->total_tea_time,
+                            'status'           => $attendance->status,
+                        ] : null,
+                    ];
+                }
+
+                // 3. If no shifts are present and employee is on leave, output leave-only entry
+                if (empty($dayShifts) && $onLeave) {
+                    $dayShifts[] = [
+                        'id'          => null,
+                        'shiftId'     => null,
+                        'userId'      => 'user_' . $emp->user_id,
+                        'employeeId'  => $emp->id,
+                        'type'        => 'leave',
+                        'startTime'   => null,
+                        'endTime'     => null,
+                        'shiftName'   => optional($onLeave->leaveType)->title ?? 'Leave',
+                        'notes'       => $onLeave->leave_reason,
+                        'isDefault'   => false,
                         'isLeaveOnly' => true,
-                        'leave'      => [
+                        'leave'       => [
                             'id'         => $onLeave->id,
                             'type'       => optional($onLeave->leaveType)->title ?? 'Leave',
                             'start_date' => $onLeave->start_date,
@@ -251,109 +344,9 @@ class RotaController extends Controller
                             'reason'     => $onLeave->leave_reason,
                             'days'       => $onLeave->total_leave_days,
                         ],
-                        'attendance' => null,
+                        'attendance'  => null,
                     ];
-                    continue;
                 }
-
-                // Deleted marker → suppress default, show nothing (unless on leave)
-                if ($override && $override->is_deleted) {
-                    // Still show leave even if shift was deleted for this day
-                    if ($onLeave) {
-                        $dayShifts[] = [
-                            'id'         => null,
-                            'shiftId'    => null,
-                            'userId'     => 'user_' . $emp->user_id,
-                            'employeeId' => $emp->id,
-                            'type'       => 'leave',
-                            'startTime'  => null,
-                            'endTime'    => null,
-                            'shiftName'  => optional($onLeave->leaveType)->title ?? 'Leave',
-                            'notes'      => $onLeave->leave_reason,
-                            'isDefault'  => false,
-                            'isLeaveOnly' => true,
-                            'leave'      => [
-                                'id'         => $onLeave->id,
-                                'type'       => optional($onLeave->leaveType)->title ?? 'Leave',
-                                'start_date' => $onLeave->start_date,
-                                'end_date'   => $onLeave->end_date,
-                                'reason'     => $onLeave->leave_reason,
-                                'days'       => $onLeave->total_leave_days,
-                            ],
-                            'attendance' => null,
-                        ];
-                    }
-                    continue;
-                }
-
-                // Determine which shift record to display
-                $isDefault = false;
-                if ($override) {
-                    $shift = $override;
-                } else {
-                    // 1st fallback: employee-level default (shifts table, date=null, employee_id set)
-                    $shift = $defaultShifts->first(fn($d) => $d->employee_id === $emp->id);
-
-                    // 2nd fallback: company-assigned shift from employees.shift_id
-                    if (!$shift) {
-                        $shift = $emp->shift;
-                    }
-
-                    if (!$shift) continue;
-
-                    if ($shift && $shift->id === optional($emp->shift)->id) {
-                        $shiftKey = ($shift->company_start_time ?? '') . '|' . ($shift->company_end_time ?? '');
-                        if (array_key_exists($shiftKey, $hiddenFromRota)) {
-                            continue;
-                        }
-                    }
-
-                    $isDefault = true;
-                    if (!empty($workingDays) && !in_array((int) $day->dayOfWeek, $workingDays)) {
-                        continue;
-                    }
-                    if (!empty($holidayDates) && isset($holidayDates[$dateStr])) {
-                        continue;
-                    }
-                }
-
-                // Resolve type — leave overrides shift type
-                $type = $shift->type ?? 'regular';
-                if ($onLeave) {
-                    $type = 'leave';
-                } elseif ($attendance && !empty($attendance->overtime) && $attendance->overtime !== '00:00:00') {
-                    $type = 'overtime';
-                }
-
-                $dayShifts[] = [
-                    'id'          => $shift->id,
-                    'shiftId'     => $shift->id,
-                    'userId'      => 'user_' . $emp->user_id,
-                    'employeeId'  => $emp->id,
-                    'type'        => $type,
-                    'startTime'   => $shift->company_start_time,
-                    'endTime'     => $shift->company_end_time,
-                    'shiftName'   => $shift->name ?? '',
-                    'notes'       => $shift->notes,
-                    'isDefault'   => $isDefault,
-                    'isLeaveOnly' => false,
-                    'leave'       => $onLeave ? [
-                        'id'         => $onLeave->id,
-                        'type'       => optional($onLeave->leaveType)->title ?? 'Leave',
-                        'start_date' => $onLeave->start_date,
-                        'end_date'   => $onLeave->end_date,
-                        'reason'     => $onLeave->leave_reason,
-                        'days'       => $onLeave->total_leave_days,
-                    ] : null,
-                    'attendance'  => $attendance ? [
-                        'clock_in'         => $attendance->clock_in,
-                        'clock_out'        => $attendance->clock_out,
-                        'total_break'      => $attendance->total_break,
-                        'total_lunch_time' => $attendance->total_lunch_time,
-                        'total_tea_time'   => $attendance->total_tea_time,
-                        'status'           => $attendance->status,
-                    ] : null,
-                ];
             }
 
             if (!empty($dayShifts)) {
@@ -424,7 +417,8 @@ class RotaController extends Controller
 
         $isDefault = $request->boolean('is_default', false);
 
-        $startTime = strlen($request->start_time) == 5 ? $request->start_time . ':00' : $request->start_time; $endTime = strlen($request->end_time) == 5 ? $request->end_time . ':00' : $request->end_time;
+        $startTime = strlen($request->start_time) == 5 ? $request->start_time . ':00' : $request->start_time;
+        $endTime   = $request->filled('end_time') ? (strlen($request->end_time) == 5 ? $request->end_time . ':00' : $request->end_time) : null;
 
         $payload = [
             'name'               => $request->name ?? null,
@@ -437,13 +431,17 @@ class RotaController extends Controller
         ];
 
         if ($isDefault) {
-            // Upsert the employee's default shift (date = null)
             $rota = Shift::updateOrCreate(
                 ['employee_id' => $employee->id, 'date' => null],
                 $payload
             );
+
+            if ($request->filled('date')) {
+                Shift::where('employee_id', $employee->id)
+                    ->where('date', $request->date)
+                    ->delete();
+            }
         } else {
-            // Date is required for a specific-day override
             if (!$request->filled('date')) {
                 return response()->json(['success' => false, 'message' => 'Date is required for a date-specific shift.'], 422);
             }
@@ -506,9 +504,10 @@ class RotaController extends Controller
         }
         $user = Auth::user();
 
-        $rota = Shift::where('id', $id)
-            ->where('created_by', $user->creatorId())
-            ->firstOrFail();
+        $rota = Shift::find($id);
+        if (!$rota) {
+            return response()->json(['success' => false, 'message' => __('Shift not found.')], 404);
+        }
 
         return response()->json([
             'success' => true,
@@ -538,9 +537,10 @@ class RotaController extends Controller
         }
         $user = Auth::user();
 
-        $rota = Shift::where('id', $id)
-            ->where('created_by', $user->creatorId())
-            ->firstOrFail();
+        $rota = Shift::find($id);
+        if (!$rota) {
+            return response()->json(['success' => false, 'message' => __('Shift not found.')], 404);
+        }
 
         $isDefaultShift = is_null($rota->date);
 

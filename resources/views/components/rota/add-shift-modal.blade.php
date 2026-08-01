@@ -20,7 +20,7 @@
                     </div>
 
                     {{-- Default shift toggle --}}
-                    <div class="mb-3">
+                    <div class="mb-3" id="isDefaultToggleWrapper">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="isDefaultToggle">
                             <label class="form-check-label fw-semibold" for="isDefaultToggle">
@@ -74,8 +74,8 @@
                             <input type="time" class="form-control" name="start_time" id="addShiftStart" required>
                         </div>
                         <div class="col-6 mb-3">
-                            <label class="form-label">{{ __('End Time') }} <span class="text-danger">*</span></label>
-                            <input type="time" class="form-control" name="end_time" id="addShiftEnd" required>
+                            <label class="form-label">{{ __('End Time') }}</label>
+                            <input type="time" class="form-control" name="end_time" id="addShiftEnd">
                         </div>
                     </div>
 
@@ -158,6 +158,7 @@ function openAddShiftForStaffAndDate(staffId, date) {
     document.getElementById('rotaId').value                   = '';
     document.getElementById('isDefaultHidden').value          = '0';
     document.getElementById('isDefaultToggle').checked        = false;
+    document.getElementById('isDefaultToggleWrapper').style.display = 'none';
     document.getElementById('dateFieldWrapper').style.display = '';
     document.getElementById('addShiftDate').required          = true;
     _setDateValue('addShiftDate', date);
@@ -185,6 +186,43 @@ function openAddShiftForStaffAndDate(staffId, date) {
     _showAddShiftModal();
 }
 
+// ── Open for adding an extra shift (Overtime/Emergency) for employee + date ─────
+function openAddExtraShiftForStaffAndDate(staffId, date) {
+    const staff = typeof allStaff !== 'undefined' ? allStaff.find(s => String(s.id) === String(staffId) || String(s.employee_id) === String(staffId)) : null;
+
+    document.getElementById('rotaId').value                   = '';
+    document.getElementById('isDefaultHidden').value          = '0';
+    document.getElementById('isDefaultToggle').checked        = false;
+    document.getElementById('isDefaultToggleWrapper').style.display = 'none';
+    document.getElementById('dateFieldWrapper').style.display = '';
+    document.getElementById('addShiftDate').required          = true;
+    _setDateValue('addShiftDate', date);
+    document.getElementById('addShiftType').value             = 'overtime';
+    document.getElementById('addShiftStart').value            = '';
+    document.getElementById('addShiftEnd').value              = '';
+    document.getElementById('addShiftNotes').value            = '';
+    document.getElementById('addShiftTemplateSelect').value   = '';
+    document.getElementById('overrideBanner').classList.add('d-none');
+    document.getElementById('addShiftModalTitle').textContent = '{{ __("Add Extra Shift") }}';
+
+    if (staff) {
+        document.getElementById('addShiftEmployeeSelect').value = staff.employee_id;
+    } else if (staffId) {
+        document.getElementById('addShiftEmployeeSelect').value = staffId;
+    }
+
+    _pendingModalData = {
+        date:        date || '',
+        employee_id: staff ? staff.employee_id : staffId,
+        type:        'overtime',
+        start_time:  '',
+        end_time:    '',
+        notes:       '',
+    };
+
+    _showAddShiftModal();
+}
+
 // ── Edit existing shift row ───────────────────────────────────────────────────
 function editShift(rotaId) {
     if (!rotaId) return;
@@ -202,6 +240,7 @@ function editShift(rotaId) {
             document.getElementById('addShiftTemplateSelect').value   = '';
             document.getElementById('isDefaultToggle').checked        = isDefault;
             document.getElementById('isDefaultHidden').value          = isDefault ? '1' : '0';
+            document.getElementById('isDefaultToggleWrapper').style.display = isDefault ? '' : 'none';
             document.getElementById('dateFieldWrapper').style.display = isDefault ? 'none' : '';
             document.getElementById('addShiftDate').required          = !isDefault;
             _setDateValue('addShiftDate', isDefault ? '' : (d.date || ''));

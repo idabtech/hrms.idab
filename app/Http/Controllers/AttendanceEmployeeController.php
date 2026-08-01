@@ -355,13 +355,22 @@ class AttendanceEmployeeController extends Controller
             if (time() > strtotime($date . $endTime)) {
                 //Overtime
                 $totalOvertimeSeconds = time() - strtotime($date . $endTime);
-                $hours                = floor($totalOvertimeSeconds / 3600);
-                $mins                 = floor($totalOvertimeSeconds / 60 % 60);
-                $secs                 = floor($totalOvertimeSeconds % 60);
-                $overtime             = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
             } else {
-                $overtime = '00:00:00';
+                $totalOvertimeSeconds = 0;
             }
+
+            // Combine with any completed OvertimeLog session minutes for today so prior overtime is preserved
+            $logMinutes = \App\Models\OvertimeLog::where('employee_id', $employeeId)
+                ->whereDate('date', $date)
+                ->whereNotNull('end_time')
+                ->sum('duration_minutes');
+
+            $totalOvertimeSeconds += ($logMinutes * 60);
+
+            $hours    = floor($totalOvertimeSeconds / 3600);
+            $mins     = floor(($totalOvertimeSeconds % 3600) / 60);
+            $secs     = $totalOvertimeSeconds % 60;
+            $overtime = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
 
             $attendanceEmployee['clock_out']     = $time;
             $attendanceEmployee['early_leaving'] = $earlyLeaving;

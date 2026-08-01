@@ -796,6 +796,11 @@ Route::group(['middleware' => ['verified']], function () {
         ]
     );
 
+    // ── Overtime Clock In/Out routes ──────────────────────────────────────────
+    Route::get('overtime/status', [OvertimeController::class, 'checkStatus'])->name('overtime.status')->middleware(['auth', 'XSS']);
+    Route::post('overtime/start',  [OvertimeController::class, 'startOvertime'])->name('overtime.start')->middleware(['auth', 'XSS']);
+    Route::post('overtime/stop',   [OvertimeController::class, 'stopOvertime'])->name('overtime.stop')->middleware(['auth', 'XSS']);
+
     Route::resource('overtime', OvertimeController::class)->middleware(
         [
             'auth',
@@ -1597,6 +1602,8 @@ Route::group(['middleware' => ['verified']], function () {
         // Copy shift          POST /rota/copy-shift
         Route::post('copy-shift',          [RotaController::class, 'apiCopyShift'])->name('copy-shift');
     });
+
+
     Route::get('candidates-job-applications', [JobApplicationController::class, 'candidate'])->name('job.application.candidate')->middleware(
         [
             'auth',

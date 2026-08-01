@@ -78,7 +78,7 @@ class AttendanceRequestController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'type'   => 'required|in:clock_in,clock_out',
+            'type'   => 'required|in:clock_in,clock_out,clock_in_overtime,clock_out_overtime',
             'reason' => 'nullable|string|max:255',
         ]);
 
@@ -167,6 +167,16 @@ class AttendanceRequestController extends Controller
                 if($pastAttendanceRequest)
                 {
                     return redirect()->back()->with('error', __('Please change status first clock in request.'));
+                }
+        } elseif ($attendanceRequest->type == "clock_out_overtime") {
+                $pastInOvertimeRequest = AttendanceRequest::whereDate('requested_at', \Carbon\Carbon::parse($attendanceRequest->requested_at)->toDateString())
+                ->where('employee_id', $attendanceRequest->employee_id)
+                ->where('type', 'clock_in_overtime')
+                ->where('status', '!=', 'approved')
+                ->first();
+                if($pastInOvertimeRequest)
+                {
+                    return redirect()->back()->with('error', __('Please approve the Overtime Clock-In request first before approving the Overtime Clock-Out request.'));
                 }
         }
         // Approve the request
@@ -292,6 +302,83 @@ class AttendanceRequestController extends Controller
                 $attendance->save();
             } else {
                 \Log::warning("AttendanceRequest approve: no open AttendanceEmployee row found for employee {$employeeId} on {$date}");
+            }
+        } elseif ($attendanceRequest->type === 'clock_in_overtime') {
+            // ---- OVERTIME CLOCK IN REQUEST ----
+            $attendance = AttendanceEmployee::where('employee_id', $employeeId)
+                ->where('date', $date)
+                ->first();
+
+            \App\Models\OvertimeLog::create([
+                'employee_id'   => $employeeId,
+                'attendance_id' => $attendance ? $attendance->id : null,
+                'date'          => $date,
+                'start_time'    => $requestedAt,
+                'created_by'    => Auth::id(),
+            ]);
+        } elseif ($attendanceRequest->type === 'clock_out_overtime') {
+            // ---- OVERTIME CLOCK OUT REQUEST ----
+            $clockInReq = AttendanceRequest::where('employee_id', $employeeId)
+                ->whereDate('requested_at', $date)
+                ->where('type', 'clock_in_overtime')
+                ->where('status', 'approved')
+                ->latest()
+                ->first();
+
+            $startTime = $clockInReq ? \Carbon\Carbon::parse($clockInReq->requested_at) : $requestedAt;
+            $endTime = $requestedAt;
+            $durationSeconds = max(0, $endTime->diffInSeconds($startTime));
+            $durationMinutes = round($durationSeconds / 60);
+
+            // 1. Update OvertimeLog
+            $activeLog = \App\Models\OvertimeLog::where('employee_id', $employeeId)
+                ->whereDate('date', $date)
+                ->whereNull('end_time')
+                ->latest()
+                ->first();
+
+            if ($activeLog) {
+                $activeLog->update([
+                    'end_time'         => $endTime,
+                    'duration_minutes' => $durationMinutes,
+                ]);
+            } else {
+                \App\Models\OvertimeLog::create([
+                    'employee_id'      => $employeeId,
+                    'date'             => $date,
+                    'start_time'       => $startTime,
+                    'end_time'         => $endTime,
+                    'duration_minutes' => $durationMinutes,
+                    'created_by'       => Auth::id(),
+                ]);
+            }
+
+            // 2. Update or create AttendanceEmployee record overtime column
+            $attendance = AttendanceEmployee::where('employee_id', $employeeId)
+                ->where('date', $date)
+                ->first();
+
+            if (!$attendance) {
+                $attendance = new AttendanceEmployee();
+                $attendance->employee_id   = $employeeId;
+                $attendance->date          = $date;
+                $attendance->status        = 'Present';
+                $attendance->clock_in      = $startTime->toTimeString();
+                $attendance->clock_out     = $endTime->toTimeString();
+                $attendance->late          = '00:00:00';
+                $attendance->early_leaving = '00:00:00';
+                $attendance->overtime      = gmdate('H:i:s', $durationSeconds);
+                $attendance->created_by    = Auth::id();
+                $attendance->save();
+            } else {
+                // Add to existing overtime total
+                $existingOt = $attendance->overtime ?? '00:00:00';
+                $parts = explode(':', $existingOt);
+                $existingSeconds = (int)($parts[0] ?? 0) * 3600 + (int)($parts[1] ?? 0) * 60 + (int)($parts[2] ?? 0);
+
+                $totalOtSeconds = $existingSeconds + $durationSeconds;
+                $attendance->overtime = gmdate('H:i:s', $totalOtSeconds);
+                $attendance->save();
             }
         }
 

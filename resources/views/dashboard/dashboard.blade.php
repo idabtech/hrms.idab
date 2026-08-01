@@ -95,6 +95,41 @@
                             $clockInEarly = $now->lt($loginEarlyDeadline);
                             $clockOutLate = $now->gt($logoutLateAllowed);
                             $clockOutEarly = $now->lt($logoutAllowed);
+
+                            // Today's scheduled overtime shift
+                            $todayOvertimeShift = $employee ? \App\Models\Shift::where('employee_id', $employee->id)
+                                ->whereDate('date', Carbon::today())
+                                ->where(function ($q) {
+                                    $q->where('type', 'overtime')
+                                      ->orWhere('type', 'Overtime')
+                                      ->orWhere('name', 'like', '%overtime%');
+                                })
+                                ->where(function ($q) {
+                                    $q->where('is_deleted', false)
+                                      ->orWhere('is_deleted', 0)
+                                      ->orWhereNull('is_deleted');
+                                })
+                                ->first() : null;
+
+                            $hasOvertimeShift = !is_null($todayOvertimeShift);
+                            $otStartStr = $todayOvertimeShift ? ($todayOvertimeShift->company_start_time ? formatTime12h($todayOvertimeShift->company_start_time) : '') : '';
+                            $otEndStr   = $todayOvertimeShift ? ($todayOvertimeShift->company_end_time && $todayOvertimeShift->company_end_time !== '00:00:00' ? formatTime12h($todayOvertimeShift->company_end_time) : '') : '';
+                            $otShiftTimeText = $otStartStr . ($otEndStr ? ' - ' . $otEndStr : '');
+
+                            $isRegularClockedIn = $employeeAttendance && !empty($employeeAttendance->clock_in) && ($employeeAttendance->clock_out === '00:00:00' || is_null($employeeAttendance->clock_out));
+                            $isRegularClockedOut = !$isRegularClockedIn;
+
+                            $otClockInReq = $employee ? \App\Models\AttendanceRequest::where('employee_id', $employee->id)
+                                ->whereDate('requested_at', Carbon::today())
+                                ->where('type', 'clock_in_overtime')
+                                ->latest()
+                                ->first() : null;
+
+                            $otClockOutReq = $employee ? \App\Models\AttendanceRequest::where('employee_id', $employee->id)
+                                ->whereDate('requested_at', Carbon::today())
+                                ->where('type', 'clock_out_overtime')
+                                ->latest()
+                                ->first() : null;
                         @endphp
 
                         <div class="row">
@@ -697,6 +732,118 @@
                                         {{ __('CLOCK OUT') }}
                                     </button>
                                 @endif
+                            </div>
+                        </div>
+
+                        {{-- Overtime Section --}}
+                        <div class="row mt-3 pt-3 border-top" id="overtimeContainer" style="{{ $hasOvertimeShift ? 'display:flex;' : 'display:none;' }}">
+                            <div class="col-12 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div>
+                                    <span class="fw-bold text-dark me-2"><i class="ti ti-clock-play me-1 text-primary"></i> {{ __('Overtime Shift') }}:</span>
+                                    <span id="overtimeShiftInfo" class="badge bg-primary text-white">{{ $otShiftTimeText }}</span>
+                                    <span id="overtimeStatusText" class="ms-2 text-muted small"></span>
+                                </div>
+                                <div id="overtimeActionButtons">
+                                    <button type="button" id="btnStartOvertime" class="btn btn-success me-2" {{ $isRegularClockedIn ? 'disabled' : '' }} title="{{ $isRegularClockedIn ? __('Please clock out of your regular shift first') : '' }}">
+                                        <i class="ti ti-play me-1"></i> {{ __('Overtime Start') }}
+                                    </button>
+                                    <button type="button" id="btnStopOvertime" class="btn btn-danger d-none">
+                                        <i class="ti ti-square-toggle me-1"></i> {{ __('Overtime Off') }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Unscheduled / Ad-hoc Overtime Request Section (When no shift assigned in Rota) --}}
+                        @if (!$hasOvertimeShift)
+                            <div class="row mt-3 pt-3 border-top" id="unscheduledOvertimeContainer" style="display:flex;">
+                                <div class="col-12 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                    <div>
+                                        <span class="fw-bold text-dark me-2"><i class="ti ti-clock-plus me-1 text-warning"></i> {{ __('Unscheduled Overtime') }}:</span>
+                                        @if ($otClockInReq)
+                                            @if ($otClockInReq->status == 'pending')
+                                                <span class="badge bg-warning text-white">{{ __('Overtime Clock In Request Pending') }}</span>
+                                            @elseif ($otClockInReq->status == 'approved' && (!$otClockOutReq || $otClockOutReq->status != 'approved'))
+                                                <span class="badge bg-success text-white">{{ __('Overtime Active (Approved)') }}</span>
+                                            @elseif ($otClockOutReq && $otClockOutReq->status == 'approved')
+                                                <span class="badge bg-info text-white">{{ __('Overtime Completed & Approved') }}</span>
+                                            @endif
+                                        @else
+                                            <span class="text-muted small">{{ __('No overtime shift assigned. You can request overtime below.') }}</span>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        @if (!$otClockInReq)
+                                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#requestOvertimeClockInModal">
+                                                <i class="ti ti-send me-1"></i> {{ __('Request Overtime') }}
+                                            </button>
+                                        @elseif ($otClockInReq && ($otClockInReq->status == 'approved' || $otClockInReq->status == 'pending') && (!$otClockOutReq || $otClockOutReq->status != 'approved'))
+                                            @if (!$otClockOutReq)
+                                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#requestOvertimeClockOutModal">
+                                                    <i class="ti ti-square-toggle me-1"></i> {{ __('Request Overtime Clock Out') }}
+                                                </button>
+                                            @elseif ($otClockOutReq->status == 'pending')
+                                                <button type="button" class="btn btn-secondary" disabled>
+                                                    {{ __('Overtime Clock Out Request Pending') }}
+                                                </button>
+                                            @endif
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- Request Overtime Clock In Modal --}}
+                        <div class="modal fade" id="requestOvertimeClockInModal" tabindex="-1" aria-labelledby="requestOvertimeClockInModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    {{ Form::open(['route' => 'attendance-requests.store', 'method' => 'post']) }}
+                                    <input type="hidden" name="type" value="clock_in_overtime">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="requestOvertimeClockInModalLabel">{{ __('Request Overtime Clock In') }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <div class="form-group col-md-12">
+                                                <label for="reason_ot_in" class="form-label">{{ __('Reason / Description') }} <span class="text-danger">*</span></label>
+                                                <textarea name="reason" id="reason_ot_in" class="form-control" rows="3" required placeholder="{{ __('e.g., Working on urgent client task...') }}"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <input type="button" value="{{ __('Cancel') }}" class="btn btn-light" data-bs-dismiss="modal">
+                                        <input type="submit" value="{{ __('Submit Request') }}" class="btn btn-primary">
+                                    </div>
+                                    {{ Form::close() }}
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Request Overtime Clock Out Modal --}}
+                        <div class="modal fade" id="requestOvertimeClockOutModal" tabindex="-1" aria-labelledby="requestOvertimeClockOutModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    {{ Form::open(['route' => 'attendance-requests.store', 'method' => 'post']) }}
+                                    <input type="hidden" name="type" value="clock_out_overtime">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="requestOvertimeClockOutModalLabel">{{ __('Request Overtime Clock Out') }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <div class="form-group col-md-12">
+                                                <label for="reason_ot_out" class="form-label">{{ __('Notes / Work Summary') }}</label>
+                                                <textarea name="reason" id="reason_ot_out" class="form-control" rows="3" placeholder="{{ __('e.g., Completed task successfully...') }}"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <input type="button" value="{{ __('Cancel') }}" class="btn btn-light" data-bs-dismiss="modal">
+                                        <input type="submit" value="{{ __('Submit Clock Out Request') }}" class="btn btn-danger">
+                                    </div>
+                                    {{ Form::close() }}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2301,5 +2448,170 @@
         }
         window.dashboardCalTriggerUpdateSize();
     });
+</script>
+
+<script>
+(function () {
+    const OVERTIME_URLS = {
+        status: '{{ route("overtime.status") }}',
+        start:  '{{ route("overtime.start") }}',
+        stop:   '{{ route("overtime.stop") }}',
+    };
+    const CSRF = '{{ csrf_token() }}';
+
+    function checkOvertimeStatus(triggerPrompt = false) {
+        fetch(OVERTIME_URLS.status, {
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF }
+        })
+        .then(r => r.json())
+        .then(res => {
+            const container = document.getElementById('overtimeContainer');
+            const infoEl = document.getElementById('overtimeShiftInfo');
+
+            if (!res.success || !res.has_overtime_shift) {
+                if (!infoEl || !infoEl.textContent.trim()) {
+                    if (container) container.style.display = 'none';
+                }
+                return;
+            }
+
+            if (container) container.style.display = 'flex';
+
+            let shiftStr = res.shift_start + (res.shift_end ? (' - ' + res.shift_end) : '');
+            if (infoEl) infoEl.textContent = shiftStr;
+
+            const btnStart  = document.getElementById('btnStartOvertime');
+            const btnStop   = document.getElementById('btnStopOvertime');
+            const statusTxt = document.getElementById('overtimeStatusText');
+
+            if (res.is_active) {
+                if (btnStart) btnStart.classList.add('d-none');
+                if (btnStop)  btnStop.classList.remove('d-none');
+                if (statusTxt) statusTxt.innerHTML = '<span class="text-success fw-bold"><i class="ti ti-disc me-1"></i>Overtime Active</span> (Started at ' + (res.active_log_start || '') + ')';
+            } else if (res.is_finished) {
+                if (btnStart) {
+                    btnStart.classList.remove('d-none');
+                    btnStart.innerHTML = '<i class="ti ti-play me-1"></i>{{ __("Start Additional Overtime") }}';
+                }
+                if (btnStop) btnStop.classList.add('d-none');
+                if (statusTxt) statusTxt.innerHTML = '<span class="text-primary fw-bold"><i class="ti ti-circle-check me-1"></i>Today\'s Overtime: ' + res.total_overtime_time + '</span>';
+            } else {
+                if (btnStart) {
+                    btnStart.classList.remove('d-none');
+                    btnStart.innerHTML = '<i class="ti ti-play me-1"></i>{{ __("Overtime Start") }}';
+                    if (res.is_regular_clocked_out) {
+                        btnStart.disabled = false;
+                        btnStart.removeAttribute('disabled');
+                        btnStart.title = '';
+                    } else {
+                        btnStart.disabled = true;
+                        btnStart.setAttribute('disabled', 'disabled');
+                        btnStart.title = '{{ __("Please clock out of your regular shift first") }}';
+                    }
+                }
+                if (btnStop) btnStop.classList.add('d-none');
+                if (statusTxt) statusTxt.textContent = '{{ __("Not Started") }}';
+
+                // Trigger Swal.fire alert modal ONLY IF regular shift is clocked out AND overtime shift start time has arrived AND overtime is not active yet
+                if (triggerPrompt && res.is_regular_clocked_out && res.is_ot_time_reached && !res.is_active && !res.is_finished) {
+                    let bodyMsg = '{{ __("You have been assigned an overtime shift for today") }} (' + shiftStr + '). {{ __("Would you like to start your overtime shift now?") }}';
+
+                    if (typeof Swal === 'function') {
+                        Swal.fire({
+                            title: '{{ __("Start Overtime Shift?") }}',
+                            text: bodyMsg,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#6777ef',
+                            cancelButtonColor: '#8592a3',
+                            confirmButtonText: '{{ __("Yes, Start Overtime!") }}',
+                            cancelButtonText: '{{ __("No") }}',
+                        }).then((r) => {
+                            if (r.isConfirmed) {
+                                doStartOvertime();
+                            }
+                        });
+                    } else {
+                        const msgEl = document.getElementById('overtimeModalTimeText');
+                        if (msgEl) msgEl.textContent = bodyMsg;
+                        const modalEl = document.getElementById('overtimePromptModal');
+                        if (modalEl) {
+                            let promptModal = new bootstrap.Modal(modalEl);
+                            promptModal.show();
+                        }
+                    }
+                }
+            }
+        })
+        .catch(err => console.error('Overtime status error:', err));
+    }
+
+    function doStartOvertime() {
+        fetch(OVERTIME_URLS.start, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF }
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                if (typeof show_toastr === 'function') {
+                    show_toastr('Success', res.message, 'success');
+                }
+                checkOvertimeStatus(false);
+            } else {
+                if (typeof show_toastr === 'function') {
+                    show_toastr('Error', res.message || 'Failed to start overtime', 'error');
+                }
+            }
+        });
+    }
+
+    function initOvertime() {
+        checkOvertimeStatus(true);
+
+        document.getElementById('overtimePromptModal')?.addEventListener('hidden.bs.modal', function () {
+            sessionStorage.setItem('overtime_prompt_dismissed_' + new Date().toISOString().slice(0,10), '1');
+        });
+
+        document.getElementById('btnStartOvertime')?.addEventListener('click', function () {
+            doStartOvertime();
+        });
+
+        document.getElementById('btnModalStartOvertime')?.addEventListener('click', function () {
+            const modalEl = document.getElementById('overtimePromptModal');
+            if (modalEl) {
+                const modalInst = bootstrap.Modal.getInstance(modalEl);
+                if (modalInst) modalInst.hide();
+            }
+            doStartOvertime();
+        });
+
+        document.getElementById('btnStopOvertime')?.addEventListener('click', function () {
+            fetch(OVERTIME_URLS.stop, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF }
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    if (typeof show_toastr === 'function') {
+                        show_toastr('Success', res.message, 'success');
+                    }
+                    checkOvertimeStatus(false);
+                } else {
+                    if (typeof show_toastr === 'function') {
+                        show_toastr('Error', res.message || 'Failed to stop overtime', 'error');
+                    }
+                }
+            });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initOvertime);
+    } else {
+        initOvertime();
+    }
+})();
 </script>
 @endpush

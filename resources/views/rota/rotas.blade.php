@@ -621,10 +621,18 @@ function buildShiftBadge(shift, date, viewType) {
             + '</div>';
     }
 
-    // ── Normal shift entry (with optional leave overlay) ─────────────────────
-    const timeStr = typeof formatTime12hours === 'function'
-        ? formatTime12hours(startTime + '-' + endTime)
-        : startTime + ' – ' + endTime;
+    function _fmtTime(t) {
+        if (!t || t === 'null' || t === 'undefined') return '';
+        var p = t.split(':');
+        var h = parseInt(p[0], 10);
+        var m = p[1] || '00';
+        var am = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return h + ':' + m + ' ' + am;
+    }
+    var sFormatted = _fmtTime(startTime);
+    var eFormatted = _fmtTime(endTime);
+    const timeStr  = eFormatted ? (sFormatted + ' – ' + eFormatted) : sFormatted;
 
     const defaultStyle = isDefault ? 'border-style:dashed;opacity:0.85;' : '';
     const defaultLabel = isDefault ? ' <span style="font-size:0.6rem;opacity:.7;">(default)</span>' : '';
@@ -721,6 +729,20 @@ function openRotaActionMenu(btn) {
         menu.appendChild(editItem);
     }
 
+    var canCreate = (window.canCreateRota ?? false) || canEdit;
+    if (canCreate) {
+        var addExtraItem = document.createElement('a');
+        addExtraItem.href      = '#';
+        addExtraItem.className = 'dropdown-item';
+        addExtraItem.innerHTML = '<i class="ti ti-circle-plus me-2"></i>{{ __("Add Extra Shift") }}';
+        addExtraItem.addEventListener('click', function (e) {
+            e.preventDefault();
+            closeRotaActionMenu();
+            openAddExtraShiftForStaffAndDate(employeeId, date);
+        });
+        menu.appendChild(addExtraItem);
+    }
+
     if (canDelete) {
         var divider = document.createElement('div');
         divider.className = 'dropdown-divider';
@@ -784,6 +806,7 @@ function _openOverrideModalFromData(employeeId, date, startTime, endTime, shiftT
     document.getElementById('addShiftTemplateSelect').value    = '';
     document.getElementById('isDefaultToggle').checked         = false;
     document.getElementById('isDefaultHidden').value           = '0';
+    document.getElementById('isDefaultToggleWrapper').style.display = 'none';
     document.getElementById('dateFieldWrapper').style.display  = '';
     document.getElementById('addShiftDate').required           = true;
     _setDateValue('addShiftDate', date);
