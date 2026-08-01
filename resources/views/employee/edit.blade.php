@@ -110,6 +110,15 @@
                                         ]) !!}
                                     </div>
                                 </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {!! Form::label('passcode', __('Passcode'), ['class' => 'form-label']) !!}
+                                        {!! Form::text('passcode', old('passcode', $employee->user->passcode ?? ''), [
+                                        'class' => 'form-control',
+                                        'placeholder' => __('Enter employee passcode'),
+                                        ]) !!}
+                                    </div>
+                                </div>
                                 <div class="form-group col-md-12">
                                     {{ Form::label('address', __('Address'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                     {{ Form::textarea('address', null, ['class' => 'form-control' ,'placeholder'=>__('Enter address'),'rows'=>'3']) }}
