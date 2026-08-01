@@ -24,6 +24,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Shift;
+use App\Models\User;
 use App\Models\Utility;
 
 class ReportController extends Controller
@@ -1201,340 +1202,360 @@ class ReportController extends Controller
 
     public function updateMonthlyAttendanceStatus(Request $request)
     {
-        if (!\Auth::user()->can('Manage Report')) {
-            return response()->json(['error' => __('Permission denied.')], 403);
-        }
+        try {
+            if (!\Auth::user()->can('Manage Report')) {
+                return response()->json(['error' => __('Permission denied.')], 403);
+            }
 
+            $request->validate([
+                'employee_id' => 'required|integer|exists:employees,id',
+                'date' => 'required|date',
+                'status' => 'required|in:P,A,HD,L,DO,PH',
+                'company_shift_time' => 'nullable|string|max:255',
+                'passcode' => 'required|string|max:255',
+            ]);
+            $employee = Employee::find($request->employee_id);
 
-        $request->validate([
-            'employee_id' => 'required|integer|exists:employees,id',
-            'date' => 'required|date',
-            'status' => 'required|in:P,A,HD,L,DO,PH',
-            'company_shift_time' => 'nullable|string|max:255',
-            'passcode' => 'required|string|max:255',
-        ]);
-        $employee = Employee::find($request->employee_id);
+            $passcode = trim((string)$request->passcode);
 
-        $passcode = $request->passcode;
+            $empPasscode      = $employee?->user?->passcode;
+            $authUserPasscode = Auth::user()->passcode;
+            $creatorUser      = \App\Models\User::find(Auth::user()->creatorId());
+            $creatorPasscode  = $creatorUser?->passcode;
 
-        if (!$employee || !$employee->user || (Auth::user()->passcode != $passcode)) {
-            return response()->json([
-                'success' => false,
-                'message' => "passcode verification failed"
-            ], 500);
-        }
+            $validPasscodes = array_map('strval', array_filter([
+                $empPasscode,
+                $authUserPasscode,
+                $creatorPasscode,
+            ]));
 
-        $statusVal = $request->status;
+            if (!$employee || !in_array($passcode, $validPasscodes)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('Passcode verification failed')
+                ], 200);
+            }
 
-        $dbStatusMap = [
-            'P'  => 'Present',
-            'HD' => 'Present',
-            'A'  => 'Absent',
-            'L'  => 'Leave',
-            'DO' => 'Day Off',
-            'PH' => 'Public Holiday',
-        ];
-        $status = $dbStatusMap[$statusVal] ?? 'Present';
+            $statusVal = $request->status;
 
-        $attendance = AttendanceEmployee::firstOrNew([
-            'employee_id' => $request->employee_id,
-            'date' => Carbon::parse($request->date)->format('Y-m-d'),
-        ]);
+            $dbStatusMap = [
+                'P'  => 'Present',
+                'HD' => 'Present',
+                'A'  => 'Absent',
+                'L'  => 'Leave',
+                'DO' => 'Day Off',
+                'PH' => 'Public Holiday',
+            ];
+            $status = $dbStatusMap[$statusVal] ?? 'Present';
 
-        $company_start_time = !empty($request->company_shift_time) ? (explode(' - ', $request->company_shift_time)[0] ?? null) : null;
-        $company_end_time   = !empty($request->company_shift_time) ? (explode(' - ', $request->company_shift_time)[1] ?? null) : null;
+            $attendance = AttendanceEmployee::firstOrNew([
+                'employee_id' => $request->employee_id,
+                'date' => Carbon::parse($request->date)->format('Y-m-d'),
+            ]);
 
-        $attendance->status = $status;
-        $attendance->company_shift_time = $request->company_shift_time;
+            $company_start_time = !empty($request->company_shift_time) ? (explode(' - ', $request->company_shift_time)[0] ?? null) : null;
+            $company_end_time   = !empty($request->company_shift_time) ? (explode(' - ', $request->company_shift_time)[1] ?? null) : null;
 
-        $attendance->is_manual = true;
-        $attendance->is_manual_by = \Auth::user()->id;
+            $attendance->status = $status;
+            $attendance->company_shift_time = $request->company_shift_time;
 
-        if ($statusVal === 'P') {
-            // Use manually entered clock_in/clock_out if provided, otherwise fall back to shift times
-            $clockIn  = !empty($request->clock_in)  ? $request->clock_in  : $company_start_time;
-            $clockOut = !empty($request->clock_out) ? $request->clock_out : $company_end_time;
-            $attendance->clock_in  = $clockIn  ? Carbon::parse($request->date . ' ' . $clockIn)->format('H:i:s')  : null;
-            $attendance->clock_out = $clockOut ? Carbon::parse($request->date . ' ' . $clockOut)->format('H:i:s') : null;
-        } elseif ($statusVal === 'HD') {
-            // Half Day: worked duration between 2h and 6h
-            $clockIn  = !empty($request->clock_in)  ? $request->clock_in  : ($company_start_time ?: '09:00');
-            $clockOut = !empty($request->clock_out) ? $request->clock_out : null;
+            $attendance->is_manual = true;
+            $attendance->is_manual_by = \Auth::user()->id;
 
-            if (!$clockOut) {
-                $clockOut = Carbon::parse($request->date . ' ' . $clockIn)->addHours(4)->format('H:i');
+            if ($statusVal === 'P') {
+                // Use manually entered clock_in/clock_out if provided, otherwise fall back to shift times
+                $clockIn  = !empty($request->clock_in)  ? $request->clock_in  : $company_start_time;
+                $clockOut = !empty($request->clock_out) ? $request->clock_out : $company_end_time;
+                $attendance->clock_in  = $clockIn  ? Carbon::parse($request->date . ' ' . $clockIn)->format('H:i:s')  : null;
+                $attendance->clock_out = $clockOut ? Carbon::parse($request->date . ' ' . $clockOut)->format('H:i:s') : null;
+            } elseif ($statusVal === 'HD') {
+                // Half Day: worked duration between 2h and 6h
+                $clockIn  = !empty($request->clock_in)  ? $request->clock_in  : ($company_start_time ?: '09:00');
+                $clockOut = !empty($request->clock_out) ? $request->clock_out : null;
+
+                if (!$clockOut) {
+                    $clockOut = Carbon::parse($request->date . ' ' . $clockIn)->addHours(4)->format('H:i');
+                } else {
+                    $inTime  = Carbon::parse($request->date . ' ' . $clockIn);
+                    $outTime = Carbon::parse($request->date . ' ' . $clockOut);
+                    if ($outTime->lessThan($inTime)) $outTime->addDay();
+                    $workedSecs = $inTime->diffInSeconds($outTime);
+                    if ($workedSecs >= (6 * 3600)) {
+                        $clockOut = $inTime->copy()->addHours(4)->format('H:i');
+                    }
+                }
+
+                $attendance->clock_in  = Carbon::parse($request->date . ' ' . $clockIn)->format('H:i:s');
+                $attendance->clock_out = Carbon::parse($request->date . ' ' . $clockOut)->format('H:i:s');
             } else {
-                $inTime  = Carbon::parse($request->date . ' ' . $clockIn);
-                $outTime = Carbon::parse($request->date . ' ' . $clockOut);
-                if ($outTime->lessThan($inTime)) $outTime->addDay();
-                $workedSecs = $inTime->diffInSeconds($outTime);
-                if ($workedSecs >= (6 * 3600)) {
-                    $clockOut = $inTime->copy()->addHours(4)->format('H:i');
+                $attendance->clock_in  = '00:00:00';
+                $attendance->clock_out = '00:00:00';
+            }
+
+            $attendance->late = '00:00:00';
+            $attendance->early_leaving = '00:00:00';
+            $attendance->overtime = '00:00:00';
+
+            $refreshType = $employee->refresh_type ?? 'none';
+            if ($refreshType == 'fixed') {
+
+                $lunchSeconds = ($employee->lunch_start && $employee->lunch_end)
+                    ? Carbon::parse($employee->lunch_start)->diffInSeconds(Carbon::parse($employee->lunch_end))
+                    : 0;
+
+                $teaSeconds = ($employee->tea_start && $employee->tea_end)
+                    ? Carbon::parse($employee->tea_start)->diffInSeconds(Carbon::parse($employee->tea_end))
+                    : 0;
+
+                $totalSeconds = $lunchSeconds + $teaSeconds;
+
+                $attendance->total_lunch_time = $this->secondsToTime($lunchSeconds);
+                $attendance->total_tea_time   = $this->secondsToTime($teaSeconds);
+                $attendance->total_break      = $this->secondsToTime($totalSeconds);
+            } else if ($refreshType == 'flexible') {
+
+                $attendance->total_lunch_time = !empty($employee->lunch_minutes) ? $this->secondsToTime($employee->lunch_minutes * 60) : '00:00:00';
+                $attendance->total_tea_time   = !empty($employee->tea_minutes)   ? $this->secondsToTime($employee->tea_minutes * 60)   : '00:00:00';
+                $attendance->total_break = $this->secondsToTime(
+                    $this->timeToSeconds($attendance->total_lunch_time) +
+                    $this->timeToSeconds($attendance->total_tea_time)
+                );
+            } else {
+                $attendance->total_lunch_time = '00:00:00';
+                $attendance->total_tea_time   = '00:00:00';
+                $attendance->total_break      = '00:00:00';
+            }
+
+            $attendance->total_rest = '00:00:00';
+
+            if (!$attendance->exists) {
+                $attendance->created_by = \Auth::user()->creatorId();
+            }
+
+            $attendance->save();
+
+            // Recalculate row summary for the employee for the saved month
+            $savedMonth = Carbon::parse($request->date);
+            $monthStart = $savedMonth->copy()->startOfMonth()->toDateString();
+            $monthEnd   = $savedMonth->copy()->endOfMonth()->toDateString();
+            $tz = config('app.timezone') ?: 'UTC';
+
+            $monthAttendances = AttendanceEmployee::where('employee_id', $request->employee_id)
+                ->whereBetween('date', [$monthStart, $monthEnd])
+                ->get();
+
+            $totalWorkedSeconds = 0;
+            $totalPresents      = 0;
+            $totalLunchSeconds  = 0;
+            $totalTeaSeconds    = 0;
+            $totalLeaves        = 0;
+            $totalHalfDays      = 0;
+            $clockHalfDays      = 0;   // clock-based half-days (affect $totalPresents score)
+            $leaveHalfDays      = 0;   // leave-based half-days (don't affect $totalPresents)
+            $totalDayOffs       = 0;
+            $totalHolidays      = 0;
+            $totalPaidLeave     = 0;
+            $totalUnpaidLeave   = 0;
+            $totalAbsents       = 0;
+
+            // Load working days + holidays once for the month (needed for TDO, TPH, score)
+            // fetchSettings() bypasses the static cache to always get the current DB value.
+            $settings       = \App\Models\Utility::settings();
+            $workingDaysRaw = $settings['rota_working_days'] ?? '1,2,3,4,5';
+            $workingDays    = array_map('intval', array_filter(array_map('trim', explode(',', $workingDaysRaw)), 'strlen'));
+            $satPattern     = $settings['saturday_pattern'] ?? 'none';
+
+            $holidaysInMonth = \App\Models\Holiday::where('created_by', \Auth::user()->creatorId())
+                ->where('start_date', '<=', $monthEnd)
+                ->where('end_date',   '>=', $monthStart)
+                ->get();
+            $holidayDates = [];
+            foreach ($holidaysInMonth as $h) {
+                $hPeriod = \Carbon\CarbonPeriod::create($h->start_date, $h->end_date);
+                foreach ($hPeriod as $hDay) {
+                    $holidayDates[$hDay->format('Y-m-d')] = true;
                 }
             }
 
-            $attendance->clock_in  = Carbon::parse($request->date . ' ' . $clockIn)->format('H:i:s');
-            $attendance->clock_out = Carbon::parse($request->date . ' ' . $clockOut)->format('H:i:s');
-        } else {
-            $attendance->clock_in  = '00:00:00';
-            $attendance->clock_out = '00:00:00';
-        }
-
-        $attendance->late = '00:00:00';
-        $attendance->early_leaving = '00:00:00';
-        $attendance->overtime = '00:00:00';
-
-        if ($employee->refresh_type == 'fixed') {
-
-            $lunchSeconds = ($employee->lunch_start && $employee->lunch_end)
-                ? Carbon::parse($employee->lunch_start)->diffInSeconds(Carbon::parse($employee->lunch_end))
-                : 0;
-
-            $teaSeconds = ($employee->tea_start && $employee->tea_end)
-                ? Carbon::parse($employee->tea_start)->diffInSeconds(Carbon::parse($employee->tea_end))
-                : 0;
-
-            $totalSeconds = $lunchSeconds + $teaSeconds;
-
-            $attendance->total_lunch_time = $this->secondsToTime($lunchSeconds);
-            $attendance->total_tea_time   = $this->secondsToTime($teaSeconds);
-            $attendance->total_break      = $this->secondsToTime($totalSeconds);
-        } else if ($employee->refresh_type == 'flexible') {
-
-            $attendance->total_lunch_time = $employee->lunch_minutes ? $this->secondsToTime($employee->lunch_minutes * 60) : '00:00:00';
-            $attendance->total_tea_time = $employee->tea_minutes ? $this->secondsToTime($employee->tea_minutes * 60) : '00:00:00';
-            $attendance->total_break = $this->secondsToTime(
-                $this->timeToSeconds($attendance->total_lunch_time) +
-                    $this->timeToSeconds($attendance->total_tea_time)
-            );
-        } else {
-            $attendance->total_lunch_time = '00:00:00';
-            $attendance->total_tea_time = '00:00:00';
-            $attendance->total_break = '00:00:00';
-        }
-
-        $attendance->total_rest = '00:00:00';
-
-        if (!$attendance->exists) {
-            $attendance->created_by = \Auth::user()->creatorId();
-        }
-
-        $attendance->save();
-
-        // Recalculate row summary for the employee for the saved month
-        $savedMonth = Carbon::parse($request->date);
-        $monthStart = $savedMonth->copy()->startOfMonth()->toDateString();
-        $monthEnd   = $savedMonth->copy()->endOfMonth()->toDateString();
-        $tz = config('app.timezone') ?: 'UTC';
-
-        $monthAttendances = AttendanceEmployee::where('employee_id', $request->employee_id)
-            ->whereBetween('date', [$monthStart, $monthEnd])
-            ->get();
-
-        $totalWorkedSeconds = 0;
-        $totalPresents      = 0;
-        $totalLunchSeconds  = 0;
-        $totalTeaSeconds    = 0;
-        $totalLeaves        = 0;
-        $totalHalfDays      = 0;
-        $clockHalfDays      = 0;   // clock-based half-days (affect $totalPresents score)
-        $leaveHalfDays      = 0;   // leave-based half-days (don't affect $totalPresents)
-        $totalDayOffs       = 0;
-        $totalHolidays      = 0;
-        $totalPaidLeave     = 0;
-        $totalUnpaidLeave   = 0;
-
-        // Load working days + holidays once for the month (needed for TDO, TPH, score)
-        // fetchSettings() bypasses the static cache to always get the current DB value.
-        $settings       = \App\Models\Utility::settings();
-        $workingDaysRaw = $settings['rota_working_days'] ?? '1,2,3,4,5';
-        $workingDays    = array_map('intval', array_filter(array_map('trim', explode(',', $workingDaysRaw)), 'strlen'));
-        $satPattern     = $settings['saturday_pattern'] ?? 'none';
-
-        $holidaysInMonth = \App\Models\Holiday::where('created_by', \Auth::user()->creatorId())
-            ->where('start_date', '<=', $monthEnd)
-            ->where('end_date',   '>=', $monthStart)
-            ->get();
-        $holidayDates = [];
-        foreach ($holidaysInMonth as $h) {
-            $hPeriod = \Carbon\CarbonPeriod::create($h->start_date, $h->end_date);
-            foreach ($hPeriod as $hDay) {
-                $holidayDates[$hDay->format('Y-m-d')] = true;
+            // Approved leaves for this employee in the month
+            $approvedLeaves = \App\Models\Leave::where('employee_id', $request->employee_id)
+                ->where('status', 'Approved')
+                ->where('start_date', '<=', $monthEnd)
+                ->where('end_date',   '>=', $monthStart)
+                ->with('dayDetails')
+                ->get();
+            $leaveDates     = [];  // date => ['duration'=>, 'status'=>]
+            foreach ($approvedLeaves as $lv) {
+                $detailsByDate = $lv->dayDetails->keyBy(
+                    fn($d) => $d->date instanceof \Carbon\Carbon
+                        ? $d->date->format('Y-m-d')
+                        : \Carbon\Carbon::parse($d->date)->format('Y-m-d')
+                );
+                $lvPeriod = \Carbon\CarbonPeriod::create($lv->start_date, $lv->end_date);
+                foreach ($lvPeriod as $lvDay) {
+                    $dk     = $lvDay->format('Y-m-d');
+                    $detail = $detailsByDate->get($dk);
+                    $leaveDates[$dk] = [
+                        'duration' => $detail ? ($detail->day_duration ?? 'full_day') : ($lv->leave_duration ?? 'full_day'),
+                        'status'   => $detail ? ($detail->day_status  ?? 'paid')     : 'paid',
+                    ];
+                }
             }
-        }
 
-        // Approved leaves for this employee in the month
-        $approvedLeaves = \App\Models\Leave::where('employee_id', $request->employee_id)
-            ->where('status', 'Approved')
-            ->where('start_date', '<=', $monthEnd)
-            ->where('end_date',   '>=', $monthStart)
-            ->with('dayDetails')
-            ->get();
-        $leaveDates     = [];  // date => ['duration'=>, 'status'=>]
-        foreach ($approvedLeaves as $lv) {
-            $detailsByDate = $lv->dayDetails->keyBy(
-                fn($d) => $d->date instanceof \Carbon\Carbon
-                    ? $d->date->format('Y-m-d')
-                    : \Carbon\Carbon::parse($d->date)->format('Y-m-d')
-            );
-            $lvPeriod = \Carbon\CarbonPeriod::create($lv->start_date, $lv->end_date);
-            foreach ($lvPeriod as $lvDay) {
-                $dk     = $lvDay->format('Y-m-d');
-                $detail = $detailsByDate->get($dk);
-                $leaveDates[$dk] = [
-                    'duration' => $detail ? ($detail->day_duration ?? 'full_day') : ($lv->leave_duration ?? 'full_day'),
-                    'status'   => $detail ? ($detail->day_status  ?? 'paid')     : 'paid',
-                ];
-            }
-        }
-
-        // Count TDO and TPH across the whole month up to today
-        $allDates = \Carbon\CarbonPeriod::create($monthStart, $monthEnd);
-        foreach ($allDates as $d) {
-            if ($d->format('Y-m-d') > date('Y-m-d')) break;
-            $dow = (int) $d->dayOfWeek;
-            $df  = $d->format('Y-m-d');
-            if (isset($holidayDates[$df])) {
-                // Only count as holiday if no attendance record
-                $hasAtt = $monthAttendances->firstWhere('date', $df);
-                if (!$hasAtt) $totalHolidays++;
-            } elseif (!empty($workingDays) && !in_array($dow, $workingDays)) {
-                $hasAtt = $monthAttendances->firstWhere('date', $df);
-                if (!$hasAtt) $totalDayOffs++;
-            } elseif ($dow === 6 && in_array(6, $workingDays)) {
-                // Saturday is in working days — but check alternate pattern
-                if (!$this->isSaturdayWorking($d, $satPattern)) {
+            // Count TDO and TPH across the whole month up to today
+            $allDates = \Carbon\CarbonPeriod::create($monthStart, $monthEnd);
+            foreach ($allDates as $d) {
+                if ($d->format('Y-m-d') > date('Y-m-d')) break;
+                $dow = (int) $d->dayOfWeek;
+                $df  = $d->format('Y-m-d');
+                if (isset($holidayDates[$df])) {
+                    // Only count as holiday if no attendance record
+                    $hasAtt = $monthAttendances->firstWhere('date', $df);
+                    if (!$hasAtt) $totalHolidays++;
+                } elseif (!empty($workingDays) && !in_array($dow, $workingDays)) {
                     $hasAtt = $monthAttendances->firstWhere('date', $df);
                     if (!$hasAtt) $totalDayOffs++;
-                }
-            }
-        }
-
-        foreach ($monthAttendances as $rec) {
-            $recDate = is_string($rec->date) ? $rec->date : $rec->date->format('Y-m-d');
-            if (in_array($rec->status, ['Day Off', 'DO'])) {
-                $totalDayOffs++;
-                continue;
-            }
-            if (in_array($rec->status, ['Public Holiday', 'PH'])) {
-                $totalHolidays++;
-                continue;
-            }
-            if (!in_array($rec->status, ['present', 'Present'])) {
-                if (in_array($rec->status, ['Leave', 'L'])) {
-                    $totalLeaves++;
-                } else {
-                    $totalAbsents++;
-                }
-                // Count as leave if approved leave exists for this date
-                if (isset($leaveDates[$recDate])) {
-                    $ld       = $leaveDates[$recDate];
-                    $ldays    = ($ld['duration'] === 'half_day') ? 0.5 : 1.0;
-                    if ($ld['status'] === 'paid') $totalPaidLeave += $ldays; else $totalUnpaidLeave += $ldays;
-                }
-                continue;
-            }
-            $totalPresents++;
-            $totalLunchSeconds += $this->timeToSeconds($rec->total_lunch_time ?? '00:00:00');
-            $totalTeaSeconds   += $this->timeToSeconds($rec->total_tea_time   ?? '00:00:00');
-
-            // Normalise clock values to H:i:s
-            $normalise = fn($t) => $t ? ((strlen($t) === 5) ? $t . ':00' : $t) : null;
-            $ciRaw = $normalise($rec->clock_in);
-            $coRaw = $normalise($rec->clock_out);
-
-            // If clock_out is missing but clock_in exists, try to derive clock_out
-            // from the stored company_shift_time (format: "HH:MM - HH:MM")
-            if (!empty($ciRaw) && $ciRaw !== '00:00:00'
-                && (empty($coRaw) || $coRaw === '00:00:00')
-                && !empty($rec->company_shift_time)
-            ) {
-                $shiftParts = explode(' - ', $rec->company_shift_time);
-                if (!empty($shiftParts[1])) {
-                    $coRaw = $normalise(trim($shiftParts[1]));
+                } elseif ($dow === 6 && in_array(6, $workingDays)) {
+                    // Saturday is in working days — but check alternate pattern
+                    if (!$this->isSaturdayWorking($d, $satPattern)) {
+                        $hasAtt = $monthAttendances->firstWhere('date', $df);
+                        if (!$hasAtt) $totalDayOffs++;
+                    }
                 }
             }
 
-            if (!empty($ciRaw) && $ciRaw !== '00:00:00') {
-                try {
-                    $in = Carbon::createFromFormat('Y-m-d H:i:s', $recDate . ' ' . $ciRaw, $tz);
-                } catch (\Exception $e) { $in = null; }
+            foreach ($monthAttendances as $rec) {
+                $recDate = is_string($rec->date) ? $rec->date : $rec->date->format('Y-m-d');
+                if (in_array($rec->status, ['Day Off', 'DO'])) {
+                    $totalDayOffs++;
+                    continue;
+                }
+                if (in_array($rec->status, ['Public Holiday', 'PH'])) {
+                    $totalHolidays++;
+                    continue;
+                }
+                if (!in_array($rec->status, ['present', 'Present'])) {
+                    if (in_array($rec->status, ['Leave', 'L'])) {
+                        $totalLeaves++;
+                    } else {
+                        $totalAbsents++;
+                    }
+                    // Count as leave if approved leave exists for this date
+                    if (isset($leaveDates[$recDate])) {
+                        $ld       = $leaveDates[$recDate];
+                        $ldays    = ($ld['duration'] === 'half_day') ? 0.5 : 1.0;
+                        if ($ld['status'] === 'paid') $totalPaidLeave += $ldays; else $totalUnpaidLeave += $ldays;
+                    }
+                    continue;
+                }
+                $totalPresents++;
+                $totalLunchSeconds += $this->timeToSeconds($rec->total_lunch_time ?? '00:00:00');
+                $totalTeaSeconds   += $this->timeToSeconds($rec->total_tea_time   ?? '00:00:00');
 
-                if ($in && !empty($coRaw) && $coRaw !== '00:00:00') {
+                // Normalise clock values to H:i:s
+                $normalise = fn($t) => $t ? ((strlen($t) === 5) ? $t . ':00' : $t) : null;
+                $ciRaw = $normalise($rec->clock_in);
+                $coRaw = $normalise($rec->clock_out);
+
+                // If clock_out is missing but clock_in exists, try to derive clock_out
+                // from the stored company_shift_time (format: "HH:MM - HH:MM")
+                if (!empty($ciRaw) && $ciRaw !== '00:00:00'
+                    && (empty($coRaw) || $coRaw === '00:00:00')
+                    && !empty($rec->company_shift_time)
+                ) {
+                    $shiftParts = explode(' - ', $rec->company_shift_time);
+                    if (!empty($shiftParts[1])) {
+                        $coRaw = $normalise(trim($shiftParts[1]));
+                    }
+                }
+
+                if (!empty($ciRaw) && $ciRaw !== '00:00:00') {
                     try {
-                        $out = Carbon::createFromFormat('Y-m-d H:i:s', $recDate . ' ' . $coRaw, $tz);
-                    } catch (\Exception $e) { $out = null; }
+                        $in = Carbon::createFromFormat('Y-m-d H:i:s', $recDate . ' ' . $ciRaw, $tz);
+                    } catch (\Exception $e) { $in = null; }
 
-                    if ($out) {
-                        if ($out->lessThan($in)) $out->addDay();
-                        $daySeconds = $in->diffInSeconds($out);
-                        if (!empty($rec->total_break) && $rec->total_break !== '00:00:00') {
-                            [$bH, $bM, $bS] = array_map('intval', explode(':', $rec->total_break));
-                            $daySeconds -= ($bH * 3600 + $bM * 60 + $bS);
-                        }
-                        $daySeconds = max(0, $daySeconds);
-                        $totalWorkedSeconds += $daySeconds;
-                        // Duration-based classification:
-                        // < 2h  → full-day leave (don't count as present or half-day)
-                        // 2–6h  → half day
-                        // >= 6h → full present
-                        if ($daySeconds > 0 && $daySeconds < (2 * 3600)) {
-                            // Full-day leave: don't count as present
-                            $totalWorkedSeconds -= $daySeconds; // undo the addition above
-                            $totalPresents--;                   // undo the totalPresents++ above
-                            $totalLeaves++;
-                        } elseif ($daySeconds >= (2 * 3600) && $daySeconds < (6 * 3600)) {
-                            $totalHalfDays++;
-                            $clockHalfDays++;
+                    if ($in && !empty($coRaw) && $coRaw !== '00:00:00') {
+                        try {
+                            $out = Carbon::createFromFormat('Y-m-d H:i:s', $recDate . ' ' . $coRaw, $tz);
+                        } catch (\Exception $e) { $out = null; }
+
+                        if ($out) {
+                            if ($out->lessThan($in)) $out->addDay();
+                            $daySeconds = $in->diffInSeconds($out);
+                            if (!empty($rec->total_break) && $rec->total_break !== '00:00:00') {
+                                [$bH, $bM, $bS] = array_map('intval', explode(':', $rec->total_break));
+                                $daySeconds -= ($bH * 3600 + $bM * 60 + $bS);
+                            }
+                            $daySeconds = max(0, $daySeconds);
+                            $totalWorkedSeconds += $daySeconds;
+                            // Duration-based classification:
+                            // < 2h  → full-day leave (don't count as present or half-day)
+                            // 2–6h  → half day
+                            // >= 6h → full present
+                            if ($daySeconds > 0 && $daySeconds < (2 * 3600)) {
+                                // Full-day leave: don't count as present
+                                $totalWorkedSeconds -= $daySeconds; // undo the addition above
+                                $totalPresents--;                   // undo the totalPresents++ above
+                                $totalLeaves++;
+                            } elseif ($daySeconds >= (2 * 3600) && $daySeconds < (6 * 3600)) {
+                                $totalHalfDays++;
+                                $clockHalfDays++;
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // Also count approved leave days where no attendance record exists
-        foreach ($leaveDates as $ld => $lvDetail) {
-            if ($ld > date('Y-m-d')) continue;
-            $hasAtt = $monthAttendances->firstWhere('date', $ld);
-            if (!$hasAtt) {
-                $ldays = ($lvDetail['duration'] === 'half_day') ? 0.5 : 1.0;
-                $totalLeaves += $ldays;
-                if ($lvDetail['duration'] === 'half_day') { $totalHalfDays++; $leaveHalfDays++; }
-                if ($lvDetail['status'] === 'paid') $totalPaidLeave += $ldays; else $totalUnpaidLeave += $ldays;
+            // Also count approved leave days where no attendance record exists
+            foreach ($leaveDates as $ld => $lvDetail) {
+                if ($ld > date('Y-m-d')) continue;
+                $hasAtt = $monthAttendances->firstWhere('date', $ld);
+                if (!$hasAtt) {
+                    $ldays = ($lvDetail['duration'] === 'half_day') ? 0.5 : 1.0;
+                    $totalLeaves += $ldays;
+                    if ($lvDetail['duration'] === 'half_day') { $totalHalfDays++; $leaveHalfDays++; }
+                    if ($lvDetail['status'] === 'paid') $totalPaidLeave += $ldays; else $totalUnpaidLeave += $ldays;
+                }
             }
+
+            // ── Effective present (float) for score ───────────────────────────
+            $effectivePresentScore = ($totalPresents - ($clockHalfDays * 0.5))
+                                   + ($leaveHalfDays * 0.5);
+
+            return response()->json([
+                'success'            => true,
+                'status'             => $request->status,
+                'label'              => $status,
+                'clock_in'           => $attendance->clock_in  ? substr($attendance->clock_in, 0, 5)  : '',
+                'clock_out'          => $attendance->clock_out ? substr($attendance->clock_out, 0, 5) : '',
+                'company_shift_time' => $attendance->company_shift_time ?? '',
+                'row_summary'        => [
+                    'total_hours'        => $this->secondsToTime($totalWorkedSeconds),
+                    'total_present'      => $totalPresents,
+                    'total_leave'        => $totalLeaves,
+                    'total_paid_leave'   => $totalPaidLeave,
+                    'total_unpaid_leave' => $totalUnpaidLeave,
+                    'total_absent'       => $totalAbsents,
+                    'total_half_day'     => $totalHalfDays,
+                    'total_day_off'      => $totalDayOffs,
+                    'total_holiday'      => $totalHolidays,
+                    'total_lunch_break'  => $this->secondsToTime($totalLunchSeconds),
+                    'total_tea_break'    => $this->secondsToTime($totalTeaSeconds),
+                    'attendance_score'   => $this->calcAttendanceScore(
+                                                $request->employee_id,
+                                                $monthStart,
+                                                $monthEnd,
+                                                $effectivePresentScore
+                                            ),
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Error in updateMonthlyAttendanceStatus: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 200);
         }
-
-        // ── Effective present (float) for score ───────────────────────────
-        $effectivePresentScore = ($totalPresents - ($clockHalfDays * 0.5))
-                               + ($leaveHalfDays * 0.5);
-
-        return response()->json([
-            'success'            => true,
-            'status'             => $request->status,
-            'label'              => $status,
-            'clock_in'           => $attendance->clock_in  ? substr($attendance->clock_in, 0, 5)  : '',
-            'clock_out'          => $attendance->clock_out ? substr($attendance->clock_out, 0, 5) : '',
-            'company_shift_time' => $attendance->company_shift_time ?? '',
-            'row_summary'        => [
-                'total_hours'        => $this->secondsToTime($totalWorkedSeconds),
-                'total_present'      => $totalPresents,
-                'total_leave'        => $totalLeaves,
-                'total_paid_leave'   => $totalPaidLeave,
-                'total_unpaid_leave' => $totalUnpaidLeave,
-                'total_absent'       => $totalAbsents,
-                'total_half_day'     => $totalHalfDays,
-                'total_day_off'      => $totalDayOffs,
-                'total_holiday'      => $totalHolidays,
-                'total_lunch_break'  => $this->secondsToTime($totalLunchSeconds),
-                'total_tea_break'    => $this->secondsToTime($totalTeaSeconds),
-                'attendance_score'   => $this->calcAttendanceScore(
-                                            $request->employee_id,
-                                            $monthStart,
-                                            $monthEnd,
-                                            $effectivePresentScore
-                                        ),
-            ],
-        ]);
     }
 
     private function timeToSeconds($time)
