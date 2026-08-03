@@ -1027,10 +1027,11 @@ class ReportController extends Controller
                                     $totalUnpaidLeave += 1;
                                 } else {
                                     $totalWorkedSeconds += $dayWorkedSeconds;
-                                    $cellStatus = $isHalfDay ? 'HD' : 'P';
+                                    $isExplicitHalf = ($isHalfDay && empty($attendance->is_manual_by));
+                                    $cellStatus = $isExplicitHalf ? 'HD' : 'P';
                                     $attendanceStatus[$date] = [
                                         'status'            => $cellStatus,
-                                        'label'             => $isHalfDay ? 'Half Day' : 'Present',
+                                        'label'             => $isExplicitHalf ? 'Half Day' : 'Present',
                                         'future'            => false,
                                         'clock_in'          => $ciDisplay,
                                         'clock_out'         => $coDisplay,
@@ -1038,7 +1039,7 @@ class ReportController extends Controller
                                     ];
                                     $totalPresent++;
                                     $totalPresents++;
-                                    if ($isHalfDay) {
+                                    if ($isExplicitHalf) {
                                         $totalHalfDays++;
                                         $clockHalfDays++;
                                     }
@@ -1067,6 +1068,7 @@ class ReportController extends Controller
                             $cellStatus = match($attendance->status) {
                                 'Day Off', 'DO' => 'DO',
                                 'Public Holiday', 'PH' => 'PH',
+                                'Half Day', 'HD' => 'HD',
                                 'Leave', 'L' => 'L',
                                 'Absent', 'A' => 'A',
                                 default => ($isOnLeave ? ($leaveIsHalf ? 'HD' : 'L') : 'A'),
@@ -1074,6 +1076,7 @@ class ReportController extends Controller
                             $cellLabel  = match($cellStatus) {
                                 'DO' => 'Day Off',
                                 'PH' => 'Public Holiday',
+                                'HD' => 'Half Day',
                                 'L'  => 'Leave',
                                 'A'  => 'Absent',
                                 default => ($isOnLeave ? $leaveCellLabel : 'Absent'),
@@ -1085,17 +1088,40 @@ class ReportController extends Controller
                                 'clock_in'          => '',
                                 'clock_out'         => '',
                                 'company_shift_time'=> $shiftDisplay,
+                                'leave_pay_type'    => $attendance->leave_pay_type ?? 'unpaid',
+                                'use_leave_balance' => $attendance->use_leave_balance ?? 0,
                             ];
                             if ($cellStatus === 'DO') {
                                 $totalDayOffs++;
                             } elseif ($cellStatus === 'PH') {
                                 $totalHolidays++;
+                            } elseif ($cellStatus === 'HD') {
+                                $totalHalfDays++;
+                                $clockHalfDays++;
+                                $totalPresents++;
+                                $totalLeaves += 0.5;
+                                $totalLeave += 0.5;
+                                if (($attendance->leave_pay_type ?? 'unpaid') === 'paid') {
+                                    $totalPaidLeave += 0.5;
+                                } else {
+                                    $totalUnpaidLeave += 0.5;
+                                }
                             } elseif ($cellStatus === 'L') {
                                 $totalLeaves++;
                                 $totalLeave++;
+                                if (($attendance->leave_pay_type ?? 'unpaid') === 'paid') {
+                                    $totalPaidLeave += 1.0;
+                                } else {
+                                    $totalUnpaidLeave += 1.0;
+                                }
                             } else { // 'A'
                                 $totalAbsents++;
                                 $totalLeave++;
+                                if (($attendance->leave_pay_type ?? 'unpaid') === 'paid') {
+                                    $totalPaidLeave += 1.0;
+                                } else {
+                                    $totalUnpaidLeave += 1.0;
+                                }
                             }
                         }
 
@@ -1213,6 +1239,8 @@ class ReportController extends Controller
                 'status' => 'required|in:P,A,HD,L,DO,PH',
                 'company_shift_time' => 'nullable|string|max:255',
                 'passcode' => 'required|string|max:255',
+                'leave_pay_type' => 'nullable|string|in:paid,unpaid',
+                'use_leave_balance' => 'nullable',
             ]);
             $employee = Employee::find($request->employee_id);
 
@@ -1240,7 +1268,7 @@ class ReportController extends Controller
 
             $dbStatusMap = [
                 'P'  => 'Present',
-                'HD' => 'Present',
+                'HD' => 'Half Day',
                 'A'  => 'Absent',
                 'L'  => 'Leave',
                 'DO' => 'Day Off',
@@ -1258,6 +1286,10 @@ class ReportController extends Controller
 
             $attendance->status = $status;
             $attendance->company_shift_time = $request->company_shift_time;
+
+            $attendance->leave_pay_type = $request->leave_pay_type ?? 'unpaid';
+            $attendance->use_leave_balance = ($request->has('use_leave_balance') && ($request->use_leave_balance == 1 || $request->use_leave_balance === 'true' || $request->use_leave_balance === 'on')) ? 1 : 0;
+            $attendance->leave_type_id = !empty($request->leave_type_id) ? $request->leave_type_id : null;
 
             $attendance->is_manual = true;
             $attendance->is_manual_by = \Auth::user()->id;
@@ -1424,6 +1456,17 @@ class ReportController extends Controller
                 }
             }
 
+            $isWorkDay = function($dateStr) use ($workingDays, $satPattern, $holidayDates) {
+                $cd = Carbon::parse($dateStr);
+                $dow = (int)$cd->dayOfWeek;
+                if (isset($holidayDates[$dateStr])) return false;
+                if (!empty($workingDays) && !in_array($dow, $workingDays)) return false;
+                if ($dow === 6 && in_array(6, $workingDays)) {
+                    if (!$this->isSaturdayWorking($cd, $satPattern)) return false;
+                }
+                return true;
+            };
+
             foreach ($monthAttendances as $rec) {
                 $recDate = is_string($rec->date) ? $rec->date : $rec->date->format('Y-m-d');
                 if (in_array($rec->status, ['Day Off', 'DO'])) {
@@ -1434,17 +1477,38 @@ class ReportController extends Controller
                     $totalHolidays++;
                     continue;
                 }
+                if (!$isWorkDay($recDate) && !in_array($rec->status, ['present', 'Present', 'P'])) {
+                    // Attendance record marked Absent/Leave on a Day Off (Sat/Sun) — do not count as working day absent
+                    continue;
+                }
+                if (in_array($rec->status, ['Half Day', 'HD'])) {
+                    $totalHalfDays++;
+                    $clockHalfDays++;
+                    $totalPresents++;
+                    $totalLeaves += 0.5;
+                    if (($rec->leave_pay_type ?? 'unpaid') === 'paid') {
+                        $totalPaidLeave += 0.5;
+                    } else {
+                        $totalUnpaidLeave += 0.5;
+                    }
+                    $totalLunchSeconds += $this->timeToSeconds($rec->total_lunch_time ?? '00:00:00');
+                    $totalTeaSeconds   += $this->timeToSeconds($rec->total_tea_time   ?? '00:00:00');
+                    continue;
+                }
                 if (!in_array($rec->status, ['present', 'Present'])) {
                     if (in_array($rec->status, ['Leave', 'L'])) {
                         $totalLeaves++;
                     } else {
                         $totalAbsents++;
                     }
-                    // Count as leave if approved leave exists for this date
-                    if (isset($leaveDates[$recDate])) {
+                    if (($rec->leave_pay_type ?? 'unpaid') === 'paid') {
+                        $totalPaidLeave += 1.0;
+                    } elseif (isset($leaveDates[$recDate])) {
                         $ld       = $leaveDates[$recDate];
                         $ldays    = ($ld['duration'] === 'half_day') ? 0.5 : 1.0;
                         if ($ld['status'] === 'paid') $totalPaidLeave += $ldays; else $totalUnpaidLeave += $ldays;
+                    } else {
+                        $totalUnpaidLeave += 1.0;
                     }
                     continue;
                 }
@@ -1498,8 +1562,12 @@ class ReportController extends Controller
                                 $totalPresents--;                   // undo the totalPresents++ above
                                 $totalLeaves++;
                             } elseif ($daySeconds >= (2 * 3600) && $daySeconds < (6 * 3600)) {
-                                $totalHalfDays++;
-                                $clockHalfDays++;
+                                if (!empty($rec->is_manual_by) && in_array($rec->status, ['present', 'Present', 'P'])) {
+                                    // Manually marked Present by HR — do not convert to half day
+                                } else {
+                                    $totalHalfDays++;
+                                    $clockHalfDays++;
+                                }
                             }
                         }
                     }
@@ -1529,6 +1597,9 @@ class ReportController extends Controller
                 'clock_in'           => $attendance->clock_in  ? substr($attendance->clock_in, 0, 5)  : '',
                 'clock_out'          => $attendance->clock_out ? substr($attendance->clock_out, 0, 5) : '',
                 'company_shift_time' => $attendance->company_shift_time ?? '',
+                'leave_pay_type'     => $attendance->leave_pay_type ?? 'unpaid',
+                'use_leave_balance'  => $attendance->use_leave_balance ?? 0,
+                'leave_type_id'      => $attendance->leave_type_id ?? '',
                 'row_summary'        => [
                     'total_hours'        => $this->secondsToTime($totalWorkedSeconds),
                     'total_present'      => $totalPresents,

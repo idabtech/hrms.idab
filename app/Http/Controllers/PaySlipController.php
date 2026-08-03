@@ -277,23 +277,34 @@ class PaySlipController extends Controller
 
         // Process employee and payslip data
         foreach ($paylip_employee as $employee) {
-            // Recalculate net salary live from employeePayslipDetail so it always
-            // matches the PDF — overrides any stale stored net_payble value
-            $liveNet = $employee->net_payble;
+            $salary = 0;
+            $basic_salary = 0;
+            $total_loan = 0;
+            $total_hra = 0;
+            $total_da = 0;
+            $total_allowance = 0;
+            $total_bonus = 0;
+            $total_commission = 0;
+            $total_pension = 0;
+            $total_saturation_deduction = 0;
+            $liveNet = $employee->net_salary ?? 0;
+
             if (!empty($employee->pay_slip_id)) {
                 try {
                     $detail  = Utility::employeePayslipDetail($employee->id, $formate_month_year);
-                    $liveNet = round($detail['net_salary'], 2);
-                    $salary = round($detail['salary'], 2);
-                    $basic_salary = round($detail['basic_salary'], 2);
-                    $total_loan = round($detail['totalLoan'], 2);
-                    $total_hra = round($detail['hra'], 2);
-                    $total_da = round($detail['da'], 2);
-                    $total_allowance = round($detail['totalAllowance'], 2);
-                    $total_bonus = round($detail['total_bonus'], 2);
-                    $total_commission = round($detail['totalCommission'], 2);
-                    $total_pension = round($detail['totalPansion'], 2);
-                    $total_saturation_deduction = round($detail['total_saturation_deduction'], 2);
+                    if (!empty($detail)) {
+                        $liveNet = round($detail['net_salary'] ?? 0, 2);
+                        $salary = round($detail['salary'] ?? 0, 2);
+                        $basic_salary = round($detail['basic_salary'] ?? 0, 2);
+                        $total_loan = round($detail['totalLoan'] ?? 0, 2);
+                        $total_hra = round($detail['hra'] ?? 0, 2);
+                        $total_da = round($detail['da'] ?? 0, 2);
+                        $total_allowance = round($detail['totalAllowance'] ?? 0, 2);
+                        $total_bonus = round($detail['total_bonus'] ?? 0, 2);
+                        $total_commission = round($detail['totalCommission'] ?? 0, 2);
+                        $total_pension = round($detail['totalPansion'] ?? 0, 2);
+                        $total_saturation_deduction = round($detail['total_saturation_deduction'] ?? 0, 2);
+                    }
                 } catch (\Throwable $_e) {
                     // fall back to stored value if detail fails
                 }
@@ -648,16 +659,17 @@ class PaySlipController extends Controller
                 $dedRows[] = ['label' => $_p->title ?: __('Provident Fund'), 'amount' => $_amt];
             }
         }
-        foreach ($payslipDetail['deduction']['leave'] ?? [] as $_lea) {
-            if (($_lea->empleave ?? 0) > 0) {
-                $dedRows[] = ['label' => __('Loss Of Pay'), 'amount' => (float) $_lea->empleave];
-            }
-        }
         if ($unpaidLeaveDeduction > 0) {
             $dedRows[] = [
-                'label'  => __('Unpaid Leave') . ' (' . $unpaidLeaveDays . ' ' . __('days') . ')',
+                'label'  => __('Unpaid Leave') . ' (' . ($unpaidLeaveDays == floor($unpaidLeaveDays) ? (int)$unpaidLeaveDays : $unpaidLeaveDays) . ' ' . __('days') . ')',
                 'amount' => $unpaidLeaveDeduction,
             ];
+        } else {
+            foreach ($payslipDetail['deduction']['leave'] ?? [] as $_lea) {
+                if (($_lea->empleave ?? 0) > 0) {
+                    $dedRows[] = ['label' => __('Loss Of Pay'), 'amount' => (float) $_lea->empleave];
+                }
+            }
         }
 
         // Pad rows to equal count (for side-by-side tables)
@@ -672,12 +684,19 @@ class PaySlipController extends Controller
             $dedRowsPadded[] = ['label' => '', 'amount' => null];
         }
 
-        $totalEarnings   = (float) ($payslipDetail['totalEarning'] ?? 0) + $_salary;
-        $totalDeductions = (float) ($payslipDetail['totalDeduction'] ?? 0);
-        $netSalary       = max(
-            0,
-            (float) ($payslipDetail['totalEarning'] ?? 0) + ($_salary - (float) ($payslipDetail['totalDeduction'] ?? 0))
-        );
+        $totalEarnings = 0;
+        foreach ($earRows as $_er) {
+            if (!empty($_er['amount']) && $_er['amount'] > 0) {
+                $totalEarnings += (float) $_er['amount'];
+            }
+        }
+        $totalDeductions = 0;
+        foreach ($dedRows as $_dr) {
+            if (!empty($_dr['amount']) && $_dr['amount'] > 0) {
+                $totalDeductions += (float) $_dr['amount'];
+            }
+        }
+        $netSalary = max(0, $totalEarnings - $totalDeductions);
 
         // ── Company ──────────────────────────────────────────────────────────
         $companyName  = \App\Models\Utility::getValByName('company_name') ?? '';

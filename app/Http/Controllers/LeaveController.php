@@ -79,16 +79,28 @@ class LeaveController extends Controller
                     ->where('leave_types.created_by', '=', \Auth::user()->creatorId())
                     ->whereIn('leave_types.id', $assignedIds);
 
+                $firstPaidId = null;
+                foreach ($assignedLeaveTypesForCards as $alt) {
+                    $isP = $pivotIsPaidMap[$alt->id] ?? $alt->is_paid;
+                    if ($isP && $firstPaidId === null) {
+                        $firstPaidId = $alt->id;
+                    }
+                }
+
                 $leaveBalances = $leaveBalanceQuery
                     ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days', 'leave_types.is_paid')
                     ->get()
-                    ->map(function ($item) use ($pivotDaysMap, $pivotIsPaidMap) {
+                    ->map(function ($item) use ($pivotDaysMap, $pivotIsPaidMap, $employee, $date, $firstPaidId) {
                         // Use per-employee total_days from pivot (treat 0 as "use global default")
                         $pivotDays = $pivotDaysMap[$item->id] ?? 0;
                         $item->days = $pivotDays > 0 ? $pivotDays : $item->days;
                         // Use per-employee is_paid from pivot if available
                         $item->is_paid = $pivotIsPaidMap[$item->id] ?? $item->is_paid;
-                        $item->remaining = max(0, $item->days - $item->total_used);
+
+                        $isPrimaryPaid = ($item->is_paid && $item->id == $firstPaidId);
+                        $attUsed = Utility::getAttendanceLeaveUsedForType($employee->id, $item->id, $item->is_paid, $date['start_date'], $date['end_date'], $isPrimaryPaid);
+                        $item->total_used = (float)$item->total_used + $attUsed;
+                        $item->remaining  = max(0, $item->days - $item->total_used);
                         return $item;
                     });
             }
@@ -142,6 +154,14 @@ class LeaveController extends Controller
                     $pivotDaysMap = $assignedLeaveTypesAdmin->pluck('pivot.total_days', 'id')->toArray();
                     $pivotIsPaidMap = $assignedLeaveTypesAdmin->pluck('pivot.is_paid', 'id')->toArray();
 
+                    $firstPaidIdAdmin = null;
+                    foreach ($assignedLeaveTypesAdmin as $alt) {
+                        $isP = $pivotIsPaidMap[$alt->id] ?? $alt->is_paid;
+                        if ($isP && $firstPaidIdAdmin === null) {
+                            $firstPaidIdAdmin = $alt->id;
+                        }
+                    }
+
                     $leaveBalances = LeaveType::select(
                             \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_used, leave_types.title, leave_types.days, leave_types.id, leave_types.is_paid')
                         )
@@ -155,11 +175,15 @@ class LeaveController extends Controller
                         ->whereIn('leave_types.id', $assignedIds)
                         ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days', 'leave_types.is_paid')
                         ->get()
-                        ->map(function ($item) use ($pivotDaysMap, $pivotIsPaidMap) {
+                        ->map(function ($item) use ($pivotDaysMap, $pivotIsPaidMap, $request, $date, $firstPaidIdAdmin) {
                             $pivotDays = $pivotDaysMap[$item->id] ?? 0;
                             $item->days = $pivotDays > 0 ? $pivotDays : $item->days;
                             $item->is_paid = $pivotIsPaidMap[$item->id] ?? $item->is_paid;
-                            $item->remaining = max(0, $item->days - $item->total_used);
+
+                            $isPrimaryPaid = ($item->is_paid && $item->id == $firstPaidIdAdmin);
+                            $attUsed = Utility::getAttendanceLeaveUsedForType($request->employee, $item->id, $item->is_paid, $date['start_date'], $date['end_date'], $isPrimaryPaid);
+                            $item->total_used = (float)$item->total_used + $attUsed;
+                            $item->remaining  = max(0, $item->days - $item->total_used);
                             return $item;
                         });
                 }
