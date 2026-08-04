@@ -79,16 +79,28 @@ class LeaveController extends Controller
                     ->where('leave_types.created_by', '=', \Auth::user()->creatorId())
                     ->whereIn('leave_types.id', $assignedIds);
 
+                $firstPaidId = null;
+                foreach ($assignedLeaveTypesForCards as $alt) {
+                    $isP = $pivotIsPaidMap[$alt->id] ?? $alt->is_paid;
+                    if ($isP && $firstPaidId === null) {
+                        $firstPaidId = $alt->id;
+                    }
+                }
+
                 $leaveBalances = $leaveBalanceQuery
                     ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days', 'leave_types.is_paid')
                     ->get()
-                    ->map(function ($item) use ($pivotDaysMap, $pivotIsPaidMap) {
+                    ->map(function ($item) use ($pivotDaysMap, $pivotIsPaidMap, $employee, $date, $firstPaidId) {
                         // Use per-employee total_days from pivot (treat 0 as "use global default")
                         $pivotDays = $pivotDaysMap[$item->id] ?? 0;
                         $item->days = $pivotDays > 0 ? $pivotDays : $item->days;
                         // Use per-employee is_paid from pivot if available
                         $item->is_paid = $pivotIsPaidMap[$item->id] ?? $item->is_paid;
-                        $item->remaining = max(0, $item->days - $item->total_used);
+
+                        $isPrimaryPaid = ($item->is_paid && $item->id == $firstPaidId);
+                        $attUsed = Utility::getAttendanceLeaveUsedForType($employee->id, $item->id, $item->is_paid, $date['start_date'], $date['end_date'], $isPrimaryPaid);
+                        $item->total_used = (float)$item->total_used + $attUsed;
+                        $item->remaining  = max(0, $item->days - $item->total_used);
                         return $item;
                     });
             }
@@ -142,6 +154,14 @@ class LeaveController extends Controller
                     $pivotDaysMap = $assignedLeaveTypesAdmin->pluck('pivot.total_days', 'id')->toArray();
                     $pivotIsPaidMap = $assignedLeaveTypesAdmin->pluck('pivot.is_paid', 'id')->toArray();
 
+                    $firstPaidIdAdmin = null;
+                    foreach ($assignedLeaveTypesAdmin as $alt) {
+                        $isP = $pivotIsPaidMap[$alt->id] ?? $alt->is_paid;
+                        if ($isP && $firstPaidIdAdmin === null) {
+                            $firstPaidIdAdmin = $alt->id;
+                        }
+                    }
+
                     $leaveBalances = LeaveType::select(
                             \DB::raw('COALESCE(SUM(leaves.total_leave_days),0) AS total_used, leave_types.title, leave_types.days, leave_types.id, leave_types.is_paid')
                         )
@@ -155,11 +175,15 @@ class LeaveController extends Controller
                         ->whereIn('leave_types.id', $assignedIds)
                         ->groupBy('leave_types.id', 'leave_types.title', 'leave_types.days', 'leave_types.is_paid')
                         ->get()
-                        ->map(function ($item) use ($pivotDaysMap, $pivotIsPaidMap) {
+                        ->map(function ($item) use ($pivotDaysMap, $pivotIsPaidMap, $request, $date, $firstPaidIdAdmin) {
                             $pivotDays = $pivotDaysMap[$item->id] ?? 0;
                             $item->days = $pivotDays > 0 ? $pivotDays : $item->days;
                             $item->is_paid = $pivotIsPaidMap[$item->id] ?? $item->is_paid;
-                            $item->remaining = max(0, $item->days - $item->total_used);
+
+                            $isPrimaryPaid = ($item->is_paid && $item->id == $firstPaidIdAdmin);
+                            $attUsed = Utility::getAttendanceLeaveUsedForType($request->employee, $item->id, $item->is_paid, $date['start_date'], $date['end_date'], $isPrimaryPaid);
+                            $item->total_used = (float)$item->total_used + $attUsed;
+                            $item->remaining  = max(0, $item->days - $item->total_used);
                             return $item;
                         });
                 }
@@ -224,7 +248,10 @@ class LeaveController extends Controller
             $leavetypes = LeaveType::where('created_by', '=', \Auth::user()->creatorId())->get();
         }
 
-        return view('leave.create', compact('employees', 'leavetypes'));
+        $sandwichRules = \App\Models\SandwichLeaveRule::where('created_by', \Auth::user()->creatorId())
+            ->where('is_active', 1)->get();
+
+        return view('leave.create', compact('employees', 'leavetypes', 'sandwichRules'));
     }
 
     // =========================================================================
@@ -304,6 +331,8 @@ class LeaveController extends Controller
         $leave                   = new LocalLeave();
         $leave->employee_id      = $request->employee_id;
         $leave->leave_type_id    = $request->leave_type_id;
+        $leave->sandwich_leave_rule_id  = $request->sandwich_leave_rule_id ?: null;
+        $leave->sandwich_deduction_rate = $request->sandwich_deduction_rate ?: null;
         $leave->applied_on       = date('Y-m-d');
         $leave->start_date       = $request->start_date;
         $leave->end_date         = $request->end_date;
@@ -405,7 +434,10 @@ class LeaveController extends Controller
         // Eager-load day details so the view can pre-populate the breakdown table
         $leave->load('dayDetails');
 
-        return view('leave.edit', compact('leave', 'employees', 'leavetypes'));
+        $sandwichRules = \App\Models\SandwichLeaveRule::where('created_by', \Auth::user()->creatorId())
+            ->where('is_active', 1)->get();
+
+        return view('leave.edit', compact('leave', 'employees', 'leavetypes', 'sandwichRules'));
     }
 
     // =========================================================================
@@ -483,6 +515,8 @@ class LeaveController extends Controller
         // ── Save ───────────────────────────────────────────────────────────
         $leave->employee_id      = $request->employee_id;
         $leave->leave_type_id    = $request->leave_type_id;
+        $leave->sandwich_leave_rule_id  = $request->sandwich_leave_rule_id ?: null;
+        $leave->sandwich_deduction_rate = $request->sandwich_deduction_rate ?: null;
         $leave->start_date       = $request->start_date;
         $leave->end_date         = $request->end_date;
         $leave->total_leave_days = $totalDays;
@@ -914,15 +948,16 @@ class LeaveController extends Controller
      */
     private function buildDayDetailsFromRequest(Request $request): array
     {
-        $durations   = $request->input('day_duration', []);
-        $periods     = $request->input('half_day_period_day', []); // keyed by date
-        $statuses    = $request->input('day_status', []);
+        $durations       = $request->input('day_duration', []);
+        $periods         = $request->input('half_day_period_day', []); // keyed by date
+        $statuses        = $request->input('day_status', []);
+        $sandwichRuleIds = $request->input('sandwich_leave_rule_id', []); // keyed by date or single
 
         if (empty($durations) && empty($statuses)) {
             return [];
         }
 
-        // Merge all date keys from both arrays
+        // Merge all date keys from arrays
         $dates = array_unique(array_merge(array_keys($durations), array_keys($statuses)));
 
         $result = [];
@@ -931,15 +966,21 @@ class LeaveController extends Controller
             $status = $statuses[$date]   ?? 'paid';
             $period = ($dur === 'half_day') ? ($periods[$date] ?? 'morning') : null;
 
+            $ruleId = is_array($sandwichRuleIds) ? ($sandwichRuleIds[$date] ?? null) : $sandwichRuleIds;
+            $rule   = $ruleId ? \App\Models\SandwichLeaveRule::find($ruleId) : null;
+            $rate   = $rule ? $rule->deduction_rate : null;
+
             if (!in_array($dur,    ['full_day', 'half_day']))     $dur    = 'full_day';
             if (!in_array($status, ['paid', 'unpaid']))            $status = 'paid';
             if ($period && !in_array($period, ['morning', 'afternoon'])) $period = 'morning';
 
             $result[] = [
-                'date'            => $date,
-                'day_duration'    => $dur,
-                'half_day_period' => $period,
-                'day_status'      => $status,
+                'date'                    => $date,
+                'day_duration'            => $dur,
+                'half_day_period'         => $period,
+                'day_status'              => $status,
+                'sandwich_leave_rule_id'  => $ruleId ?: null,
+                'sandwich_deduction_rate' => $rate,
             ];
         }
 
@@ -990,9 +1031,11 @@ class LeaveController extends Controller
             LeaveDayDetail::updateOrCreate(
                 ['leave_id' => $leaveId, 'date' => $d['date']],
                 [
-                    'day_duration'    => $d['day_duration'],
-                    'half_day_period' => $d['half_day_period'],
-                    'day_status'      => $d['day_status'],
+                    'day_duration'            => $d['day_duration'],
+                    'half_day_period'         => $d['half_day_period'],
+                    'day_status'              => $d['day_status'],
+                    'sandwich_leave_rule_id'  => $d['sandwich_leave_rule_id'] ?? null,
+                    'sandwich_deduction_rate' => $d['sandwich_deduction_rate'] ?? null,
                 ]
             );
         }

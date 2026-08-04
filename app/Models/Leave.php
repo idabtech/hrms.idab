@@ -9,6 +9,8 @@ class Leave extends Model
     protected $fillable = [
         'employee_id',
         'leave_type_id',
+        'sandwich_leave_rule_id',
+        'sandwich_deduction_rate',
         'applied_on',
         'start_date',
         'end_date',
@@ -25,6 +27,7 @@ class Leave extends Model
         'start_date' => 'date',
         'end_date'   => 'date',
         'applied_on' => 'date',
+        'sandwich_deduction_rate' => 'float',
     ];
 
     // ── Relationships ──────────────────────────────────────────────────────
@@ -32,6 +35,11 @@ class Leave extends Model
     public function leaveType()
     {
         return $this->hasOne('App\Models\LeaveType', 'id', 'leave_type_id');
+    }
+
+    public function sandwichLeaveRule()
+    {
+        return $this->belongsTo('App\Models\SandwichLeaveRule', 'sandwich_leave_rule_id');
     }
 
     public function employees()

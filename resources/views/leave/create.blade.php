@@ -67,6 +67,16 @@
                     <span id="leave_type_remaining" class="ms-2 text-muted small"></span>
                 </div>
             </div>
+    </div>
+
+    {{-- Sandwich Leave Notice (Shown ONLY when leave spans across weekend/holiday) --}}
+    <div id="sandwich_leave_notice" class="alert alert-warning border-warning align-items-center mb-3" style="display:none;">
+        <div class="d-flex align-items-center">
+            <i class="ti ti-alert-triangle fs-4 me-2 text-warning"></i>
+            <div>
+                <strong>{{ __('Sandwich Leave Notice') }}:</strong>
+                <span>{{ __('This leave application includes intervening Day Off / Weekend dates. Sandwich Leave rules apply.') }}</span>
+            </div>
         </div>
     </div>
 
@@ -98,6 +108,9 @@
                         <th>{{ __('Duration') }}</th>
                         <th>{{ __('Period') }}<small class="text-muted d-block">{{ __('(if half day)') }}</small></th>
                         <th>{{ __('Status') }}</th>
+                        @if (\Auth::user()->type != 'employee')
+                            <th>{{ __('Sandwich Rule') }}</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody class="day-breakdown-body"></tbody>
@@ -305,8 +318,35 @@
             $tbody.append(buildRow(dateStr, formatDate(cur), dayNames[cur.getDay()], 'full_day', 'morning', status, locked));
         }
 
+        checkSandwichCondition(start, end);
         updateSummary();
         $wrapper.show();
+    }
+
+    function checkSandwichCondition(start, end) {
+        var diffDays = Math.round((end - start) / 86400000) + 1;
+        if (diffDays <= 1) {
+            $form.find('#sandwich_leave_notice').hide();
+            return;
+        }
+
+        var hasWeekendInside = false;
+
+        for (var i = 0; i < diffDays; i++) {
+            var cur = new Date(start);
+            cur.setDate(start.getDate() + i);
+            var dow = cur.getDay(); // 0 = Sun, 6 = Sat
+
+            if (dow === 0 || dow === 6) {
+                hasWeekendInside = true;
+            }
+        }
+
+        if (hasWeekendInside && diffDays > 1) {
+            $form.find('#sandwich_leave_notice').fadeIn();
+        } else {
+            $form.find('#sandwich_leave_notice').hide();
+        }
     }
 
     function buildRow(dateStr, dateDisp, dayName, duration, period, status, locked) {
@@ -318,6 +358,18 @@
         var hiddenStat = locked
             ? '<input type="hidden" name="day_status[' + dateStr + ']" value="' + status + '">' : '';
         var statName   = locked ? '_day_status_display[' + dateStr + ']' : 'day_status[' + dateStr + ']';
+
+        var isNotEmp = {{ \Auth::user()->type !== 'employee' ? 'true' : 'false' }};
+        var sRuleCell = '';
+        if (isNotEmp) {
+            var sRuleOptions = '<option value="">{{ __("None") }}</option>';
+            @if (isset($sandwichRules) && count($sandwichRules) > 0)
+                @foreach ($sandwichRules as $srule)
+                    sRuleOptions += '<option value="{{ $srule->id }}">{{ $srule->name }} ({{ number_format($srule->deduction_rate, 2) }}{{ $srule->rate_type == "percentage" ? "%" : "x" }})</option>';
+                @endforeach
+            @endif
+            sRuleCell = '<td><select name="sandwich_leave_rule_id[' + dateStr + ']" class="form-select form-select-sm">' + sRuleOptions + '</select></td>';
+        }
 
         return '<tr data-date="' + dateStr + '">'
             + '<td><small>' + dateDisp + '</small></td>'
@@ -338,7 +390,7 @@
             +   '<div class="form-check form-check-inline"><input class="form-check-input stat-radio" type="radio" name="' + statName + '" id="paid_' + uid + '" value="paid"' + (status === 'paid' ? ' checked' : '') + dis + '><label class="form-check-label text-success" for="paid_' + uid + '">{{ __("Paid") }}</label></div>'
             +   '<div class="form-check form-check-inline"><input class="form-check-input stat-radio" type="radio" name="' + statName + '" id="unpaid_' + uid + '" value="unpaid"' + (status === 'unpaid' ? ' checked' : '') + dis + '><label class="form-check-label text-danger" for="unpaid_' + uid + '">{{ __("Unpaid") }}</label></div>'
             +   lockBadge
-            + '</td></tr>';
+            + '</td>' + sRuleCell + '</tr>';
     }
 
     function updateSummary() {

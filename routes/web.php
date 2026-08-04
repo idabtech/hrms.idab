@@ -22,6 +22,7 @@ use App\Http\Controllers\ExpenseTypeController;
 use App\Http\Controllers\AttendanceEmployeeController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LeaveTypeController;
+use App\Http\Controllers\SandwichLeaveRuleController;
 use App\Http\Controllers\AccountListController;
 use App\Http\Controllers\AiTemplateController;
 use App\Http\Controllers\TimeSheetController;
@@ -1223,6 +1224,12 @@ Route::group(['middleware' => ['verified']], function () {
         ]
     );
     Route::resource('leavetype', LeaveTypeController::class)->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+    Route::resource('sandwich-leave-rule', SandwichLeaveRuleController::class)->middleware(
         [
             'auth',
             'XSS',

@@ -571,6 +571,11 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                                                     data-clock-in="{{ $clockIn }}"
                                                     data-clock-out="{{ $clockOut }}"
                                                     data-shift="{{ $shiftTime }}"
+                                                    data-leave-pay-type="{{ is_array($status) ? ($status['leave_pay_type'] ?? 'unpaid') : 'unpaid' }}"
+                                                    data-use-leave-balance="{{ is_array($status) ? ($status['use_leave_balance'] ?? 0) : 0 }}"
+                                                    data-leave-type-id="{{ is_array($status) ? ($status['leave_type_id'] ?? '') : '' }}"
+                                                    data-sandwich-rule-id="{{ is_array($status) ? ($status['sandwich_leave_rule_id'] ?? '') : '' }}"
+                                                    data-sandwich-rate="{{ is_array($status) ? ($status['sandwich_deduction_rate'] ?? '') : '' }}"
                                                     title="{{ $statusLabel }} — {{ __('Click to edit') }}"
                                                     @else
                                                     title="{{ $statusLabel }}"
@@ -633,6 +638,53 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                             <option value="DO">{{ __('Day Off (DO)') }}</option>
                             <option value="PH">{{ __('Public Holiday (PH)') }}</option>
                         </select>
+                    </div>
+
+                    {{-- Leave Pay Type --}}
+                    <div class="mb-3" id="leave-pay-type-group">
+                        <label class="form-label d-block">{{ __('Leave Pay Type') }}</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="leave_pay_type" id="pay_unpaid" value="unpaid" checked>
+                            <label class="form-check-label" for="pay_unpaid">{{ __('Unpaid (LOP)') }}</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="leave_pay_type" id="pay_paid" value="paid">
+                            <label class="form-check-label" for="pay_paid">{{ __('Paid') }}</label>
+                        </div>
+                    </div>
+
+                    {{-- Deduct from Leave Balance --}}
+                    <div class="mb-3" id="use-leave-balance-group">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="use_leave_balance" name="use_leave_balance" value="1">
+                            <label class="form-check-label" for="use_leave_balance">{{ __('Deduct from Leave Balance?') }}</label>
+                        </div>
+                        <div id="leave-type-select-wrapper" style="display: none;" class="mt-2">
+                            <label for="modal_leave_type_id" class="form-label">{{ __('Select Leave Type') }} <span class="text-danger">*</span></label>
+                            <select name="leave_type_id" id="modal_leave_type_id" class="form-control">
+                                <option value="">{{ __('Select Leave Type') }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- Sandwich Leave Rule (Synchronized with Edit Leave) --}}
+                    <div class="mb-3" id="sandwich-rule-modal-group">
+                        <label for="modal_sandwich_leave_rule_id" class="form-label">
+                            {{ __('Sandwich Leave Rule') }}
+                        </label>
+                        <select name="sandwich_leave_rule_id" id="modal_sandwich_leave_rule_id" class="form-control">
+                            <option value="">{{ __('None (Standard Leave)') }}</option>
+                            @if (!empty($data['sandwich_rules']) && count($data['sandwich_rules']) > 0)
+                                @foreach ($data['sandwich_rules'] as $srule)
+                                    <option value="{{ $srule->id }}"
+                                        data-rate="{{ $srule->deduction_rate }}"
+                                        data-type="{{ $srule->rate_type }}">
+                                        {{ $srule->name }} ({{ number_format($srule->deduction_rate, 2) }}{{ $srule->rate_type == 'percentage' ? '%' : 'x' }})
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        <input type="hidden" name="sandwich_deduction_rate" id="modal_sandwich_deduction_rate" value="">
                     </div>
 
                     {{-- Shift Selection --}}
@@ -785,21 +837,134 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
         $('#modal-employee-name').val($cell.data('employee-name') || '');
         $('#modal-date-label').val($cell.data('date-label') || $cell.data('date'));
 
-        // Pre-fill shift, clock in/out from saved attendance data (or reset if none)
-        var savedShift    = $cell.data('shift')     || '';
-        var savedClockIn  = $cell.data('clock-in')  || '';
-        var savedClockOut = $cell.data('clock-out') || '';
+        // Pre-fill shift, clock in/out, leave pay type, leave balance switch
+        var savedShift       = $cell.data('shift')          || '';
+        var savedClockIn     = $cell.data('clock-in')       || '';
+        var savedClockOut    = $cell.data('clock-out')      || '';
+        var leavePayType     = $cell.data('leave-pay-type') || 'unpaid';
+        var useLeaveBal      = $cell.data('use-leave-balance') || 0;
+        var savedLeaveTypeId = $cell.data('leave-type-id')  || '';
+        var savedSandwichId  = $cell.data('sandwich-rule-id') || '';
+        var empId            = $cell.data('employee-id');
+        var currentStatus    = $cell.data('status');
 
         $('#company_shift_time').val(savedShift);
         $('#attendance-clock-in').val(savedClockIn);
         $('#attendance-clock-out').val(savedClockOut);
         $('#attendance-passcode').val('');
 
+        // Pre-set leave pay type radio
+        $('input[name="leave_pay_type"][value="' + leavePayType + '"]').prop('checked', true);
+
+        // Auto-check "Deduct from Leave Balance" if this is a leave status cell
+        var isLeaveStatus = ['L', 'HD'].includes(currentStatus);
+        var isChecked = isLeaveStatus
+            ? (useLeaveBal == 1 || useLeaveBal === true || useLeaveBal === '1' || useLeaveBal === true)
+            : false;
+
+        // If leave status and useLeaveBal not explicitly set, default to true (leave = deduct balance)
+        if (isLeaveStatus && (useLeaveBal === 0 || useLeaveBal === '0' || useLeaveBal === '') && savedLeaveTypeId) {
+            isChecked = true;
+        }
+        $('#use_leave_balance').prop('checked', isChecked);
+
+        // Show/hide the leave type select wrapper immediately based on checkbox state
+        if (isChecked) {
+            $('#leave-type-select-wrapper').show();
+        } else {
+            $('#leave-type-select-wrapper').hide();
+        }
+
+        // Pre-select Sandwich Rule
+        if (savedSandwichId) {
+            $('#modal_sandwich_leave_rule_id').val(savedSandwichId);
+        } else {
+            $('#modal_sandwich_leave_rule_id').val('');
+        }
+
+        // Load employee leave types for the select dropdown
+        var $ltSel = $('#modal_leave_type_id');
+        $ltSel.empty().append('<option value="">{{ __("Loading...") }}</option>');
+        $.ajax({
+            url: "{{ route('leave.jsoncount') }}",
+            type: 'POST',
+            data: { employee_id: empId, _token: "{{ csrf_token() }}" },
+            success: function(data) {
+                $ltSel.empty().append('<option value="">{{ __("Select Leave Type") }}</option>');
+                var matchedIsPaid = null;
+                $.each(data, function(k, v) {
+                    var label = v.title + ' (' + v.total_leave + '/' + v.days + ' {{ __("used") }}, {{ __("Remaining") }}: ' + v.remaining + ')';
+                    var isSelected = (savedLeaveTypeId && savedLeaveTypeId == v.id);
+                    var selected = isSelected ? ' selected' : '';
+                    $ltSel.append('<option value="' + v.id + '"' + selected + ' data-is-paid="' + (v.is_paid ? 1 : 0) + '">' + label + '</option>');
+                    if (isSelected) {
+                        matchedIsPaid = v.is_paid ? 1 : 0;
+                    }
+                });
+
+                // After options are loaded, ALWAYS restore the saved leave_pay_type.
+                // Admin may intentionally set Unpaid (LOP) on a Casual (paid) leave type,
+                // so we must NEVER auto-correct the radio — just honor what was saved.
+                $('input[name="leave_pay_type"][value="' + leavePayType + '"]').prop('checked', true);
+
+                // If no leave type was previously matched (new selection), auto-set from leave type default
+                if (matchedIsPaid !== null && !savedLeaveTypeId) {
+                    var defaultPaid = matchedIsPaid === 1 ? 'paid' : 'unpaid';
+                    $('input[name="leave_pay_type"][value="' + defaultPaid + '"]').prop('checked', true);
+                }
+            },
+            error: function() {
+                $ltSel.empty().append('<option value="">{{ __("Select Leave Type") }}</option>');
+            }
+        });
+
+        function toggleLeaveOptionGroups() {
+            var st = $('#attendance-status').val();
+            if (['L', 'HD', 'A'].includes(st)) {
+                $('#leave-pay-type-group, #use-leave-balance-group').slideDown(200);
+                if ($('#use_leave_balance').is(':checked')) {
+                    $('#leave-type-select-wrapper').slideDown(200);
+                } else {
+                    $('#leave-type-select-wrapper').slideUp(200);
+                }
+            } else {
+                $('#leave-pay-type-group, #use-leave-balance-group, #leave-type-select-wrapper').slideUp(200);
+            }
+        }
+
+        toggleLeaveOptionGroups();
+
         // Clear error alert
         $('#attendanceErrorAlert').hide();
         $('#attendanceErrorMessage').text('');
 
         $('#attendanceStatusModal').data('cell', $cell).modal('show');
+    });
+
+    $(document).on('change', '#use_leave_balance', function() {
+        if ($(this).is(':checked')) {
+            $('#leave-type-select-wrapper').slideDown(200);
+        } else {
+            $('#leave-type-select-wrapper').slideUp(200);
+        }
+    });
+
+    $(document).on('change', '#modal_leave_type_id', function() {
+        // Do NOT auto-change leave_pay_type when admin changes leave type.
+        // Admin controls Paid/Unpaid (LOP) manually.
+        // Only show sandwich rule section if needed — pay type radio is admin's choice.
+    });
+
+    $(document).on('change', '#attendance-status', function() {
+        var st = $(this).val();
+        if (['L', 'HD', 'A'].includes(st)) {
+            $('#leave-pay-type-group, #use-leave-balance-group').slideDown(200);
+            if ($('#use_leave_balance').is(':checked')) {
+                $('#leave-type-select-wrapper').slideDown(200);
+            }
+        } else {
+            $('#leave-pay-type-group, #use-leave-balance-group, #leave-type-select-wrapper').slideUp(200);
+        }
     });
 
     // Shift select → auto-fill clock in/out times
@@ -821,6 +986,10 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
         var passcode = $('#attendance-passcode').val();
         var clockIn  = $('#attendance-clock-in').val();
         var clockOut = $('#attendance-clock-out').val();
+        var leavePayType = $('input[name="leave_pay_type"]:checked').val() || 'unpaid';
+        var useLeaveBalance = $('#use_leave_balance').is(':checked') ? 1 : 0;
+        var leaveTypeId = $('#modal_leave_type_id').val() || '';
+        var sandwichRuleId = $('#modal_sandwich_leave_rule_id').val() || '';
         var oldStatus = $cell.data('status');
 
         // Hide error alert on new attempt
@@ -845,6 +1014,10 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                 passcode: passcode,
                 clock_in: clockIn,
                 clock_out: clockOut,
+                leave_pay_type: leavePayType,
+                use_leave_balance: useLeaveBalance,
+                leave_type_id: leaveTypeId,
+                sandwich_leave_rule_id: sandwichRuleId,
             },
             success: function(response) {
                 if (response.success) {
@@ -865,10 +1038,18 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                          .data('clock-in', response.clock_in || '')
                          .data('clock-out', response.clock_out || '')
                          .data('shift', response.company_shift_time || '')
+                         .data('leave-pay-type', response.leave_pay_type || 'unpaid')
+                         .data('use-leave-balance', response.use_leave_balance || 0)
+                         .data('leave-type-id', response.leave_type_id || '')
+                         .data('sandwich-rule-id', response.sandwich_leave_rule_id || '')
                          .attr('data-status', status)
                          .attr('data-clock-in', response.clock_in || '')
                          .attr('data-clock-out', response.clock_out || '')
                          .attr('data-shift', response.company_shift_time || '')
+                         .attr('data-leave-pay-type', response.leave_pay_type || 'unpaid')
+                         .attr('data-use-leave-balance', response.use_leave_balance || 0)
+                         .attr('data-leave-type-id', response.leave_type_id || '')
+                         .attr('data-sandwich-rule-id', response.sandwich_leave_rule_id || '')
                          .text(status);
 
                     // Refresh all row summary columns without reload
