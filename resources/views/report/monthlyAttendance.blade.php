@@ -175,6 +175,11 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
     color: #b45309;
 }
 
+.status-dot.unpaid {
+    background: #fce4ec;
+    color: #c62828;
+}
+
 .status-dot.future {
     background: transparent;
     color: #ced4da;
@@ -553,6 +558,7 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                                                         'P'  => 'present',
                                                         'HD' => 'half-day',
                                                         'L'  => 'on-leave',
+                                                        'U'  => 'unpaid',
                                                         'DO' => 'day-off',
                                                         'PH' => 'public-holiday',
                                                         'NA' => 'not-added',
@@ -635,6 +641,7 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                             <option value="A">{{ __('Absent (A)') }}</option>
                             <option value="HD">{{ __('Half Day (HD)') }}</option>
                             <option value="L">{{ __('Leave (L)') }}</option>
+                            <option value="U">{{ __('Unpaid (U)') }}</option>
                             <option value="DO">{{ __('Day Off (DO)') }}</option>
                             <option value="PH">{{ __('Public Holiday (PH)') }}</option>
                         </select>
@@ -920,7 +927,7 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
 
         function toggleLeaveOptionGroups() {
             var st = $('#attendance-status').val();
-            if (['L', 'HD', 'A'].includes(st)) {
+            if (['L', 'HD', 'A', 'U'].includes(st)) {
                 $('#leave-pay-type-group, #use-leave-balance-group').slideDown(200);
                 if ($('#use_leave_balance').is(':checked')) {
                     $('#leave-type-select-wrapper').slideDown(200);
@@ -957,7 +964,7 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
 
     $(document).on('change', '#attendance-status', function() {
         var st = $(this).val();
-        if (['L', 'HD', 'A'].includes(st)) {
+        if (['L', 'HD', 'A', 'U'].includes(st)) {
             $('#leave-pay-type-group, #use-leave-balance-group').slideDown(200);
             if ($('#use_leave_balance').is(':checked')) {
                 $('#leave-type-select-wrapper').slideDown(200);
@@ -1025,6 +1032,7 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                         'P': 'present',
                         'HD': 'half-day',
                         'L': 'on-leave',
+                        'U': 'unpaid',
                         'DO': 'day-off',
                         'PH': 'public-holiday',
                         'A': 'absent'
@@ -1032,7 +1040,7 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                     var newClass = dotClassMap[status] || 'absent';
 
                     // Update the clicked cell dot
-                    $cell.removeClass('present half-day on-leave day-off public-holiday absent not-added')
+                    $cell.removeClass('present half-day on-leave unpaid day-off public-holiday absent not-added')
                          .addClass(newClass)
                          .data('status', status)
                          .data('clock-in', response.clock_in || '')

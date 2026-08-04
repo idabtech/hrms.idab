@@ -943,7 +943,7 @@ class Utility extends Model
             if (in_array($attStatus, ['Day Off', 'DO', 'Public Holiday', 'PH']) && empty($dr['clock_in'])) {
                 continue;
             }
-            if (!$isWd && empty($dr['clock_in']) && !in_array($attStatus, ['Half Day', 'HD', 'Leave', 'L', 'Absent', 'A'])) {
+            if (!$isWd && empty($dr['clock_in']) && !in_array($attStatus, ['Half Day', 'HD', 'Leave', 'L', 'Unpaid', 'U', 'Absent', 'A'])) {
                 continue;
             }
             if (!$isWd && !empty($dr['clock_in'])) {
@@ -997,6 +997,12 @@ class Utility extends Model
                     } else {
                         $unpaid_leave_days += 1.0;
                     }
+                }
+            } elseif (in_array($attStatus, ['Unpaid', 'U'])) {
+                // Unpaid status — always counted as unpaid leave
+                if ($isWd) $attLeaveCount += 1.0;
+                if (!$isOnLeaveDay && $isWd) {
+                    $unpaid_leave_days += 1.0;
                 }
             } elseif (in_array($attStatus, ['Absent', 'A'])) {
                 if (!$isOnLeaveDay && $isWd) {
