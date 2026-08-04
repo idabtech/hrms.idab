@@ -1352,20 +1352,25 @@ class ReportController extends Controller
             $attendance->sandwich_leave_rule_id  = $sandwichRuleId;
             $attendance->sandwich_deduction_rate = $sandwichRate;
 
-            // Sync with LeaveDayDetail if leave detail exists for this employee and date
+            // Sync with LeaveDayDetail & Leave if leave detail exists for this employee and date
             $targetDate = Carbon::parse($request->date)->format('Y-m-d');
             $dayDetail  = \App\Models\LeaveDayDetail::whereHas('leave', function ($q) use ($request) {
                 $q->where('employee_id', $request->employee_id);
-            })->where('date', $targetDate)->first();
+            })->whereDate('date', $targetDate)->first();
 
             if ($dayDetail) {
                 $dayDetail->sandwich_leave_rule_id  = $sandwichRuleId;
                 $dayDetail->sandwich_deduction_rate = $sandwichRate;
                 // Only sync day_status when admin explicitly sets a leave/absent status
-                if (in_array($statusVal, ['L', 'HD', 'A'])) {
+                if (in_array($statusVal, ['L', 'HD', 'A', 'U'])) {
                     $dayDetail->day_status = $attendance->leave_pay_type;
                 }
                 $dayDetail->save();
+
+                if (!empty($request->leave_type_id) && $dayDetail->leave) {
+                    $dayDetail->leave->leave_type_id = $request->leave_type_id;
+                    $dayDetail->leave->save();
+                }
             }
 
             $attendance->is_manual = true;
