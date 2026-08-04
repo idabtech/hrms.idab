@@ -1112,6 +1112,7 @@ class ReportController extends Controller
                                 'Public Holiday', 'PH' => 'PH',
                                 'Half Day', 'HD' => 'HD',
                                 'Leave', 'L' => 'L',
+                                'Unpaid', 'U' => 'U',
                                 'Absent', 'A' => 'A',
                                 default => ($isOnLeave ? ($leaveIsHalf ? 'HD' : 'L') : 'A'),
                             };
@@ -1120,6 +1121,7 @@ class ReportController extends Controller
                                 'PH' => 'Public Holiday',
                                 'HD' => 'Half Day',
                                 'L'  => 'Leave',
+                                'U'  => 'Unpaid',
                                 'A'  => 'Absent',
                                 default => ($isOnLeave ? $leaveCellLabel : 'Absent'),
                             };
@@ -1159,6 +1161,11 @@ class ReportController extends Controller
                                 } else {
                                     $totalUnpaidLeave += 1.0;
                                 }
+                            } elseif ($cellStatus === 'U') {
+                                // Unpaid status — always counted as unpaid leave
+                                $totalLeaves++;
+                                $totalLeave++;
+                                $totalUnpaidLeave += 1.0;
                             } else { // 'A'
                                 $totalAbsents++;
                                 $totalLeave++;
@@ -1316,6 +1323,7 @@ class ReportController extends Controller
                 'HD' => 'Half Day',
                 'A'  => 'Absent',
                 'L'  => 'Leave',
+                'U'  => 'Unpaid',
                 'DO' => 'Day Off',
                 'PH' => 'Public Holiday',
             ];
@@ -1332,7 +1340,8 @@ class ReportController extends Controller
             $attendance->status = $status;
             $attendance->company_shift_time = $request->company_shift_time;
 
-            $attendance->leave_pay_type = $request->leave_pay_type ?? 'unpaid';
+            // If status is Unpaid (U), force leave_pay_type to 'unpaid'
+            $attendance->leave_pay_type = ($statusVal === 'U') ? 'unpaid' : ($request->leave_pay_type ?? 'unpaid');
             $attendance->use_leave_balance = ($request->has('use_leave_balance') && ($request->use_leave_balance == 1 || $request->use_leave_balance === 'true' || $request->use_leave_balance === 'on')) ? 1 : 0;
             $attendance->leave_type_id = !empty($request->leave_type_id) ? $request->leave_type_id : null;
 
@@ -1566,6 +1575,10 @@ class ReportController extends Controller
                 if (!in_array($rec->status, ['present', 'Present'])) {
                     if (in_array($rec->status, ['Leave', 'L'])) {
                         $totalLeaves++;
+                    } elseif (in_array($rec->status, ['Unpaid', 'U'])) {
+                        $totalLeaves++;
+                        $totalUnpaidLeave += 1.0;
+                        continue;
                     } else {
                         $totalAbsents++;
                     }
@@ -2102,10 +2115,18 @@ class ReportController extends Controller
                 if ($dateFormat <= date('Y-m-d')) {
                     $employeeAttendance = AttendanceEmployee::where('employee_id', $id)->where('date', $dateFormat)->first();
 
-                    if (!empty($employeeAttendance) && $employeeAttendance->status == 'Present') {
-                        $attendanceStatus[$date] = 'P';
-                    } elseif (!empty($employeeAttendance) && $employeeAttendance->status == 'Leave') {
-                        $attendanceStatus[$date] = 'A';
+                    if (!empty($employeeAttendance)) {
+                        $st = $employeeAttendance->status;
+                        $attendanceStatus[$date] = match($st) {
+                            'Present', 'P'        => 'P',
+                            'Half Day', 'HD'       => 'HD',
+                            'Leave', 'L'          => 'L',
+                            'Unpaid', 'U'         => 'U',
+                            'Day Off', 'DO'        => 'DO',
+                            'Public Holiday', 'PH' => 'PH',
+                            'Absent', 'A'         => 'A',
+                            default               => $st ?: '-',
+                        };
                     } else {
                         $attendanceStatus[$date] = '-';
                     }
