@@ -16,11 +16,12 @@
             $dk = $day->format('Y-m-d');
             $savedRow = $savedDetails[$dk] ?? null;
             $editDays[] = [
-                'date'            => $dk,
-                'day_name'        => $day->format('D'),
-                'day_duration'    => $savedRow ? $savedRow->day_duration    : 'full_day',
-                'half_day_period' => $savedRow ? $savedRow->half_day_period : 'morning',
-                'day_status'      => $savedRow ? $savedRow->day_status      : $defaultDayStatus,
+                'date'                    => $dk,
+                'day_name'                => $day->format('D'),
+                'day_duration'            => $savedRow ? $savedRow->day_duration            : 'full_day',
+                'half_day_period'         => $savedRow ? $savedRow->half_day_period         : 'morning',
+                'day_status'              => $savedRow ? $savedRow->day_status              : $defaultDayStatus,
+                'sandwich_leave_rule_id'  => $savedRow ? $savedRow->sandwich_leave_rule_id  : null,
             ];
         }
     }
@@ -88,6 +89,17 @@
         </div>
     </div>
 
+    {{-- Sandwich Leave Notice (Shown ONLY when leave spans across weekend/holiday) --}}
+    <div id="sandwich_leave_notice" class="alert alert-warning border-warning align-items-center mb-3" style="display:none;">
+        <div class="d-flex align-items-center">
+            <i class="ti ti-alert-triangle fs-4 me-2 text-warning"></i>
+            <div>
+                <strong>{{ __('Sandwich Leave Notice') }}:</strong>
+                <span>{{ __('This leave application includes intervening Day Off / Weekend dates. Sandwich Leave rules apply.') }}</span>
+            </div>
+        </div>
+    </div>
+
     {{-- Date range --}}
     <div class="row">
         <div class="col-md-6">
@@ -116,6 +128,9 @@
                         <th>{{ __('Duration') }}</th>
                         <th>{{ __('Period') }}</th>
                         <th>{{ __('Status') }}</th>
+                        @if (\Auth::user()->type != 'employee')
+                            <th>{{ __('Sandwich Rule') }}</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody class="day-breakdown-body">
@@ -166,6 +181,21 @@
                                     <label class="form-check-label text-danger" for="unpaid_{{ $uid }}">{{ __('Unpaid') }}</label>
                                 </div>
                             </td>
+                            @if (\Auth::user()->type != 'employee')
+                                <td>
+                                    @php
+                                        $curRuleId = $eDay['sandwich_leave_rule_id'] ?? $leave->sandwich_leave_rule_id;
+                                    @endphp
+                                    <select name="sandwich_leave_rule_id[{{ $dk }}]" class="form-select form-select-sm">
+                                        <option value="">{{ __('None') }}</option>
+                                        @foreach ($sandwichRules as $srule)
+                                            <option value="{{ $srule->id }}" {{ $curRuleId == $srule->id ? 'selected' : '' }}>
+                                                {{ $srule->name }} ({{ number_format($srule->deduction_rate, 2) }}{{ $srule->rate_type == 'percentage' ? '%' : 'x' }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                            @endif
                         </tr>
                     @endforeach
                 </tbody>
@@ -248,7 +278,8 @@
         "{{ \Carbon\Carbon::parse($det->date)->format('Y-m-d') }}": {
             day_duration: "{{ $det->day_duration }}",
             half_day_period: "{{ $det->half_day_period ?? 'morning' }}",
-            day_status: "{{ $det->day_status }}"
+            day_status: "{{ $det->day_status }}",
+            sandwich_leave_rule_id: "{{ $det->sandwich_leave_rule_id ?? '' }}"
         },
         @endforeach
         @if ($leave->dayDetails->isEmpty() && $leave->start_date && $leave->end_date)
@@ -282,6 +313,12 @@
         if (!$(this).val()) return;
         updateLeaveTypeInfo($(this).val());
         buildBreakdown();
+    });
+
+    $form.on('change', '#sandwich_leave_rule_id', function () {
+        var $opt = $(this).find('option:selected');
+        var rate = $opt.data('rate') || '';
+        $form.find('#sandwich_deduction_rate').val(rate);
     });
 
     $form.on('change', '[name="employee_id"]', function () {
@@ -389,13 +426,56 @@
             var status = saved.day_status || (isPaid ? 'paid' : 'unpaid');
             $tbody.append(buildRow(dateStr, formatDate(cur), dayNames[cur.getDay()], dur, period, status));
         }
+        checkSandwichCondition(start, end);
         updateSummary();
         $wrapper.show();
+    }
+
+    function checkSandwichCondition(start, end) {
+        var diffDays = Math.round((end - start) / 86400000) + 1;
+        if (diffDays <= 1) {
+            $form.find('#sandwich_leave_notice').hide();
+            return;
+        }
+
+        var hasWeekendInside = false;
+
+        for (var i = 0; i < diffDays; i++) {
+            var cur = new Date(start);
+            cur.setDate(start.getDate() + i);
+            var dow = cur.getDay(); // 0 = Sun, 6 = Sat
+
+            if (dow === 0 || dow === 6) {
+                hasWeekendInside = true;
+            }
+        }
+
+        if (hasWeekendInside && diffDays > 1) {
+            $form.find('#sandwich_leave_notice').fadeIn();
+        } else {
+            $form.find('#sandwich_leave_notice').hide();
+        }
     }
 
     function buildRow(dateStr, dateDisp, dayName, duration, period, status) {
         var uid = dateStr.replace(/-/g, '_') + '_{{ $leave->id }}';
         var showSelect = duration === 'half_day';
+
+        var isNotEmp = {{ \Auth::user()->type !== 'employee' ? 'true' : 'false' }};
+        var sRuleCell = '';
+        if (isNotEmp) {
+            var saved = savedDetails[dateStr] || {};
+            var curRuleId = saved.sandwich_leave_rule_id || '';
+            var sRuleOptions = '<option value="">{{ __("None") }}</option>';
+            @if (isset($sandwichRules) && count($sandwichRules) > 0)
+                @foreach ($sandwichRules as $srule)
+                    var sel = (curRuleId == '{{ $srule->id }}') ? ' selected' : '';
+                    sRuleOptions += '<option value="{{ $srule->id }}"' + sel + '>{{ $srule->name }} ({{ number_format($srule->deduction_rate, 2) }}{{ $srule->rate_type == "percentage" ? "%" : "x" }})</option>';
+                @endforeach
+            @endif
+            sRuleCell = '<td><select name="sandwich_leave_rule_id[' + dateStr + ']" class="form-select form-select-sm">' + sRuleOptions + '</select></td>';
+        }
+
         return '<tr data-date="' + dateStr + '">'
             + '<td><small>' + dateDisp + '</small></td>'
             + '<td><small>' + dayName + '</small></td>'
@@ -410,7 +490,7 @@
             + '<td>'
             + '<div class="form-check form-check-inline"><input class="form-check-input stat-radio" type="radio" name="day_status[' + dateStr + ']" id="paid_' + uid + '" value="paid"' + (status === 'paid' ? ' checked' : '') + '><label class="form-check-label text-success" for="paid_' + uid + '">{{ __("Paid") }}</label></div>'
             + '<div class="form-check form-check-inline"><input class="form-check-input stat-radio" type="radio" name="day_status[' + dateStr + ']" id="unpaid_' + uid + '" value="unpaid"' + (status === 'unpaid' ? ' checked' : '') + '><label class="form-check-label text-danger" for="unpaid_' + uid + '">{{ __("Unpaid") }}</label></div>'
-            + '</td></tr>';
+            + '</td>' + sRuleCell + '</tr>';
     }
 
     function updateSummary() {

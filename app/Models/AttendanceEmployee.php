@@ -24,7 +24,16 @@ class AttendanceEmployee extends Model
         'passcode',
         'created_by',
         'is_manual_by',
-        'is_auto_clock_out'
+        'is_auto_clock_out',
+        'leave_pay_type',
+        'use_leave_balance',
+        'leave_type_id',
+        'sandwich_leave_rule_id',
+        'sandwich_deduction_rate',
+    ];
+
+    protected $casts = [
+        'sandwich_deduction_rate' => 'float',
     ];
 
     public function employees()

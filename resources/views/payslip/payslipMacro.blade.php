@@ -23,6 +23,10 @@ $avgHrsPerDay    = $payslipDetail['avg_hrs_per_day'];
 $totalLeaveAlloc = (int) $payslipDetail['total_leave_alloc'];
 $remainingLeaves = (int) $payslipDetail['remaining_leaves'];
 $usedLeaves      = $approvedLeaves;
+$unpaidLeaveDeduction   = (float) ($payslipDetail['unpaid_leave_deduction'] ?? 0);
+$unpaidLeaveDays        = (float) ($payslipDetail['unpaid_leave_days'] ?? 0);
+$sandwichLeaveDeduction = (float) ($payslipDetail['sandwich_leave_deduction'] ?? 0);
+$sandwichLeaveDays      = (float) ($payslipDetail['sandwich_leave_days'] ?? 0);
 
 // Format for display
 $presentDisplay  = min($presentDays, $officeDays);
@@ -68,33 +72,55 @@ if ($extraDays > 0) {
 
 // ── Deduction rows ────────────────────────────────────────────────────────
 $dedRows = [];
-foreach ($payslipDetail['deduction']['loan'] as $_lr) {
-    foreach (json_decode($_lr->loan) as $_ln) {
-        $_amt = $_ln->type === 'percentage'
-            ? round($_ln->amount * $_basicSalary / 100, 2) : (float)$_ln->amount;
+foreach ($payslipDetail['deduction']['loan'] ?? [] as $_lr) {
+    foreach (json_decode($_lr->loan ?? '[]') as $_ln) {
+        $_amt = ($_ln->type ?? 'fixed') === 'percentage'
+            ? round($_ln->amount * $_basicSalary / 100, 2) : (float)($_ln->amount ?? 0);
         if ($_amt > 0) $dedRows[] = ['label' => $_ln->title ?: 'Loan', 'amount' => $_amt];
     }
 }
-foreach ($payslipDetail['deduction']['saturation_deduction'] as $_dr) {
-    foreach (json_decode($_dr->saturation_deduction) as $_d) {
-        $_amt = $_d->type === 'percentage'
-            ? round($_d->amount * $_basicSalary / 100, 2) : (float)$_d->amount;
-        if ($_amt > 0) $dedRows[] = ['label' => $_d->title, 'amount' => $_amt];
+foreach ($payslipDetail['deduction']['saturation_deduction'] ?? [] as $_dr) {
+    foreach (json_decode($_dr->saturation_deduction ?? '[]') as $_d) {
+        $_amt = ($_d->type ?? 'fixed') === 'percentage'
+            ? round($_d->amount * $_basicSalary / 100, 2) : (float)($_d->amount ?? 0);
+        if ($_amt > 0) $dedRows[] = ['label' => $_d->title ?? 'Deduction', 'amount' => $_amt];
     }
 }
-foreach ($payslipDetail['deduction']['pansion'] as $_p) {
-    $_amt = $_p->type === 'percentage'
-        ? round($_p->amount * $_basicSalary / 100, 2) : (float)$_p->amount;
+foreach ($payslipDetail['deduction']['pansion'] ?? [] as $_p) {
+    $_amt = ($_p->type ?? 'fixed') === 'percentage'
+        ? round($_p->amount * $_basicSalary / 100, 2) : (float)($_p->amount ?? 0);
     if ($_amt > 0) $dedRows[] = ['label' => $_p->title ?: 'Provident Fund', 'amount' => $_amt];
 }
-foreach ($payslipDetail['deduction']['leave'] as $_lea) {
-    if ($_lea->empleave > 0) $dedRows[] = ['label' => 'Loss Of Pay', 'amount' => (float)$_lea->empleave];
+if ($unpaidLeaveDeduction > 0) {
+    $dedRows[] = ['label' => 'Unpaid Leave (' . ($unpaidLeaveDays == floor($unpaidLeaveDays) ? (int)$unpaidLeaveDays : $unpaidLeaveDays) . ' days)', 'amount' => $unpaidLeaveDeduction];
+} else {
+    foreach ($payslipDetail['deduction']['leave'] ?? [] as $_lea) {
+        if (($_lea->empleave ?? 0) > 0) $dedRows[] = ['label' => 'Loss Of Pay', 'amount' => (float)$_lea->empleave];
+    }
+}
+
+// Sandwich Leave deduction row
+if ($sandwichLeaveDeduction > 0) {
+    $_sdDaysFmt = ($sandwichLeaveDays == floor($sandwichLeaveDays)) ? (int)$sandwichLeaveDays : $sandwichLeaveDays;
+    $dedRows[] = ['label' => 'Sandwich Leave (' . $_sdDaysFmt . ' days)', 'amount' => $sandwichLeaveDeduction];
 }
 
 $_extraEarning   = $extraDays > 0 ? round($perDaySalary * $extraDays, 2) : 0;
-$totalEarnings   = $payslipDetail['totalEarning'] + $_storedSalary + $_extraEarning;
-$totalDeductions = $payslipDetail['totalDeduction'];
-$netSalary       = $payslipDetail['net_salary'];
+$totalEarnings   = 0;
+foreach ($earRows as $_er) {
+    if (!empty($_er['amount']) && $_er['amount'] > 0) {
+        $totalEarnings += (float) $_er['amount'];
+    }
+}
+$totalEarnings  += $_extraEarning;
+
+$totalDeductions = 0;
+foreach ($dedRows as $_dr) {
+    if (!empty($_dr['amount']) && $_dr['amount'] > 0) {
+        $totalDeductions += (float) $_dr['amount'];
+    }
+}
+$netSalary       = max(0, $totalEarnings - $totalDeductions);
 
 $_maxED = max(count($earRows), count($dedRows));
 while (count($earRows) < $_maxED) $earRows[] = ['label' => '', 'amount' => null];

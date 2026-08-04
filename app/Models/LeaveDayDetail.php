@@ -14,10 +14,13 @@ class LeaveDayDetail extends Model
         'day_duration',    // full_day | half_day
         'half_day_period', // morning | afternoon (nullable, only when day_duration=half_day)
         'day_status',      // paid | unpaid
+        'sandwich_leave_rule_id',
+        'sandwich_deduction_rate',
     ];
 
     protected $casts = [
         'date' => 'date',
+        'sandwich_deduction_rate' => 'float',
     ];
 
     // ── Relationships ──────────────────────────────────────────────────────
@@ -25,6 +28,11 @@ class LeaveDayDetail extends Model
     public function leave()
     {
         return $this->belongsTo(Leave::class);
+    }
+
+    public function sandwichLeaveRule()
+    {
+        return $this->belongsTo(SandwichLeaveRule::class, 'sandwich_leave_rule_id');
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────

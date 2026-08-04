@@ -9,9 +9,11 @@
     $totalPension         = (float) ($payslipDetail['totalPansion'] ?? 0);
     $totalSatDeduction    = (float) ($payslipDetail['total_saturation_deduction'] ?? 0);
     $isHourly             = (bool)  ($payslipDetail['is_hourly'] ?? false);
-    $unpaidLeaveDeduction = (float) ($payslipDetail['unpaid_leave_deduction'] ?? 0);
-    $unpaidLeaveDays      = (float) ($payslipDetail['unpaid_leave_days'] ?? 0);
-    $lopDays              = (float) ($payslipDetail['lop_days'] ?? 0);
+    $unpaidLeaveDeduction    = (float) ($payslipDetail['unpaid_leave_deduction'] ?? 0);
+    $unpaidLeaveDays         = (float) ($payslipDetail['unpaid_leave_days'] ?? 0);
+    $lopDays                 = (float) ($payslipDetail['lop_days'] ?? 0);
+    $sandwichLeaveDeduction  = (float) ($payslipDetail['sandwich_leave_deduction'] ?? 0);
+    $sandwichLeaveDays       = (float) ($payslipDetail['sandwich_leave_days'] ?? 0);
 
     // ── Build individual earning rows (same logic as pdf.blade.php) ──────────
     $earRows = [];
@@ -122,26 +124,48 @@
             ];
         }
     }
-    // LOP
-    foreach ($payslipDetail['deduction']['leave'] as $_lea) {
-        if ($_lea->empleave > 0) {
-            $dedRows[] = [
-                'label'  => __('Loss of Pay') . ($lopDays > 0 ? ' (' . ($lopDays == floor($lopDays) ? (int)$lopDays : $lopDays) . ' ' . __('days') . ')' : ''),
-                'amount' => (float) $_lea->empleave,
-                'pct'    => null,
-            ];
-        }
-    }
-    // Unpaid leave
+    // Unpaid leave / Loss of Pay (prevent duplicate rows)
     if ($unpaidLeaveDeduction > 0) {
         $dedRows[] = [
             'label'  => __('Unpaid Leave') . ' (' . ($unpaidLeaveDays == floor($unpaidLeaveDays) ? (int)$unpaidLeaveDays : $unpaidLeaveDays) . ' ' . __('days') . ')',
             'amount' => $unpaidLeaveDeduction,
             'pct'    => null,
         ];
+    } else {
+        foreach ($payslipDetail['deduction']['leave'] as $_lea) {
+            if ($_lea->empleave > 0) {
+                $dedRows[] = [
+                    'label'  => __('Loss of Pay') . ($lopDays > 0 ? ' (' . ($lopDays == floor($lopDays) ? (int)$lopDays : $lopDays) . ' ' . __('days') . ')' : ''),
+                    'amount' => (float) $_lea->empleave,
+                    'pct'    => null,
+                ];
+            }
+        }
+    }
+    // Sandwich Leave deduction
+    if ($sandwichLeaveDeduction > 0) {
+        $dedRows[] = [
+            'label'  => __('Sandwich Leave') . ' (' . ($sandwichLeaveDays == floor($sandwichLeaveDays) ? (int)$sandwichLeaveDays : $sandwichLeaveDays) . ' ' . __('days') . ')',
+            'amount' => $sandwichLeaveDeduction,
+            'pct'    => null,
+        ];
     }
 
-    $totalEarningsDisplay = $totalEarning + $basicSalary;
+    $totalEarningsDisplay = $basicSalary;
+    foreach ($earRows as $_er) {
+        if (!empty($_er['amount']) && $_er['amount'] > 0) {
+            $totalEarningsDisplay += (float) $_er['amount'];
+        }
+    }
+
+    $totalDeductions = 0;
+    foreach ($dedRows as $_dr) {
+        if (!empty($_dr['amount']) && $_dr['amount'] > 0) {
+            $totalDeductions += (float) $_dr['amount'];
+        }
+    }
+
+    $netSalary = max(0, $totalEarningsDisplay - $totalDeductions);
 @endphp
 
 <div class="modal-body px-4">
