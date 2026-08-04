@@ -1288,7 +1288,7 @@ class ReportController extends Controller
             $request->validate([
                 'employee_id' => 'required|integer|exists:employees,id',
                 'date' => 'required|date',
-                'status' => 'required|in:P,A,HD,L,DO,PH',
+                'status' => 'required|in:P,A,HD,L,U,DO,PH',
                 'company_shift_time' => 'nullable|string|max:255',
                 'passcode' => 'required|string|max:255',
                 'leave_pay_type' => 'nullable|string|in:paid,unpaid',

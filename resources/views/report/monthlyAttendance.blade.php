@@ -520,7 +520,17 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                                 <th class="col-summary" title="{{ __('Extra Days Worked beyond Working Days') }}" style="color:#856404;">{{ __('EXT') }}</th>
                                 <th class="col-summary" title="{{ __('Effective Present (half-day=0.5) / Working Days') }}" style="color:#0f9d58;min-width:70px;">{{ __('Score') }}</th>
                                 @foreach ($dates as $date)
-                                    <th class="date-col">{{ $date }}</th>
+                                    @php
+                                        $dayCarbon = \Carbon\Carbon::parse($currentMonthForDate . '-' . $date);
+                                        $dayName   = $dayCarbon->format('D');
+                                        $isWeekend = $dayCarbon->isWeekend();
+                                    @endphp
+                                    <th class="date-col text-center" style="padding: 4px 2px; vertical-align: middle;">
+                                        <div style="font-size: 13px; font-weight: 700; line-height: 1.1;">{{ $date }}</div>
+                                        <div style="font-size: 10px; font-weight: 600; line-height: 1.1; margin-top: 2px; color: {{ $isWeekend ? '#d93025' : '#6c757d' }};">
+                                            {{ $dayName }}
+                                        </div>
+                                    </th>
                                 @endforeach
                             </tr>
                         </thead>
@@ -572,7 +582,7 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                                                     data-employee-id="{{ $attendance['employee_id'] }}"
                                                     data-employee-name="{{ $attendance['name'] }}"
                                                     data-date="{{ $currentMonthForDate . '-' . $key }}"
-                                                    data-date-label="{{ \Carbon\Carbon::parse($currentMonthForDate . '-' . $key)->format('d M Y') }}"
+                                                    data-date-label="{{ \Carbon\Carbon::parse($currentMonthForDate . '-' . $key)->format('d M Y (D)') }}"
                                                     data-status="{{ $statusVal }}"
                                                     data-clock-in="{{ $clockIn }}"
                                                     data-clock-out="{{ $clockOut }}"
