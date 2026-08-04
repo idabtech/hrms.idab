@@ -574,6 +574,8 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                                                     data-leave-pay-type="{{ is_array($status) ? ($status['leave_pay_type'] ?? 'unpaid') : 'unpaid' }}"
                                                     data-use-leave-balance="{{ is_array($status) ? ($status['use_leave_balance'] ?? 0) : 0 }}"
                                                     data-leave-type-id="{{ is_array($status) ? ($status['leave_type_id'] ?? '') : '' }}"
+                                                    data-sandwich-rule-id="{{ is_array($status) ? ($status['sandwich_leave_rule_id'] ?? '') : '' }}"
+                                                    data-sandwich-rate="{{ is_array($status) ? ($status['sandwich_deduction_rate'] ?? '') : '' }}"
                                                     title="{{ $statusLabel }} — {{ __('Click to edit') }}"
                                                     @else
                                                     title="{{ $statusLabel }}"
@@ -663,6 +665,26 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                                 <option value="">{{ __('Select Leave Type') }}</option>
                             </select>
                         </div>
+                    </div>
+
+                    {{-- Sandwich Leave Rule (Synchronized with Edit Leave) --}}
+                    <div class="mb-3" id="sandwich-rule-modal-group">
+                        <label for="modal_sandwich_leave_rule_id" class="form-label">
+                            {{ __('Sandwich Leave Rule') }}
+                        </label>
+                        <select name="sandwich_leave_rule_id" id="modal_sandwich_leave_rule_id" class="form-control">
+                            <option value="">{{ __('None (Standard Leave)') }}</option>
+                            @if (!empty($data['sandwich_rules']) && count($data['sandwich_rules']) > 0)
+                                @foreach ($data['sandwich_rules'] as $srule)
+                                    <option value="{{ $srule->id }}"
+                                        data-rate="{{ $srule->deduction_rate }}"
+                                        data-type="{{ $srule->rate_type }}">
+                                        {{ $srule->name }} ({{ number_format($srule->deduction_rate, 2) }}{{ $srule->rate_type == 'percentage' ? '%' : 'x' }})
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        <input type="hidden" name="sandwich_deduction_rate" id="modal_sandwich_deduction_rate" value="">
                     </div>
 
                     {{-- Shift Selection --}}
@@ -822,16 +844,43 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
         var leavePayType     = $cell.data('leave-pay-type') || 'unpaid';
         var useLeaveBal      = $cell.data('use-leave-balance') || 0;
         var savedLeaveTypeId = $cell.data('leave-type-id')  || '';
+        var savedSandwichId  = $cell.data('sandwich-rule-id') || '';
         var empId            = $cell.data('employee-id');
+        var currentStatus    = $cell.data('status');
 
         $('#company_shift_time').val(savedShift);
         $('#attendance-clock-in').val(savedClockIn);
         $('#attendance-clock-out').val(savedClockOut);
         $('#attendance-passcode').val('');
 
+        // Pre-set leave pay type radio
         $('input[name="leave_pay_type"][value="' + leavePayType + '"]').prop('checked', true);
-        var isChecked = (useLeaveBal == 1 || useLeaveBal === true || useLeaveBal === '1');
+
+        // Auto-check "Deduct from Leave Balance" if this is a leave status cell
+        var isLeaveStatus = ['L', 'HD'].includes(currentStatus);
+        var isChecked = isLeaveStatus
+            ? (useLeaveBal == 1 || useLeaveBal === true || useLeaveBal === '1' || useLeaveBal === true)
+            : false;
+
+        // If leave status and useLeaveBal not explicitly set, default to true (leave = deduct balance)
+        if (isLeaveStatus && (useLeaveBal === 0 || useLeaveBal === '0' || useLeaveBal === '') && savedLeaveTypeId) {
+            isChecked = true;
+        }
         $('#use_leave_balance').prop('checked', isChecked);
+
+        // Show/hide the leave type select wrapper immediately based on checkbox state
+        if (isChecked) {
+            $('#leave-type-select-wrapper').show();
+        } else {
+            $('#leave-type-select-wrapper').hide();
+        }
+
+        // Pre-select Sandwich Rule
+        if (savedSandwichId) {
+            $('#modal_sandwich_leave_rule_id').val(savedSandwichId);
+        } else {
+            $('#modal_sandwich_leave_rule_id').val('');
+        }
 
         // Load employee leave types for the select dropdown
         var $ltSel = $('#modal_leave_type_id');
@@ -842,11 +891,27 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
             data: { employee_id: empId, _token: "{{ csrf_token() }}" },
             success: function(data) {
                 $ltSel.empty().append('<option value="">{{ __("Select Leave Type") }}</option>');
+                var matchedIsPaid = null;
                 $.each(data, function(k, v) {
                     var label = v.title + ' (' + v.total_leave + '/' + v.days + ' {{ __("used") }}, {{ __("Remaining") }}: ' + v.remaining + ')';
-                    var selected = (savedLeaveTypeId && savedLeaveTypeId == v.id) ? ' selected' : '';
+                    var isSelected = (savedLeaveTypeId && savedLeaveTypeId == v.id);
+                    var selected = isSelected ? ' selected' : '';
                     $ltSel.append('<option value="' + v.id + '"' + selected + ' data-is-paid="' + (v.is_paid ? 1 : 0) + '">' + label + '</option>');
+                    if (isSelected) {
+                        matchedIsPaid = v.is_paid ? 1 : 0;
+                    }
                 });
+
+                // After options are loaded, ALWAYS restore the saved leave_pay_type.
+                // Admin may intentionally set Unpaid (LOP) on a Casual (paid) leave type,
+                // so we must NEVER auto-correct the radio — just honor what was saved.
+                $('input[name="leave_pay_type"][value="' + leavePayType + '"]').prop('checked', true);
+
+                // If no leave type was previously matched (new selection), auto-set from leave type default
+                if (matchedIsPaid !== null && !savedLeaveTypeId) {
+                    var defaultPaid = matchedIsPaid === 1 ? 'paid' : 'unpaid';
+                    $('input[name="leave_pay_type"][value="' + defaultPaid + '"]').prop('checked', true);
+                }
             },
             error: function() {
                 $ltSel.empty().append('<option value="">{{ __("Select Leave Type") }}</option>');
@@ -885,15 +950,9 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
     });
 
     $(document).on('change', '#modal_leave_type_id', function() {
-        var $opt = $(this).find('option:selected');
-        var isPaid = $opt.data('is-paid');
-        if (isPaid !== undefined) {
-            if (isPaid == 1) {
-                $('input[name="leave_pay_type"][value="paid"]').prop('checked', true);
-            } else {
-                $('input[name="leave_pay_type"][value="unpaid"]').prop('checked', true);
-            }
-        }
+        // Do NOT auto-change leave_pay_type when admin changes leave type.
+        // Admin controls Paid/Unpaid (LOP) manually.
+        // Only show sandwich rule section if needed — pay type radio is admin's choice.
     });
 
     $(document).on('change', '#attendance-status', function() {
@@ -930,6 +989,7 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
         var leavePayType = $('input[name="leave_pay_type"]:checked').val() || 'unpaid';
         var useLeaveBalance = $('#use_leave_balance').is(':checked') ? 1 : 0;
         var leaveTypeId = $('#modal_leave_type_id').val() || '';
+        var sandwichRuleId = $('#modal_sandwich_leave_rule_id').val() || '';
         var oldStatus = $cell.data('status');
 
         // Hide error alert on new attempt
@@ -957,6 +1017,7 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                 leave_pay_type: leavePayType,
                 use_leave_balance: useLeaveBalance,
                 leave_type_id: leaveTypeId,
+                sandwich_leave_rule_id: sandwichRuleId,
             },
             success: function(response) {
                 if (response.success) {
@@ -980,6 +1041,7 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                          .data('leave-pay-type', response.leave_pay_type || 'unpaid')
                          .data('use-leave-balance', response.use_leave_balance || 0)
                          .data('leave-type-id', response.leave_type_id || '')
+                         .data('sandwich-rule-id', response.sandwich_leave_rule_id || '')
                          .attr('data-status', status)
                          .attr('data-clock-in', response.clock_in || '')
                          .attr('data-clock-out', response.clock_out || '')
@@ -987,6 +1049,7 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                          .attr('data-leave-pay-type', response.leave_pay_type || 'unpaid')
                          .attr('data-use-leave-balance', response.use_leave_balance || 0)
                          .attr('data-leave-type-id', response.leave_type_id || '')
+                         .attr('data-sandwich-rule-id', response.sandwich_leave_rule_id || '')
                          .text(status);
 
                     // Refresh all row summary columns without reload

@@ -590,6 +590,7 @@ class ReportController extends Controller
             $monthStart = $year . '-' . sprintf('%02d', $month) . '-01';
             $monthEnd   = $year . '-' . sprintf('%02d', $month) . '-' . sprintf('%02d', $num_of_days);
             $creatorId  = \Auth::user()->creatorId();
+            $data['sandwich_rules'] = \App\Models\SandwichLeaveRule::where('created_by', $creatorId)->where('is_active', 1)->get();
 
             // ── Resolve valid employees for this month ────────────────────────────
             // 1) Active employees whose user is active and who joined on/before $monthEnd
@@ -729,22 +730,32 @@ class ReportController extends Controller
                     $detail = $detailsByDate->get($dk);
 
                     // Per-day detail takes priority; fall back to leave-level fields
+                    $leaveTypePaid = optional($lv->leaveType)->is_paid ?? true;
                     if ($detail) {
                         $duration = $detail->day_duration    ?? 'full_day';
                         $period   = $detail->half_day_period ?? null;
-                        $status   = $detail->day_status      ?? 'paid';
+                        $status   = $detail->day_status      ?? ($leaveTypePaid ? 'paid' : 'unpaid');
+                        $sRuleId  = $detail->sandwich_leave_rule_id  ?? $lv->sandwich_leave_rule_id;
+                        $sRate    = $detail->sandwich_deduction_rate ?? $lv->sandwich_deduction_rate;
                     } else {
                         // Single-day leave or legacy leave with no day_details rows
                         $duration = $lv->leave_duration   ?? 'full_day';
                         $period   = $lv->half_day_period  ?? null;
-                        $status   = 'paid'; // legacy leaves default to paid
+                        $status   = $leaveTypePaid ? 'paid' : 'unpaid';
+                        $sRuleId  = $lv->sandwich_leave_rule_id;
+                        $sRate    = $lv->sandwich_deduction_rate;
                     }
 
                     $leaveDateMap[$lv->employee_id][$dk] = [
-                        'type'     => $leaveTypeName,
-                        'duration' => $duration,
-                        'period'   => $period,
-                        'status'   => $status,
+                        'type'                    => $leaveTypeName,
+                        'leave_type_id'           => $lv->leave_type_id,
+                        'duration'                => $duration,
+                        'period'                  => $period,
+                        'status'                  => $status,
+                        'leave_pay_type'          => $status, // 'paid' or 'unpaid' — used by modal
+                        'use_leave_balance'       => 1,       // always deduct from balance for approved leaves
+                        'sandwich_leave_rule_id'  => $sRuleId,
+                        'sandwich_deduction_rate' => $sRate,
                     ];
                 }
             }
@@ -838,10 +849,17 @@ class ReportController extends Controller
                         } elseif ($isOnLeave) {
                             $futureStatus = $leaveIsHalf ? 'HD' : 'L';
                             $attendanceStatus[$date] = [
-                                'status' => $futureStatus,
-                                'label'  => $leaveCellLabel,
-                                'future' => true,
-                                'clock_in' => '', 'clock_out' => '', 'company_shift_time' => '',
+                                'status'                  => $futureStatus,
+                                'label'                   => $leaveCellLabel,
+                                'future'                  => true,
+                                'clock_in'                => '',
+                                'clock_out'               => '',
+                                'company_shift_time'      => '',
+                                'leave_pay_type'          => $leavePayStatus,
+                                'use_leave_balance'       => 1,
+                                'leave_type_id'           => $leaveDetail['leave_type_id'] ?? '',
+                                'sandwich_leave_rule_id'  => $leaveDetail['sandwich_leave_rule_id'] ?? '',
+                                'sandwich_deduction_rate' => $leaveDetail['sandwich_deduction_rate'] ?? '',
                             ];
                             $recordLeave();
                         } else {
@@ -878,8 +896,17 @@ class ReportController extends Controller
                         // No attendance record — pure leave day (or half-day leave)
                         $pureStatus = $leaveIsHalf ? 'HD' : 'L';
                         $attendanceStatus[$date] = [
-                            'status' => $pureStatus, 'label' => $leaveCellLabel,
-                            'future' => false, 'clock_in' => '', 'clock_out' => '', 'company_shift_time' => '',
+                            'status'                  => $pureStatus,
+                            'label'                   => $leaveCellLabel,
+                            'future'                  => false,
+                            'clock_in'                => '',
+                            'clock_out'               => '',
+                            'company_shift_time'      => '',
+                            'leave_pay_type'          => $leavePayStatus,
+                            'use_leave_balance'       => 1,
+                            'leave_type_id'           => $leaveDetail['leave_type_id'] ?? '',
+                            'sandwich_leave_rule_id'  => $leaveDetail['sandwich_leave_rule_id'] ?? '',
+                            'sandwich_deduction_rate' => $leaveDetail['sandwich_deduction_rate'] ?? '',
                         ];
                         $recordLeave();
 
@@ -967,12 +994,17 @@ class ReportController extends Controller
                                 //   >= 6h → leave takes priority (full leave day)
                                 if ($isFullDayLeave) {
                                     $attendanceStatus[$date] = [
-                                        'status'            => $leaveIsHalf ? 'HD' : 'L',
-                                        'label'             => $leaveCellLabel,
-                                        'future'            => false,
-                                        'clock_in'          => $ciDisplay,
-                                        'clock_out'         => $coDisplay,
-                                        'company_shift_time'=> $shiftDisplay,
+                                        'status'                  => $leaveIsHalf ? 'HD' : 'L',
+                                        'label'                   => $leaveCellLabel,
+                                        'future'                  => false,
+                                        'clock_in'                => $ciDisplay,
+                                        'clock_out'               => $coDisplay,
+                                        'company_shift_time'      => $shiftDisplay,
+                                        'leave_pay_type'          => $leavePayStatus,
+                                        'use_leave_balance'       => 1,
+                                        'leave_type_id'           => $leaveDetail['leave_type_id'] ?? '',
+                                        'sandwich_leave_rule_id'  => $leaveDetail['sandwich_leave_rule_id'] ?? '',
+                                        'sandwich_deduction_rate' => $leaveDetail['sandwich_deduction_rate'] ?? '',
                                     ];
                                     $recordLeave();
                                 } elseif ($isHalfDay) {
@@ -982,12 +1014,17 @@ class ReportController extends Controller
                                     // (the 0.5 leave portion is already accounted for by the clock half).
                                     $totalWorkedSeconds += $dayWorkedSeconds;
                                     $attendanceStatus[$date] = [
-                                        'status'            => 'HD',
-                                        'label'             => 'Half Day + ' . $leaveCellLabel,
-                                        'future'            => false,
-                                        'clock_in'          => $ciDisplay,
-                                        'clock_out'         => $coDisplay,
-                                        'company_shift_time'=> $shiftDisplay,
+                                        'status'                  => 'HD',
+                                        'label'                   => 'Half Day + ' . $leaveCellLabel,
+                                        'future'                  => false,
+                                        'clock_in'                => $ciDisplay,
+                                        'clock_out'               => $coDisplay,
+                                        'company_shift_time'      => $shiftDisplay,
+                                        'leave_pay_type'          => $leavePayStatus,
+                                        'use_leave_balance'       => 1,
+                                        'leave_type_id'           => $leaveDetail['leave_type_id'] ?? '',
+                                        'sandwich_leave_rule_id'  => $leaveDetail['sandwich_leave_rule_id'] ?? '',
+                                        'sandwich_deduction_rate' => $leaveDetail['sandwich_deduction_rate'] ?? '',
                                     ];
                                     $totalPresents++;
                                     $totalHalfDays++;
@@ -1001,12 +1038,17 @@ class ReportController extends Controller
                                 } else {
                                     // >= 6h — leave still takes priority
                                     $attendanceStatus[$date] = [
-                                        'status'            => $leaveIsHalf ? 'HD' : 'L',
-                                        'label'             => $leaveCellLabel,
-                                        'future'            => false,
-                                        'clock_in'          => $ciDisplay,
-                                        'clock_out'         => $coDisplay,
-                                        'company_shift_time'=> $shiftDisplay,
+                                        'status'                  => $leaveIsHalf ? 'HD' : 'L',
+                                        'label'                   => $leaveCellLabel,
+                                        'future'                  => false,
+                                        'clock_in'                => $ciDisplay,
+                                        'clock_out'               => $coDisplay,
+                                        'company_shift_time'      => $shiftDisplay,
+                                        'leave_pay_type'          => $leavePayStatus,
+                                        'use_leave_balance'       => 1,
+                                        'leave_type_id'           => $leaveDetail['leave_type_id'] ?? '',
+                                        'sandwich_leave_rule_id'  => $leaveDetail['sandwich_leave_rule_id'] ?? '',
+                                        'sandwich_deduction_rate' => $leaveDetail['sandwich_deduction_rate'] ?? '',
                                     ];
                                     $recordLeave();
                                 }
@@ -1088,8 +1130,11 @@ class ReportController extends Controller
                                 'clock_in'          => '',
                                 'clock_out'         => '',
                                 'company_shift_time'=> $shiftDisplay,
-                                'leave_pay_type'    => $attendance->leave_pay_type ?? 'unpaid',
-                                'use_leave_balance' => $attendance->use_leave_balance ?? 0,
+                                'leave_pay_type'          => $attendance->leave_pay_type ?? ($leavePayStatus ?? 'unpaid'),
+                                'use_leave_balance'       => $attendance->use_leave_balance ?? ($isOnLeave ? 1 : 0),
+                                'leave_type_id'           => $attendance->leave_type_id ?? ($leaveDetail['leave_type_id'] ?? ''),
+                                'sandwich_leave_rule_id'  => $attendance->sandwich_leave_rule_id ?? ($leaveDetail['sandwich_leave_rule_id'] ?? ''),
+                                'sandwich_deduction_rate' => $attendance->sandwich_deduction_rate ?? ($leaveDetail['sandwich_deduction_rate'] ?? ''),
                             ];
                             if ($cellStatus === 'DO') {
                                 $totalDayOffs++;
@@ -1290,6 +1335,29 @@ class ReportController extends Controller
             $attendance->leave_pay_type = $request->leave_pay_type ?? 'unpaid';
             $attendance->use_leave_balance = ($request->has('use_leave_balance') && ($request->use_leave_balance == 1 || $request->use_leave_balance === 'true' || $request->use_leave_balance === 'on')) ? 1 : 0;
             $attendance->leave_type_id = !empty($request->leave_type_id) ? $request->leave_type_id : null;
+
+            $sandwichRuleId = !empty($request->sandwich_leave_rule_id) ? $request->sandwich_leave_rule_id : null;
+            $sandwichRule   = $sandwichRuleId ? \App\Models\SandwichLeaveRule::find($sandwichRuleId) : null;
+            $sandwichRate   = $sandwichRule ? $sandwichRule->deduction_rate : null;
+
+            $attendance->sandwich_leave_rule_id  = $sandwichRuleId;
+            $attendance->sandwich_deduction_rate = $sandwichRate;
+
+            // Sync with LeaveDayDetail if leave detail exists for this employee and date
+            $targetDate = Carbon::parse($request->date)->format('Y-m-d');
+            $dayDetail  = \App\Models\LeaveDayDetail::whereHas('leave', function ($q) use ($request) {
+                $q->where('employee_id', $request->employee_id);
+            })->where('date', $targetDate)->first();
+
+            if ($dayDetail) {
+                $dayDetail->sandwich_leave_rule_id  = $sandwichRuleId;
+                $dayDetail->sandwich_deduction_rate = $sandwichRate;
+                // Only sync day_status when admin explicitly sets a leave/absent status
+                if (in_array($statusVal, ['L', 'HD', 'A'])) {
+                    $dayDetail->day_status = $attendance->leave_pay_type;
+                }
+                $dayDetail->save();
+            }
 
             $attendance->is_manual = true;
             $attendance->is_manual_by = \Auth::user()->id;
@@ -1600,6 +1668,7 @@ class ReportController extends Controller
                 'leave_pay_type'     => $attendance->leave_pay_type ?? 'unpaid',
                 'use_leave_balance'  => $attendance->use_leave_balance ?? 0,
                 'leave_type_id'      => $attendance->leave_type_id ?? '',
+                'sandwich_leave_rule_id' => $attendance->sandwich_leave_rule_id ?? '',
                 'row_summary'        => [
                     'total_hours'        => $this->secondsToTime($totalWorkedSeconds),
                     'total_present'      => $totalPresents,

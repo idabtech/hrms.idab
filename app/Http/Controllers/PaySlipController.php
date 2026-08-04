@@ -550,6 +550,8 @@ class PaySlipController extends Controller
         $paidLeaveDays        = (float) ($payslipDetail['paid_leave_days'] ?? 0);
         $unpaidLeaveDays      = (float) ($payslipDetail['unpaid_leave_days'] ?? 0);
         $unpaidLeaveDeduction = (float) ($payslipDetail['unpaid_leave_deduction'] ?? 0);
+        $sandwichLeaveDeduction = (float) ($payslipDetail['sandwich_leave_deduction'] ?? 0);
+        $sandwichLeaveDays    = (float) ($payslipDetail['sandwich_leave_days'] ?? 0);
         $daysPaid             = (float) ($payslipDetail['days_paid'] ?? ($presentDays + $paidLeaveDays));
         $isHourly             = (bool) ($payslipDetail['is_hourly'] ?? false);
         $hoursPerDay          = (float) ($payslipDetail['hours_per_day'] ?? 8);
@@ -670,6 +672,15 @@ class PaySlipController extends Controller
                     $dedRows[] = ['label' => __('Loss Of Pay'), 'amount' => (float) $_lea->empleave];
                 }
             }
+        }
+
+        // Sandwich Leave deduction row
+        if ($sandwichLeaveDeduction > 0) {
+            $_sdDaysFmt = ($sandwichLeaveDays == floor($sandwichLeaveDays)) ? (int)$sandwichLeaveDays : $sandwichLeaveDays;
+            $dedRows[] = [
+                'label'  => __('Sandwich Leave') . ' (' . $_sdDaysFmt . ' ' . __('days') . ')',
+                'amount' => $sandwichLeaveDeduction,
+            ];
         }
 
         // Pad rows to equal count (for side-by-side tables)

@@ -1066,24 +1066,52 @@ class Utility extends Model
             foreach ($period as $leaveDay) {
                 $dayStr = $leaveDay->format('Y-m-d');
 
-                // Skip day-offs and holidays — leave on a non-working day costs nothing
-                if (!$isWorkingDay($dayStr)) {
+                // Resolve paid/unpaid, duration, and sandwich rule for this specific day
+                $dayDetail   = $dayDetailMap[$dayStr] ?? null;
+                $attRecord   = $attByDate[$dayStr] ?? null;
+                $sRuleId     = !empty($dayDetail->sandwich_leave_rule_id)
+                    ? $dayDetail->sandwich_leave_rule_id
+                    : (!empty($attRecord['sandwich_leave_rule_id'])
+                        ? $attRecord['sandwich_leave_rule_id']
+                        : (!empty($leave->sandwich_leave_rule_id) ? $leave->sandwich_leave_rule_id : null));
+
+                $sRate       = !empty($dayDetail->sandwich_deduction_rate)
+                    ? $dayDetail->sandwich_deduction_rate
+                    : (!empty($attRecord['sandwich_deduction_rate'])
+                        ? $attRecord['sandwich_deduction_rate']
+                        : (!empty($leave->sandwich_deduction_rate) ? $leave->sandwich_deduction_rate : null));
+
+                if (empty($sRate) && !empty($sRuleId)) {
+                    $sRuleObj = \App\Models\SandwichLeaveRule::find($sRuleId);
+                    $sRate    = $sRuleObj ? $sRuleObj->deduction_rate : null;
+                }
+
+                $hasSandwich = !empty($sRuleId) && !empty($sRate) && (float)$sRate > 0;
+
+                // Skip day-offs and holidays UNLESS this day has a Sandwich Leave Rule applied
+                if (!$isWorkingDay($dayStr) && !$hasSandwich) {
                     continue;
                 }
 
-                // Resolve paid/unpaid and duration for this specific day
-                $dayDetail   = $dayDetailMap[$dayStr] ?? null;
+
+                $attRecord = $attByDate[$dayStr] ?? null;
                 if ($dayDetail) {
-                    $dayDuration  = $dayDetail->day_duration  ?? 'full_day';
-                    $dayPayStatus = $dayDetail->day_status    ?? 'paid';
+                    $dayDuration  = $dayDetail->day_duration ?? 'full_day';
+                    // LeaveDayDetail.day_status is the authoritative source for approved leaves
+                    $dayPayStatus = !empty($dayDetail->day_status)
+                        ? $dayDetail->day_status
+                        : ($attRecord['leave_pay_type'] ?? 'paid');
                 } else {
-                    // No per-day record → use leave-level flags (legacy or single-day)
+                    // No per-day record → check attendance record or leave-level type
                     $dayDuration  = $leave->leave_duration ?? 'full_day';
-                    // Derive paid/unpaid from the leave type's is_paid flag.
-                    // Falls back to 'paid' only if the leave type cannot be resolved.
-                    $leaveTypeIsPaid = $leave->leaveType->is_paid ?? true;
-                    $dayPayStatus = $leaveTypeIsPaid ? 'paid' : 'unpaid';
+                    if (!empty($attRecord['is_manual_by']) && !empty($attRecord['leave_pay_type'])) {
+                        $dayPayStatus = $attRecord['leave_pay_type'];
+                    } else {
+                        $leaveTypeIsPaid = $leave->leaveType->is_paid ?? true;
+                        $dayPayStatus = $leaveTypeIsPaid ? 'paid' : 'unpaid';
+                    }
                 }
+
 
                 // Determine how many days this entry consumes (0.5 for half, 1.0 for full)
                 // Cross-check with attendance to handle half-day clock-in overlap
@@ -1125,15 +1153,34 @@ class Utility extends Model
                     }
                 }
 
-                // Accumulate into the correct bucket
-                $total_leave_days += $daysThisEntry;
-                if ($dayPayStatus === 'paid') {
-                    $paid_leave_days   += $daysThisEntry;
-                } else {
-                    $unpaid_leave_days += $daysThisEntry;
+                // Accumulate regular leave days ONLY on working days
+                if ($isWorkingDay($dayStr)) {
+                    $total_leave_days += $daysThisEntry;
+                    if ($dayPayStatus === 'paid') {
+                        $paid_leave_days   += $daysThisEntry;
+                    } else {
+                        $unpaid_leave_days += $daysThisEntry;
+                    }
+                }
+
+                // ── Sandwich Leave deduction ─────────────────────────────────
+                // If a sandwich rule is applied on this day, apply the rule's
+                // deduction_rate multiplier on per_day_amount as an extra penalty.
+                // e.g. 1.5x rate = 1.5 * per_day_amount total penalty per day.
+                // Since 1x is already handled by regular leave/paid day, extra penalty = (1.5 - 1) = 0.5 * per_day_amount.
+                if ($hasSandwich) {
+                    $rateFactor = $sRate > 10
+                        ? (($sRate / 100) - 1.0)
+                        : ($sRate > 1.0 ? ($sRate - 1.0) : $sRate);
+                    $sandwichPenalty = round($per_day_amount * $rateFactor * $daysThisEntry, 2);
+                    if (!isset($sandwich_deduction_total)) $sandwich_deduction_total = 0;
+                    if (!isset($sandwich_deduction_days))  $sandwich_deduction_days  = 0;
+                    $sandwich_deduction_total += $sandwichPenalty;
+                    $sandwich_deduction_days  += $daysThisEntry;
                 }
             }
         }
+
 
         if ($total_leave_days == 0 && $attLeaveCount > 0) {
             $total_leave_days = $attLeaveCount;
@@ -1154,6 +1201,22 @@ class Utility extends Model
             ];
         } else {
             $deduction['unpaid_leave'] = [];
+        }
+
+        // ── Sandwich Leave deduction ─────────────────────────────────────────
+        // Per-day penalty: deduction_rate % of gross salary for each day
+        // that has a sandwich leave rule applied (paid OR unpaid leave days).
+        $sandwich_deduction_total = $sandwich_deduction_total ?? 0;
+        $sandwich_deduction_days  = $sandwich_deduction_days  ?? 0;
+        if ($sandwich_deduction_total > 0) {
+            $deduction['sandwich_leave'][] = (object) [
+                'leave_reason'     => 'Sandwich Leave',
+                'leave_type'       => 'Sandwich Leave',
+                'total_leave_days' => $sandwich_deduction_days . ' days',
+                'amount'           => round($sandwich_deduction_total, 2),
+            ];
+        } else {
+            $deduction['sandwich_leave'] = [];
         }
 
         $covered_days         = $attendance_count + $paid_leave_days + $unpaid_leave_days;
@@ -1352,8 +1415,10 @@ class Utility extends Model
         $unpaid_leave_deduction  = round($total_unpaid_days * $per_day_amount, 2);
 
         // ── Deductions total ──────────────────────────────────────────────────
+        $sandwich_deduction_total = isset($sandwich_deduction_total) ? round($sandwich_deduction_total, 2) : 0;
         $payslip['deduction']      = $deduction;
-        $payslip['totalDeduction'] = $totalLoanRepayment + $total_saturation_deduction + $totalPansion + $unpaid_leave_deduction;
+        $payslip['totalDeduction'] = $totalLoanRepayment + $total_saturation_deduction + $totalPansion
+            + $unpaid_leave_deduction + $sandwich_deduction_total;
 
         // ── Base amount used in net salary formula ────────────────────────────
         $salaryBase = $isHourly ? $monthlySalaryGross : (float) $employess->basic_salary;
@@ -1388,8 +1453,10 @@ class Utility extends Model
         $payslip['leave_days']           = $total_leave_days > 0 ? $total_leave_days : (isset($attLeaveCount) ? $attLeaveCount : 0);
         $payslip['paid_leave_days']      = $paid_leave_days;
         $payslip['unpaid_leave_days']    = $total_unpaid_days;
-        $payslip['unpaid_leave_deduction'] = $unpaid_leave_deduction;
-        $payslip['absent_days']          = $absent_days;
+        $payslip['unpaid_leave_deduction']    = $unpaid_leave_deduction;
+        $payslip['sandwich_leave_deduction']  = $sandwich_deduction_total;
+        $payslip['sandwich_leave_days']       = $sandwich_deduction_days ?? 0;
+        $payslip['absent_days']               = $absent_days;
         $payslip['extra_days']           = 0;
         $payslip['lop_days']             = $absent_days;
         $payslip['total_work_hours']     = $totalWorkHours;

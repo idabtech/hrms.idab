@@ -23,8 +23,10 @@ $avgHrsPerDay    = $payslipDetail['avg_hrs_per_day'];
 $totalLeaveAlloc = (int) $payslipDetail['total_leave_alloc'];
 $remainingLeaves = (int) $payslipDetail['remaining_leaves'];
 $usedLeaves      = $approvedLeaves;
-$unpaidLeaveDeduction = (float) ($payslipDetail['unpaid_leave_deduction'] ?? 0);
-$unpaidLeaveDays      = (float) ($payslipDetail['unpaid_leave_days'] ?? 0);
+$unpaidLeaveDeduction   = (float) ($payslipDetail['unpaid_leave_deduction'] ?? 0);
+$unpaidLeaveDays        = (float) ($payslipDetail['unpaid_leave_days'] ?? 0);
+$sandwichLeaveDeduction = (float) ($payslipDetail['sandwich_leave_deduction'] ?? 0);
+$sandwichLeaveDays      = (float) ($payslipDetail['sandwich_leave_days'] ?? 0);
 
 // Format for display
 $presentDisplay  = min($presentDays, $officeDays);
@@ -95,6 +97,12 @@ if ($unpaidLeaveDeduction > 0) {
     foreach ($payslipDetail['deduction']['leave'] ?? [] as $_lea) {
         if (($_lea->empleave ?? 0) > 0) $dedRows[] = ['label' => 'Loss Of Pay', 'amount' => (float)$_lea->empleave];
     }
+}
+
+// Sandwich Leave deduction row
+if ($sandwichLeaveDeduction > 0) {
+    $_sdDaysFmt = ($sandwichLeaveDays == floor($sandwichLeaveDays)) ? (int)$sandwichLeaveDays : $sandwichLeaveDays;
+    $dedRows[] = ['label' => 'Sandwich Leave (' . $_sdDaysFmt . ' days)', 'amount' => $sandwichLeaveDeduction];
 }
 
 $_extraEarning   = $extraDays > 0 ? round($perDaySalary * $extraDays, 2) : 0;
