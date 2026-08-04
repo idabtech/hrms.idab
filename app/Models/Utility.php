@@ -939,23 +939,23 @@ class Utility extends Model
             $attStatus    = $dr['status'] ?? '';
             $leavePayType = $dr['leave_pay_type'] ?? 'unpaid';
 
-            // Skip Day-Off or Public Holiday rows with no clock in
-            if (in_array($attStatus, ['Day Off', 'DO', 'Public Holiday', 'PH']) && empty($dr['clock_in'])) {
-                continue;
-            }
-            if (!$isWd && empty($dr['clock_in']) && !in_array($attStatus, ['Half Day', 'HD', 'Leave', 'L', 'Unpaid', 'U', 'Absent', 'A'])) {
-                continue;
-            }
-            if (!$isWd && !empty($dr['clock_in'])) {
-                $extraDays++;
-            }
-
             $dayMins = 0;
             $ciRaw = $dr['clock_in']  ?? '';
             $coRaw = $dr['clock_out'] ?? '';
             // Normalise — treat '00:00:00' as empty
             if ($ciRaw === '00:00:00' || $ciRaw === '00:00') $ciRaw = '';
             if ($coRaw === '00:00:00' || $coRaw === '00:00') $coRaw = '';
+
+            // Skip Day-Off or Public Holiday rows with no clock in
+            if (in_array($attStatus, ['Day Off', 'DO', 'Public Holiday', 'PH']) && empty($ciRaw)) {
+                continue;
+            }
+            if (!$isWd && empty($ciRaw) && !in_array($attStatus, ['Half Day', 'HD', 'Leave', 'L', 'Unpaid', 'U', 'Absent', 'A'])) {
+                continue;
+            }
+            if (!$isWd && !empty($ciRaw)) {
+                $extraDays++;
+            }
 
             if (!empty($ciRaw) && !empty($coRaw)) {
                 try {
@@ -1018,7 +1018,11 @@ class Utility extends Model
                 }
             } elseif ($dayMins === 0) {
                 if (!$isOnLeaveDay) {
-                    $fullDayLeaveFromAtt++;
+                    if (in_array($attStatus, ['present', 'Present', 'P']) || !empty($dr['is_manual_by'])) {
+                        $fullDays++;
+                    } else {
+                        $fullDayLeaveFromAtt++;
+                    }
                 }
             } elseif ($dayMins > 0 && $dayMins < 120) {
                 $fullDayLeaveFromAtt++;
