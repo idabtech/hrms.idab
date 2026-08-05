@@ -27,6 +27,15 @@ $unpaidLeaveDeduction   = (float) ($payslipDetail['unpaid_leave_deduction'] ?? 0
 $unpaidLeaveDays        = (float) ($payslipDetail['unpaid_leave_days'] ?? 0);
 $sandwichLeaveDeduction = (float) ($payslipDetail['sandwich_leave_deduction'] ?? 0);
 $sandwichLeaveDays      = (float) ($payslipDetail['sandwich_leave_days'] ?? 0);
+$preJoiningDeduction    = (float) ($payslipDetail['pre_joining_deduction'] ?? 0);
+$preJoiningDays         = (float) ($payslipDetail['pre_joining_days'] ?? 0);
+$daysPaid               = $payslipDetail['days_paid'] ?? max(0, $officeDays - $absentDays - $unpaidLeaveDays);
+
+$salaryDayCalc          = $payslipDetail['salary_day_calculation'] ?? 'working_days';
+$isMonthWise            = in_array($salaryDayCalc, ['month_wise', 'calendar_month']);
+$workingDaysLabel       = $isMonthWise ? __('Month Days') : __('Working Days');
+$dayOffDays             = (float) ($payslipDetail['day_off_days'] ?? 0);
+$dayOffDaysFmt          = ($dayOffDays == floor($dayOffDays)) ? (int)$dayOffDays : $dayOffDays;
 
 // Format for display
 $presentDisplay  = min($presentDays, $officeDays);
@@ -103,6 +112,12 @@ if ($unpaidLeaveDeduction > 0) {
 if ($sandwichLeaveDeduction > 0) {
     $_sdDaysFmt = ($sandwichLeaveDays == floor($sandwichLeaveDays)) ? (int)$sandwichLeaveDays : $sandwichLeaveDays;
     $dedRows[] = ['label' => 'Sandwich Leave (' . $_sdDaysFmt . ' days)', 'amount' => $sandwichLeaveDeduction];
+}
+
+// Pre-joining Date Adjustment deduction row
+if ($preJoiningDeduction > 0) {
+    $_pjDaysFmt = ($preJoiningDays == floor($preJoiningDays)) ? (int)$preJoiningDays : $preJoiningDays;
+    $dedRows[] = ['label' => 'Joining Date Adjustment (' . $_pjDaysFmt . ' days)', 'amount' => $preJoiningDeduction];
 }
 
 $_extraEarning   = $extraDays > 0 ? round($perDaySalary * $extraDays, 2) : 0;

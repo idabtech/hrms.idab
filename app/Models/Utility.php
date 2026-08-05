@@ -223,6 +223,7 @@ class Utility extends Model
             'working_hours_per_day' => '8', // default working hours per day
             'auto_clock_out' => 'off',       // off | on
             'auto_clock_out_time' => '30',   // minutes after shift end time
+            'salary_day_calculation' => 'working_days', // working_days | month_wise
 
             // ── Salary Slip / Payslip Settings ────────────────────────────────
             'payslip_template'              => 'standard',   // standard | uk
@@ -756,13 +757,18 @@ class Utility extends Model
         $net_salary = $payslipRecord ? (float) $payslipRecord->net_salary : (float) $employess->salary;
 
         // Working days via shared utility (same logic as attendance report)
-        $workingDaysInMonth = self::getWorkingDaysInMonth($payYear, $payMonth, $employess->created_by);
+        $workingDaysInMonth  = self::getWorkingDaysInMonth($payYear, $payMonth, $employess->created_by);
+        $calendarDaysInMonth = $monthEnd->day;
 
         // ── Hours per day: priority order ─────────────────────────────────────
         // 1. Explicit 'working_hours_per_day' setting (set by admin in Company Settings)
         // 2. Calculated from company_start_time / company_end_time shift times
         // 3. Fallback: 8 hours
         $companySettings = self::settings();
+        $salaryDayCalc   = $companySettings['salary_day_calculation'] ?? 'working_days';
+        $isMonthWise     = in_array($salaryDayCalc, ['month_wise', 'calendar_month']);
+
+        $calculationDaysInMonth = $isMonthWise ? $calendarDaysInMonth : $workingDaysInMonth;
 
         $hoursPerDayShift = null;
 
@@ -794,7 +800,7 @@ class Utility extends Model
             $hoursPerDayShift = 8.0;
         }
 
-        $totalShiftHoursInMonth = $workingDaysInMonth * $hoursPerDayShift;
+        $totalShiftHoursInMonth = $calculationDaysInMonth * $hoursPerDayShift;
 
         // ── Determine salary type: monthly or hourly ──────────────────────────
         // Use the salary_basis column (added migration 2026_06_17) — reliable enum.
@@ -824,8 +830,8 @@ class Utility extends Model
         } else {
             // $salary stored is the MONTHLY fixed salary
 
-            $per_day_amount      = $workingDaysInMonth > 0
-                ? round($salary / $workingDaysInMonth, 4)
+            $per_day_amount      = $calculationDaysInMonth > 0
+                ? round($salary / $calculationDaysInMonth, 4)
                 : 0;
             $per_hour_amount     = $hoursPerDayShift > 0
                 ? round($per_day_amount / $hoursPerDayShift, 4)
@@ -900,6 +906,43 @@ class Utility extends Model
             return !$isHol && !$isDO;
         };
 
+        // ── Joining date / mid-month entry handling ───────────────────────
+        $companyDoj = !empty($employess->company_doj) ? Carbon::parse($employess->company_doj)->startOfDay() : null;
+
+        $effectiveStart = ($companyDoj && $companyDoj->greaterThan($monthStart))
+            ? $companyDoj->copy()
+            : $monthStart->copy();
+        $effectiveStartStr = $effectiveStart->format('Y-m-d');
+
+        $preJoiningDays = 0;
+        $employedDays   = $calculationDaysInMonth;
+
+        if ($companyDoj && $companyDoj->greaterThan($monthStart)) {
+            if ($isMonthWise) {
+                // Calendar days before joining date in this month
+                $preJoiningDays = $monthStart->diffInDays($companyDoj);
+                $employedDays   = max(0, $calendarDaysInMonth - $preJoiningDays);
+            } else {
+                // Working days before joining date in this month
+                $preJoiningWorkingDays = 0;
+                foreach (CarbonPeriod::create($monthStart, $companyDoj->copy()->subDay()) as $pD) {
+                    if ($isWorkingDay($pD->format('Y-m-d'))) {
+                        $preJoiningWorkingDays++;
+                    }
+                }
+                $preJoiningDays = $preJoiningWorkingDays;
+                $employedDays   = max(0, $workingDaysInMonth - $preJoiningDays);
+            }
+        }
+
+        // Count non-working days (Day Offs) during active employed period
+        $dayOffCountInEmployedPeriod = 0;
+        foreach (CarbonPeriod::create($effectiveStart, $monthEnd) as $eDate) {
+            if (!$isWorkingDay($eDate->format('Y-m-d'))) {
+                $dayOffCountInEmployedPeriod++;
+            }
+        }
+
         // Duration-based classification (mirrors ReportController thresholds exactly):
         //   < 2 hours  (< 120 min) → treat as full-day leave; don't count as present
         //   2–6 hours  (120–360 min) → half day: count as 0.5
@@ -915,13 +958,13 @@ class Utility extends Model
             ->where('status', 'Approved')
             ->where('start_date', '<=', $monthEnd->format('Y-m-d'))
             ->where('end_date',   '>=', $monthStart->format('Y-m-d'))
-            ->get(['start_date', 'end_date']);
+            ->get(['start_date', 'end_date', 'leave_duration']);
         foreach ($leavesForHalf as $lh) {
             foreach (\Carbon\CarbonPeriod::create($lh->start_date, $lh->end_date) as $ld) {
                 $ldStr = $ld->format('Y-m-d');
                 // Only flag working days — leaves on day-offs/holidays don't affect present
                 if ($isWorkingDay($ldStr)) {
-                    $leaveDatesForHalf[$ldStr] = true;
+                    $leaveDatesForHalf[$ldStr] = $lh->leave_duration ?? 'full_day';
                 }
             }
         }
@@ -935,6 +978,9 @@ class Utility extends Model
         $extraDays = 0;
         $attLeaveCount = 0;
         foreach ($attByDate as $dk => $dr) {
+            if ($dk < $effectiveStartStr) {
+                continue;
+            }
             $isWd = $isWorkingDay($dk);
             $attStatus    = $dr['status'] ?? '';
             $leavePayType = $dr['leave_pay_type'] ?? 'unpaid';
@@ -971,7 +1017,8 @@ class Utility extends Model
                 }
             }
 
-            $isOnLeaveDay = isset($leaveDatesForHalf[$dk]);
+            $isOnLeaveDay   = isset($leaveDatesForHalf[$dk]);
+            $isHalfDayLeave = ($leaveDatesForHalf[$dk] ?? '') === 'half_day';
 
             $hasClockIn      = !empty($ciRaw);
             $hasClockOut     = !empty($coRaw);
@@ -1015,6 +1062,8 @@ class Utility extends Model
             } elseif ($clockOutMissing) {
                 if (!$isOnLeaveDay) {
                     $fullDays++;
+                } elseif ($isHalfDayLeave) {
+                    $halfDays++;
                 }
             } elseif ($dayMins === 0) {
                 if (!$isOnLeaveDay) {
@@ -1023,18 +1072,30 @@ class Utility extends Model
                     } else {
                         $fullDayLeaveFromAtt++;
                     }
+                } elseif ($isHalfDayLeave && (in_array($attStatus, ['present', 'Present', 'P']) || !empty($dr['is_manual_by']))) {
+                    $halfDays++;
                 }
             } elseif ($dayMins > 0 && $dayMins < 120) {
-                $fullDayLeaveFromAtt++;
+                if ($isHalfDayLeave) {
+                    $halfDays++;
+                } else {
+                    $fullDayLeaveFromAtt++;
+                }
             } elseif ($dayMins >= 120 && $dayMins < 360) {
                 if (in_array($attStatus, ['present', 'Present', 'P'])) {
-                    $fullDays++;
+                    if ($isHalfDayLeave) {
+                        $halfDays++;
+                    } else {
+                        $fullDays++;
+                    }
                 } else {
                     $halfDays++;
                 }
             } else {
                 if (!$isOnLeaveDay) {
                     $fullDays++;
+                } elseif ($isHalfDayLeave) {
+                    $halfDays++;
                 }
             }
         }
@@ -1152,7 +1213,9 @@ class Utility extends Model
                         }
                     }
 
-                    if ($clockOutMissing2) {
+                    if ($dayDuration === 'half_day') {
+                        $daysThisEntry = 0.5;
+                    } elseif ($clockOutMissing2) {
                         $daysThisEntry = 1.0; // Full leave day (leave takes priority)
                     } elseif ($dayMins === 0 || ($dayMins > 0 && $dayMins < 120)) {
                         $daysThisEntry = 1.0; // No/minimal clock → full leave day
@@ -1230,8 +1293,25 @@ class Utility extends Model
         }
 
         $covered_days         = $attendance_count + $paid_leave_days + $unpaid_leave_days;
-        $absent_days          = max(0, $workingDaysInMonth - $covered_days);
+        if ($isMonthWise) {
+            $absent_days      = max(0, $employedDays - $covered_days - $dayOffCountInEmployedPeriod);
+        } else {
+            $absent_days      = max(0, $employedDays - $covered_days);
+        }
         $total_absent_for_lop = $absent_days + $fullDayLeaveFromAtt;
+
+        // Pre-joining non-employed adjustment deduction
+        $pre_joining_deduction = round($preJoiningDays * $per_day_amount, 2);
+        if ($pre_joining_deduction > 0) {
+            $deduction['pre_joining'][] = (object) [
+                'leave_reason'     => 'Joining Date Adjustment',
+                'leave_type'       => 'Joining Date Adjustment',
+                'total_leave_days' => $preJoiningDays . ' days',
+                'amount'           => $pre_joining_deduction,
+            ];
+        } else {
+            $deduction['pre_joining'] = [];
+        }
         
         // Prevent duplicate deduction rows: if unpaid_leave_deduction is present, zero out LOP deduction row
         $leave_deduction = ($unpaid_leave_deduction > 0) ? 0 : ($total_absent_for_lop * $per_day_amount);
@@ -1428,7 +1508,7 @@ class Utility extends Model
         $sandwich_deduction_total = isset($sandwich_deduction_total) ? round($sandwich_deduction_total, 2) : 0;
         $payslip['deduction']      = $deduction;
         $payslip['totalDeduction'] = $totalLoanRepayment + $total_saturation_deduction + $totalPansion
-            + $unpaid_leave_deduction + $sandwich_deduction_total;
+            + $unpaid_leave_deduction + $sandwich_deduction_total + $pre_joining_deduction;
 
         // ── Base amount used in net salary formula ────────────────────────────
         $salaryBase = $isHourly ? $monthlySalaryGross : (float) $employess->basic_salary;
@@ -1458,7 +1538,15 @@ class Utility extends Model
         $payslip['hours_per_day']        = $hoursPerDayShift;
         $payslip['total_shift_hours']    = $totalShiftHoursInMonth;
         // Attendance & leave display values — single source of truth for all blades
-        $payslip['office_days']          = $workingDaysInMonth;
+        $payslip['office_days']          = $calculationDaysInMonth;
+        $payslip['working_days_in_month']  = $workingDaysInMonth;
+        $payslip['calendar_days_in_month'] = $calendarDaysInMonth;
+        $payslip['salary_day_calculation'] = $salaryDayCalc;
+        $payslip['is_month_wise']         = $isMonthWise;
+        $payslip['day_off_days']          = $dayOffCountInEmployedPeriod;
+        $payslip['pre_joining_days']      = $preJoiningDays;
+        $payslip['pre_joining_deduction'] = $pre_joining_deduction;
+        $payslip['days_paid']             = max(0, $employedDays - $absent_days - $unpaid_leave_days);
         $payslip['present_days']         = $attendance_count;
         $payslip['leave_days']           = $total_leave_days > 0 ? $total_leave_days : (isset($attLeaveCount) ? $attLeaveCount : 0);
         $payslip['paid_leave_days']      = $paid_leave_days;
