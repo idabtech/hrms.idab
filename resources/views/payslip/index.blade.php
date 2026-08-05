@@ -252,9 +252,9 @@
             });
         }
     </script>
-    // HMRC Submit FPS
     @if(\App\Services\HmrcService::isEnabled())
         <script>
+        // HMRC Submit FPS
         $(document).on('click', '.btn-hmrc-fps', function() {
             var $btn = $(this);
             var employeeId = $btn.data('employee-id');
