@@ -126,10 +126,13 @@
                 <div>
                     <div class="bld-title">{{ __('Days & Work') }}</div>
                     <table class="bld-table">
-                        <tr><td class="bld-lbl">{{ __('Working Days') }}</td><td class="bld-val" style="color:{{ $_themeColor }};">{{ $officeDays }}</td></tr>
+                        <tr><td class="bld-lbl">{{ $workingDaysLabel ?? __('Working Days') }}</td><td class="bld-val" style="color:{{ $_themeColor }};">{{ $officeDays }}</td></tr>
                         <tr><td class="bld-lbl">{{ __('Present') }}</td><td class="bld-val" style="color:#198754;">{{ $presentDaysFmt }}</td></tr>
                         <tr><td class="bld-lbl">{{ __('Leave') }}</td><td class="bld-val" style="color:#e07900;">{{ $approvedLeaves }}</td></tr>
                         <tr><td class="bld-lbl">{{ __('Absent') }}</td><td class="bld-val" style="color:#dc3545;">{{ $absentDaysFmt }}</td></tr>
+                        @if(!empty($isMonthWise) || !empty($dayOffDays))
+                        <tr><td class="bld-lbl">{{ __('Day Off') }}</td><td class="bld-val" style="color:#6c757d;">{{ $dayOffDaysFmt ?? 0 }}</td></tr>
+                        @endif
                         @if($extraDays>0)
                         <tr><td class="bld-lbl" style="color:#856404;">{{ __('Extra / OT') }}</td><td class="bld-val" style="color:#856404;">+{{ $extraDaysFmt }}</td></tr>
                         @endif
@@ -150,7 +153,7 @@
                 <div>
                     <div class="bld-title">{{ __('Attendance') }}</div>
                     <table class="bld-table">
-                        <tr><td class="bld-lbl">{{ __('Working Days') }}</td><td class="bld-val" style="color:{{ $_themeColor }};">{{ $officeDays }}</td></tr>
+                        <tr><td class="bld-lbl">{{ $workingDaysLabel ?? __('Working Days') }}</td><td class="bld-val" style="color:{{ $_themeColor }};">{{ $officeDays }}</td></tr>
                         <tr><td class="bld-lbl">{{ __('Present') }}</td><td class="bld-val" style="color:#198754;">{{ $presentDaysFmt }}</td></tr>
                         <tr><td class="bld-lbl">{{ __('Absent') }}</td><td class="bld-val" style="color:#dc3545;">{{ $absentDaysFmt }}</td></tr>
                         <tr><td class="bld-lbl">{{ __('Hours') }}</td><td class="bld-val">{{ $totalWorkHours }} hrs</td></tr>
@@ -181,6 +184,9 @@
                         <tr><td class="bld-lbl">{{ __('Gross Salary') }}</td><td class="bld-val" style="color:{{ $_themeColor }};">{{ $_fmtMoney($_storedSalary) }}</td></tr>
                         <tr><td class="bld-lbl">{{ __('Per Day Rate') }}</td><td class="bld-val">{{ $_fmtMoney($perDaySalary) }}</td></tr>
                         <tr><td class="bld-lbl">{{ __('Per Hour Rate') }}</td><td class="bld-val">{{ $_fmtMoney($perHourSalary) }}</td></tr>
+                        @if(!empty($isMonthWise) || !empty($dayOffDays))
+                        <tr><td class="bld-lbl">{{ __('Day Off') }}</td><td class="bld-val" style="color:#6c757d;">{{ $dayOffDaysFmt ?? 0 }}</td></tr>
+                        @endif
                         <tr>
                             <td class="bld-lbl">{{ __('Days Paid') }}</td>
                             <td class="bld-val">

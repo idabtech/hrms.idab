@@ -552,6 +552,8 @@ class PaySlipController extends Controller
         $unpaidLeaveDeduction = (float) ($payslipDetail['unpaid_leave_deduction'] ?? 0);
         $sandwichLeaveDeduction = (float) ($payslipDetail['sandwich_leave_deduction'] ?? 0);
         $sandwichLeaveDays    = (float) ($payslipDetail['sandwich_leave_days'] ?? 0);
+        $preJoiningDeduction  = (float) ($payslipDetail['pre_joining_deduction'] ?? 0);
+        $preJoiningDays       = (float) ($payslipDetail['pre_joining_days'] ?? 0);
         $daysPaid             = (float) ($payslipDetail['days_paid'] ?? ($presentDays + $paidLeaveDays));
         $isHourly             = (bool) ($payslipDetail['is_hourly'] ?? false);
         $hoursPerDay          = (float) ($payslipDetail['hours_per_day'] ?? 8);
@@ -560,6 +562,12 @@ class PaySlipController extends Controller
         $isPaid               = ($payslip->status ?? 0) == 1;
         $payslipTypeName      = optional(\App\Models\PayslipType::find($employee->salary_type ?? null))->name ?? 'Monthly';
         $usedLeaves           = $approvedLeaves;
+
+        $salaryDayCalc        = $payslipDetail['salary_day_calculation'] ?? 'working_days';
+        $isMonthWise          = in_array($salaryDayCalc, ['month_wise', 'calendar_month']);
+        $workingDaysLabel     = $isMonthWise ? __('Month Days') : __('Working Days');
+        $dayOffDays           = (float) ($payslipDetail['day_off_days'] ?? 0);
+        $dayOffDaysFmt        = ($dayOffDays == floor($dayOffDays)) ? (int) $dayOffDays : $dayOffDays;
 
         // ── Format helpers ───────────────────────────────────────────────────
         $presentDisplay  = min($presentDays, $officeDays);
@@ -683,6 +691,15 @@ class PaySlipController extends Controller
             ];
         }
 
+        // Joining Date Adjustment deduction row
+        if ($preJoiningDeduction > 0) {
+            $_pjDaysFmt = ($preJoiningDays == floor($preJoiningDays)) ? (int)$preJoiningDays : $preJoiningDays;
+            $dedRows[] = [
+                'label'  => __('Joining Date Adjustment') . ' (' . $_pjDaysFmt . ' ' . __('days') . ')',
+                'amount' => $preJoiningDeduction,
+            ];
+        }
+
         // Pad rows to equal count (for side-by-side tables)
         // (only needed for standard/pdf template — others can ignore)
         $_maxED = max(count($earRows), count($dedRows));
@@ -793,6 +810,8 @@ class PaySlipController extends Controller
             'totalWorkHours', 'avgHrsPerDay',
             'totalLeaveAlloc', 'remainingLeaves', 'usedLeaves',
             'paidLeaveDays', 'unpaidLeaveDays', 'unpaidLeaveDeduction',
+            'salaryDayCalc', 'isMonthWise', 'workingDaysLabel', 'dayOffDays', 'dayOffDaysFmt',
+            'preJoiningDeduction', 'preJoiningDays',
             'daysPaid', 'isHourly', 'hoursPerDay', 'totalShiftHours', 'salaryRate',
             'payslipTypeName', 'isPaid',
             'earRows', 'earRowsPadded', 'dedRows', 'dedRowsPadded',
