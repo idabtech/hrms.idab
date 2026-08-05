@@ -2348,4 +2348,169 @@ class SettingsController extends Controller
 
         return redirect()->back()->with('success', __('HMRC PAYE settings saved successfully.'));
     }
+
+    /**
+     * Sync employees from iDAB system using SSO Login & Get All Staff APIs.
+     */
+    public function syncIdabEmployees(Request $request)
+    {
+        if (Auth::user()->type != 'company' && Auth::user()->type != 'super admin') {
+            return response()->json(['success' => false, 'message' => __('Permission denied.')], 403);
+        }
+
+        $user      = Auth::user();
+        $creatorId = $user->creatorId();
+        $userEmail = $user->email;
+
+        $baseUrl = config('app.idab_base_url', env('IDAB_BASE_URL', 'https://dev.idabcard.com/'));
+        $baseUrl = rtrim($baseUrl, '/');
+
+        if (empty($userEmail)) {
+            return response()->json(['success' => false, 'message' => __('User email is empty.')], 400);
+        }
+
+        try {
+            // Step 1: SSO Login
+            $ssoResponse = \Illuminate\Support\Facades\Http::acceptJson()->post("{$baseUrl}/api/v1/sso-login", [
+                'email' => $userEmail,
+            ]);
+
+            if (!$ssoResponse->successful() || !($ssoResponse->json()['status'] ?? false)) {
+                $err = $ssoResponse->json()['message'] ?? __('SSO Login failed on iDAB system.');
+                return response()->json(['success' => false, 'message' => $err], 400);
+            }
+
+            $token = $ssoResponse->json()['token'] ?? null;
+            if (empty($token)) {
+                return response()->json(['success' => false, 'message' => __('SSO Token not returned from iDAB.')], 400);
+            }
+
+            // Step 2: Fetch Staff List
+            $staffResponse = \Illuminate\Support\Facades\Http::acceptJson()
+                ->withToken($token)
+                ->get("{$baseUrl}/api/v1/employee/staff");
+
+            if (!$staffResponse->successful() || !($staffResponse->json()['success'] ?? false)) {
+                $err = $staffResponse->json()['message'] ?? __('Failed to retrieve staff from iDAB system.');
+                return response()->json(['success' => false, 'message' => $err], 400);
+            }
+
+            $staffList = $staffResponse->json()['data']['staff'] ?? [];
+
+            if (empty($staffList)) {
+                return response()->json(['success' => true, 'message' => __('No staff found on iDAB system to sync.')]);
+            }
+
+            // Default fallback models for new employees
+            $defaultBranch      = \App\Models\Branch::where('created_by', $creatorId)->first();
+            $defaultDepartment  = \App\Models\Department::where('created_by', $creatorId)->first();
+            $defaultDesignation = \App\Models\Designation::where('created_by', $creatorId)->first();
+            $defaultSalaryType  = \App\Models\PayslipType::where('created_by', $creatorId)->first();
+
+            $createdCount = 0;
+            $updatedCount = 0;
+            $skippedCount = 0;
+
+            foreach ($staffList as $staffItem) {
+                $email = trim($staffItem['email'] ?? '');
+                if (empty($email)) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                $name    = trim($staffItem['name'] ?? 'Staff');
+                $mobile  = trim($staffItem['mobile'] ?? '');
+                $isLogin = !empty($staffItem['is_enable_login']) ? 1 : 0;
+
+                // Check existing User (globally by email since users.email is unique)
+                $existingUser = \App\Models\User::where('email', $email)->first();
+
+                // Check existing Employee for this company
+                $existingEmployee = Employee::where('email', $email)
+                    ->where('created_by', $creatorId)
+                    ->first();
+
+                if ($existingEmployee) {
+                    $updated = false;
+                    if (empty($existingEmployee->phone) && !empty($mobile)) {
+                        $existingEmployee->phone = $mobile;
+                        $updated = true;
+                    }
+                    if ($existingEmployee->name !== $name && !empty($name)) {
+                        $existingEmployee->name = $name;
+                        $updated = true;
+                    }
+                    if ($updated) {
+                        $existingEmployee->save();
+                        $updatedCount++;
+                    } else {
+                        $skippedCount++;
+                    }
+                    continue;
+                }
+
+                // If user doesn't exist, create User
+                if (!$existingUser) {
+                    $existingUser = \App\Models\User::create([
+                        'name'              => $name,
+                        'email'             => $email,
+                        'password'          => \Illuminate\Support\Facades\Hash::make('12345678'),
+                        'type'              => 'employee',
+                        'lang'              => 'en',
+                        'created_by'        => $creatorId,
+                        'is_enable_login'   => $isLogin,
+                        'email_verified_at' => date('Y-m-d H:i:s'),
+                    ]);
+                    $existingUser->assignRole('Employee');
+                }
+
+                // Create Employee record
+                $lastEmployee = Employee::where('created_by', $creatorId)->latest('id')->first();
+                $nextEmpId    = $lastEmployee ? ((int)$lastEmployee->employee_id + 1) : 1;
+
+                Employee::create([
+                    'user_id'        => $existingUser->id,
+                    'name'           => $name,
+                    'dob'            => null,
+                    'gender'         => 'Male',
+                    'phone'          => $mobile,
+                    'address'        => '',
+                    'email'          => $email,
+                    'password'       => \Illuminate\Support\Facades\Hash::make('12345678'),
+                    'employee_id'    => $nextEmpId,
+                    'branch_id'      => $defaultBranch?->id ?? 0,
+                    'department_id'  => $defaultDepartment?->id ?? 0,
+                    'designation_id' => $defaultDesignation?->id ?? 0,
+                    'company_doj'    => date('Y-m-d'),
+                    'salary_type'    => $defaultSalaryType?->id ?? 1,
+                    'salary'         => 0,
+                    'created_by'     => $creatorId,
+                ]);
+
+                $createdCount++;
+            }
+
+            $totalFetched = count($staffList);
+            $msg = __("Successfully synced employees with iDAB system. Total staff fetched: :total. Created: :created, Updated: :updated, Skipped: :skipped.", [
+                'total'   => $totalFetched,
+                'created' => $createdCount,
+                'updated' => $updatedCount,
+                'skipped' => $skippedCount,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+            ]);
+
+        } catch (\Throwable $e) {
+            \Log::error('iDAB Employee Sync Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => __('Sync failed: ') . $e->getMessage(),
+            ], 500);
+        }
+    }
 }

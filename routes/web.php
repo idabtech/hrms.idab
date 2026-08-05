@@ -287,6 +287,7 @@ Route::group(['middleware' => ['verified']], function () {
             Route::post('payment-settings', [SettingsController::class, 'savePaymentSettings'])->name('payment.settings');
             Route::post('hmrc-settings', [SettingsController::class, 'saveHmrcSettings'])->name('hmrc.settings.store');
             Route::post('hmrc-paye-settings', [SettingsController::class, 'saveHmrcPayeSettings'])->name('hmrc.paye.settings.store');
+            Route::post('idab-sync-employees', [SettingsController::class, 'syncIdabEmployees'])->name('idab.sync.employees');
 
             // HMRC NI Verification (company/hr can verify employee NI numbers)
             Route::post('hmrc/verify-nino', [HmrcController::class, 'verifyNino'])->name('hmrc.verify.nino');
