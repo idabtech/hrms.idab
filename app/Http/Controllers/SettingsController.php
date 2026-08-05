@@ -2422,10 +2422,8 @@ class SettingsController extends Controller
                 $mobile  = trim($staffItem['mobile'] ?? '');
                 $isLogin = !empty($staffItem['is_enable_login']) ? 1 : 0;
 
-                // Check existing User for this company
-                $existingUser = \App\Models\User::where('email', $email)
-                    ->where('created_by', $creatorId)
-                    ->first();
+                // Check existing User (globally by email since users.email is unique)
+                $existingUser = \App\Models\User::where('email', $email)->first();
 
                 // Check existing Employee for this company
                 $existingEmployee = Employee::where('email', $email)
@@ -2468,8 +2466,7 @@ class SettingsController extends Controller
 
                 // Create Employee record
                 $lastEmployee = Employee::where('created_by', $creatorId)->latest('id')->first();
-                $nextEmpId    = $lastEmployee ? ($lastEmployee->id + 1) : 1;
-                $empIdStr     = Utility::employeeIdFormat($creatorId, $nextEmpId);
+                $nextEmpId    = $lastEmployee ? ((int)$lastEmployee->employee_id + 1) : 1;
 
                 Employee::create([
                     'user_id'        => $existingUser->id,
@@ -2480,7 +2477,7 @@ class SettingsController extends Controller
                     'address'        => '',
                     'email'          => $email,
                     'password'       => \Illuminate\Support\Facades\Hash::make('12345678'),
-                    'employee_id'    => $empIdStr,
+                    'employee_id'    => $nextEmpId,
                     'branch_id'      => $defaultBranch?->id ?? 0,
                     'department_id'  => $defaultDepartment?->id ?? 0,
                     'designation_id' => $defaultDesignation?->id ?? 0,
