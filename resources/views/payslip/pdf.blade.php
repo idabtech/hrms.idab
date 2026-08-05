@@ -476,7 +476,7 @@
                         <div class="ps-band">{{ __('Days & Work Details') }}</div>
                         <table class="ps-t">
                             <tr>
-                                <td class="lbl" style="width:60%;">{{ __('Working Days') }}</td>
+                                <td class="lbl" style="width:60%;">{{ $workingDaysLabel ?? __('Working Days') }}</td>
                                 <td class="ra val v-teal">{{ $officeDays }}</td>
                             </tr>
                             <tr>
@@ -491,6 +491,12 @@
                                 <td class="lbl">{{ __('Absent Days') }}</td>
                                 <td class="ra val v-red">{{ $absentDaysFmt }}</td>
                             </tr>
+                            @if (!empty($isMonthWise) || !empty($dayOffDays))
+                            <tr>
+                                <td class="lbl">{{ __('Day Off') }}</td>
+                                <td class="ra val" style="color:#6c757d;">{{ $dayOffDaysFmt ?? 0 }}</td>
+                            </tr>
+                            @endif
                             @if ($extraDays > 0)
                                 <tr style="background:#fff8e1;">
                                     <td class="lbl" style="color:#856404;">{{ __('Extra / OT Days') }}</td>
@@ -552,6 +558,12 @@
                                 <td class="lbl">{{ __('Per Hour Rate') }}</td>
                                 <td class="ra val">{{ $_fmtMoney($perHourSalary) }}</td>
                             </tr>
+                            @if (!empty($isMonthWise) || !empty($dayOffDays))
+                            <tr>
+                                <td class="lbl">{{ __('Day Off') }}</td>
+                                <td class="ra val" style="color:#6c757d;">{{ $dayOffDaysFmt ?? 0 }}</td>
+                            </tr>
+                            @endif
                             <tr>
                                 <td class="lbl">Days Paid</td>
                                 <td class="ra cb">

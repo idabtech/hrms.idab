@@ -1450,13 +1450,24 @@ $lang = \App\Models\Utility::getValByName('default_language');
 
                                 {{-- ── Saturday Pattern ────────────────────────────────── --}}
                                 <div class="mt-3" id="saturday_pattern_row" style="{{ in_array('6', $workingDays) ? '' : 'display:none;' }}">
-                                    <label class="col-form-label fw-semibold mb-1">{{ __('Saturday Working Pattern') }}</label>
+                                    <label class="col-form-label fw-semibold mb-1">{{ __('Saturday  Pattern') }}</label>
                                     <small class="text-muted d-block mb-2">{{ __('Choose which Saturdays are working days when Saturday is enabled above.') }}</small>
                                     @php $satPattern = $settings['saturday_pattern'] ?? 'none'; @endphp
                                     <select name="saturday_pattern" class="form-control" style="max-width:300px;">
                                         <option value="all"  {{ $satPattern === 'all'  ? 'selected' : '' }}>{{ __('Every Saturday (all working)') }}</option>
                                         <option value="odd"  {{ $satPattern === 'odd'  ? 'selected' : '' }}>{{ __('Odd Saturdays only (1st, 3rd, 5th)') }}</option>
                                         <option value="even" {{ $satPattern === 'even' ? 'selected' : '' }}>{{ __('Even Saturdays only (2nd, 4th)') }}</option>
+                                    </select>
+                                </div>
+
+                                {{-- ── Salary Calculation Basis ─────────────────────────── --}}
+                                <div class="mt-3" id="salary_day_calculation_row">
+                                    <label class="col-form-label fw-semibold mb-1">{{ __('Salary Calculation Basis') }}</label>
+                                    <small class="text-muted d-block mb-2">{{ __('Choose whether per-day salary rate and total monthly calculation is based on Working Days or Month Wise (31 calendar days).') }}</small>
+                                    @php $salaryDayCalc = $settings['salary_day_calculation'] ?? 'working_days'; @endphp
+                                    <select name="salary_day_calculation" class="form-control" style="max-width:350px;">
+                                        <option value="working_days" {{ in_array($salaryDayCalc, ['working_days', 'working_day_wise']) ? 'selected' : '' }}>{{ __('Working Day Wise') }}</option>
+                                        <option value="month_wise"    {{ in_array($salaryDayCalc, ['month_wise', 'calendar_month']) ? 'selected' : '' }}>{{ __('Month Wise') }}</option>
                                     </select>
                                 </div>
 
