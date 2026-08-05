@@ -645,6 +645,11 @@ $lang = \App\Models\Utility::getValByName('default_language');
                         </a>
                         @endif
 
+                        <a href="#idab-employee-sync-settings" id="idab-employee-sync-tab"
+                            class="list-group-item list-group-item-action border-0">{{ __('HRMS Employee Sync') }}
+                            <div class="float-end"><i class="ti ti-chevron-right"></i></div>
+                        </a>
+
                     </div>
 
                 </div>
@@ -3159,6 +3164,40 @@ $lang = \App\Models\Utility::getValByName('default_language');
     </div>
     @endif
 
+    {{-- ═══ HRMS Employee Sync ═══ --}}
+    <div class="" id="idab-employee-sync-settings">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <div>
+                    <h5 class="mb-1">{{ __('HRMS Employee Sync') }}</h5>
+                    <small class="text-muted">{{ __('Import employees from your iDAB card system into HRMS') }}</small>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-primary btn-sm btn-sync-idab-employees" id="btn-sync-idab-employees" onclick="syncIdabEmployeesNow(this)">
+                        <i class="ti ti-refresh me-1"></i> {{ __('Sync Employees Now') }}
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info border-0 shadow-sm" style="background-color: #e0f2fe; color: #0369a1; border-radius: 8px;">
+                    <h6 class="fw-bold mb-2" style="color: #0284c7;">
+                        <i class="ti ti-info-circle me-1"></i> {{ __('How it works') }}
+                    </h6>
+                    <ul class="mb-0 ps-3 small">
+                        <li class="mb-1">{{ __('Clicking "Sync Employees Now" connects via SSO and fetches all staff from the iDAB system.') }}</li>
+                        <li class="mb-1">{{ __('Employees that already exist in HRMS (matched by email) are skipped/updated.') }}</li>
+                        <li class="mb-1">{{ __('New employees are created as Employee entries for your company in HRMS.') }}</li>
+                        <li><strong class="text-warning">{{ __('Action required:') }}</strong> {{ __('After sync, go to Employee > Staff to review assigned roles and employee details.') }}</li>
+                    </ul>
+                </div>
+
+                <div id="idab-sync-result-box" class="mt-3 d-none">
+                    <div class="alert alert-success border-0 shadow-sm" id="idab-sync-result-msg"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 </div>
 </div>
@@ -3409,5 +3448,50 @@ $(document).on('click', '#btn-hmrc-test-company', function() {
     });
 });
 @endif
+
+// ── iDAB Employee Sync Handler ────────────────────────────────────────
+function syncIdabEmployeesNow(btn) {
+    var $btn = $(btn);
+    var $box = $('#idab-sync-result-box');
+    var $msg = $('#idab-sync-result-msg');
+
+    $btn.prop('disabled', true).html('<i class="ti ti-loader ti-spin me-1"></i> {{ __("Syncing...") }}');
+    $box.addClass('d-none');
+
+    $.ajax({
+        url: '{{ route("idab.sync.employees") }}',
+        type: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        success: function(res) {
+            if (res.success) {
+                if (typeof show_toastr === 'function') {
+                    show_toastr('Success', res.message, 'success');
+                }
+                $msg.removeClass('alert-danger').addClass('alert-success').html(res.message);
+                $box.removeClass('d-none');
+            } else {
+                if (typeof show_toastr === 'function') {
+                    show_toastr('Error', res.message, 'error');
+                }
+                $msg.removeClass('alert-success').addClass('alert-danger').html(res.message);
+                $box.removeClass('d-none');
+            }
+        },
+        error: function(xhr) {
+            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : '{{ __("Sync failed. Please try again.") }}';
+            if (typeof show_toastr === 'function') {
+                show_toastr('Error', msg, 'error');
+            }
+            $msg.removeClass('alert-success').addClass('alert-danger').html(msg);
+            $box.removeClass('d-none');
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html('<i class="ti ti-refresh me-1"></i> {{ __("Sync Employees Now") }}');
+        }
+    });
+}
+$(document).on('click', '#btn-sync-idab-employees', function() {
+    syncIdabEmployeesNow(this);
+});
 </script>
 @endsection
