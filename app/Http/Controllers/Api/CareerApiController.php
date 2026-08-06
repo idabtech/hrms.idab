@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 class CareerApiController extends Controller
 {
     /**
-     * Get public career job listings filtered by keyword / branch name / category title.
+     * Get public career job listings filtered by keyword / branch name / category title with pagination support.
      * No raw IDs are exposed in the JSON response.
      *
      * @param Request $request
@@ -37,9 +37,15 @@ class CareerApiController extends Controller
             $companyId = $company->id;
 
             // Fetch jobs for company
+            $sortOrder = strtolower($request->query('sort', $request->query('order', 'desc')));
+            if (!in_array($sortOrder, ['asc', 'desc'])) {
+                $sortOrder = 'desc';
+            }
+
             $jobsQuery = Job::where('created_by', $companyId)
                 ->where('status', 'active')
-                ->with(['branches', 'categories', 'createdBy']);
+                ->with(['branches', 'categories', 'createdBy'])
+                ->orderBy('created_at', $sortOrder);
 
             // Filter: General Search Keyword (Title, Position, Skill, Description)
             if ($request->filled('search')) {
@@ -68,7 +74,29 @@ class CareerApiController extends Controller
                 });
             }
 
-            $jobsList = $jobsQuery->get();
+            // Handle Pagination
+            $perPageParam = $request->query('per_page', $request->query('limit'));
+            if (strtolower($perPageParam) === 'all') {
+                $jobsList = $jobsQuery->get();
+                $totalJobs = $jobsList->count();
+                $currentPage = 1;
+                $lastPage = 1;
+                $perPage = $totalJobs;
+                $hasMorePages = false;
+            } else {
+                $perPage = (int) ($perPageParam ?? 5);
+                if ($perPage <= 0) {
+                    $perPage = 5;
+                }
+
+                $paginator = $jobsQuery->paginate($perPage);
+                $jobsList = collect($paginator->items());
+                $totalJobs = $paginator->total();
+                $currentPage = $paginator->currentPage();
+                $lastPage = $paginator->lastPage();
+                $perPage = $paginator->perPage();
+                $hasMorePages = $paginator->hasMorePages();
+            }
 
             // Fetch settings for company
             $settingsRaw = DB::table('settings')->where('created_by', $companyId)->get()->pluck('value', 'name');
@@ -144,13 +172,19 @@ class CareerApiController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Career jobs retrieved successfully.',
+                'pagination' => [
+                    'total_jobs' => $totalJobs,
+                    'per_page' => $perPage,
+                    'current_page' => $currentPage,
+                    'last_page' => $lastPage,
+                    'has_more_pages' => $hasMorePages,
+                ],
                 'data' => [
                     'company' => $companyInfo,
                     'filters' => [
                         'branches' => $branches,
                         'categories' => $categories,
                     ],
-                    'total_jobs' => $formattedJobs->count(),
                     'jobs' => $formattedJobs,
                 ],
             ], 200);
@@ -159,6 +193,99 @@ class CareerApiController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'An error occurred while fetching career jobs: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all active system jobs without filters, with ASC/DESC sorting and pagination support.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAllJobs(Request $request)
+    {
+        try {
+            $lang = $request->query('lang', 'en');
+            $sortOrder = strtolower($request->query('sort', $request->query('order', 'desc')));
+            if (!in_array($sortOrder, ['asc', 'desc'])) {
+                $sortOrder = 'desc';
+            }
+
+            $jobsQuery = Job::where('status', 'active')
+                ->with(['branches', 'categories', 'createdBy'])
+                ->orderBy('created_at', $sortOrder);
+
+            // Handle Pagination
+            $perPageParam = $request->query('per_page', $request->query('limit'));
+            if (strtolower($perPageParam) === 'all') {
+                $jobsList = $jobsQuery->get();
+                $totalJobs = $jobsList->count();
+                $currentPage = 1;
+                $lastPage = 1;
+                $perPage = $totalJobs;
+                $hasMorePages = false;
+            } else {
+                $perPage = (int) ($perPageParam ?? 5);
+                if ($perPage <= 0) {
+                    $perPage = 5;
+                }
+
+                $paginator = $jobsQuery->paginate($perPage);
+                $jobsList = collect($paginator->items());
+                $totalJobs = $paginator->total();
+                $currentPage = $paginator->currentPage();
+                $lastPage = $paginator->lastPage();
+                $perPage = $paginator->perPage();
+                $hasMorePages = $paginator->hasMorePages();
+            }
+
+            $formattedJobs = $jobsList->map(function ($job) use ($lang) {
+                $skills = !empty($job->skill) ? array_map('trim', explode(',', $job->skill)) : [];
+                $jobLang = !empty($job->createdBy) && !empty($job->createdBy->lang) ? $job->createdBy->lang : $lang;
+
+                $readMoreUrl = url('/job/requirement/' . $job->code . '/' . $jobLang);
+                $applyUrl = url('/job/apply/' . $job->code . '/' . $jobLang);
+
+                return [
+                    'title' => $job->title,
+                    'code' => $job->code,
+                    'position' => (int) $job->position,
+                    'branch' => [
+                        'name' => $job->branches ? $job->branches->name : null,
+                    ],
+                    'category' => [
+                        'title' => $job->categories ? $job->categories->title : null,
+                    ],
+                    'skills' => $skills,
+                    'description' => $job->description,
+                    'requirement' => $job->requirement,
+                    'start_date' => $job->start_date,
+                    'end_date' => $job->end_date,
+                    'status' => $job->status,
+                    'read_more_url' => $readMoreUrl,
+                    'apply_url' => $applyUrl,
+                    'created_at' => $job->created_at ? $job->created_at->toDateTimeString() : null,
+                ];
+            });
+
+            return response()->json([
+                'status' => true,
+                'message' => 'All system jobs retrieved successfully.',
+                'pagination' => [
+                    'total_jobs' => $totalJobs,
+                    'per_page' => $perPage,
+                    'current_page' => $currentPage,
+                    'last_page' => $lastPage,
+                    'has_more_pages' => $hasMorePages,
+                ],
+                'jobs' => $formattedJobs,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while fetching jobs: ' . $e->getMessage(),
             ], 500);
         }
     }
