@@ -8,6 +8,22 @@
 
 @push('script-page')
     <script>
+        function copyApiUrl(inputId) {
+            var copyText = document.getElementById(inputId);
+            if (copyText) {
+                copyText.select();
+                copyText.setSelectionRange(0, 99999);
+                navigator.clipboard.writeText(copyText.value).then(function() {
+                    if (typeof show_toastr === 'function') {
+                        show_toastr('Success', '{{ __("URL copied to clipboard successfully!") }}', 'success');
+                    } else {
+                        alert('{{ __("URL copied to clipboard successfully!") }}');
+                    }
+                });
+            }
+        }
+    </script>
+    <script>
         $('.colorPicker').on('click', function(e) {
 
             $('body').removeClass('custom-color');
@@ -380,6 +396,10 @@
                             </a>
                             <a href="#pwa-settings"
                                 class="list-group-item list-group-item-action border-0">{{ __('PWA Settings') }}
+                                <div class="float-end"><i class="ti ti-chevron-right"></i></div>
+                            </a>
+                            <a href="#company-career-settings" id="company-career-tab"
+                                class="list-group-item list-group-item-action border-0">{{ __('Company Career Settings') }}
                                 <div class="float-end"><i class="ti ti-chevron-right"></i></div>
                             </a>
                             {{-- <a href="#hmrc-settings" id="hmrc-setting-tab"
@@ -4150,11 +4170,137 @@
                                     </div>
                                 </div>
 
-                                <div class="card-footer text-end">
+                                 <div class="card-footer text-end">
                                     <input type="submit" value="{{ __('Save Changes') }}"
                                         class="btn-submit btn btn-primary">
                                 </div>
                                 {{ Form::close() }}
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- ═══ Company Career Settings ═══ --}}
+                    @php
+                        $allCompanies = \App\Models\User::where('type', 'company')->get();
+                        $allActiveJobs = \App\Models\Job::where('status', 'active')->with(['createdBy', 'branches', 'categories'])->get();
+                        $globalCareerPageUrl = url('/openings-job');
+                        $globalCareerApiUrl  = url('/api/career/job');
+                    @endphp
+                    <div class="mt-4" id="company-career-settings">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="mb-1">{{ __('Global Career Page & API Settings') }}</h5>
+                                        <small class="text-muted font-weight-bold">
+                                            {{ __('Single URL displaying all active jobs posted by all registered companies.') }}
+                                        </small>
+                                    </div>
+                                    <span class="badge bg-primary px-3 py-2 text-white">
+                                        <i class="ti ti-briefcase me-1"></i> {{ count($allActiveJobs) }} {{ __('Active Jobs') }}
+                                    </span>
+                                </div>
+
+                                <div class="card-body">
+                                    {{-- Global URL Banner Cards --}}
+                                    <div class="row g-3 mb-4">
+                                        {{-- Global Career Page URL Card --}}
+                                        <div class="col-md-12">
+                                            <div class="card bg-light-primary border border-primary border-opacity-25 mb-0">
+                                                <div class="card-body p-3">
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <div class="avatar avatar-sm bg-primary text-white rounded-3 me-2 d-flex align-items-center justify-content-center">
+                                                            <i class="ti ti-world fs-5"></i>
+                                                        </div>
+                                                        <h6 class="fw-bold mb-0 text-primary">{{ __('Main Public Career Page URL') }}</h6>
+                                                    </div>
+                                                    <p class="text-muted small mb-2">{{ __('All active jobs from all companies are displayed on this career page.') }}</p>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control bg-white fw-semibold" readonly value="{{ $globalCareerPageUrl }}" id="global-career-page-url">
+                                                        <button class="btn btn-primary" onclick="copyApiUrl('global-career-page-url')" type="button">
+                                                            <i class="ti ti-copy me-1"></i> {{ __('Copy URL') }}
+                                                        </button>
+                                                        <a href="{{ $globalCareerPageUrl }}" target="_blank" class="btn btn-outline-primary" title="{{ __('Open Career Page') }}">
+                                                            <i class="ti ti-external-link"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {{-- All Companies Active Jobs List --}}
+                                    <div class="d-flex justify-content-between align-items-center mt-4 pt-2 mb-3">
+                                        <h6 class="fw-bold mb-0 text-dark"><i class="ti ti-list-check me-1 text-primary"></i> {{ __('Active Openings List Across All Companies') }}</h6>
+                                        <small class="text-muted">{{ __('Total Active:') }} {{ count($allActiveJobs) }} {{ __('Jobs') }}</small>
+                                    </div>
+
+                                    <div class="table-responsive mt-3">
+                                        <table class="table table-hover align-middle mb-0" id="pc-dt-company-career">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>{{ __('Job Title') }}</th>
+                                                    <th>{{ __('Company') }}</th>
+                                                    <th>{{ __('Department / Branch') }}</th>
+                                                    <th>{{ __('Positions') }}</th>
+                                                    <th>{{ __('Direct Job Link') }}</th>
+                                                    <th class="text-end">{{ __('Action') }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @forelse ($allActiveJobs as $index => $job)
+                                                    @php
+                                                        $jobUrl = url('/job/requirement/' . $job->code . '/en');
+                                                        $compName = !empty($job->createdBy) ? ($job->createdBy->company_name ?: $job->createdBy->name) : 'Company';
+                                                    @endphp
+                                                    <tr>
+                                                        <td>{{ $index + 1 }}</td>
+                                                        <td>
+                                                            <h6 class="mb-0 fw-semibold text-dark">{{ $job->title }}</h6>
+                                                            <small class="text-muted">Code: {{ $job->code }}</small>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-light-primary text-primary fw-semibold px-2 py-1">
+                                                                <i class="ti ti-building me-1"></i> {{ $compName }}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-light-secondary text-secondary">
+                                                                {{ !empty($job->categories) ? $job->categories->title : '-' }}
+                                                            </span>
+                                                            <small class="text-muted ms-1">({{ !empty($job->branches) ? $job->branches->name : '-' }})</small>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-light-success text-success">
+                                                                {{ $job->position }} {{ __('Positions') }}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <div class="input-group input-group-sm" style="max-width: 280px;">
+                                                                <input type="text" class="form-control bg-white" readonly value="{{ $jobUrl }}" id="job-url-{{ $job->id }}">
+                                                                <button class="btn btn-outline-primary" onclick="copyApiUrl('job-url-{{ $job->id }}')" type="button" title="{{ __('Copy Direct Job Link') }}">
+                                                                    <i class="ti ti-copy"></i>
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <a href="{{ $jobUrl }}" target="_blank" class="btn btn-sm btn-icon btn-light-primary" data-bs-toggle="tooltip" title="{{ __('View Job Requirement Page') }}">
+                                                                <i class="ti ti-external-link"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                @empty
+                                                    <tr>
+                                                        <td colspan="7" class="text-center text-muted py-4">
+                                                            {{ __('No active job openings found.') }}
+                                                        </td>
+                                                    </tr>
+                                                @endforelse
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

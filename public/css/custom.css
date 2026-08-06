@@ -1526,3 +1526,126 @@ body.theme-10 .information-tab {
 .is-browser-fullscreen .fc-view-harness {
     height: calc(100vh - 200px) !important;
 }
+
+/* ═══ Global Career Page Styles ═══ */
+.career-header-section {
+    padding: 30px 0 15px;
+}
+.job-item-card {
+    background: #ffffff;
+    border: 1px solid #edf2f7;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+.job-item-card:hover {
+    border-color: rgba(var(--bs-primary-rgb), 0.35);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+    transform: translateY(-2px);
+}
+.job-icon-box {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    background: rgba(var(--bs-primary-rgb), 0.08);
+    color: var(--bs-primary);
+    flex-shrink: 0;
+}
+.badge-level-gray {
+    background: #f1f3f5;
+    color: #6c757d;
+    font-weight: 600;
+    font-size: 0.82rem;
+    padding: 6px 14px;
+    border-radius: 20px;
+}
+.filter-card {
+    background: #ffffff;
+    border: 1px solid #edf2f7;
+    border-radius: 14px;
+    padding: 14px 18px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+.filter-card .form-control,
+.filter-card .form-select,
+.filter-card .input-group-text {
+    font-size: 0.875rem !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    border-radius: 10px !important;
+}
+.filter-card .input-group .form-control {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+}
+.filter-card .input-group .input-group-text {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+.filter-card .btn-sm {
+    min-height: 38px !important;
+    max-height: 38px !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+}
+@media (max-width: 767.98px) {
+    .career-header-section h1 {
+        font-size: 2rem !important;
+    }
+    .filter-card {
+        padding: 12px 14px;
+    }
+    .filter-card .form-control,
+    .filter-card .form-select,
+    .filter-card .input-group-text,
+    .filter-card .btn-sm {
+        font-size: 0.83rem !important;
+        min-height: 36px !important;
+        max-height: 36px !important;
+    }
+}
+.custom-sort-select {
+    border: 1px solid #e2e8f0 !important;
+    background-color: #ffffff !important;
+    color: #2d3748 !important;
+    border-radius: 10px !important;
+    padding: 6px 30px 6px 14px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.2s ease-in-out !important;
+}
+.custom-sort-select:hover {
+    border-color: rgba(var(--bs-primary-rgb), 0.4) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+}
+.custom-sort-select:focus {
+    border-color: var(--bs-primary) !important;
+    box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), 0.15) !important;
+    outline: none !important;
+}
+.pagination .page-item .page-link {
+    border-radius: 10px !important;
+    margin: 0 4px !important;
+    color: #4a5568 !important;
+    font-weight: 600 !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 8px 16px !important;
+    transition: all 0.2s ease !important;
+}
+.pagination .page-item.active .page-link {
+    background-color: var(--bs-primary) !important;
+    border-color: var(--bs-primary) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12) !important;
+}
+.pagination .page-item .page-link:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
+    color: var(--bs-primary) !important;
+}

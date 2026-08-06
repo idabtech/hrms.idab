@@ -245,6 +245,7 @@ Route::get('/check', [HomeController::class, 'check'])->middleware(
 );
 Route::get('/', [HomeController::class, 'index'])->name('home')->middleware(['XSS']);
 
+Route::get('openings-job', [JobController::class, 'globalCareer'])->name('global.career');
 Route::get('career/job', [\App\Http\Controllers\Api\CareerApiController::class, 'getAllJobs'])->name('career.job');
 Route::get('career/{id}/{lang}', [JobController::class, 'career'])->name('career');
 Route::get('job/requirement/{code}/{lang}', [JobController::class, 'jobRequirement'])->name('job.requirement');
