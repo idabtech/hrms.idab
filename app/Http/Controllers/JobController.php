@@ -214,6 +214,10 @@ class JobController extends Controller
 
     public function career(Request $request, $id, $lang)
     {
+        if ($request->wantsJson() || $request->query('format') == 'json') {
+            return (new \App\Http\Controllers\Api\CareerApiController)->getCareerJobs($request, $id, $lang);
+        }
+
         $jobs = Job::where('created_by', $id)->where('status', 'active')->with('createdBy');
 
         if ($request->filled('search')) {

@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\EmployeeRegisterController;
 use App\Http\Controllers\Api\ShiftController;
 use App\Http\Controllers\Api\PaySlipController as ApiPaySlipController;
+use App\Http\Controllers\Api\CareerApiController;
 use App\Http\Controllers\EmployeeController;
 
 /*
@@ -28,6 +29,9 @@ Route::post('attendance-requests', [AttendanceRequestController::class, 'store']
 Route::post('attendanceemployee/attendance', [AttendanceEmployeeController::class, 'attendance'])->name('attendanceemployee.attendance')->middleware(['auth', 'XSS', 'throttle:1,1']);
 Route::post('company/register', [RegisteredUserController::class, 'companyStore'])->name('company.register');
 Route::post('employee/register', [RegisteredUserController::class, 'employeeStore'])->name('employee.register');
+
+// Public Career API (No Auth Token required)
+Route::get('career/{id}/{lang?}', [CareerApiController::class, 'getCareerJobs'])->name('api.career');
 
 Route::post('employee/simple-register', [EmployeeRegisterController::class, 'store'])
     ->middleware(['auth:sanctum'])
