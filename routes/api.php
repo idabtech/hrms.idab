@@ -31,6 +31,7 @@ Route::post('company/register', [RegisteredUserController::class, 'companyStore'
 Route::post('employee/register', [RegisteredUserController::class, 'employeeStore'])->name('employee.register');
 
 // Public Career API (No Auth Token required)
+Route::get('career/job', [CareerApiController::class, 'getAllJobs'])->name('api.career.alljobs');
 Route::get('career/{id}/{lang?}', [CareerApiController::class, 'getCareerJobs'])->name('api.career');
 
 Route::post('employee/simple-register', [EmployeeRegisterController::class, 'store'])
