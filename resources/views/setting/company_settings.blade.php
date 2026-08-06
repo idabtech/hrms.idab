@@ -2238,50 +2238,38 @@ $lang = \App\Models\Utility::getValByName('default_language');
                         <div class="card-header card-body">
                             <div class="row text-xs">
                                 <div class="row">
-                                    <p class="col-4">
-                                        {{ __('Applicant Name') }}
-                                        : <span class="pull-end text-primary">{applicant_name}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{applicant_name}', 'offer_letter_content')" style="cursor: pointer;">
+                                        {{ __('Applicant Name') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{applicant_name}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Company Name') }} :
-                                        <span class="pull-right text-primary">{app_name}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{app_name}', 'offer_letter_content')" style="cursor: pointer;">
+                                        {{ __('Company Name') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{app_name}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Job title') }} :
-                                        <span class="pull-right text-primary">{job_title}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{job_title}', 'offer_letter_content')" style="cursor: pointer;">
+                                        {{ __('Job title') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{job_title}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Job type') }} :
-                                        <span class="pull-right text-primary">{job_type}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{job_type}', 'offer_letter_content')" style="cursor: pointer;">
+                                        {{ __('Job type') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{job_type}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Proposed Start Date') }}
-                                        : <span class="pull-right text-primary">{start_date}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{start_date}', 'offer_letter_content')" style="cursor: pointer;">
+                                        {{ __('Proposed Start Date') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{start_date}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Working Location') }}
-                                        : <span class="pull-right text-primary">{workplace_location}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{workplace_location}', 'offer_letter_content')" style="cursor: pointer;">
+                                        {{ __('Working Location') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{workplace_location}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Days Of Week') }} :
-                                        <span class="pull-right text-primary">{days_of_week}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{days_of_week}', 'offer_letter_content')" style="cursor: pointer;">
+                                        {{ __('Days Of Week') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{days_of_week}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Salary') }} :
-                                        <span class="pull-right text-primary">{salary}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{salary}', 'offer_letter_content')" style="cursor: pointer;">
+                                        {{ __('Salary') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{salary}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Salary Type') }} :
-                                        <span class="pull-right text-primary">{salary_type}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{salary_type}', 'offer_letter_content')" style="cursor: pointer;">
+                                        {{ __('Salary Type') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{salary_type}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Salary Duration') }}
-                                        : <span class="pull-end text-primary">{salary_duration}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{salary_duration}', 'offer_letter_content')" style="cursor: pointer;">
+                                        {{ __('Salary Duration') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{salary_duration}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Offer Expiration Date') }}
-                                        : <span
-                                            class="pull-right text-primary">{offer_expiration_date}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{offer_expiration_date}', 'offer_letter_content')" style="cursor: pointer;">
+                                        {{ __('Offer Expiration Date') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{offer_expiration_date}</span>
                                     </p>
                                 </div>
                             </div>
@@ -2294,7 +2282,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                 {{ Form::open(['route' => ['offerlatter.update', $offerlang], 'method' => 'post']) }}
                 <div class="form-group col-12">
                     {{ Form::label('content', __(' Format'), ['class' => 'form-label text-dark']) }}
-                    <textarea name="content" class="form-control summernote-simple" id="content" rows="15">
+                    <textarea name="content" class="form-control summernote-simple" id="offer_letter_content" rows="15">
                     {{ old('content', isset($currOfferletterLang->content) ? $currOfferletterLang->content : '') }}</textarea>
                 </div>
             </div>
@@ -2352,45 +2340,35 @@ $lang = \App\Models\Utility::getValByName('default_language');
                         <div class="card-header card-body">
                             <div class="row text-xs">
                                 <div class="row">
-                                    <p class="col-4">
-                                        {{ __('Applicant Name') }} :
-                                        <span class="pull-end text-primary">{date}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{date}', 'joining_letter_content')" style="cursor: pointer;">
+                                        {{ __('Date') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{date}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Company Name') }} :
-                                        <span class="pull-right text-primary">{app_name}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{app_name}', 'joining_letter_content')" style="cursor: pointer;">
+                                        {{ __('Company Name') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{app_name}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Employee Name') }} :
-                                        <span class="pull-right text-primary">{employee_name}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{employee_name}', 'joining_letter_content')" style="cursor: pointer;">
+                                        {{ __('Employee Name') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{employee_name}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Address') }} : <span
-                                            class="pull-right text-primary">{address}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{address}', 'joining_letter_content')" style="cursor: pointer;">
+                                        {{ __('Address') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{address}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Designation') }} :
-                                        <span class="pull-right text-primary">{designation}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{designation}', 'joining_letter_content')" style="cursor: pointer;">
+                                        {{ __('Designation') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{designation}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Start Date') }} : <span
-                                            class="pull-right text-primary">{start_date}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{start_date}', 'joining_letter_content')" style="cursor: pointer;">
+                                        {{ __('Start Date') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{start_date}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Branch') }} : <span
-                                            class="pull-right text-primary">{branch}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{branch}', 'joining_letter_content')" style="cursor: pointer;">
+                                        {{ __('Branch') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{branch}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Start Time') }} : <span
-                                            class="pull-end text-primary">{start_time}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{start_time}', 'joining_letter_content')" style="cursor: pointer;">
+                                        {{ __('Start Time') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{start_time}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('End Time') }} : <span
-                                            class="pull-right text-primary">{end_time}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{end_time}', 'joining_letter_content')" style="cursor: pointer;">
+                                        {{ __('End Time') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{end_time}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Number of Hours') }} :
-                                        <span class="pull-right text-primary">{total_hours}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{total_hours}', 'joining_letter_content')" style="cursor: pointer;">
+                                        {{ __('Number of Hours') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{total_hours}</span>
                                     </p>
                                 </div>
                             </div>
@@ -2403,7 +2381,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                 {{ Form::open(['route' => ['joiningletter.update', $joininglang], 'method' => 'post']) }}
                 <div class="form-group col-12">
                     {{ Form::label('content', __(' Format'), ['class' => 'form-label text-dark']) }}
-                    <textarea name="content" class="form-control summernote-simple" id="content" rows="15">
+                    <textarea name="content" class="form-control summernote-simple" id="joining_letter_content" rows="15">
                     {{ old('content', isset($currjoiningletterLang->content) ? $currjoiningletterLang->content : '') }}</textarea>
                 </div>
 
@@ -2466,41 +2444,32 @@ $lang = \App\Models\Utility::getValByName('default_language');
                         <div class="card-header card-body">
                             <div class="row text-xs">
                                 <div class="row">
-                                    <p class="col-4">
-                                        {{ __('Company Name') }} :
-                                        <span class="pull-right text-primary">{app_name}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{app_name}', 'experience_certificate_content')" style="cursor: pointer;">
+                                        {{ __('Company Name') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{app_name}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Employee Name') }} :
-                                        <span class="pull-right text-primary">{employee_name}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{employee_name}', 'experience_certificate_content')" style="cursor: pointer;">
+                                        {{ __('Employee Name') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{employee_name}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Date of Issuance') }} :
-                                        <span class="pull-right text-primary">{date}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{date}', 'experience_certificate_content')" style="cursor: pointer;">
+                                        {{ __('Date of Issuance') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{date}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Designation') }} :
-                                        <span class="pull-right text-primary">{designation}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{designation}', 'experience_certificate_content')" style="cursor: pointer;">
+                                        {{ __('Designation') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{designation}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Start Date') }} : <span
-                                            class="pull-right text-primary">{start_date}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{start_date}', 'experience_certificate_content')" style="cursor: pointer;">
+                                        {{ __('Start Date') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{start_date}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Branch') }} : <span
-                                            class="pull-right text-primary">{branch}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{branch}', 'experience_certificate_content')" style="cursor: pointer;">
+                                        {{ __('Branch') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{branch}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Start Time') }} : <span
-                                            class="pull-end text-primary">{start_time}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{start_time}', 'experience_certificate_content')" style="cursor: pointer;">
+                                        {{ __('Start Time') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{start_time}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('End Time') }} : <span
-                                            class="pull-right text-primary">{end_time}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{end_time}', 'experience_certificate_content')" style="cursor: pointer;">
+                                        {{ __('End Time') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{end_time}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Number of Hours') }} :
-                                        <span class="pull-right text-primary">{total_hours}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{total_hours}', 'experience_certificate_content')" style="cursor: pointer;">
+                                        {{ __('Number of Hours') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{total_hours}</span>
                                     </p>
                                 </div>
                             </div>
@@ -2513,9 +2482,8 @@ $lang = \App\Models\Utility::getValByName('default_language');
                 {{ Form::open(['route' => ['experiencecertificate.update', $explang], 'method' => 'post']) }}
                 <div class="form-group col-12">
                     {{ Form::label('content', __(' Format'), ['class' => 'form-label text-dark']) }}
-                    <textarea name="content" class="form-control summernote-simple" id="content" rows="15">
-                    {{ old('content', isset($curr_exp_cetificate_Lang->content) ? $curr_exp_cetificate_Lang->content : '') }}</textarea>
-
+                    <textarea name="content" class="form-control summernote-simple" id="experience_certificate_content" rows="15">
+                    {{ old('content', isset($currexperiencecertificateLang->content) ? $currexperiencecertificateLang->content : '') }}</textarea>
                 </div>
 
             </div>
@@ -2573,21 +2541,17 @@ $lang = \App\Models\Utility::getValByName('default_language');
                         <div class="card-header card-body">
                             <div class="row text-xs">
                                 <div class="row">
-                                    <p class="col-4">
-                                        {{ __('Date') }} : <span
-                                            class="pull-end text-primary">{date}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{date}', 'noc_content')" style="cursor: pointer;">
+                                        {{ __('Date') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{date}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Company Name') }} :
-                                        <span class="pull-right text-primary">{app_name}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{app_name}', 'noc_content')" style="cursor: pointer;">
+                                        {{ __('Company Name') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{app_name}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Employee Name') }} :
-                                        <span class="pull-right text-primary">{employee_name}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{employee_name}', 'noc_content')" style="cursor: pointer;">
+                                        {{ __('Employee Name') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{employee_name}</span>
                                     </p>
-                                    <p class="col-4">
-                                        {{ __('Designation') }} :
-                                        <span class="pull-right text-primary">{designation}</span>
+                                    <p class="col-4 mb-2" onclick="insertPlaceholderTag('{designation}', 'noc_content')" style="cursor: pointer;">
+                                        {{ __('Designation') }} : <span class="badge bg-light-primary text-primary border border-primary px-2 py-1">{designation}</span>
                                     </p>
                                 </div>
                             </div>
@@ -2600,7 +2564,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                 <div class="form-group col-12">
                     {{ Form::label('content', __(' Format'), ['class' => 'form-label text-dark']) }}
 
-                    <textarea name="content" class="form-control summernote-simple" id="content" rows="15">
+                    <textarea name="content" class="form-control summernote-simple" id="noc_content" rows="15">
                     {{ old('content', isset($currnocLang->content) ? $currnocLang->content : '') }}</textarea>
                 </div>
 
@@ -3492,6 +3456,84 @@ function syncIdabEmployeesNow(btn) {
 }
 $(document).on('click', '#btn-sync-idab-employees', function() {
     syncIdabEmployeesNow(this);
+});
+
+// ── Save Textarea Cursor Position ─────────────────────────────────────
+$(document).on('keyup click focus input select', '#offer-letter-settings textarea, #joining-letter-settings textarea, #experience-certificate-settings textarea, #noc-settings textarea, textarea', function() {
+    if (typeof this.selectionStart === 'number') {
+        this.lastPos = this.selectionStart;
+    }
+});
+
+// ── Global Function: Insert Placeholder Tag at Caret Position ──────────
+function insertPlaceholderTag(tagText, targetEditorId) {
+    if (!tagText) return;
+
+    var el = null;
+
+    // 1. Target exact textarea by specific ID if passed
+    if (targetEditorId) {
+        el = document.getElementById(targetEditorId);
+    }
+
+    // 2. Fallback to visible textarea
+    if (!el) {
+        var $visible = $('textarea[name="content"]:visible, textarea:visible').first();
+        if ($visible.length) el = $visible[0];
+    }
+
+    // 3. Ultimate Fallback
+    if (!el) {
+        var $any = $('textarea[name="content"], textarea').first();
+        if ($any.length) el = $any[0];
+    }
+
+    if (!el) return;
+
+    var $textarea = $(el);
+
+    // Check if Summernote is active
+    var $note = $textarea.siblings('.note-editor');
+    if (!$note.length) $note = $textarea.parent().find('.note-editor');
+
+    if ($note.length > 0 && typeof $.fn.summernote !== 'undefined') {
+        try {
+            $textarea.summernote('focus');
+            $textarea.summernote('insertText', tagText);
+        } catch(err) {
+            var curCode = $textarea.summernote('code') || '';
+            $textarea.summernote('code', curCode + ' ' + tagText);
+        }
+    } else {
+        // Standard Textarea Caret Insertion
+        var val = el.value || '';
+        var start = (typeof el.selectionStart === 'number' && el.selectionStart >= 0) ? el.selectionStart : (typeof el.lastPos === 'number' ? el.lastPos : val.length);
+        var end = (typeof el.selectionEnd === 'number' && el.selectionEnd >= 0) ? el.selectionEnd : start;
+
+        var newVal = val.substring(0, start) + tagText + val.substring(end);
+        el.value = newVal;
+
+        var newPos = start + tagText.length;
+        if (typeof el.setSelectionRange === 'function') {
+            el.setSelectionRange(newPos, newPos);
+        } else {
+            el.selectionStart = newPos;
+            el.selectionEnd = newPos;
+        }
+        el.lastPos = newPos;
+
+        el.focus();
+        $(el).trigger('input').trigger('change');
+    }
+}
+
+// ── Universal Click Handler for Placeholder Tags ───────────────────────
+$(document).on('click', '.placeholder-tag, #offer-letter-settings p, #joining-letter-settings p, #experience-certificate-settings p, #noc-settings p, #offer-letter-settings span, #joining-letter-settings span, #experience-certificate-settings span, #noc-settings span', function(e) {
+    var rawText = $(this).attr('data-placeholder') || $(this).text() || '';
+    var match = rawText.match(/\{[a-zA-Z0-9_]+\}/);
+    if (!match) return;
+    e.preventDefault();
+    insertPlaceholderTag(match[0], this);
 });
 </script>
 @endsection

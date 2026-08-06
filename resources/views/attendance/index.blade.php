@@ -327,19 +327,36 @@
                                         <td class="{{ $attendance->isManualBy ? 'text-primary' : '' }}">{{ $attendance->total_tea_time ?? '00:00:00' }}</td>
                                         @php
                                             $breakReason = '';
-                                            if ($attendance->breaks) {
+                                            if (!empty($attendance->breaks)) {
                                                 $breaks = json_decode($attendance->breaks, true);
                                                 if (is_array($breaks)) {
+                                                    $reasons = [];
                                                     foreach ($breaks as $break) {
-                                                        if (isset($break['type']) && $break['type'] == 'lunch' && isset($break['reason']) && !empty($break['reason'])) {
-                                                            $breakReason = $break['reason'];
-                                                            break;
+                                                        if (!empty($break['reason'])) {
+                                                            $reasons[] = $break['reason'];
                                                         }
+                                                    }
+                                                    if (!empty($reasons)) {
+                                                        $breakReason = implode(', ', array_unique($reasons));
                                                     }
                                                 }
                                             }
                                         @endphp
-                                        <td class="{{ $attendance->isManualBy ? 'text-primary' : '' }}">{{ $breakReason }}</td>
+                                        <td class="{{ $attendance->isManualBy ? 'text-primary' : '' }}">
+                                            @if (!empty($breakReason))
+                                                @if (strlen($breakReason) > 20)
+                                                    <span data-bs-toggle="tooltip" data-bs-placement="top"
+                                                        data-bs-custom-class="tooltip-primary"
+                                                        title="{{ $breakReason }}" style="cursor: pointer;">
+                                                        {{ \Illuminate\Support\Str::limit($breakReason, 20) }}
+                                                    </span>
+                                                @else
+                                                    {{ $breakReason }}
+                                                @endif
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
                                         <td class="{{ $attendance->isManualBy ? 'text-primary' : '' }}">{{ $attendance->late }}</td>
                                         <td class="{{ $attendance->isManualBy ? 'text-primary' : '' }}">{{ $attendance->early_leaving }}</td>
                                         <td class="{{ $attendance->isManualBy ? 'text-primary' : '' }}">{{ $attendance->overtime }}</td>

@@ -81,13 +81,14 @@
 @section('content')
     <div class="row">
         <div class="col-xl-12">
-            <div class="row">
+            <div class="row g-4">
+                {{-- Personal Detail --}}
                 <div class="col-sm-12 col-md-6">
-                    <div class="card ">
+                    <div class="card h-100 mb-0">
                         <div class="card-body employee-detail-body fulls-card">
                             <h5>{{ __('Personal Detail') }}</h5>
                             <hr>
-                            <div class="row">
+                            <div class="row g-3">
                                 <div class="col-md-6">
                                     <div class="info text-sm">
                                         <strong class="font-bold">{{ __('Employee ID') }} : </strong>
@@ -140,13 +141,14 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-12 col-md-6">
 
-                    <div class="card h-100">
-                        <div class="card-body employee-detail-body fulls-card" style="height: auto !important;">
+                {{-- Company Detail --}}
+                <div class="col-sm-12 col-md-6">
+                    <div class="card h-100 mb-0">
+                        <div class="card-body employee-detail-body fulls-card">
                             <h5>{{ __('Company Detail') }}</h5>
                             <hr>
-                            <div class="row">
+                            <div class="row g-3">
                                 <div class="col-md-6">
                                     <div class="info text-sm">
                                         <strong class="font-bold">{{ __('Branch') }} : </strong>
@@ -173,24 +175,14 @@
                                         <span>{{ \Auth::user()->dateFormat($employee->company_doj) }}</span>
                                     </div>
                                 </div>
-
-                                {{-- <div class="col-md-6">
-                                    <div class="info text-sm">
-                                        <strong class="font-bold">{{ __('Employee Code') }} :</strong>
-                                        <span>{{ !empty($employee->biometric_emp_id) ? $employee->biometric_emp_id : '' }}</span>
-                                    </div>
-                                </div> --}}
-
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="row">
+                {{-- Document Detail --}}
                 <div class="col-sm-12 col-md-6">
-
-                    <div class="card h-100">
+                    <div class="card h-100 mb-0">
                         <div class="card-body employee-detail-body fulls-card">
                             <h5>{{ __('Document Detail') }}</h5>
                             <hr>
@@ -245,15 +237,15 @@
                                         No Document Type Added.!
                                     </div>
                                 @endif
-
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-12 col-md-6">
 
-                    <div class="card h-100">
-                        <div class="card-body employee-detail-body fulls-card" style="height: auto !important;">
+                {{-- Bank Account Detail --}}
+                <div class="col-sm-12 col-md-6">
+                    <div class="card h-100 mb-0">
+                        <div class="card-body employee-detail-body fulls-card">
                             <h5>{{ __('Bank Account Detail') }}</h5>
                             <hr>
                             <div class="row g-3">

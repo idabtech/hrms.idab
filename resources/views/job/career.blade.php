@@ -1,5 +1,5 @@
 @php
-$logo = \App\Models\Utility::get_file('uploads/logo/');
+ $logo = \App\Models\Utility::get_file('uploads/logo/');
 $setting = App\Models\Utility::colorset();
 $color = !empty($setting['theme_color']) ? $setting['theme_color'] : 'theme-2';
 $SITE_RTL = \App\Models\Utility::getValByName('SITE_RTL');
@@ -326,4 +326,3 @@ $themeColor = $color;
 
 </body>
 
-</html>
