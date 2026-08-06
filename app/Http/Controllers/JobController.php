@@ -207,9 +207,56 @@ class JobController extends Controller
         $application = JobApplication::where('job', $job->id)->get()->pluck('id');
         JobApplicationNote::whereIn('application_id', $application)->delete();
         JobApplication::where('job', $job->id)->delete();
-        $job->delete();
-
         return redirect()->route('job.index')->with('success', __('Job  successfully deleted.'));
+    }
+
+    public function globalCareer(Request $request)
+    {
+        $lang = $request->get('lang', 'en');
+        if ($request->wantsJson() || $request->query('format') == 'json') {
+            return (new \App\Http\Controllers\Api\CareerApiController)->getAllJobs($request);
+        }
+
+        $sort = $request->get('sort', 'newest');
+
+        $jobs = Job::where('status', 'active')->with(['createdBy', 'branches', 'categories']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $jobs   = $jobs->where(function ($query) use ($search) {
+                $query->where('title', 'LIKE', "%{$search}%")
+                    ->orWhere('position', 'LIKE', "%{$search}%")
+                    ->orWhere('skill', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('branch')) {
+            $jobs = $jobs->where('branch', $request->branch);
+        }
+
+        if ($request->filled('category')) {
+            $jobs = $jobs->where('category', $request->category);
+        }
+
+        if ($sort === 'oldest') {
+            $jobs = $jobs->orderBy('created_at', 'asc');
+        } elseif ($sort === 'title_asc') {
+            $jobs = $jobs->orderBy('title', 'asc');
+        } else {
+            $jobs = $jobs->orderBy('created_at', 'desc');
+        }
+
+        $jobs = $jobs->paginate(6)->withQueryString();
+
+        \Session::put('lang', $lang);
+        \App::setLocale($lang);
+
+        $branches   = Branch::pluck('name', 'id');
+        $categories = JobCategory::pluck('title', 'id');
+        $currantLang = $lang;
+
+        return view('job.global_career', compact('jobs', 'currantLang', 'branches', 'categories', 'sort'));
     }
 
     public function career(Request $request, $id, $lang)
