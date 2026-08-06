@@ -53,7 +53,21 @@
                                                         {{ ucfirst($rule->rate_type) }}
                                                     </span>
                                                 </td>
-                                                <td>{{ $rule->description ?: '-' }}</td>
+                                                <td>
+                                                    @if (!empty($rule->description))
+                                                        @if (strlen($rule->description) > 30)
+                                                            <span data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                data-bs-custom-class="tooltip-primary"
+                                                                title="{{ $rule->description }}" style="cursor: pointer;">
+                                                                {{ \Illuminate\Support\Str::limit($rule->description, 30) }}
+                                                            </span>
+                                                        @else
+                                                            {{ $rule->description }}
+                                                        @endif
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </td>
                                                 <td>
                                                     @if ($rule->is_active)
                                                         <span class="badge bg-success">{{ __('Active') }}</span>
