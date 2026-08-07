@@ -50,16 +50,21 @@
     <meta property="twitter:image"
         content="{{ isset($meta_logo) && !empty(asset('storage/uploads/meta/' . $meta_logo)) ? asset('storage/uploads/meta/' . $meta_logo) : 'hrmgo.png' }}">
 
-
     <link rel="icon"
         href="{{ $logo . '/' . (isset($company_favicon) && !empty($company_favicon) ? $company_favicon .'?'.time() : 'favicon.png' .'?'.time()) }}"
         type="image/x-icon" />
+
+    <!-- Google Fonts: Comfortaa & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="{{ asset('assets/fonts/tabler-icons.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/site.css') }}" id="stylesheet">
     @if (isset($setting['cust_darklayout']) && $setting['cust_darklayout'] == 'on')
         <link rel="stylesheet" href="{{ asset('assets/css/style-dark.css') }}">
     @else
-        <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}"id="main-style-link">
+        <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}" id="main-style-link">
     @endif
 
     @if (isset($setting['cust_darklayout']) && $setting['cust_darklayout'] == 'on')
@@ -72,103 +77,146 @@
         }
     </style>
     <link rel="stylesheet" href="{{ asset('css/custom-color.css') }}">
-
     <link rel="stylesheet" href="{{ asset('css/custom.css') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <style>
         body.job-page {
-            background: #f3f6fb;
-            color: #1f2a44;
+            background-color: #F9FAFB !important;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+            color: #1E293B !important;
         }
         .job-wrapper {
-            padding: 60px 0;
+            padding: 40px 0;
         }
         .apply-job-wrapper {
-            background: #ffffff;
-            border-radius: 24px;
-            box-shadow: 0 24px 60px rgba(31, 41, 55, 0.08);
-            padding: 40px;
+            background: #ffffff !important;
+            border: 1px solid #F1F5F9 !important;
+            border-radius: 20px !important;
+            box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05) !important;
+            padding: 40px !important;
+        }
+        .btn-back-link {
+            display: inline-flex;
+            align-items: center;
+            color: #64748B;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 14px;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .btn-back-link:hover {
+            color: #5E2590;
         }
         .job-headline {
-            font-size: 2.35rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 0.8rem;
-            color: #112341;
+            font-family: 'Comfortaa', cursive, sans-serif !important;
+            font-size: 2.2rem !important;
+            font-weight: 700 !important;
+            line-height: 1.3 !important;
+            color: #1E293B !important;
+            margin-bottom: 1rem !important;
         }
         .job-badges span {
-            font-size: 0.85rem;
-            font-weight: 600;
-            background: rgba(49, 130, 206, 0.1);
-            color: #175cd3;
-            border-radius: 999px;
-            padding: 0.55rem 0.95rem;
-            margin-bottom: 0.5rem;
+            font-family: 'Comfortaa', cursive, sans-serif !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            background-color: #F3F0FF !important;
+            color: #5E2590 !important;
+            border-radius: 9999px !important;
+            padding: 6px 16px !important;
         }
         .job-meta-card {
-            background: #f8fbff;
-            border: 1px solid #e5e7eb;
-            border-radius: 20px;
-            padding: 24px;
+            background: #ffffff !important;
+            border: 1px solid #F1F5F9 !important;
+            border-radius: 16px !important;
+            box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05) !important;
+            padding: 28px !important;
         }
         .job-meta-card h5 {
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
+            font-family: 'Comfortaa', cursive, sans-serif !important;
+            font-size: 1.15rem !important;
+            font-weight: 700 !important;
+            color: #1E293B !important;
+            margin-bottom: 1.25rem !important;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #F3F0FF;
         }
         .job-meta-card .meta-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.9rem 0;
-            border-bottom: 1px solid #e5e7eb;
+            padding: 0.85rem 0;
+            border-bottom: 1px solid #F1F5F9;
         }
         .job-meta-card .meta-item:last-child {
             border-bottom: none;
         }
         .job-meta-card .meta-item span:first-child {
-            color: #6b7280;
-            font-size: 0.95rem;
+            color: #64748B;
+            font-size: 0.9rem;
+            font-weight: 500;
         }
         .job-meta-card .meta-item span:last-child {
-            color: #111827;
+            color: #1E293B;
             font-weight: 600;
+            font-size: 0.95rem;
         }
         .job-section-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            border-bottom: 2px solid rgba(99, 102, 241, 0.15);
+            font-family: 'Comfortaa', cursive, sans-serif !important;
+            font-size: 1.3rem !important;
+            font-weight: 700 !important;
+            color: #1E293B !important;
+            margin-bottom: 1.25rem !important;
+            border-bottom: 2px solid #5E2590;
             display: inline-block;
             padding-bottom: 0.35rem;
         }
         .job-content-block {
-            margin-bottom: 32px;
+            margin-bottom: 36px;
         }
         .job-content-block p,
         .job-content-block ul {
-            font-size: 1rem;
-            line-height: 1.8;
-            color: #374151;
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0.98rem !important;
+            line-height: 1.8 !important;
+            color: #475569 !important;
         }
-        .job-content-block ul {
-            padding-left: 1.25rem;
-        }
-        .job-content-block ul li {
-            margin-bottom: 0.75rem;
-        }
-        .apply-cta {
+        .btn-apply-purple {
+            background-color: #5E2590 !important;
+            border-color: #5E2590 !important;
+            color: #ffffff !important;
+            font-family: 'Comfortaa', cursive, sans-serif !important;
+            font-weight: 700 !important;
+            font-size: 16px !important;
+            border-radius: 12px !important;
+            padding: 12px 32px !important;
+            transition: all 0.25s ease !important;
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            box-shadow: 0px 4px 12px rgba(94, 37, 144, 0.2) !important;
+            text-decoration: none !important;
+        }
+        .btn-apply-purple:hover {
+            background-color: #441668 !important;
+            border-color: #441668 !important;
+            color: #ffffff !important;
+            transform: translateY(-1px);
         }
     </style>
 </head>
 
-<body class="{{ $themeColor }} job-page">
+<body class="{{ $themeColor }} global-career-body job-page">
     <div class="job-wrapper">
         <div class="container">
             <div class="apply-job-wrapper">
+                <!-- Back Link -->
+                <div class="mb-4">
+                    <a href="{{ route('global.career') }}" class="btn-back-link">
+                        <i class="ti ti-arrow-left me-1 fs-6"></i> {{ __('Back to All Openings') }}
+                    </a>
+                </div>
+
                 <div class="row align-items-start gy-4">
                     <div class="col-lg-8">
                         <div class="mb-5">
@@ -178,16 +226,16 @@
                                     <span>{{ trim($skill) }}</span>
                                 @endforeach
                             </div>
-                            <div class="d-flex flex-wrap align-items-center gap-3 mb-4 text-secondary">
+                            <div class="d-flex flex-wrap align-items-center gap-3 mb-4 text-secondary fs-7" style="color: #64748B !important;">
                                 @if (!empty($job->branches) ? $job->branches->name : '')
-                                    <div><i class="ti ti-map-pin me-2"></i>{{ !empty($job->branches) ? $job->branches->name : '' }}</div>
+                                    <div><i class="ti ti-map-pin me-1" style="color: #5E2590;"></i>{{ !empty($job->branches) ? $job->branches->name : '' }}</div>
                                 @endif
                                 @if (!empty($job->job_type))
-                                    <div><i class="ti ti-briefcase me-2"></i>{{ ucfirst($job->job_type) }}</div>
+                                    <div><i class="ti ti-briefcase me-1" style="color: #5E2590;"></i>{{ ucfirst($job->job_type) }}</div>
                                 @endif
                             </div>
-                            <a href="{{ route('job.apply', [$job->code, $currantLang]) }}" class="btn btn-primary btn-lg rounded apply-cta">
-                                {{ __('Apply now') }} <i class="ti ti-send ms-2"></i>
+                            <a href="{{ route('job.apply', [$job->code, $currantLang]) }}" class="btn btn-apply-purple">
+                                {{ __('Apply now') }} <i class="ti ti-send ms-2 fs-6"></i>
                             </a>
                         </div>
 

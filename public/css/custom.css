@@ -1527,6 +1527,265 @@ body.theme-10 .information-tab {
     height: calc(100vh - 200px) !important;
 }
 
+/* ═══ Global Career Page Styles (allopen.html Design System) ═══ */
+body.global-career-body {
+    background-color: #F9FAFB !important;
+    font-family: 'Comfortaa', cursive, 'Inter', system-ui, -apple-system, sans-serif !important;
+    color: #1E293B !important;
+}
+
+.global-career-body .career-header-section {
+    padding: 30px 0 20px;
+}
+.global-career-body .career-header-section h1 {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+    font-weight: 800 !important;
+    font-size: 48px !important;
+    line-height: 48px !important;
+    color: #1E293B !important;
+    letter-spacing: -0.5px;
+}
+.global-career-body .career-header-section h1 span.text-purple-brand {
+    color: #5E2590 !important;
+    font-weight: 800 !important;
+}
+.global-career-body .career-header-section p {
+    font-family: 'Comfortaa', cursive, sans-serif !important;
+    font-size: 18px !important;
+    font-weight: 400 !important;
+    line-height: 28px !important;
+    color: #64748B !important;
+}
+
+/* Filter Card Container */
+.global-career-body .filter-card-container {
+    background: #ffffff !important;
+    border: 1px solid #F1F5F9 !important;
+    border-radius: 16px !important;
+    padding: 24px 28px !important;
+    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+.global-career-body .search-col-box {
+    flex: 1 1 280px;
+    min-width: 240px;
+}
+.global-career-body .filter-select-box {
+    flex: 0 0 200px;
+    min-width: 180px;
+}
+.global-career-body .search-input-group {
+    background-color: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+}
+.global-career-body .search-input-group .input-group-text {
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    color: #94A3B8 !important;
+    padding-left: 16px !important;
+    padding-right: 8px !important;
+}
+.global-career-body .search-input-group .form-control {
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    color: #1E293B !important;
+    box-shadow: none !important;
+    padding-left: 0 !important;
+}
+.global-career-body .search-input-group .form-control::placeholder {
+    color: #6B7280 !important;
+}
+.global-career-body .filter-select {
+    background-color: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    border-radius: 12px !important;
+    color: #1E293B !important;
+    box-shadow: none !important;
+}
+.global-career-body .btn-outline-purple {
+    border: 1px solid #E2E8F0 !important;
+    background-color: #ffffff !important;
+    color: #5E2590 !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    border-radius: 12px !important;
+    padding: 0 20px !important;
+    white-space: nowrap !important;
+    transition: all 0.2s ease !important;
+}
+.global-career-body .btn-outline-purple:hover {
+    background-color: #F3F0FF !important;
+    color: #5E2590 !important;
+}
+.global-career-body .btn-outline-gray {
+    border: 1px solid #E2E8F0 !important;
+    background-color: #ffffff !important;
+    color: #475569 !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    border-radius: 12px !important;
+    padding: 0 20px !important;
+    white-space: nowrap !important;
+    transition: all 0.2s ease !important;
+}
+.global-career-body .btn-outline-gray:hover {
+    background-color: #F8FAFC !important;
+    color: #1E293B !important;
+}
+.global-career-body .custom-sort-dropdown {
+    border: 1px solid #E2E8F0 !important;
+    background-color: #ffffff !important;
+    color: #1E293B !important;
+    font-family: 'Comfortaa', cursive, sans-serif !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    padding: 6px 32px 6px 14px !important;
+    font-size: 14px !important;
+}
+
+/* Job Cards List */
+.global-career-body .job-item-card {
+    background: #ffffff !important;
+    border: 1px solid #F1F5F9 !important;
+    border-radius: 16px !important;
+    padding: 21px 24px !important;
+    margin-bottom: 16px !important;
+    transition: all 0.25s ease !important;
+    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+.global-career-body .job-item-card:hover {
+    border-color: rgba(94, 37, 144, 0.35) !important;
+    box-shadow: 0px 6px 16px -2px rgba(94, 37, 144, 0.1) !important;
+    transform: translateY(-2px);
+}
+.global-career-body .job-icon-box-colorful {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+}
+.global-career-body .job-title-heading {
+    font-family: 'Comfortaa', cursive, sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 20px !important;
+    line-height: 28px !important;
+    color: #1E293B !important;
+}
+.global-career-body .hover-purple:hover {
+    color: #5E2590 !important;
+}
+.global-career-body .badge-cat-pill {
+    background-color: #F3F0FF !important;
+    color: #5E2590 !important;
+    font-family: 'Comfortaa', cursive, sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    line-height: 16px !important;
+    padding: 6px 16px !important;
+    border-radius: 9999px !important;
+}
+.global-career-body .job-meta-text {
+    font-family: 'Comfortaa', cursive, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    line-height: 20px !important;
+    color: #64748B !important;
+}
+
+/* Action Detail & Arrow Buttons */
+.global-career-body .btn-detail-purple {
+    background-color: #441668 !important;
+    border-color: #441668 !important;
+    color: #ffffff !important;
+    font-family: 'Comfortaa', cursive, sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    line-height: 24px !important;
+    border-radius: 12px !important;
+    padding: 12px 32px !important;
+    transition: all 0.25s ease !important;
+}
+.global-career-body .btn-detail-purple:hover {
+    background-color: #5E2590 !important;
+    border-color: #5E2590 !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+}
+.global-career-body .btn-circle-arrow {
+    width: 28px;
+    height: 28px;
+    border-radius: 50% !important;
+    background-color: #F1F5F9 !important;
+    border: none !important;
+    color: #6B7280 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    transition: all 0.2s ease !important;
+}
+.global-career-body .btn-circle-arrow:hover {
+    background-color: #5E2590 !important;
+    color: #ffffff !important;
+}
+
+/* Pagination Style */
+.global-career-body .pagination .page-item .page-link {
+    font-family: 'Inter', system-ui, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    margin: 0 4px !important;
+    color: #475569 !important;
+    border: 1px solid #E2E8F0 !important;
+    background-color: #ffffff !important;
+    padding: 9.5px 16px !important;
+    transition: all 0.2s ease !important;
+}
+.global-career-body .pagination .page-item.active .page-link {
+    background-color: #5E2590 !important;
+    border-color: #5E2590 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+.global-career-body .pagination .page-item .page-link:hover {
+    background-color: #F3F0FF !important;
+    color: #5E2590 !important;
+}
+
+@media (max-width: 767.98px) {
+    .global-career-body .career-header-section h1 {
+        font-size: 32px !important;
+        line-height: 38px !important;
+    }
+    .global-career-body .filter-card-container {
+        padding: 16px 16px !important;
+    }
+}
+
 /* ═══ Global Career Page Styles ═══ */
 .career-header-section {
     padding: 30px 0 15px;
