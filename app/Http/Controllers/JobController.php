@@ -265,7 +265,9 @@ class JobController extends Controller
             return (new \App\Http\Controllers\Api\CareerApiController)->getCareerJobs($request, $id, $lang);
         }
 
-        $jobs = Job::where('created_by', $id)->where('status', 'active')->with('createdBy');
+        $sort = $request->get('sort', 'newest');
+
+        $jobs = Job::where('created_by', $id)->where('status', 'active')->with(['createdBy', 'branches', 'categories']);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -283,6 +285,14 @@ class JobController extends Controller
 
         if ($request->filled('category')) {
             $jobs = $jobs->where('category', $request->category);
+        }
+
+        if ($sort === 'oldest') {
+            $jobs = $jobs->orderBy('created_at', 'asc');
+        } elseif ($sort === 'title_asc') {
+            $jobs = $jobs->orderBy('title', 'asc');
+        } else {
+            $jobs = $jobs->orderBy('created_at', 'desc');
         }
 
         $jobs = $jobs->get();
@@ -418,8 +428,11 @@ class JobController extends Controller
 
         $job = Job::where('code', $code)->first();
 
-        // $stage = JobStage::where('created_by',\Auth::user()->creatorId())->first();
-        $stage = JobStage::where('created_by', $job->created_by)->first();
+        $stage = JobStage::where('created_by', $job->created_by)->orderBy('order', 'asc')->first();
+        if (empty($stage)) {
+            Utility::jobStage($job->created_by);
+            $stage = JobStage::where('created_by', $job->created_by)->orderBy('order', 'asc')->first();
+        }
 
         $jobApplication                        = new JobApplication();
         $jobApplication->job                   = $job->id;
@@ -432,16 +445,18 @@ class JobController extends Controller
         $jobApplication->address               = $request->address;
         $jobApplication->country               = $request->country;
         $jobApplication->state                 = $request->state;
-        $jobApplication->stage                 = $stage->id ?? 1;
+        $jobApplication->stage                 = !empty($stage) ? $stage->id : 1;
         $jobApplication->city                  = $request->city;
         $jobApplication->zip_code              = $request->zip_code;
         $jobApplication->custom_question       = json_encode($request->question);
         $jobApplication->terms_condition_check = !empty($request->terms_condition_check) ? $request->terms_condition_check : '';
         $jobApplication->created_by            = $job->created_by;
 
+        $creatorId = \Auth::check() ? \Auth::user()->creatorId() : $job->created_by;
+
         if (!empty($request->profile)) {
             $image_size = $request->file('profile')->getSize();
-            $result = Utility::updateStorageLimit(\Auth::user()->creatorId(), $image_size);
+            $result = Utility::updateStorageLimit($creatorId, $image_size);
             if ($result == 1) {
                 $filenameWithExt = $request->file('profile')->getClientOriginalName();
                 $filename        = pathinfo($filenameWithExt, PATHINFO_FILENAME);
@@ -466,7 +481,7 @@ class JobController extends Controller
         if (!empty($request->resume)) {
 
             $image_size = $request->file('resume')->getSize();
-            $result = Utility::updateStorageLimit(\Auth::user()->creatorId(), $image_size);
+            $result = Utility::updateStorageLimit($creatorId, $image_size);
 
             if ($result == 1) {
                 $filenameWithExt1 = $request->file('resume')->getClientOriginalName();
@@ -491,8 +506,7 @@ class JobController extends Controller
         }
         $jobApplication->save();
 
-        // return redirect()->back()->with('success', __('Job application successfully send.'));
-        return redirect()->back()->with('success', __('Job application successfully send.') . ((isset($result) && $result != 1) ? '<br> <span class="text-danger">' . $result . '</span>' : ''));
+        return redirect()->back()->with('success', __('Your application submitted successfully.') . ((isset($result) && $result != 1) ? '<br> <span class="text-danger">' . $result . '</span>' : ''));
         // return redirect()->route('job-application.index')->with('success', __('Job application successfully send.'));
     }
 }

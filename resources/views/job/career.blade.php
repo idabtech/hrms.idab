@@ -53,6 +53,11 @@ $themeColor = $color;
         content="{{ isset($meta_logo) && !empty(asset('storage/uploads/meta/' . $meta_logo)) ? asset('storage/uploads/meta/' . $meta_logo) : 'hrmgo.png' }}">
 
 
+    <!-- Google Fonts: Comfortaa & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <link rel="icon"
         href="{{ $logo . '/' . (isset($company_favicon) && !empty($company_favicon) ? $company_favicon .'?'.time() : 'favicon.png' .'?'.time()) }}"
         type="image/x-icon" />
@@ -143,7 +148,7 @@ $themeColor = $color;
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 
-<body class="{{ $themeColor }}">
+<body class="{{ $themeColor }} global-career-body">
     <div class="job-wrapper">
         <div class="job-content">
             <section id="job-listings" class="placedjob-section">
@@ -229,43 +234,60 @@ $themeColor = $color;
                             </div>
                         </div>
                     </div>
-                    <div class="job-filter-bar mb-5">
-                        <form action="{{ route('career', [$id, $currantLang]) }}" method="get">
-                            <div class="row g-3 align-items-end">
-                                <div class="col-md-4">
-                                    <label class="form-label">{{ __('Search') }}</label>
-                                    <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="{{ __('Search jobs, skills, positions') }}">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">{{ __('Branch') }}</label>
-                                    <select name="branch" class="form-control">
-                                        <option value="">{{ __('All Branches') }}</option>
-                                        @foreach($branches as $key => $branchName)
-                                        <option value="{{ $key }}" {{ request('branch') == $key ? 'selected' : '' }}>{{ $branchName }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">{{ __('Category') }}</label>
-                                    <select name="category" class="form-control">
-                                        <option value="">{{ __('All Categories') }}</option>
-                                        @foreach($categories as $key => $categoryName)
-                                        <option value="{{ $key }}" {{ request('category') == $key ? 'selected' : '' }}>{{ $categoryName }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-2">
-                                    <div class="row d-flex justify-content-between">
-                                        <div class="col w-50">
-                                            <button type="submit" class="btn btn-primary">{{ __('Filter') }}</button>
-                                        </div>
-                                        <div class="col w-50">
-                                            @if(request()->filled('search') || request()->filled('branch') || request()->filled('category'))
-                                            <a href="{{ route('career', [$id, $currantLang]) }}" class="btn btn-outline-secondary">{{ __('Reset') }}</a>
-                                            @endif
-                                        </div>
+                    <!-- Filter Card Container -->
+                    <div class="filter-card-container mb-4">
+                        <form action="{{ route('career', [$id, $currantLang]) }}" method="get" id="career-filter-form">
+                            <div class="d-flex align-items-center flex-wrap gap-3 mb-3">
+                                <!-- Search Input -->
+                                <div class="search-col-box">
+                                    <div class="input-group search-input-group">
+                                        <span class="input-group-text">
+                                            <i class="ti ti-search fs-6"></i>
+                                        </span>
+                                        <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="{{ __('Search by job title, keyword or location') }}">
                                     </div>
+                                </div>
 
+                                <!-- Department Dropdown -->
+                                <div class="filter-select-box">
+                                    <select name="category" class="form-select filter-select" onchange="document.getElementById('career-filter-form').submit();">
+                                        <option value="">{{ __('Department') }}</option>
+                                        @foreach($categories as $key => $categoryName)
+                                            <option value="{{ $key }}" {{ request('category') == $key ? 'selected' : '' }}>{{ $categoryName }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- Location Dropdown -->
+                                <div class="filter-select-box">
+                                    <select name="branch" class="form-select filter-select" onchange="document.getElementById('career-filter-form').submit();">
+                                        <option value="">{{ __('Location') }}</option>
+                                        @foreach($branches as $key => $branchName)
+                                            <option value="{{ $key }}" {{ request('branch') == $key ? 'selected' : '' }}>{{ $branchName }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- Reset Button -->
+                                <div class="d-flex align-items-center gap-2">
+                                    <a href="{{ route('career', [$id, $currantLang]) }}" class="btn btn-outline-gray d-flex align-items-center justify-content-center" title="{{ __('Reset Filter') }}">
+                                        <i class="ti ti-rotate-clockwise me-1 fs-6"></i> {{ __('Reset') }}
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Sub Header Bar -->
+                            <div class="d-flex justify-content-between align-items-center pt-3 border-top flex-wrap gap-2" style="border-color: #F1F5F9 !important;">
+                                <span class="fs-7 fw-normal" style="color: #475569;">
+                                    Showing <strong style="color: #5E2590; font-weight: 600;">{{ is_object($jobs) && method_exists($jobs, 'total') ? $jobs->total() : (is_countable($jobs) ? count($jobs) : 0) }}</strong> Openings
+                                </span>
+                                <div class="d-flex align-items-center fs-7" style="color: #64748B;">
+                                    <span class="me-2">{{ __('Sort by:') }}</span>
+                                    <select id="sort_by_select" name="sort" onchange="document.getElementById('career-filter-form').submit();" class="form-select form-select-sm custom-sort-dropdown">
+                                        <option value="newest" {{ request('sort', 'newest') == 'newest' ? 'selected' : '' }}>{{ __('Newest First') }}</option>
+                                        <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>{{ __('Oldest First') }}</option>
+                                        <option value="title_asc" {{ request('sort') == 'title_asc' ? 'selected' : '' }}>{{ __('Title (A-Z)') }}</option>
+                                    </select>
                                 </div>
                             </div>
                         </form>
@@ -298,7 +320,7 @@ $themeColor = $color;
 
                                 <div class="job-card-footer mt-auto">
                                     <a href="{{ route('job.requirement', [$job->code, !empty($job) ? (!empty($job->createdBy->lang) ? $job->createdBy->lang : 'en') : 'en']) }}"
-                                        class="btn btn-primary w-100">{{ __('Read more') }}</a>
+                                        class="btn btn-primary w-100">{{ __('Detail') }}</a>
                                 </div>
 
                             </div>

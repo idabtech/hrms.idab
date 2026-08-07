@@ -28,20 +28,17 @@
         $faviconUrl = asset('assets/images/favicon.png');
     }
 
-    $iconsMap = [
-        'developer' => 'ti-code',
-        'frontend' => 'ti-code',
-        'backend' => 'ti-server',
-        'fullstack' => 'ti-terminal-2',
-        'designer' => 'ti-palette',
-        'ui/ux' => 'ti-palette',
-        'manager' => 'ti-briefcase',
-        'hr' => 'ti-users',
-        'marketing' => 'ti-speakerphone',
-        'mobile' => 'ti-device-mobile',
-        'flutter' => 'ti-device-mobile',
-        'react' => 'ti-brand-react',
-        'node' => 'ti-brand-nodejs',
+    $iconStylesMap = [
+        'developer' => ['icon' => 'ti-code', 'bg' => '#F0FDF4', 'color' => '#16A34A'],
+        'frontend'  => ['icon' => 'ti-code', 'bg' => '#F0FDF4', 'color' => '#16A34A'],
+        'designer'  => ['icon' => 'ti-palette', 'bg' => '#FFF7ED', 'color' => '#EA580C'],
+        'ui/ux'     => ['icon' => 'ti-palette', 'bg' => '#FFF7ED', 'color' => '#EA580C'],
+        'backend'   => ['icon' => 'ti-server', 'bg' => '#EFF6FF', 'color' => '#2563EB'],
+        'hr'        => ['icon' => 'ti-users', 'bg' => '#FEF2F2', 'color' => '#DC2626'],
+        'marketing' => ['icon' => 'ti-speakerphone', 'bg' => '#FAF5FF', 'color' => '#9333EA'],
+        'mobile'    => ['icon' => 'ti-device-mobile', 'bg' => '#ECFEFF', 'color' => '#0891B2'],
+        'flutter'   => ['icon' => 'ti-device-mobile', 'bg' => '#ECFEFF', 'color' => '#0891B2'],
+        'fullstack' => ['icon' => 'ti-terminal-2', 'bg' => '#F0FDF4', 'color' => '#16A34A'],
     ];
 @endphp
 
@@ -67,6 +64,12 @@
 
     <link rel="icon" href="{{ $faviconUrl . '?' . time() }}" type="image/x-icon" />
     <link rel="shortcut icon" href="{{ $faviconUrl . '?' . time() }}" type="image/x-icon" />
+
+    <!-- Google Fonts: Comfortaa & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="{{ asset('assets/fonts/tabler-icons.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/site.css') }}" id="stylesheet">
     @if (isset($setting['cust_darklayout']) && $setting['cust_darklayout'] == 'on')
@@ -82,43 +85,49 @@
         :root {
             --color-customColor: <?= $color ?>;
         }
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        }
     </style>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 
-<body class="{{ $themeColor }}">
+<body class="{{ $themeColor }} global-career-body">
     <div class="container py-4">
+        <!-- Top Breadcrumbs (Commented for now as requested)
+        <nav aria-label="breadcrumb" class="mb-2">
+            <ol class="breadcrumb mb-0 text-muted fs-7 align-items-center">
+                <li class="breadcrumb-item"><a href="{{ route('home') }}" class="text-decoration-none text-muted"><i class="ti ti-home fs-6"></i></a></li>
+                <li class="breadcrumb-item fw-bold" style="color: #64748B;">{{ __('Careers') }}</li>
+                <li class="breadcrumb-item active fw-bold" style="color: #5E2590;" aria-current="page">{{ __('Openings') }}</li>
+            </ol>
+        </nav>
+        -->
+
         <!-- Header Section -->
         <div class="career-header-section mb-4">
-            <h1 class="display-5 fw-bold text-dark mb-2">
-                All <span class="text-primary">Openings</span>
+            <h1 class="display-4 fw-extrabold mb-2">
+                All <span class="text-purple-brand">Openings</span>
             </h1>
-            <p class="text-muted fs-6 mb-0" style="max-width: 620px;">
+            <p class="text-muted mb-0" style="max-width: 580px;">
                 Explore exciting career opportunities and take the next step in your professional journey.
             </p>
         </div>
 
-        <!-- Filter Bar Card -->
-        <div class="filter-card mb-4">
+        <!-- Filter Card Container -->
+        <div class="filter-card-container mb-4">
             <form action="{{ route('global.career') }}" method="get" id="career-filter-form">
-                <div class="row g-2 align-items-center">
+                <div class="d-flex align-items-center flex-wrap gap-3 mb-3">
                     <!-- Search Input -->
-                    <div class="col-lg-5 col-md-4">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-white border-end-0 text-muted pe-1">
+                    <div class="search-col-box">
+                        <div class="input-group search-input-group">
+                            <span class="input-group-text">
                                 <i class="ti ti-search fs-6"></i>
                             </span>
-                            <input type="text" name="search" value="{{ request('search') }}" class="form-control form-control-sm border-start-0 ps-2" placeholder="{{ __('Search by job title, keyword or location') }}">
+                            <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="{{ __('Search by job title, keyword or location') }}">
                         </div>
                     </div>
 
-                    <!-- Department/Category Dropdown -->
-                    <div class="col-lg-3 col-md-3">
-                        <select name="category" class="form-select form-select-sm">
+                    <!-- Department Dropdown -->
+                    <div class="filter-select-box">
+                        <select name="category" class="form-select filter-select" onchange="document.getElementById('career-filter-form').submit();">
                             <option value="">{{ __('Department') }}</option>
                             @foreach($categories as $catId => $catTitle)
                                 <option value="{{ $catId }}" {{ request('category') == $catId ? 'selected' : '' }}>{{ $catTitle }}</option>
@@ -126,9 +135,9 @@
                         </select>
                     </div>
 
-                    <!-- Location/Branch Dropdown -->
-                    <div class="col-lg-2 col-md-3">
-                        <select name="branch" class="form-select form-select-sm">
+                    <!-- Location Dropdown -->
+                    <div class="filter-select-box">
+                        <select name="branch" class="form-select filter-select" onchange="document.getElementById('career-filter-form').submit();">
                             <option value="">{{ __('Location') }}</option>
                             @foreach($branches as $branchId => $branchName)
                                 <option value="{{ $branchId }}" {{ request('branch') == $branchId ? 'selected' : '' }}>{{ $branchName }}</option>
@@ -136,34 +145,29 @@
                         </select>
                     </div>
 
-                    <!-- Actions Buttons -->
-                    <div class="col-lg-2 col-md-2 d-flex gap-2">
-                        <button type="submit" class="btn btn-primary btn-sm w-100 d-flex align-items-center justify-content-center">
-                            <i class="ti ti-filter me-1"></i> {{ __('Filter') }}
-                        </button>
-                        @if(request()->filled('search') || request()->filled('branch') || request()->filled('category') || request()->filled('sort'))
-                            <a href="{{ route('global.career') }}" class="btn btn-light btn-sm text-muted border border-secondary border-opacity-25 d-flex align-items-center justify-content-center" title="{{ __('Reset Filter') }}">
-                                <i class="ti ti-rotate-clockwise"></i>
-                            </a>
-                        @endif
+                    <!-- Reset Button -->
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="{{ route('global.career') }}" class="btn btn-outline-gray d-flex align-items-center justify-content-center" title="{{ __('Reset Filter') }}">
+                            <i class="ti ti-rotate-clockwise me-1 fs-6"></i> {{ __('Reset') }}
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Sub Header Bar -->
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top flex-wrap gap-2" style="border-color: #F1F5F9 !important;">
+                    <span class="fs-7 fw-normal" style="color: #475569;">
+                        Showing <strong style="color: #5E2590; font-weight: 600;">{{ $jobs->total() }}</strong> Openings
+                    </span>
+                    <div class="d-flex align-items-center fs-7" style="color: #64748B;">
+                        <span class="me-2">{{ __('Sort by:') }}</span>
+                        <select id="sort_by_select" name="sort" onchange="document.getElementById('career-filter-form').submit();" class="form-select form-select-sm custom-sort-dropdown">
+                            <option value="newest" {{ request('sort', 'newest') == 'newest' ? 'selected' : '' }}>{{ __('Newest First') }}</option>
+                            <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>{{ __('Oldest First') }}</option>
+                            <option value="title_asc" {{ request('sort') == 'title_asc' ? 'selected' : '' }}>{{ __('Title (A-Z)') }}</option>
+                        </select>
                     </div>
                 </div>
             </form>
-        </div>
-
-        <!-- Openings Header Bar -->
-        <div class="d-flex justify-content-between align-items-center mb-3 px-1 flex-wrap gap-2">
-            <span class="text-muted fw-semibold fs-7">
-                Showing <strong class="text-dark">{{ $jobs->total() }}</strong> Openings
-            </span>
-            <div class="d-flex align-items-center">
-                <label for="sort_by_select" class="text-muted fw-semibold me-2 mb-0 fs-7">{{ __('Sort by:') }}</label>
-                <select id="sort_by_select" name="sort" form="career-filter-form" onchange="document.getElementById('career-filter-form').submit();" class="form-select form-select-sm custom-sort-select">
-                    <option value="newest" {{ request('sort', 'newest') == 'newest' ? 'selected' : '' }}>{{ __('Newest First') }}</option>
-                    <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>{{ __('Oldest First') }}</option>
-                    <option value="title_asc" {{ request('sort') == 'title_asc' ? 'selected' : '' }}>{{ __('Title (A-Z)') }}</option>
-                </select>
-            </div>
         </div>
 
         <!-- Openings Card List -->
@@ -171,10 +175,10 @@
             @forelse($jobs as $job)
                 @php
                     $titleLower = strtolower($job->title);
-                    $iconClass = 'ti-briefcase';
-                    foreach ($iconsMap as $key => $icon) {
+                    $style = ['icon' => 'ti-briefcase', 'bg' => '#F0FDF4', 'color' => '#16A34A'];
+                    foreach ($iconStylesMap as $key => $mapData) {
                         if (str_contains($titleLower, $key)) {
-                            $iconClass = $icon;
+                            $style = $mapData;
                             break;
                         }
                     }
@@ -182,37 +186,37 @@
                     $categoryTitle = !empty($job->categories) ? $job->categories->title : 'Development';
                     $companyName = !empty($job->createdBy) ? ($job->createdBy->company_name ?: $job->createdBy->name) : '';
                 @endphp
-                <div class="job-item-card">
-                    <div class="row align-items-center gy-3">
-                        <!-- Icon & Info -->
-                        <div class="col-md-7 col-12 d-flex align-items-center">
-                            <div class="job-icon-box me-3">
-                                <i class="ti {{ $iconClass }}"></i>
-                            </div>
-                            <div>
-                                <h5 class="fw-bold mb-1">
-                                    <a href="{{ route('job.requirement', [$job->code, !empty($job->createdBy->lang) ? $job->createdBy->lang : 'en']) }}" class="text-dark text-decoration-none hover-primary">
-                                        {{ $job->title }}
-                                    </a>
-                                </h5>
-                                <div class="d-flex flex-wrap align-items-center gap-3 text-muted fs-7">
-                                    <span><i class="ti ti-map-pin me-1 text-primary"></i> {{ $branchName }}</span>
-                                    <span><i class="ti ti-clock me-1 text-primary"></i> Full Time</span>
-                                    @if($companyName)
-                                        <span><i class="ti ti-building me-1 text-primary"></i> {{ $companyName }}</span>
-                                    @endif
-                                </div>
+                <div class="job-item-card d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <!-- Icon & Details Info -->
+                    <div class="d-flex align-items-center flex-wrap gap-3">
+                        <div class="job-icon-box-colorful" style="background-color: {{ $style['bg'] }}; color: {{ $style['color'] }};">
+                            <i class="ti {{ $style['icon'] }}"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1 job-title-heading">
+                                <a href="{{ route('job.requirement', [$job->code, !empty($job->createdBy->lang) ? $job->createdBy->lang : 'en']) }}" class="text-decoration-none hover-purple" style="color: #1E293B;">
+                                    {{ $job->title }}
+                                </a>
+                            </h5>
+                            <div class="d-flex flex-wrap align-items-center gap-3 job-meta-text">
+                                <span class="badge-cat-pill">{{ $categoryTitle }}</span>
+                                <span><i class="ti ti-map-pin me-1" style="color: #64748B;"></i> {{ $branchName }}</span>
+                                <span><i class="ti ti-clock me-1" style="color: #64748B;"></i> Full Time</span>
+                                @if($companyName)
+                                    <span><i class="ti ti-building me-1" style="color: #64748B;"></i> {{ $companyName }}</span>
+                                @endif
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Badges & Action -->
-                        <div class="col-md-5 col-12 d-flex align-items-center justify-content-md-end gap-3 flex-wrap">
-                            <span class="badge bg-light-primary text-primary rounded-pill px-3 py-2 fw-semibold fs-7">{{ $categoryTitle }}</span>
-                            <span class="badge-level-gray">Mid Level</span>
-                            <a href="{{ route('job.requirement', [$job->code, !empty($job->createdBy->lang) ? $job->createdBy->lang : 'en']) }}" class="btn btn-primary rounded-3 px-4 py-2 text-white shadow-sm d-inline-flex align-items-center">
-                                {{ __('Apply Now') }} <i class="ti ti-chevron-right ms-1"></i>
-                            </a>
-                        </div>
+                    <!-- Action Buttons -->
+                    <div class="d-flex align-items-center gap-2 mt-2 mt-sm-0">
+                        <a href="{{ route('job.requirement', [$job->code, !empty($job->createdBy->lang) ? $job->createdBy->lang : 'en']) }}" class="btn btn-detail-purple">
+                            {{ __('Detail') }}
+                        </a>
+                        <a href="{{ route('job.requirement', [$job->code, !empty($job->createdBy->lang) ? $job->createdBy->lang : 'en']) }}" class="btn btn-circle-arrow" title="{{ __('View Details') }}">
+                            <i class="ti ti-chevron-right fs-6"></i>
+                        </a>
                     </div>
                 </div>
             @empty

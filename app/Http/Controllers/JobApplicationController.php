@@ -36,9 +36,23 @@ class JobApplicationController extends Controller
     {
 
         if (\Auth::user()->can('Manage Job Application')) {
-            $stages = JobStage::where('created_by', '=', \Auth::user()->creatorId())->orderBy('order', 'asc')->get();
+            $creatorId = \Auth::user()->creatorId();
+            $stages = JobStage::where('created_by', '=', $creatorId)->orderBy('order', 'asc')->get();
 
-            $jobs = Job::where('created_by', \Auth::user()->creatorId())->get()->pluck('title', 'id');
+            if ($stages->isEmpty()) {
+                Utility::jobStage($creatorId);
+                $stages = JobStage::where('created_by', '=', $creatorId)->orderBy('order', 'asc')->get();
+            }
+
+            if ($stages->isNotEmpty()) {
+                $firstStageId = $stages->first()->id;
+                $stageIds = $stages->pluck('id')->toArray();
+                JobApplication::where('created_by', $creatorId)
+                    ->whereNotIn('stage', $stageIds)
+                    ->update(['stage' => $firstStageId]);
+            }
+
+            $jobs = Job::where('created_by', $creatorId)->get()->pluck('title', 'id');
             $jobs->prepend('All', '');
 
             if (isset($request->start_date) && !empty($request->start_date)) {
