@@ -29,71 +29,42 @@
         <ul class="dash-navbar">
 
             <!-- dashboard-->
-            @if (\Auth::user()->type != 'company' && !Gate::check('Manage Report'))
-                <li class="dash-item">
-                    <a href="{{ route('dashboard') }}" class="dash-link"><span class="dash-micon"><i
-                                class="ti ti-home"></i></span><span class="dash-mtext">{{ __('Dashboard') }}</span></a>
-                </li>
-            @endif
+            <li class="dash-item {{ Request::segment(1) == '' || Request::segment(1) == 'dashboard' || Request::segment(1) == null ? 'active' : '' }}">
+                <a href="{{ route('dashboard') }}" class="dash-link">
+                    <span class="dash-micon"><i class="ti ti-home"></i></span>
+                    <span class="dash-mtext">{{ __('Dashboard') }}</span>
+                </a>
+            </li>
+
+            <!-- report-->
             @if (\Auth::user()->type == 'company' || Gate::check('Manage Report'))
-                <li class="dash-item dash-hasmenu  {{ Request::segment(1) == 'null' ? 'active dash-trigger' : '' }}">
-                    <a href="javascript:void(0)" class="dash-link"><span class="dash-micon"><i class="ti ti-home"></i></span><span
-                            class="dash-mtext">{{ __('Dashboard') }}</span><span class="dash-arrow"><i
-                                data-feather="chevron-right"></i></span></a>
-                    <ul class="dash-submenu ">
-                        <li
-                            class="dash-item {{ Request::segment(1) == null || Request::segment(1) == 'report' ? ' active dash-trigger' : '' }}">
-                            <a class="dash-link" href="{{ route('dashboard') }}">{{ __('Overview') }}</a>
-                        </li>
-
-                        @if (Gate::check('Manage Report'))
-                            <li class="dash-item dash-hasmenu">
-                                <a href="javascript:void(0)" class="dash-link"><span class=""><i
-                                            class=""></i></span><span
-                                        class="dash-mtext">{{ __('Report') }}</span><span class="dash-arrow"><i
-                                            data-feather="chevron-right"></i></span></a>
-                                <ul class="dash-submenu">
-                                    @can('Manage Report')
-                                        <li class="dash-item">
-                                            <a class="dash-link"
-                                                href="{{ route('report.income-expense') }}">{{ __('Income Vs Expense') }}</a>
-                                        </li>
-
-                                        <li class="dash-item">
-                                            <a class="dash-link"
-                                                href="{{ route('report.monthly.attendance') }}">{{ __('Monthly Attendance') }}</a>
-                                        </li>
-
-                                        <li class="dash-item">
-                                            <a class="dash-link"
-                                                href="{{ route('report.leave') }}">{{ __('Leave') }}</a>
-                                        </li>
-
-
-                                        <li class="dash-item">
-                                            <a class="dash-link"
-                                                href="{{ route('report.account.statement') }}">{{ __('Account Statement') }}</a>
-                                        </li>
-
-
-                                        <li class="dash-item">
-                                            <a class="dash-link"
-                                                href="{{ route('report.payroll') }}">{{ __('Payroll') }}</a>
-                                        </li>
-
-
-                                        <li class="dash-item">
-                                            <a class="dash-link"
-                                                href="{{ route('report.timesheet') }}">{{ __('Timesheet') }}</a>
-                                        </li>
-                                    @endcan
-
-
-                                </ul>
+                <li class="dash-item dash-hasmenu {{ Request::segment(1) == 'report' || Request::segment(1) == 'monthly-attendance' || Request::segment(1) == 'leave' || Request::segment(1) == 'account-statement' || Request::segment(1) == 'payroll' || Request::segment(1) == 'timesheet' ? 'active dash-trigger' : '' }}">
+                    <a href="javascript:void(0)" class="dash-link">
+                        <span class="dash-micon"><i class="ti ti-file-analytics"></i></span>
+                        <span class="dash-mtext">{{ __('Report') }}</span>
+                        <span class="dash-arrow"><i data-feather="chevron-right"></i></span>
+                    </a>
+                    <ul class="dash-submenu">
+                        @can('Manage Report')
+                            <li class="dash-item {{ Request::routeIs('report.income-expense') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('report.income-expense') }}">{{ __('Income Vs Expense') }}</a>
                             </li>
-                        @endif
-
-
+                            <li class="dash-item {{ Request::routeIs('report.monthly.attendance') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('report.monthly.attendance') }}">{{ __('Monthly Attendance') }}</a>
+                            </li>
+                            <li class="dash-item {{ Request::routeIs('report.leave') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('report.leave') }}">{{ __('Leave') }}</a>
+                            </li>
+                            <li class="dash-item {{ Request::routeIs('report.account.statement') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('report.account.statement') }}">{{ __('Account Statement') }}</a>
+                            </li>
+                            <li class="dash-item {{ Request::routeIs('report.payroll') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('report.payroll') }}">{{ __('Payroll') }}</a>
+                            </li>
+                            <li class="dash-item {{ Request::routeIs('report.timesheet') ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('report.timesheet') }}">{{ __('Timesheet') }}</a>
+                            </li>
+                        @endcan
                     </ul>
                 </li>
             @endif

@@ -440,6 +440,10 @@ class SettingsController extends Controller
                 $post['auto_clock_out'] = 'off';
             }
 
+            if (!isset($post['login_early_time'])) {
+                $post['login_early_time'] = 0;
+            }
+
             if (!isset($post['login_deley_min'])) {
                 $post['login_deley_min'] = 0;
             }

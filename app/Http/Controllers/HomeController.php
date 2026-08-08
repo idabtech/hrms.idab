@@ -151,11 +151,15 @@ class HomeController extends Controller
 
                 $currentDate = date('Y-m-d');
 
-                // $employees     = User::where('type', '=', 'employee')->where('created_by', '=', \Auth::user()->creatorId())->get();
-                // $countEmployee = count($employees);
                 $notClockIn    = AttendanceEmployee::where('date', '=', $currentDate)->get()->pluck('employee_id');
 
-                $notClockIns = Employee::where('created_by', '=', \Auth::user()->creatorId())->whereNotIn('id', $notClockIn)->get();
+                $notClockIns = Employee::where('created_by', '=', \Auth::user()->creatorId())
+                    ->where('is_active', 1)
+                    ->whereHas('user', function ($q) {
+                        $q->where('is_active', 1);
+                    })
+                    ->whereNotIn('id', $notClockIn)
+                    ->get();
 
                 $accountBalance = AccountList::where('created_by', '=', \Auth::user()->creatorId())->sum('initial_balance');
                 $activeJob   = Job::where('status', 'active')->where('created_by', '=', \Auth::user()->creatorId())->count();
@@ -192,7 +196,90 @@ class HomeController extends Controller
                         : Utility::getValByName('company_end_time'),
                 ];
 
-                return view('dashboard.dashboard', compact('allCalendarEvents', 'arrHolidays', 'arrEvents', 'announcements', 'employees', 'activeJob', 'inActiveJOb', 'meetings', 'countEmployee', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'accountBalance', 'totalPayee', 'totalPayer', 'users', 'plan', 'storage_limit', 'employeeAttendance', 'officeTime'));
+                // Real-time Live Attendance & Break Status for all Active Company Employees
+                $companyEmployees = Employee::with('department', 'designation')
+                    ->where('created_by', \Auth::user()->creatorId())
+                    ->where('is_active', 1)
+                    ->whereHas('user', function ($q) {
+                        $q->where('is_active', 1);
+                    })
+                    ->get();
+
+                $todayAttendances = AttendanceEmployee::where('date', $currentDate)
+                    ->where('created_by', \Auth::user()->creatorId())
+                    ->get()
+                    ->keyBy('employee_id');
+
+                $liveStatusData = [
+                    'on_break' => [],
+                    'working' => [],
+                    'clocked_out' => [],
+                    'not_clocked_in' => [],
+                ];
+
+                foreach ($companyEmployees as $empItem) {
+                    $attRecord = $todayAttendances->get($empItem->id);
+
+                    if (!$attRecord || empty($attRecord->clock_in) || $attRecord->clock_in == '00:00:00' || $attRecord->clock_in == '00:00') {
+                        $liveStatusData['not_clocked_in'][] = [
+                            'employee' => $empItem,
+                            'status' => 'not_clocked_in',
+                            'label' => __('Not Clocked In'),
+                        ];
+                        continue;
+                    }
+
+                    // Check if clocked out
+                    if (!empty($attRecord->clock_out) && $attRecord->clock_out != '00:00:00' && $attRecord->clock_out != '00:00') {
+                        $liveStatusData['clocked_out'][] = [
+                            'employee' => $empItem,
+                            'attendance' => $attRecord,
+                            'status' => 'clocked_out',
+                            'label' => __('Clocked Out'),
+                            'clock_out_time' => $attRecord->clock_out,
+                        ];
+                        continue;
+                    }
+
+                    // Check break status
+                    $breaks = !empty($attRecord->breaks) ? json_decode($attRecord->breaks, true) : [];
+                    $lastBreak = !empty($breaks) && is_array($breaks) ? end($breaks) : null;
+
+                    if (!empty($lastBreak) && (empty($lastBreak['end']) || $lastBreak['end'] == null)) {
+                        $breakTypeRaw = $lastBreak['type'] ?? 'break';
+                        $breakTypeLabel = match($breakTypeRaw) {
+                            'tea_break' => __('Tea Break'),
+                            'lunch_break' => __('Lunch Break'),
+                            default => __('Break'),
+                        };
+
+                        $liveStatusData['on_break'][] = [
+                            'employee' => $empItem,
+                            'attendance' => $attRecord,
+                            'status' => 'on_break',
+                            'break_type' => $breakTypeRaw,
+                            'label' => $breakTypeLabel,
+                            'start_time' => $lastBreak['start'] ?? '',
+                        ];
+                    } else {
+                        $liveStatusData['working'][] = [
+                            'employee' => $empItem,
+                            'attendance' => $attRecord,
+                            'status' => 'working',
+                            'label' => __('Working / Clocked In'),
+                            'clock_in_time' => $attRecord->clock_in,
+                        ];
+                    }
+                }
+
+                $allEmployeeStatuses = array_merge(
+                    $liveStatusData['on_break'],
+                    $liveStatusData['working'],
+                    $liveStatusData['clocked_out'],
+                    $liveStatusData['not_clocked_in']
+                );
+
+                return view('dashboard.dashboard', compact('allCalendarEvents', 'arrHolidays', 'arrEvents', 'announcements', 'employees', 'activeJob', 'inActiveJOb', 'meetings', 'countEmployee', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'accountBalance', 'totalPayee', 'totalPayer', 'users', 'plan', 'storage_limit', 'employeeAttendance', 'officeTime', 'liveStatusData', 'allEmployeeStatuses'));
             }
         } else {
             if (!file_exists(storage_path() . "/installed")) {
