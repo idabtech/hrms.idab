@@ -205,8 +205,10 @@ class HomeController extends Controller
                     })
                     ->get();
 
+                $companyEmployeeIds = $companyEmployees->pluck('id')->toArray();
+
                 $todayAttendances = AttendanceEmployee::where('date', $currentDate)
-                    ->where('created_by', \Auth::user()->creatorId())
+                    ->whereIn('employee_id', $companyEmployeeIds)
                     ->get()
                     ->keyBy('employee_id');
 
