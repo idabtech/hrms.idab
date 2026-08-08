@@ -233,6 +233,32 @@
                     </div>
                 </div>
             </div>
+            <div class="col-md-12">
+                <div class="card card-fluid job-card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="form-group col-md-12 mb-2">
+                                {!! Form::label('need_help_heading', __('Need Help Section'), ['class' => 'col-form-label fw-bold text-dark fs-6']) !!}
+                            </div>
+                            <div class="form-group col-md-8">
+                                {!! Form::label('help_description', __('Need Help Description'), ['class' => 'col-form-label']) !!}
+                                {!! Form::textarea('help_description', old('help_description'), [
+                                    'class' => 'form-control',
+                                    'rows' => 3,
+                                    'placeholder' => __('Enter help description (e.g. If you face any issues while applying, feel free to contact our HR team.)'),
+                                ]) !!}
+                            </div>
+                            <div class="form-group col-md-4">
+                                {!! Form::label('help_email', __('Need Help Email'), ['class' => 'col-form-label']) !!}
+                                {!! Form::email('help_email', old('help_email'), [
+                                    'class' => 'form-control',
+                                    'placeholder' => __('Enter contact email (e.g. hr@idabtech.com)'),
+                                ]) !!}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="col-md-12 text-end">
                 <a class="btn btn-secondary btn-submit" href="{{ route('job.index') }}">{{ __('Cancel') }}</a>
                 <button class="btn btn-primary btn-submit ms-1" type="submit"

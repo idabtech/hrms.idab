@@ -104,6 +104,8 @@ class JobController extends Controller
             $job->applicant            = !empty($request->applicant) ? implode(',', $request->applicant) : '';
             $job->visibility           = !empty($request->visibility) ? implode(',', $request->visibility) : '';
             $job->custom_question      = !empty($request->custom_question) ? implode(',', $request->custom_question) : '';
+            $job->help_description     = $request->help_description;
+            $job->help_email           = $request->help_email;
             $job->created_by           = \Auth::user()->creatorId();
             $job->save();
 
@@ -194,6 +196,8 @@ class JobController extends Controller
             $job->applicant       = !empty($request->applicant) ? implode(',', $request->applicant) : '';
             $job->visibility      = !empty($request->visibility) ? implode(',', $request->visibility) : '';
             $job->custom_question = !empty($request->custom_question) ? implode(',', $request->custom_question) : '';
+            $job->help_description = $request->help_description;
+            $job->help_email       = $request->help_email;
             $job->save();
 
             return redirect()->route('job.index')->with('success', __('Job  successfully updated.'));

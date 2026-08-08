@@ -4,6 +4,7 @@ use App\Http\Controllers\AamarpayController;
 use App\Http\Controllers\AttendanceRequestController;
 use App\Http\Controllers\SubDepartmentController;
 use App\Http\Controllers\HmrcController;
+use App\Http\Controllers\HrDocumentLibraryController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -283,6 +284,9 @@ Route::group(['middleware' => ['verified']], function () {
         function () {
 
             Route::resource('settings', SettingsController::class);
+            Route::resource('hr-document-library', HrDocumentLibraryController::class);
+            Route::get('hr-document-library/{id}/download-doc', [HrDocumentLibraryController::class, 'downloadDoc'])->name('hr-document-library.download-doc');
+            Route::get('hr-document-library/{id}/download-pdf', [HrDocumentLibraryController::class, 'downloadPdf'])->name('hr-document-library.download-pdf');
             Route::post('email-settings', [SettingsController::class, 'saveEmailSettings'])->name('email.settings');
             Route::post('/pwa-settings', [SettingsController::class, 'pwaSettingStore'])->name('pwa.settings.store');
             Route::post('company-settings', [SettingsController::class, 'saveCompanySettings'])->name('company.settings');
@@ -2171,6 +2175,10 @@ Route::group(['middleware' => ['verified']], function () {
     //         'XSS',
     //     ]
     // );
+
+    // HR Document Library Routes
+    Route::get('hr-document-library/{id}/download-doc', [App\Http\Controllers\HrDocumentLibraryController::class, 'downloadDoc'])->name('hr-document-library.download-doc')->middleware(['auth', 'XSS']);
+    Route::resource('hr-document-library', App\Http\Controllers\HrDocumentLibraryController::class)->middleware(['auth', 'XSS']);
 
     // cache
     Route::get('/config-cache', function () {

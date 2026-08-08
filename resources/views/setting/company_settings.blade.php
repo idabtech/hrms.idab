@@ -1290,6 +1290,19 @@ $lang = \App\Models\Utility::getValByName('default_language');
 
 
                                 <div class="form-group col-md-4">
+                                    {{ Form::label('defult_country', __('Country Base Setting'), ['class' => 'col-form-label']) }}
+                                    <select name="defult_country" id="defult_country" class="form-control select2">
+                                        <option value="india" {{ ($settings['defult_country'] ?? 'india') == 'india' ? 'selected' : '' }}>{{ __('India') }}</option>
+                                        <option value="uk" {{ ($settings['defult_country'] ?? 'india') == 'uk' ? 'selected' : '' }}>{{ __('United Kingdom (UK)') }}</option>
+                                    </select>
+                                    @error('defult_country')
+                                    <span class="invalid-defult_country" role="alert">
+                                        <small class="text-danger">{{ $message }}</small>
+                                    </span>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group col-md-4">
                                     {{ Form::label('timezone', __('Timezone'), ['class' => 'col-form-label']) }}<x-required></x-required>
                                     <select type="text" name="timezone" class="form-control select2"
                                         id="timezone" required>

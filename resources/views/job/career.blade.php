@@ -314,7 +314,9 @@ $themeColor = $color;
 
                                 <div class="d-flex flex-wrap gap-2 align-items-center mb-4">
                                     @foreach (explode(',', $job->skill) as $skill)
-                                    <span class="badge rounded-pill px-3 py-2 bg-light text-primary border border-primary">{{ $skill }}</span>
+                                        @if(!empty(trim($skill)))
+                                            <span class="badge rounded-pill px-3 py-2 bg-light text-primary border border-primary">{{ ucwords(str_replace('_', ' ', trim($skill))) }}</span>
+                                        @endif
                                     @endforeach
                                 </div>
 

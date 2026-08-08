@@ -311,7 +311,9 @@
                         <h6 class="fw-bold text-dark mb-2" style="font-size: 15px;">{{ __('Skills Required') }}</h6>
                         <div class="d-flex flex-wrap gap-2">
                             @foreach(explode(',', $job->skill) as $skill)
-                                <span class="job-pill-badge">{{ trim($skill) }}</span>
+                                @if(!empty(trim($skill)))
+                                    <span class="job-pill-badge">{{ ucwords(str_replace('_', ' ', trim($skill))) }}</span>
+                                @endif
                             @endforeach
                         </div>
                     </div>
@@ -319,13 +321,16 @@
 
                 <div class="pt-3 border-top">
                     <h6 class="fw-bold text-dark mb-1" style="font-size: 15px;">{{ __('Need help?') }}</h6>
-                    <p class="text-muted fs-7 mb-2">{{ __('If you face any issues while applying, feel free to contact our HR team.') }}</p>
+                    <p class="text-muted fs-7 mb-2">{{ !empty($job->help_description) ? $job->help_description : __('If you face any issues while applying, feel free to contact our HR team.') }}</p>
                     @php
-                        $hrEmail = !empty($job->createdBy) && !empty($job->createdBy->email) ? $job->createdBy->email : 'hr@idabtech.com';
+                        $defaultEmail = !empty($job->createdBy) && !empty($job->createdBy->email) ? $job->createdBy->email : 'hr@idabtech.com';
+                        $hrEmail = !empty($job->help_email) ? $job->help_email : $defaultEmail;
                     @endphp
-                    <a href="mailto:{{ $hrEmail }}" class="text-decoration-none fw-bold" style="color: #441668; font-size: 14px;">
-                        <i class="ti ti-mail me-1"></i> {{ $hrEmail }}
-                    </a>
+                    @if(!empty($hrEmail))
+                        <a href="mailto:{{ $hrEmail }}" class="text-decoration-none fw-bold" style="color: #441668; font-size: 14px;">
+                            <i class="ti ti-mail me-1"></i> {{ $hrEmail }}
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>
