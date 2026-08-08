@@ -1517,10 +1517,19 @@ $lang = \App\Models\Utility::getValByName('default_language');
                             @endpush
 
                             <div class="row mt-3">
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <div class="row">
-                                        <div class="col-md-6">
-                                            <b>{{ Form::label('login_deley_min', __('Login Delay (min)'), ['class' => 'col-form-label']) }}</b>
+                                        <div class="col-md-4">
+                                            <b>{{ Form::label('login_early_time', __('Login Early Time (min)'), ['class' => 'col-form-label']) }}</b>
+                                            {{ Form::number('login_early_time', old('login_early_time', $settings['login_early_time'] ?? 0), ['class' => 'form-control', 'min' => '0']) }}
+                                            @error('login_early_time')
+                                            <span class="invalid-login_early_time" role="alert">
+                                                <small class="text-danger">{{ $message }}</small>
+                                            </span>
+                                            @enderror
+                                        </div>
+                                        <div class="col-md-4">
+                                            <b>{{ Form::label('login_deley_min', __('Login Delay Time (min)'), ['class' => 'col-form-label']) }}</b>
                                             {{ Form::number('login_deley_min', old('login_deley_min', $settings['login_deley_min'] ?? 0), ['class' => 'form-control', 'min' => '0']) }}
                                             @error('login_deley_min')
                                             <span class="invalid-login_deley_min" role="alert">
@@ -1528,8 +1537,8 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                             </span>
                                             @enderror
                                         </div>
-                                        <div class="col-md-6">
-                                            <b>{{ Form::label('logout_lead_time', __('Logout Lead Time'), ['class' => 'col-form-label']) }}</b>
+                                        <div class="col-md-4">
+                                            <b>{{ Form::label('logout_lead_time', __('Logout Lead Time (Min)'), ['class' => 'col-form-label']) }}</b>
                                             {{ Form::number('logout_lead_time', old('logout_lead_time', $settings['logout_lead_time'] ?? 0), ['class' => 'form-control', 'min' => '0']) }}
                                             @error('logout_lead_time')
                                             <span class="invalid-logout_lead_time" role="alert">

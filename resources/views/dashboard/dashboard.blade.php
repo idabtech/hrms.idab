@@ -66,7 +66,7 @@
                             $shiftEnd = Carbon::today()->setTime((int) $endHour, (int) $endMinute, 0);
 
                             $loginDeadline = $shiftStart->copy()->addMinutes((int) ($setting['login_deley_min'] ?? 0));
-                            $loginEarlyDeadline = $shiftStart->copy()->subMinutes((int) ($setting['login_deley_min'] ?? 0));
+                            $loginEarlyDeadline = $shiftStart->copy()->subMinutes((int) ($setting['login_early_time'] ?? 0));
                             $logoutAllowed = $shiftEnd->copy()->subMinutes((int) ($setting['logout_lead_time'] ?? 0));
                             $logoutLateAllowed = $shiftEnd->copy()->addMinutes((int) ($setting['logout_lead_time'] ?? 0));
 
@@ -776,7 +776,288 @@
                     </div>
                 </div>
             </div>
-             <div class="col-xxl-12">
+        @if (\Auth::user()->type != 'employee' && !empty($liveStatusData))
+            <div class="col-xxl-12 mb-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                        <div class="d-flex align-items-center">
+                            <i class="ti ti-activity text-primary fs-2 me-2"></i>
+                            <div>
+                                <h5 class="mb-0 text-dark fw-bold">{{ __('Real-Time Employee Status & Live Break Monitor') }}</h5>
+                                <small class="text-muted">{{ __('Live status of today\'s employee attendance & breaks') }}</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-primary px-3 py-2 rounded-pill fs-7">
+                            <i class="ti ti-clock me-1"></i> {{ date('d M Y') }}
+                        </span>
+                    </div>
+                    <div class="card-body p-3">
+                        <!-- Stat Summary Counters -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 rounded border text-center" style="background-color: #FFF8E1; border-color: #FFE082 !important;">
+                                    <span class="d-block text-warning fw-bold fs-3">{{ count($liveStatusData['on_break']) }}</span>
+                                    <span class="text-dark fw-bold fs-7"><i class="ti ti-cup me-1 text-warning"></i> {{ __('On Break') }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 rounded border text-center" style="background-color: #E8F5E9; border-color: #A5D6A7 !important;">
+                                    <span class="d-block text-success fw-bold fs-3">{{ count($liveStatusData['working']) }}</span>
+                                    <span class="text-dark fw-bold fs-7"><i class="ti ti-user-check me-1 text-success"></i> {{ __('Clocked In / Working') }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 rounded border text-center" style="background-color: #FFEBEE; border-color: #FFCDD2 !important;">
+                                    <span class="d-block text-danger fw-bold fs-3">{{ count($liveStatusData['clocked_out']) }}</span>
+                                    <span class="text-dark fw-bold fs-7"><i class="ti ti-user-x me-1 text-danger"></i> {{ __('Clocked Out') }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 rounded border text-center" style="background-color: #F5F5F5; border-color: #E0E0E0 !important;">
+                                    <span class="d-block text-secondary fw-bold fs-3">{{ count($liveStatusData['not_clocked_in']) }}</span>
+                                    <span class="text-dark fw-bold fs-7"><i class="ti ti-user-minus me-1 text-secondary"></i> {{ __('Not Clocked In') }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status Filter Tabs -->
+                        <ul class="nav nav-pills mb-3" id="live-attendance-tab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-item nav-link active px-3 py-2 me-2" id="pills-onbreak-tab" data-bs-toggle="pill" data-bs-target="#pills-onbreak" type="button" role="tab">
+                                    <i class="ti ti-cup me-1"></i> {{ __('On Break') }} ({{ count($liveStatusData['on_break']) }})
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-item nav-link px-3 py-2 me-2" id="pills-working-tab" data-bs-toggle="pill" data-bs-target="#pills-working" type="button" role="tab">
+                                    <i class="ti ti-user-check me-1"></i> {{ __('Working') }} ({{ count($liveStatusData['working']) }})
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-item nav-link px-3 py-2 me-2" id="pills-clockedout-tab" data-bs-toggle="pill" data-bs-target="#pills-clockedout" type="button" role="tab">
+                                    <i class="ti ti-user-x me-1"></i> {{ __('Clocked Out') }} ({{ count($liveStatusData['clocked_out']) }})
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-item nav-link px-3 py-2" id="pills-notclocked-tab" data-bs-toggle="pill" data-bs-target="#pills-notclocked" type="button" role="tab">
+                                    <i class="ti ti-user-minus me-1"></i> {{ __('Not Clocked In') }} ({{ count($liveStatusData['not_clocked_in']) }})
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content" id="live-attendance-tabContent">
+                            <!-- Tab 1: On Break -->
+                            <div class="tab-pane fade show active" id="pills-onbreak" role="tabpanel">
+                                @if(!empty($liveStatusData['on_break']) && count($liveStatusData['on_break']) > 0)
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>{{ __('Employee') }}</th>
+                                                    <th>{{ __('Department / Designation') }}</th>
+                                                    <th>{{ __('Break Status') }}</th>
+                                                    <th>{{ __('Break Start Time') }}</th>
+                                                    <th>{{ __('Clock In Time') }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($liveStatusData['on_break'] as $item)
+                                                    <tr>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="avatar-sm me-2 rounded-circle bg-warning text-white d-flex align-items-center justify-content-center fw-bold" style="width: 36px; height: 36px;">
+                                                                    {{ strtoupper(substr($item['employee']->name ?? 'E', 0, 1)) }}
+                                                                </div>
+                                                                <div>
+                                                                    <h6 class="mb-0 text-dark font-weight-bold">{{ $item['employee']->name }}</h6>
+                                                                    <small class="text-muted">{{ $item['employee']->id_prefix . $item['employee']->employee_id }}</small>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div>{{ $item['employee']->department->name ?? '-' }}</div>
+                                                            <small class="text-muted">{{ $item['employee']->designation->name ?? '-' }}</small>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">
+                                                                <i class="ti ti-cup me-1"></i> {{ $item['label'] }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="fw-bold text-dark">
+                                                            {{ !empty($item['start_time']) ? formatTime12h($item['start_time']) : '-' }}
+                                                        </td>
+                                                        <td>
+                                                            {{ !empty($item['attendance']->clock_in) ? formatTime12h($item['attendance']->clock_in) : '-' }}
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="p-4 text-center text-muted">
+                                        <i class="ti ti-check fs-1 text-success d-block mb-2"></i>
+                                        <span>{{ __('No employees are currently on break.') }}</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <!-- Tab 2: Currently Working -->
+                            <div class="tab-pane fade" id="pills-working" role="tabpanel">
+                                @if(!empty($liveStatusData['working']) && count($liveStatusData['working']) > 0)
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>{{ __('Employee') }}</th>
+                                                    <th>{{ __('Department / Designation') }}</th>
+                                                    <th>{{ __('Status') }}</th>
+                                                    <th>{{ __('Clock In Time') }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($liveStatusData['working'] as $item)
+                                                    <tr>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="avatar-sm me-2 rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold" style="width: 36px; height: 36px;">
+                                                                    {{ strtoupper(substr($item['employee']->name ?? 'E', 0, 1)) }}
+                                                                </div>
+                                                                <div>
+                                                                    <h6 class="mb-0 text-dark font-weight-bold">{{ $item['employee']->name }}</h6>
+                                                                    <small class="text-muted">{{ $item['employee']->id_prefix . $item['employee']->employee_id }}</small>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div>{{ $item['employee']->department->name ?? '-' }}</div>
+                                                            <small class="text-muted">{{ $item['employee']->designation->name ?? '-' }}</small>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-success px-3 py-2 rounded-pill">
+                                                                <i class="ti ti-user-check me-1"></i> {{ __('Working') }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="fw-bold text-dark">
+                                                            {{ !empty($item['clock_in_time']) ? formatTime12h($item['clock_in_time']) : '-' }}
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="p-4 text-center text-muted">
+                                        <i class="ti ti-info-circle fs-1 text-secondary d-block mb-2"></i>
+                                        <span>{{ __('No employees are currently clocked in and working.') }}</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <!-- Tab 3: Clocked Out -->
+                            <div class="tab-pane fade" id="pills-clockedout" role="tabpanel">
+                                @if(!empty($liveStatusData['clocked_out']) && count($liveStatusData['clocked_out']) > 0)
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>{{ __('Employee') }}</th>
+                                                    <th>{{ __('Department / Designation') }}</th>
+                                                    <th>{{ __('Status') }}</th>
+                                                    <th>{{ __('Clock Out Time') }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($liveStatusData['clocked_out'] as $item)
+                                                    <tr>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="avatar-sm me-2 rounded-circle bg-danger text-white d-flex align-items-center justify-content-center fw-bold" style="width: 36px; height: 36px;">
+                                                                    {{ strtoupper(substr($item['employee']->name ?? 'E', 0, 1)) }}
+                                                                </div>
+                                                                <div>
+                                                                    <h6 class="mb-0 text-dark font-weight-bold">{{ $item['employee']->name }}</h6>
+                                                                    <small class="text-muted">{{ $item['employee']->id_prefix . $item['employee']->employee_id }}</small>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div>{{ $item['employee']->department->name ?? '-' }}</div>
+                                                            <small class="text-muted">{{ $item['employee']->designation->name ?? '-' }}</small>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-danger px-3 py-2 rounded-pill">
+                                                                <i class="ti ti-user-x me-1"></i> {{ __('Clocked Out') }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="fw-bold text-dark">
+                                                            {{ !empty($item['clock_out_time']) ? formatTime12h($item['clock_out_time']) : '-' }}
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="p-4 text-center text-muted">
+                                        <i class="ti ti-info-circle fs-1 text-secondary d-block mb-2"></i>
+                                        <span>{{ __('No employees have clocked out yet today.') }}</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <!-- Tab 4: Not Clocked In -->
+                            <div class="tab-pane fade" id="pills-notclocked" role="tabpanel">
+                                @if(!empty($liveStatusData['not_clocked_in']) && count($liveStatusData['not_clocked_in']) > 0)
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>{{ __('Employee') }}</th>
+                                                    <th>{{ __('Department / Designation') }}</th>
+                                                    <th>{{ __('Status') }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($liveStatusData['not_clocked_in'] as $item)
+                                                    <tr>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="avatar-sm me-2 rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 36px; height: 36px;">
+                                                                    {{ strtoupper(substr($item['employee']->name ?? 'E', 0, 1)) }}
+                                                                </div>
+                                                                <div>
+                                                                    <h6 class="mb-0 text-dark font-weight-bold">{{ $item['employee']->name }}</h6>
+                                                                    <small class="text-muted">{{ $item['employee']->id_prefix . $item['employee']->employee_id }}</small>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div>{{ $item['employee']->department->name ?? '-' }}</div>
+                                                            <small class="text-muted">{{ $item['employee']->designation->name ?? '-' }}</small>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-secondary px-3 py-2 rounded-pill">
+                                                                <i class="ti ti-user-minus me-1"></i> {{ __('Not Clocked In') }}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="p-4 text-center text-muted">
+                                        <i class="ti ti-check-all fs-1 text-success d-block mb-2"></i>
+                                        <span>{{ __('All employees have clocked in today!') }}</span>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+        <div class="col-xxl-12">
 
                 <div class="card" style="height: 402px;">
                     <div class="card-header card-body table-border-style">
@@ -1026,21 +1307,180 @@
                 <div class="row">
                     <div class="col-xl-5">
 
-                        @if (\Auth::user()->type == 'company')
-                            <div class="card">
-                                <div class="card-header card-body table-border-style">
-                                    <h5>{{ __('Storage Status') }} <small>({{ $users->storage_limit . 'MB' }} /
-                                            {{ $plan->storage_limit . 'MB' }})</small></h5>
+                        <div class="card">
+                            <div class="card-header card-body table-border-style pb-2">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <h5>{{ __('Today\'s Employee Status') }}</h5>
+                                    <span class="badge bg-primary rounded-pill px-3 py-1 fs-7" id="emp-status-total-count">{{ !empty($allEmployeeStatuses) ? count($allEmployeeStatuses) : 0 }}</span>
                                 </div>
-                                <div class="card-body" style="height: 324px; overflow:auto">
-                                    <div class="card shadow-none mt-4">
-                                        <div class="card-body p-3">
-                                            <div id="device-chart"></div>
-                                        </div>
-                                    </div>
+
+                                <!-- Live Instant Search Box -->
+                                <div class="input-group input-group-sm mb-2">
+                                    <span class="input-group-text bg-light border-end-0"><i class="ti ti-search text-muted"></i></span>
+                                    <input type="text" id="emp-status-search-input" class="form-control bg-light border-start-0 ps-0 fs-8" placeholder="{{ __('Search employee...') }}" onkeyup="filterEmployeeStatusList()">
+                                </div>
+
+                                <!-- Filter Segmented Pills -->
+                                <div class="d-flex align-items-center gap-1 overflow-auto pt-1" style="white-space: nowrap; scrollbar-width: none;">
+                                    <button type="button" class="btn btn-xs rounded-pill px-3 py-1 emp-filter-btn btn-primary" data-filter="all" onclick="setEmployeeStatusFilter('all', this)">
+                                        {{ __('All') }} ({{ !empty($allEmployeeStatuses) ? count($allEmployeeStatuses) : 0 }})
+                                    </button>
+                                    <button type="button" class="btn btn-xs rounded-pill px-3 py-1 emp-filter-btn btn-light text-dark border" data-filter="working" onclick="setEmployeeStatusFilter('working', this)">
+                                        <span class="d-inline-block rounded-circle bg-success me-1" style="width: 7px; height: 7px;"></span>{{ __('Working') }} ({{ !empty($liveStatusData['working']) ? count($liveStatusData['working']) : 0 }})
+                                    </button>
+                                    <button type="button" class="btn btn-xs rounded-pill px-3 py-1 emp-filter-btn btn-light text-dark border" data-filter="on_break" onclick="setEmployeeStatusFilter('on_break', this)">
+                                        <span class="d-inline-block rounded-circle bg-warning me-1" style="width: 7px; height: 7px;"></span>{{ __('Break') }} ({{ !empty($liveStatusData['on_break']) ? count($liveStatusData['on_break']) : 0 }})
+                                    </button>
+                                    <button type="button" class="btn btn-xs rounded-pill px-3 py-1 emp-filter-btn btn-light text-dark border" data-filter="clocked_out" onclick="setEmployeeStatusFilter('clocked_out', this)">
+                                        <span class="d-inline-block rounded-circle bg-danger me-1" style="width: 7px; height: 7px;"></span>{{ __('Clocked Out') }} ({{ !empty($liveStatusData['clocked_out']) ? count($liveStatusData['clocked_out']) : 0 }})
+                                    </button>
+                                    <button type="button" class="btn btn-xs rounded-pill px-3 py-1 emp-filter-btn btn-light text-dark border" data-filter="not_clocked_in" onclick="setEmployeeStatusFilter('not_clocked_in', this)">
+                                        <span class="d-inline-block rounded-circle bg-secondary me-1" style="width: 7px; height: 7px;"></span>{{ __('Not Clocked In') }} ({{ !empty($liveStatusData['not_clocked_in']) ? count($liveStatusData['not_clocked_in']) : 0 }})
+                                    </button>
                                 </div>
                             </div>
-                        @endif
+
+                            <!-- Scrollable Body with Clean Row Items -->
+                            <div class="card-body" style="height: 324px; overflow-y: auto;">
+                                @if(!empty($allEmployeeStatuses) && count($allEmployeeStatuses) > 0)
+                                    <div class="list-group list-group-flush" id="emp-status-list">
+                                        @foreach($allEmployeeStatuses as $item)
+                                            @php
+                                                $emp = $item['employee'] ?? null;
+                                            @endphp
+                                            @if($emp)
+                                                <div class="list-group-item px-3 py-2 border-bottom emp-status-row bg-transparent"
+                                                     data-status="{{ $item['status'] }}"
+                                                     data-name="{{ strtolower($emp->name) }}"
+                                                     data-dept="{{ strtolower($emp->department->name ?? '') }}"
+                                                     data-label="{{ strtolower($item['label'] ?? '') }}">
+                                                    <div class="d-flex align-items-center justify-content-between">
+                                                        <div class="d-flex align-items-center me-2">
+                                                            @if($item['status'] == 'working')
+                                                                <div class="avatar-sm me-3 rounded-circle text-success d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 38px; height: 38px; background-color: #E8F5E9; font-size: 0.95rem;">
+                                                                    {{ strtoupper(substr($emp->name ?? 'E', 0, 1)) }}
+                                                                </div>
+                                                            @elseif($item['status'] == 'on_break')
+                                                                <div class="avatar-sm me-3 rounded-circle text-warning d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 38px; height: 38px; background-color: #FFF8E1; font-size: 0.95rem;">
+                                                                    {{ strtoupper(substr($emp->name ?? 'E', 0, 1)) }}
+                                                                </div>
+                                                            @elseif($item['status'] == 'clocked_out')
+                                                                <div class="avatar-sm me-3 rounded-circle text-danger d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 38px; height: 38px; background-color: #FFEBEE; font-size: 0.95rem;">
+                                                                    {{ strtoupper(substr($emp->name ?? 'E', 0, 1)) }}
+                                                                </div>
+                                                            @else
+                                                                <div class="avatar-sm me-3 rounded-circle text-secondary d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 38px; height: 38px; background-color: #F5F5F5; font-size: 0.95rem;">
+                                                                    {{ strtoupper(substr($emp->name ?? 'E', 0, 1)) }}
+                                                                </div>
+                                                            @endif
+                                                            <div>
+                                                                <h6 class="mb-0 text-dark fw-bold" style="font-size: 0.92rem;">{{ $emp->name }}</h6>
+                                                                <small class="text-muted" style="font-size: 0.78rem;">
+                                                                    {{ !empty($emp->department) ? $emp->department->name : (!empty($emp->designation) ? $emp->designation->name : ($emp->id_prefix . $emp->employee_id)) }}
+                                                                </small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="text-end">
+                                                            @if($item['status'] == 'working')
+                                                                <span class="badge px-3 py-1.5 rounded-pill text-success border border-success-subtle shadow-sm" style="background-color: #E8F5E9; font-size: 0.74rem;">
+                                                                    <i class="ti ti-user-check me-1"></i> {{ __('Clocked In') }} ({{ !empty($item['clock_in_time']) ? formatTime12h($item['clock_in_time']) : '' }})
+                                                                </span>
+                                                            @elseif($item['status'] == 'on_break')
+                                                                <span class="badge px-3 py-1.5 rounded-pill text-dark border border-warning-subtle shadow-sm" style="background-color: #FFF8E1; font-size: 0.74rem;">
+                                                                    <i class="ti ti-cup me-1 text-warning"></i> {{ $item['label'] ?? __('On Break') }} ({{ !empty($item['start_time']) ? formatTime12h($item['start_time']) : '' }})
+                                                                </span>
+                                                            @elseif($item['status'] == 'clocked_out')
+                                                                <span class="badge px-3 py-1.5 rounded-pill text-danger border border-danger-subtle shadow-sm" style="background-color: #FFEBEE; font-size: 0.74rem;">
+                                                                    <i class="ti ti-user-x me-1"></i> {{ __('Clocked Out') }} ({{ !empty($item['clock_out_time']) ? formatTime12h($item['clock_out_time']) : '' }})
+                                                                </span>
+                                                            @else
+                                                                <span class="badge px-3 py-1.5 rounded-pill text-muted border shadow-sm" style="background-color: #F8F9FA; font-size: 0.74rem;">
+                                                                    <i class="ti ti-user-minus me-1 text-secondary"></i> {{ __('Not Clocked In') }}
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                    <div id="emp-status-no-results" class="text-center py-4 text-muted d-none">
+                                        <i class="ti ti-search-off fs-2 text-muted d-block mb-1"></i>
+                                        <small class="fw-bold">{{ __('No matching employees found.') }}</small>
+                                    </div>
+                                @else
+                                    <div class="text-center py-5 text-muted">
+                                        <i class="ti ti-users fs-1 text-secondary d-block mb-2"></i>
+                                        <span class="fw-bold">{{ __('No employees found.') }}</span>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        <script>
+                            let currentEmpStatusFilter = 'all';
+
+                            function setEmployeeStatusFilter(filterType, btnElem) {
+                                currentEmpStatusFilter = filterType;
+                                document.querySelectorAll('.emp-filter-btn').forEach(btn => {
+                                    btn.classList.remove('btn-primary', 'btn-success', 'btn-warning', 'btn-danger', 'btn-secondary');
+                                    btn.classList.add('btn-light', 'text-dark', 'border');
+                                });
+
+                                btnElem.classList.remove('btn-light', 'text-dark', 'border');
+                                if (filterType === 'all') {
+                                    btnElem.classList.add('btn-primary');
+                                } else if (filterType === 'working') {
+                                    btnElem.classList.add('btn-success');
+                                } else if (filterType === 'on_break') {
+                                    btnElem.classList.add('btn-warning');
+                                } else if (filterType === 'clocked_out') {
+                                    btnElem.classList.add('btn-danger');
+                                } else if (filterType === 'not_clocked_in') {
+                                    btnElem.classList.add('btn-secondary');
+                                }
+
+                                filterEmployeeStatusList();
+                            }
+
+                            function filterEmployeeStatusList() {
+                                let searchInput = document.getElementById('emp-status-search-input');
+                                let query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+                                let rows = document.querySelectorAll('.emp-status-row');
+                                let visibleCount = 0;
+
+                                rows.forEach(row => {
+                                    let rowStatus = row.getAttribute('data-status');
+                                    let rowName = row.getAttribute('data-name') || '';
+                                    let rowDept = row.getAttribute('data-dept') || '';
+                                    let rowLabel = row.getAttribute('data-label') || '';
+
+                                    let statusMatch = (currentEmpStatusFilter === 'all' || rowStatus === currentEmpStatusFilter);
+                                    let textMatch = (query === '' || rowName.includes(query) || rowDept.includes(query) || rowLabel.includes(query));
+
+                                    if (statusMatch && textMatch) {
+                                        row.style.display = 'block';
+                                        visibleCount++;
+                                    } else {
+                                        row.style.display = 'none';
+                                    }
+                                });
+
+                                let noResultsElem = document.getElementById('emp-status-no-results');
+                                if (noResultsElem) {
+                                    if (visibleCount === 0 && rows.length > 0) {
+                                        noResultsElem.classList.remove('d-none');
+                                    } else {
+                                        noResultsElem.classList.add('d-none');
+                                    }
+                                }
+
+                                let totalBadge = document.getElementById('emp-status-total-count');
+                                if (totalBadge) {
+                                    totalBadge.innerText = visibleCount;
+                                }
+                            }
+                        </script>
 
                         <div class="card">
                             <div class="card-header card-body table-border-style">
@@ -1070,31 +1510,21 @@
                             </div>
                         </div>
 
-                        <div class="card">
-                            <div class="card-header card-body table-border-style">
-                                <h5>{{ __("Today's Not Clock In") }}</h5>
-                            </div>
-                            <div class="card-body" style="height: 324px; overflow:auto">
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                            <tr>
-                                                <th>{{ __('Name') }}</th>
-                                                <th>{{ __('Status') }}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="list">
-                                            @foreach ($notClockIns as $notClockIn)
-                                                <tr>
-                                                    <td>{{ $notClockIn->name }}</td>
-                                                    <td><span class="absent-btn">{{ __('Absent') }}</span></td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
+                        @if (\Auth::user()->type == 'company')
+                            <div class="card">
+                                <div class="card-header card-body table-border-style">
+                                    <h5>{{ __('Storage Status') }} <small>({{ $users->storage_limit . 'MB' }} /
+                                            {{ $plan->storage_limit . 'MB' }})</small></h5>
+                                </div>
+                                <div class="card-body" style="height: 324px; overflow:auto">
+                                    <div class="card shadow-none mt-4">
+                                        <div class="card-body p-3">
+                                            <div id="device-chart"></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        @endif
                     </div>
                     <div class="col-xl-7">
                         <div class="card">
@@ -1796,6 +2226,7 @@
     document.addEventListener("DOMContentLoaded", function () {
         const officeStart = document.getElementById('office_start')?.value;
         const officeEnd = document.getElementById('office_end')?.value;
+        const loginEarlyTime = {{ (int) ($setting['login_early_time'] ?? 0) }};
         const loginDeadline = {{ (int) ($setting['login_deley_min'] ?? 0) }};
         const logoutDeadline = {{ (int) ($setting['logout_lead_time'] ?? 0) }};
 
@@ -1831,7 +2262,7 @@
 
             if (action === 'clock_in') {
                 const startMin = timeToMinutes(officeStart);
-                const earlyThreshold = startMin - loginDeadline;
+                const earlyThreshold = startMin - loginEarlyTime;
                 const lateThreshold = startMin + loginDeadline;
 
                 if (nowMin < earlyThreshold || nowMin > lateThreshold) {

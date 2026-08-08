@@ -127,6 +127,7 @@ class Utility extends Model
             "display_landing_page" => "on",
             "ip_restrict" => "on",
             "shift_change" => "",
+            "login_early_time" => "0",
             "login_deley_min" => "0",
             "logout_lead_time" => "0",
             "shift_turner" => "",
