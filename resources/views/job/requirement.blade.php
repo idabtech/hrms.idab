@@ -162,6 +162,25 @@
             font-weight: 600;
             font-size: 0.95rem;
         }
+        .job-meta-card .meta-item.meta-item-skills {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        .job-meta-card .meta-item.meta-item-skills .skills-badge-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+        .job-meta-card .meta-item.meta-item-skills .skill-pill {
+            background-color: #F3E8FF;
+            color: #5E2590;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.3rem 0.7rem;
+            border-radius: 20px;
+            display: inline-block;
+        }
         .job-section-title {
             font-family: 'Comfortaa', cursive, sans-serif !important;
             font-size: 1.3rem !important;
@@ -223,7 +242,9 @@
                             <p class="job-headline">{{ $job->title }}</p>
                             <div class="job-badges d-flex flex-wrap gap-2 mb-3">
                                 @foreach (explode(',', $job->skill) as $skill)
-                                    <span>{{ trim($skill) }}</span>
+                                    @if(!empty(trim($skill)))
+                                        <span>{{ ucwords(str_replace('_', ' ', trim($skill))) }}</span>
+                                    @endif
                                 @endforeach
                             </div>
                             <div class="d-flex flex-wrap align-items-center gap-3 mb-4 text-secondary fs-7" style="color: #64748B !important;">
@@ -280,10 +301,31 @@
                                     <span>{{ $job->experience }}</span>
                                 </div>
                             @endif
-                            <div class="meta-item">
-                                <span>{{ __('Skills') }}</span>
-                                <span>{{ implode(', ', array_map('trim', explode(',', $job->skill))) }}</span>
-                            </div>
+                            @if (!empty($job->skill))
+                                <div class="meta-item meta-item-skills">
+                                    <span>{{ __('Skills') }}</span>
+                                    <div class="skills-badge-list">
+                                        @foreach (explode(',', $job->skill) as $skill)
+                                            @if(!empty(trim($skill)))
+                                                <span class="skill-pill">{{ ucwords(str_replace('_', ' ', trim($skill))) }}</span>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="job-meta-card mt-3">
+                            <h6 class="fw-bold text-dark mb-2" style="font-size: 15px;">{{ __('Need help?') }}</h6>
+                            <p class="text-muted fs-7 mb-2">{{ !empty($job->help_description) ? $job->help_description : __('If you face any issues while applying, feel free to contact our HR team.') }}</p>
+                            @php
+                                $defaultEmail = !empty($job->createdBy) && !empty($job->createdBy->email) ? $job->createdBy->email : 'hr@idabtech.com';
+                                $hrEmail = !empty($job->help_email) ? $job->help_email : $defaultEmail;
+                            @endphp
+                            @if(!empty($hrEmail))
+                                <a href="mailto:{{ $hrEmail }}" class="text-decoration-none fw-bold" style="color: #5E2590; font-size: 14px;">
+                                    <i class="ti ti-mail me-1"></i> {{ $hrEmail }}
+                                </a>
+                            @endif
                         </div>
                     </div>
                 </div>

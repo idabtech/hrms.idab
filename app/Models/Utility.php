@@ -123,6 +123,7 @@ class Utility extends Model
             'salary_revision_applied'  => '1',
             'salary_revision_rejected' => '1',
             "default_language" => "en",
+            "defult_country" => "india",
             "display_landing_page" => "on",
             "ip_restrict" => "on",
             "shift_change" => "",
@@ -150,7 +151,7 @@ class Utility extends Model
             "light_logo" => "logo-light.png",
             "contract_prefix" => "#CON",
             "storage_setting" => "local",
-            "local_storage_validation" => "jpg,jpeg,png,xlsx,xls,csv,pdf",
+            "local_storage_validation" => "jpg,jpeg,png,xlsx,xls,csv,pdf,doc,docx,odt,rtf,txt",
             "local_storage_max_upload_size" => "2048000",
             "s3_key" => "",
             "s3_secret" => "",
@@ -468,12 +469,24 @@ class Utility extends Model
     }
 
     /**
-     * Returns true if the current HTTP request originates from a UK IP address.
+     * Returns true if the system country setting is set to UK,
+     * OR if the current HTTP request originates from a UK IP address.
      * Reuses the same ip-api.com detection + 24h cache as bankCodeLabel().
-     * Always returns false for localhost / private IPs.
      */
     public static function isUkRequest(): bool
     {
+        // 1. Check Setting selection first (if set to 'uk')
+        try {
+            $settings = self::settings();
+            $country  = strtolower($settings['defult_country'] ?? '');
+            if (in_array($country, ['uk', 'gb', 'united kingdom'], true)) {
+                return true;
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        // 2. IP Base Check
         try {
             $ip = request()->ip();
 
@@ -498,11 +511,15 @@ class Utility extends Model
                     return '';
                 }
             });
+
+            if (in_array($countryCode, ['GB', 'UK'], true)) {
+                return true;
+            }
         } catch (\Throwable $e) {
             return false;
         }
 
-        return in_array($countryCode, ['GB', 'UK'], true);
+        return false; 
     }
 
     /**

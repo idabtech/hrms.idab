@@ -141,6 +141,19 @@
                                 </div>
                             </div>
                         @endif
+                        @if (!empty($job->help_description) || !empty($job->help_email))
+                            <div class="row">
+                                <div class="col-12 mt-3">
+                                    <h6>{{ __('Need Help Section') }}</h6>
+                                    @if (!empty($job->help_description))
+                                        <p class="mb-1"><strong>{{ __('Need Help Description') }}:</strong> {{ $job->help_description }}</p>
+                                    @endif
+                                    @if (!empty($job->help_email))
+                                        <p class="mb-0"><strong>{{ __('Need Help Email') }}:</strong> <a href="mailto:{{ $job->help_email }}">{{ $job->help_email }}</a></p>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
                         </div>
                     </div>
                 </div>
