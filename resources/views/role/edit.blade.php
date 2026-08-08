@@ -79,6 +79,7 @@
                                 'Meeting',
                                 'Assets',
                                 'Document',
+                                'HR Document Library',
                                 'Company Policy',
                                 'Branch',
                                 'Department',

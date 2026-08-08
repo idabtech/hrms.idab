@@ -641,8 +641,8 @@
             <!-- Scheduling & Meetings-->
 
             <!-- Resources-->
-            @if (Gate::check('Manage Assets') || Gate::check('Manage Document') || Gate::check('Manage Company Policy'))
-                <li class="dash-item dash-hasmenu {{ in_array(Request::segment(1), ['account-assets', 'document-upload', 'company-policy']) ? 'dash-trigger active' : '' }}">
+            @if (Gate::check('Manage Assets') || Gate::check('Manage Document') || Gate::check('Manage Company Policy') || Gate::check('Manage HR Document Library'))
+                <li class="dash-item dash-hasmenu {{ in_array(Request::segment(1), ['account-assets', 'document-upload', 'company-policy', 'hr-document-library']) ? 'dash-trigger active' : '' }}">
                     <a href="javascript:void(0)" class="dash-link">
                         <span class="dash-micon"><i class="ti ti-folders"></i></span>
                         <span class="dash-mtext">{{ __('Resources') }}</span>
@@ -662,6 +662,11 @@
                         @can('Manage Company Policy')
                             <li class="dash-item {{ Request::segment(1) == 'company-policy' ? 'active' : '' }}">
                                 <a class="dash-link" href="{{ route('company-policy.index') }}">{{ __('Company Policy') }}</a>
+                            </li>
+                        @endcan
+                        @can('Manage HR Document Library')
+                            <li class="dash-item {{ Request::segment(1) == 'hr-document-library' ? 'active' : '' }}">
+                                <a class="dash-link" href="{{ route('hr-document-library.index') }}">{{ __('HR Document Library') }}</a>
                             </li>
                         @endcan
                     </ul>
