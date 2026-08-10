@@ -1120,6 +1120,13 @@ Route::group(['middleware' => ['verified']], function () {
         ]
     );
 
+    // Leave Document Request & Upload Routes
+    Route::get('leave/{id}/request-document', [LeaveController::class, 'requestDocumentModal'])->name('leave.request-document-modal')->middleware(['auth', 'XSS']);
+    Route::post('leave/store-document-request', [LeaveController::class, 'storeDocumentRequest'])->name('leave.store-document-request')->middleware(['auth', 'XSS']);
+    Route::post('leave/{id}/cancel-document-request', [LeaveController::class, 'cancelDocumentRequest'])->name('leave.cancel-document-request')->middleware(['auth', 'XSS']);
+    Route::get('leave/{id}/upload-document', [LeaveController::class, 'uploadDocumentModal'])->name('leave.upload-document-modal')->middleware(['auth', 'XSS']);
+    Route::post('leave/store-document-upload', [LeaveController::class, 'storeDocumentUpload'])->name('leave.store-document-upload')->middleware(['auth', 'XSS']);
+
     Route::post('leave/changeaction', [LeaveController::class, 'changeaction'])->name('leave.changeaction')->middleware(
         [
             'auth',

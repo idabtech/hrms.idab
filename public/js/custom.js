@@ -160,7 +160,10 @@ $(document).on('click', 'a[data-ajax-popup="true"], button[data-ajax-popup="true
     var size = ($(this).data('size') == '') ? 'md' : $(this).data('size');
     var url = $(this).data('url');
     $("#commonModal .modal-title").html(title);
-    $("#commonModal .modal-dialog").addClass('modal-' + size);
+    $("#commonModal .modal-dialog").removeClass('modal-md modal-lg modal-sm modal-xl').addClass('modal-' + size);
+    var loader = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status" style="width: 2.5rem; height: 2.5rem;"><span class="visually-hidden">Loading...</span></div><p class="mt-3 text-muted fw-semibold mb-0">Loading...</p></div>';
+    $('#commonModal .body').html(loader);
+    $("#commonModal").modal('show');
     $.ajax({
         url: url,
         success: function (data) {

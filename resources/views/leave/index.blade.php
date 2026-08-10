@@ -159,7 +159,8 @@
                                     <th>{{ __('End Date') }}</th>
                                     <th>{{ __('Total Days') }}</th>
                                     <th>{{ __('Leave Note') }}</th>
-                                    <th>{{ __('status') }}</th>
+                                    <th>{{ __('Status') }}</th>
+                                    <th class="text-center">{{ __('Document') }}</th>
                                     <th width="200px">{{ __('Action') }}</th>
                                 </tr>
                             </thead>
@@ -234,70 +235,94 @@
                                                 {{ $leave->leave_reason }}
                                             @endif
                                         </td>
-                                        <td>
-                                            @if ($canAction)
-                                                @if ($isOwnLeave)
-                                                    {{-- Cannot change own leave status --}}
-                                                    @if ($leave->status == 'Pending')
-                                                        <div class="badge bg-warning p-2 px-3 status-badge5">{{ $leave->status }}</div>
-                                                    @elseif ($leave->status == 'Approved')
-                                                        <div class="badge bg-success p-2 px-3 status-badge5">{{ $leave->status }}</div>
-                                                    @elseif ($leave->status == 'Reject')
-                                                        <div class="badge bg-danger p-2 px-3 status-badge5">{{ $leave->status }}</div>
-                                                    @endif
-                                                @else
-                                                    <div class="dropdown">
-                                                        <button class="btn btn-sm dropdown-toggle
-                                                            @if ($leave->status == 'Pending') btn-warning
-                                                            @elseif ($leave->status == 'Approved') btn-success
-                                                            @elseif ($leave->status == 'Reject') btn-danger
-                                                            @endif"
-                                                            data-bs-toggle="dropdown">
-                                                            {{ $leave->status }}
-                                                        </button>
-                                                        <ul class="dropdown-menu">
-                                                            <li>
-                                                                <form method="POST" action="{{ route('leave.changeaction') }}">
-                                                                    @csrf
-                                                                    <input type="hidden" name="leave_id" value="{{ $leave->id }}">
-                                                                    <input type="hidden" name="status" value="Pending">
-                                                                    <button class="dropdown-item">{{ __('Pending') }}</button>
-                                                                </form>
-                                                            </li>
-                                                            <li>
-                                                                <form method="POST" action="{{ route('leave.changeaction') }}">
-                                                                    @csrf
-                                                                    <input type="hidden" name="leave_id" value="{{ $leave->id }}">
-                                                                    <input type="hidden" name="status" value="Approved">
-                                                                    <button class="dropdown-item">{{ __('Approved') }}</button>
-                                                                </form>
-                                                            </li>
-                                                            <li>
-                                                                <form method="POST" action="{{ route('leave.changeaction') }}">
-                                                                    @csrf
-                                                                    <input type="hidden" name="leave_id" value="{{ $leave->id }}">
-                                                                    <input type="hidden" name="status" value="Reject">
-                                                                    <button class="dropdown-item">{{ __('Reject') }}</button>
-                                                                </form>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
-                                                @endif
-                                            @else
-                                                {{-- Employee: static badge only --}}
-                                                @if ($leave->status == 'Pending')
-                                                    <div class="badge bg-warning p-2 px-3 status-badge5">{{ $leave->status }}</div>
-                                                @elseif ($leave->status == 'Approved')
-                                                    <div class="badge bg-success p-2 px-3 status-badge5">{{ $leave->status }}</div>
-                                                @elseif ($leave->status == 'Reject')
-                                                    <div class="badge bg-danger p-2 px-3 status-badge5">{{ $leave->status }}</div>
-                                                @endif
-                                            @endif
-                                        </td>
-                                        <td class="Action">
-                                            @if ($canAction)
-                                                {{-- Detail modal: show for all rows except own --}}
-                                                @if (!$isOwnLeave)
+                                         <td>
+                                             @if ($canAction)
+                                                 @if ($isOwnLeave)
+                                                     {{-- Cannot change own leave status --}}
+                                                     @if ($leave->status == 'Pending')
+                                                         <div class="badge bg-warning p-2 px-3">{{ $leave->status }}</div>
+                                                     @elseif ($leave->status == 'Approved')
+                                                         <div class="badge bg-success p-2 px-3">{{ $leave->status }}</div>
+                                                     @elseif ($leave->status == 'Reject')
+                                                         <div class="badge bg-danger p-2 px-3">{{ $leave->status }}</div>
+                                                     @endif
+                                                 @else
+                                                     <div class="dropdown">
+                                                         <button class="btn btn-sm dropdown-toggle px-3
+                                                             @if ($leave->status == 'Pending') btn-warning
+                                                             @elseif ($leave->status == 'Approved') btn-success
+                                                             @elseif ($leave->status == 'Reject') btn-danger
+                                                             @endif"
+                                                             data-bs-toggle="dropdown">
+                                                             {{ $leave->status }}
+                                                         </button>
+                                                         <ul class="dropdown-menu">
+                                                             <li>
+                                                                 <form method="POST" action="{{ route('leave.changeaction') }}">
+                                                                     @csrf
+                                                                     <input type="hidden" name="leave_id" value="{{ $leave->id }}">
+                                                                     <input type="hidden" name="status" value="Pending">
+                                                                     <button class="dropdown-item">{{ __('Pending') }}</button>
+                                                                 </form>
+                                                             </li>
+                                                             <li>
+                                                                 <form method="POST" action="{{ route('leave.changeaction') }}">
+                                                                     @csrf
+                                                                     <input type="hidden" name="leave_id" value="{{ $leave->id }}">
+                                                                     <input type="hidden" name="status" value="Approved">
+                                                                     <button class="dropdown-item">{{ __('Approved') }}</button>
+                                                                 </form>
+                                                             </li>
+                                                             <li>
+                                                                 <form method="POST" action="{{ route('leave.changeaction') }}">
+                                                                     @csrf
+                                                                     <input type="hidden" name="leave_id" value="{{ $leave->id }}">
+                                                                     <input type="hidden" name="status" value="Reject">
+                                                                     <button class="dropdown-item">{{ __('Reject') }}</button>
+                                                                 </form>
+                                                             </li>
+                                                         </ul>
+                                                     </div>
+                                                 @endif
+                                             @else
+                                                 {{-- Employee: static badge --}}
+                                                 @if ($leave->status == 'Pending')
+                                                     <div class="badge bg-warning p-2 px-3">{{ $leave->status }}</div>
+                                                 @elseif ($leave->status == 'Approved')
+                                                     <div class="badge bg-success p-2 px-3">{{ $leave->status }}</div>
+                                                 @elseif ($leave->status == 'Reject')
+                                                     <div class="badge bg-danger p-2 px-3">{{ $leave->status }}</div>
+                                                 @endif
+                                             @endif
+                                         </td>
+
+                                         {{-- Document Indicator Column --}}
+                                         <td class="text-center">
+                                             @php
+                                                 $doc = $leave->documents()->latest()->first();
+                                             @endphp
+                                             @if ($doc)
+                                                 @if ($doc->status === 'uploaded')
+                                                     <span class="badge bg-success p-2 text-white" data-bs-toggle="tooltip" title="{{ __('Document Received') }}">
+                                                         <i class="ti ti-file-check fs-5"></i>
+                                                     </span>
+                                                 @else
+                                                     <span class="badge bg-warning p-2 text-white" data-bs-toggle="tooltip" title="{{ __('Document Requested') }}">
+                                                         <i class="ti ti-file-text fs-5"></i>
+                                                     </span>
+                                                 @endif
+                                             @else
+                                                 <span class="text-muted">-</span>
+                                             @endif
+                                         </td>
+                                         <td class="Action">
+                                             @php
+                                                 $docRequest = $leave->documents()->latest()->first();
+                                             @endphp
+
+                                             @if ($canAction)
+                                                 {{-- Detail modal: show for all rows except own --}}
+                                                 @if (!$isOwnLeave)
                                                     <div class="action-btn me-2">
                                                         <a href="javascript:void(0)"
                                                             class="mx-3 btn btn-sm bg-success align-items-center"
@@ -308,6 +333,20 @@
                                                             <span class="text-white"><i class="ti ti-caret-right"></i></span>
                                                         </a>
                                                     </div>
+
+                                                    {{-- Document Request & View button for Admin/HR --}}
+                                                    @can('Request Leave Document')
+                                                        <div class="action-btn me-2">
+                                                            <a href="javascript:void(0)"
+                                                                class="mx-3 btn btn-sm bg-warning align-items-center"
+                                                                data-url="{{ route('leave.request-document-modal', $leave->id) }}"
+                                                                data-ajax-popup="true" data-size="lg"
+                                                                data-bs-toggle="tooltip" title="{{ __('Request / View Documents') }}"
+                                                                data-title="{{ __('Leave Documents') }}">
+                                                                <span class="text-white"><i class="ti ti-file-text"></i></span>
+                                                            </a>
+                                                        </div>
+                                                    @endcan
                                                 @endif
 
                                                 {{-- Edit: show for all admin/company/hr so they can edit employee leaves --}}
@@ -340,7 +379,7 @@
                                                     </div>
                                                 @endcan
                                             @else
-                                                {{-- Employee: view detail + edit/delete own pending leaves --}}
+                                                {{-- Employee: view detail + upload doc + edit/delete own pending leaves --}}
                                                 <div class="action-btn me-2">
                                                     <a href="javascript:void(0)"
                                                         class="mx-3 btn btn-sm bg-success align-items-center"
@@ -351,6 +390,19 @@
                                                         <span class="text-white"><i class="ti ti-caret-right"></i></span>
                                                     </a>
                                                 </div>
+
+                                                @if($docRequest)
+                                                    <div class="action-btn me-2">
+                                                        <a href="javascript:void(0)"
+                                                            class="mx-3 btn btn-sm bg-warning align-items-center"
+                                                            data-url="{{ route('leave.upload-document-modal', $leave->id) }}"
+                                                            data-ajax-popup="true" data-size="lg"
+                                                            data-bs-toggle="tooltip" title="{{ __('Upload / View Requested Documents') }}"
+                                                            data-title="{{ __('Upload Documents') }}">
+                                                            <span class="text-white"><i class="ti ti-file-upload"></i></span>
+                                                        </a>
+                                                    </div>
+                                                @endif
 
                                                 @if ($leave->status == 'Pending')
                                                     @can('Edit Leave')
