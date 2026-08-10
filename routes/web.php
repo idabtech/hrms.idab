@@ -57,6 +57,7 @@ use App\Http\Controllers\TransferBalanceController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\StorageAddonController;
 use App\Http\Controllers\PlanRequestController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\AssetController;
@@ -1335,6 +1336,29 @@ Route::group(['middleware' => ['verified']], function () {
     Route::get('plans/plans-trial/{id}', [PlanController::class, 'PlanTrial'])->name('plans.trial');
     Route::post('plan-disable', [PlanController::class, 'planDisable'])->name('plan.disable')->middleware(['auth', 'XSS']);
 
+    // Storage Addons Module
+    Route::get('storage-addons/my-orders', [StorageAddonController::class, 'myOrders'])->name('storage-addons.my-orders')->middleware(['auth', 'XSS']);
+    Route::get('storage-addons/{id}/status', [StorageAddonController::class, 'statusToggle'])->name('storage-addons.status')->middleware(['auth', 'XSS']);
+    Route::get('storage-addons/pay/{code}', [StorageAddonController::class, 'pay'])->name('storage-addons.pay')->middleware(['auth', 'XSS']);
+    Route::post('storage-addons/process-payment/{code}', [StorageAddonController::class, 'processPayment'])->name('storage-addons.process-payment')->middleware(['auth', 'XSS']);
+    Route::get('storage-addons/approve-order/{id}', [StorageAddonController::class, 'approveOrder'])->name('storage-addons.approve-order')->middleware(['auth', 'XSS']);
+    Route::get('storage-addons/reject-order/{id}', [StorageAddonController::class, 'rejectOrder'])->name('storage-addons.reject-order')->middleware(['auth', 'XSS']);
+    Route::resource('storage-addons', StorageAddonController::class)->middleware(['auth', 'XSS']);
+    Route::get('/uploads/storage_addon_receipts/{filename}', function ($filename) {
+        $path1 = storage_path('uploads/storage_addon_receipts/' . $filename);
+        $path2 = storage_path('app/public/uploads/storage_addon_receipts/' . $filename);
+        $path3 = public_path('uploads/storage_addon_receipts/' . $filename);
+
+        if (file_exists($path3)) {
+            return response()->file($path3);
+        } elseif (file_exists($path1)) {
+            return response()->file($path1);
+        } elseif (file_exists($path2)) {
+            return response()->file($path2);
+        }
+        abort(404);
+    });
+
     Route::group(
         [
             'middleware' => [
@@ -1782,6 +1806,9 @@ Route::group(['middleware' => ['verified']], function () {
 
     Route::post('/plan-pay-with-razorpay', [RazorpayPaymentController::class, 'planPayWithRazorpay'])->name('plan.pay.with.razorpay')->middleware(['auth', 'XSS']);
     Route::get('/plan/razorpay/{txref}/{plan_id}', [RazorpayPaymentController::class, 'getPaymentStatus'])->name('plan.razorpay');
+
+    Route::post('/storage-addon-pay-with-razorpay', [RazorpayPaymentController::class, 'storageAddonPayWithRazorpay'])->name('storage-addon.pay.with.razorpay')->middleware(['auth', 'XSS']);
+    Route::get('/storage-addon/razorpay/{txref}/{addon_id}', [RazorpayPaymentController::class, 'storageAddonRazorpayStatus'])->name('storage-addon.razorpay');
 
     Route::post('/plan-pay-with-paytm', [PaytmPaymentController::class, 'planPayWithPaytm'])->name('plan.pay.with.paytm')->middleware(['auth', 'XSS']);
     Route::post('/plan/paytm/{plan}', [PaytmPaymentController::class, 'getPaymentStatus'])->name('plan.paytm');

@@ -1512,14 +1512,39 @@
 
                         @if (\Auth::user()->type == 'company')
                             <div class="card">
-                                <div class="card-header card-body table-border-style">
-                                    <h5>{{ __('Storage Status') }} <small>({{ $users->storage_limit . 'MB' }} /
-                                            {{ $plan->storage_limit . 'MB' }})</small></h5>
+                                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                    <div>
+                                        <h5 class="mb-0">{{ __('Storage Status') }}</h5>
+                                    </div>
+                                    @php
+                                        $total_limit = $users ? $users->total_storage_limit : ($plan ? $plan->storage_limit : 0);
+                                        $used_mb = round((float)($users->storage_limit ?? 0), 2);
+                                    @endphp
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-primary text-white fs-6">
+                                            {{ $used_mb }} MB / {{ $total_limit == -1 ? __('Unlimited') : ($total_limit . ' MB') }}
+                                        </span>
+                                        <a href="{{ route('plans.index', ['tab' => 'storage_addons']) }}" class="btn btn-sm btn-primary text-white d-inline-flex align-items-center shadow-sm" data-bs-toggle="tooltip" title="{{ __('Buy Storage Addons') }}">
+                                            <i class="ti ti-plus me-1"></i><span>{{ __('Buy Storage') }}</span>
+                                        </a>
+                                    </div>
                                 </div>
-                                <div class="card-body" style="height: 324px; overflow:auto">
-                                    <div class="card shadow-none mt-4">
-                                        <div class="card-body p-3">
-                                            <div id="device-chart"></div>
+                                <div class="card-body text-center p-3">
+                                    <div id="device-chart" style="min-height: 200px;"></div>
+                                    <div class="row text-center mt-2 pt-2 border-top">
+                                        <div class="col-6 border-end">
+                                            <span class="text-muted d-block text-sm">{{ __('Used Storage') }}</span>
+                                            <strong class="text-primary fs-6">{{ $used_mb }} MB</strong>
+                                        </div>
+                                        <div class="col-6">
+                                            <span class="text-muted d-block text-sm">{{ __('Available Storage') }}</span>
+                                            <strong class="text-success fs-6">
+                                                @if($total_limit == -1)
+                                                    {{ __('Unlimited') }}
+                                                @else
+                                                    {{ max(0, round($total_limit - $used_mb, 2)) }} MB
+                                                @endif
+                                            </strong>
                                         </div>
                                     </div>
                                 </div>
@@ -2148,14 +2173,14 @@
     @endif
 
     @if (\Auth::user()->type == 'company')
-        <!-- <script>
+        <script>
             (function () {
+                var storageVal = {{ round($storage_limit, 2) }};
                 var options = {
-                    series: [{{ round($storage_limit, 2) }}],
+                    series: [storageVal],
                     chart: {
-                        height: 350,
+                        height: 240,
                         type: 'radialBar',
-                        offsetY: -20,
                         sparkline: {
                             enabled: true
                         }
@@ -2167,15 +2192,22 @@
                             track: {
                                 background: "#e7e7e7",
                                 strokeWidth: '97%',
-                                margin: 5, // margin is in pixels
+                                margin: 5,
                             },
                             dataLabels: {
                                 name: {
-                                    show: true
+                                    show: true,
+                                    offsetY: 20,
+                                    color: '#6c757d',
+                                    fontSize: '13px'
                                 },
                                 value: {
-                                    offsetY: -50,
-                                    fontSize: '20px'
+                                    offsetY: -20,
+                                    fontSize: '22px',
+                                    fontWeight: '600',
+                                    formatter: function (val) {
+                                        return val + "%";
+                                    }
                                 }
                             }
                         }
@@ -2185,14 +2217,17 @@
                             top: -10
                         }
                     },
-                    colors: ["#6FD943"],
-                    labels: ['Used'],
+                    colors: [storageVal > 90 ? '#ff3a6e' : (storageVal > 75 ? '#ffa21d' : '#6FD943')],
+                    labels: ['{{ __("Storage Used") }}'],
                 };
-                var chart = new ApexCharts(document.querySelector("#device-chart"), options);
-                chart.render();
+                var chartElement = document.querySelector("#device-chart");
+                if (chartElement) {
+                    var chart = new ApexCharts(chartElement, options);
+                    chart.render();
+                }
             })();
         </script>
-    @endif -->
+    @endif
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {

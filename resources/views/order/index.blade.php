@@ -60,7 +60,7 @@
                                                     class="status_badge badge bg-danger p-2 px-3 order-status">{{ ucfirst($order->payment_status) }}</span>
                                             @endif
                                         </td>
-                                        <td>{{ $order->created_at->format('d M Y') }}</td>
+                                        <td>{{ \Auth::user()->dateFormat($order->created_at) }}</td>
                                         <td>{{ !empty($order->total_coupon_used) ? (!empty($order->total_coupon_used->coupon_detail) ? $order->total_coupon_used->coupon_detail->code : '-') : '-' }}
                                         </td>
                                         <td>{{ $order->payment_type }}</td>

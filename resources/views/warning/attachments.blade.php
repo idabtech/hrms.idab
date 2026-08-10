@@ -58,7 +58,7 @@
                                         {{ \Illuminate\Support\Str::limit($attachment->file_name, 40) }}
                                     </a>
                                 </td>
-                                <td><small class="text-muted">{{ $attachment->created_at->format('d M Y') }}</small></td>
+                                <td><small class="text-muted">{{ \Auth::user()->dateFormat($attachment->created_at) }}</small></td>
                                 <td class="text-end">
                                     <a href="{{ route('warning.attachment.download', [$warning->id, $attachment->id]) }}" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="tooltip" title="{{ __('Download') }}">
                                         <i class="ti ti-download"></i>

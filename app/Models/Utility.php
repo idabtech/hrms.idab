@@ -301,11 +301,14 @@ class Utility extends Model
     // get date format
     public static function getDateFormated($date, $time = false)
     {
-        if (!empty($date) && $date != '0000-00-00') {
+        if (!empty($date) && $date != '0000-00-00' && $date != '0000-00-00 00:00:00') {
+            $settings = Utility::settings();
+            $date_format = !empty($settings['site_date_format']) ? $settings['site_date_format'] : 'd-m-Y';
             if ($time == true) {
-                return date("d M Y H:i A", strtotime($date));
+                $time_format = !empty($settings['site_time_format']) ? $settings['site_time_format'] : 'g:i A';
+                return date($date_format . " " . $time_format, strtotime($date));
             } else {
-                return date("d M Y", strtotime($date));
+                return date($date_format, strtotime($date));
             }
         } else {
             return '';
@@ -3178,17 +3181,19 @@ class Utility extends Model
         $image_size = number_format($image_size / 1048576, 2);
 
         $user = User::find($company_id);
-        $plan = Plan::find($user->plan);
-        $total_storage = $user->storage_limit + $image_size;
+        $total_limit = $user ? $user->total_storage_limit : -1;
+        $total_storage = ($user ? $user->storage_limit : 0) + $image_size;
 
-        if ($plan->storage_limit <= $total_storage && $plan->storage_limit != -1) {
+        if ($total_limit != -1 && $total_limit <= $total_storage) {
             $error = __('Plan storage limit is over so please upgrade the plan.');
             return $error;
         } else {
-            $user->storage_limit = $total_storage;
+            if ($user) {
+                $user->storage_limit = $total_storage;
+                $user->save();
+            }
         }
 
-        $user->save();
         return 1;
     }
 
