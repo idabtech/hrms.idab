@@ -47,6 +47,16 @@ class Leave extends Model
         return $this->hasOne('App\Models\Employee', 'id', 'employee_id');
     }
 
+    public function documents()
+    {
+        return $this->hasMany(LeaveDocument::class, 'leave_id', 'id');
+    }
+
+    public function latestDocumentRequest()
+    {
+        return $this->hasOne(LeaveDocument::class, 'leave_id', 'id')->latestOfMany();
+    }
+
     /**
      * Per-day breakdown rows (populated for multi-day leaves).
      */

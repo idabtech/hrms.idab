@@ -45,6 +45,7 @@
                                 'Pay Slip',
                                 'TimeSheet',
                                 'Leave',
+                                'Leave Document',
                                 'Attendance',
                                 'Indicator',
                                 'Appraisal',
@@ -141,6 +142,7 @@
                                 'Add',
                                 'Approve',
                                 'Decline',
+                                'Request',
                             ];
                             $rolePermissions = $role->permissions()->pluck('id')->toArray();
                         @endphp

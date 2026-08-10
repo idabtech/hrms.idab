@@ -45,6 +45,38 @@
             </div>
         @endif
 
+        {{-- Leave Document Pending Alert Banner for Employee --}}
+        @php
+            $dashEmpRecord = \App\Models\Employee::where('user_id', \Auth::id())->first();
+            $pendingLeaveDocCount = 0;
+            if ($dashEmpRecord) {
+                $pendingLeaveDocCount = \App\Models\LeaveDocument::whereHas('leave', function($q) use ($dashEmpRecord) {
+                    $q->where('employee_id', $dashEmpRecord->id);
+                })->where('status', 'pending')->count();
+            }
+        @endphp
+
+        @if ($pendingLeaveDocCount > 0)
+            <div class="col-12 mb-3">
+                <div class="alert alert-warning d-flex align-items-center justify-content-between p-3 rounded" style="background-color: #fff8e1; border: 1px solid #ffe082; color: #856404; box-shadow: 0 2px 6px rgba(255, 193, 7, 0.2);">
+                    <div class="d-flex align-items-center">
+                        <i class="ti ti-file-description fs-1 me-3 text-warning"></i>
+                        <div>
+                            <h6 class="alert-heading mb-1 text-dark font-weight-bold" style="font-size: 1rem;">
+                                {{ __('Leave Document Request') }}
+                            </h6>
+                            <span class="fw-bold" style="font-size: 0.95rem; color: #795548;">
+                                {{ __('Please submit document for your requested leave.') }}
+                            </span>
+                        </div>
+                    </div>
+                    <a href="{{ route('leave.index') }}" class="btn btn-warning text-dark font-weight-bold shadow-sm">
+                        <i class="ti ti-file-upload me-1"></i> {{ __('Please Submit Document') }}
+                    </a>
+                </div>
+            </div>
+        @endif
+
         @if (\Auth::user()->type == 'employee' || (\Auth::user()->type != 'company' && \Auth::user()->employee))
             <div class="col-xxl-12">
                 <div class="card" style="min-height: 230px;">

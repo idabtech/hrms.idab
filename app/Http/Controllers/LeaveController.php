@@ -1040,4 +1040,112 @@ class LeaveController extends Controller
             );
         }
     }
+
+    public function requestDocumentModal($id)
+    {
+        $leave = LocalLeave::find($id);
+        if (!$leave) {
+            return response()->json(['error' => __('Leave not found.')], 404);
+        }
+
+        $docRequest = \App\Models\LeaveDocument::where('leave_id', $id)->latest()->first();
+
+        return view('leave.request_document_modal', compact('leave', 'docRequest'));
+    }
+
+    public function storeDocumentRequest(Request $request)
+    {
+        $request->validate([
+            'leave_id' => 'required|exists:leaves,id',
+            'request_reason' => 'required|string',
+        ]);
+
+        $leave = LocalLeave::find($request->leave_id);
+        if (!$leave) {
+            return redirect()->back()->with('error', __('Leave not found.'));
+        }
+
+        \App\Models\LeaveDocument::create([
+            'leave_id' => $leave->id,
+            'requested_by' => \Auth::id(),
+            'request_reason' => $request->request_reason,
+            'required_docs' => $request->required_docs,
+            'status' => 'pending',
+        ]);
+
+        return redirect()->route('leave.index')->with('success', __('Document request submitted successfully.'));
+    }
+
+    public function uploadDocumentModal($id)
+    {
+        $leave = LocalLeave::find($id);
+        if (!$leave) {
+            return response()->json(['error' => __('Leave not found.')], 404);
+        }
+
+        $docRequest = \App\Models\LeaveDocument::where('leave_id', $id)->latest()->first();
+
+        return view('leave.upload_document_modal', compact('leave', 'docRequest'));
+    }
+
+    public function storeDocumentUpload(Request $request)
+    {
+        $request->validate([
+            'leave_id' => 'required|exists:leaves,id',
+            'documents' => 'required|array',
+            'documents.*' => 'file|mimes:pdf,png,jpg,jpeg,doc,docx|max:10240',
+        ]);
+
+        $leave = LocalLeave::find($request->leave_id);
+        $docRequest = \App\Models\LeaveDocument::where('leave_id', $request->leave_id)->latest()->first();
+
+        if (!$docRequest) {
+            $docRequest = \App\Models\LeaveDocument::create([
+                'leave_id' => $leave->id,
+                'requested_by' => \Auth::id(),
+                'status' => 'pending',
+            ]);
+        }
+
+        $filePaths = $docRequest->file_paths ?? [];
+        $fileNames = $docRequest->file_names ?? [];
+
+        if (!file_exists(public_path('uploads/leave_documents'))) {
+            mkdir(public_path('uploads/leave_documents'), 0777, true);
+        }
+
+        if ($request->hasFile('documents')) {
+            foreach ($request->file('documents') as $file) {
+                $filenameWithExt = $file->getClientOriginalName();
+                $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
+                $extension = $file->getClientOriginalExtension();
+                $fileNameToStore = time() . '_' . rand(1000, 9999) . '_' . preg_replace('/[^a-zA-Z0-9_.-]/', '_', $filename) . '.' . $extension;
+
+                $fileStorePath = 'uploads/leave_documents/' . $fileNameToStore;
+                $file->move(public_path('uploads/leave_documents'), $fileNameToStore);
+
+                $filePaths[] = $fileStorePath;
+                $fileNames[] = $filenameWithExt;
+            }
+        }
+
+        $docRequest->file_paths = $filePaths;
+        $docRequest->file_names = $fileNames;
+        $docRequest->status = 'uploaded';
+        $docRequest->save();
+
+        return redirect()->route('leave.index')->with('success', __('Requested documents uploaded successfully.'));
+    }
+
+    public function cancelDocumentRequest($id)
+    {
+        if (\Auth::user()->can('Request Leave Document') || in_array(strtolower(\Auth::user()->type), ['company', 'hr', 'admin'])) {
+            $leave = LocalLeave::find($id);
+            if ($leave) {
+                \App\Models\LeaveDocument::where('leave_id', $id)->delete();
+                return redirect()->back()->with('success', __('Document request cancelled successfully.'));
+            }
+        }
+        return redirect()->back()->with('error', __('Permission denied or request not found.'));
+    }
 }

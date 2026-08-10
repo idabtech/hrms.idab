@@ -43,6 +43,7 @@
                                     'Pay Slip',
                                     'TimeSheet',
                                     'Leave',
+                                    'Leave Document',
                                     'Attendance',
                                     'Indicator',
                                     'Appraisal',
@@ -139,6 +140,7 @@
                                     'Add',
                                     'Approve',
                                     'Decline',
+                                    'Request',
                                 ];
                             @endphp
                             @foreach ($modules as $module)
