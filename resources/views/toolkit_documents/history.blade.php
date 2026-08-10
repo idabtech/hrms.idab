@@ -8,7 +8,7 @@
             <ul class="list-group">
                 @foreach($edits as $edit)
                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ $edit->created_at->format('d M Y, H:i') }}
+                        {{ \Auth::user()->DateTimeFormat($edit->created_at) }}
                         <a href="{{ asset('storage/uploads/toolkit-documents/' . $edit->edited_file_path) }}" class="btn btn-sm btn-success" target="_blank">
                             {{ __('Download Version') }}
                         </a>

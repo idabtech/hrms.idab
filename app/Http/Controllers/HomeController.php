@@ -171,9 +171,11 @@ class HomeController extends Controller
                 $meetings = Meeting::where('created_by', '=', \Auth::user()->creatorId())->limit(8)->get();
 
                 $users = User::find(\Auth::user()->creatorId());
-                $plan = Plan::find($users->plan);
-                if ($plan->storage_limit > 0) {
-                    $storage_limit = ($users->storage_limit / $plan->storage_limit) * 100;
+                $plan = $users ? Plan::find($users->plan) : null;
+                $used_mb = (float)($users->storage_limit ?? 0);
+                $total_limit = $users ? $users->total_storage_limit : ($plan ? (float)$plan->storage_limit : 0);
+                if ($total_limit > 0) {
+                    $storage_limit = min(100, round(($used_mb / $total_limit) * 100, 2));
                 } else {
                     $storage_limit = 0;
                 }

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\Plan;
+use App\Models\StorageAddon;
+use App\Models\StorageAddonOrder;
 use App\Models\UserCoupon;
 use App\Models\Utility;
 use Illuminate\Http\Request;
@@ -198,5 +200,89 @@ class RazorpayPaymentController extends Controller
                 return redirect()->route('plans.index')->with('error', __('Plan not found!'));
             }
         }
+    }
+
+    public function storageAddonPayWithRazorpay(Request $request)
+    {
+        $admin_payment_setting = Utility::getAdminPaymentSetting();
+        $addonID = \Illuminate\Support\Facades\Crypt::decrypt($request->addon_id);
+        $addon   = StorageAddon::find($addonID);
+        $authuser = Auth::user();
+
+        if ($addon) {
+            $price = $addon->price;
+
+            if ($price <= 0) {
+                $orderID = 'SAO_' . strtoupper(str_replace('.', '', uniqid('', true)));
+
+                StorageAddonOrder::create([
+                    'order_id'         => $orderID,
+                    'user_id'          => $authuser->id,
+                    'storage_addon_id' => $addon->id,
+                    'addon_title'      => $addon->title,
+                    'storage_amount'   => $addon->storage_amount,
+                    'price'            => 0,
+                    'price_currency'   => !empty($admin_payment_setting['currency']) ? $admin_payment_setting['currency'] : 'USD',
+                    'payment_type'     => 'Razorpay',
+                    'payment_status'   => 'succeeded',
+                ]);
+
+                $res['msg']  = __("Storage Addon activated Successfully!");
+                $res['flag'] = 2;
+                return response()->json($res);
+            }
+
+            $res_data['email']       = $authuser->email;
+            $res_data['total_price'] = $price;
+            $res_data['currency']    = !empty($admin_payment_setting['currency']) ? $admin_payment_setting['currency'] : 'USD';
+            $res_data['flag']        = 1;
+
+            return response()->json($res_data);
+        } else {
+            return response()->json(['flag' => 0, 'msg' => __('Storage Addon not found!')]);
+        }
+    }
+
+    public function storageAddonRazorpayStatus(Request $request, $pay_id, $addon_id)
+    {
+        $payment = $this->paymentConfig();
+        $admin_payment_setting = Utility::getAdminPaymentSetting();
+        $addonID = \Illuminate\Support\Facades\Crypt::decrypt($addon_id);
+        $addon   = StorageAddon::find($addonID);
+        $user    = Auth::user();
+
+        if ($addon) {
+            try {
+                $orderID = 'SAO_' . strtoupper(str_replace('.', '', uniqid('', true)));
+                $ch      = curl_init('https://api.razorpay.com/v1/payments/' . $pay_id . '');
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+                curl_setopt($ch, CURLOPT_USERPWD, $payment->public_key . ':' . $payment->secret_key);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                $response = json_decode(curl_exec($ch));
+
+                if (isset($response->status) && ($response->status == 'authorized' || $response->status == 'captured')) {
+                    StorageAddonOrder::create([
+                        'order_id'         => $orderID,
+                        'user_id'          => $user->id,
+                        'storage_addon_id' => $addon->id,
+                        'addon_title'      => $addon->title,
+                        'storage_amount'   => $addon->storage_amount,
+                        'price'            => isset($response->amount) ? ($response->amount / 100) : $addon->price,
+                        'price_currency'   => !empty($admin_payment_setting['currency']) ? $admin_payment_setting['currency'] : 'USD',
+                        'payment_type'     => 'Razorpay',
+                        'payment_status'   => 'succeeded',
+                        'receipt'          => $pay_id,
+                    ]);
+
+                    return redirect()->route('plans.index', ['tab' => 'storage_addons'])->with('success', __('Storage Addon activated Successfully!'));
+                } else {
+                    return redirect()->route('plans.index', ['tab' => 'storage_addons'])->with('error', __('Transaction has failed!'));
+                }
+            } catch (\Exception $e) {
+                return redirect()->route('plans.index', ['tab' => 'storage_addons'])->with('error', $e->getMessage());
+            }
+        }
+
+        return redirect()->route('plans.index', ['tab' => 'storage_addons'])->with('error', __('Storage Addon not found!'));
     }
 }
