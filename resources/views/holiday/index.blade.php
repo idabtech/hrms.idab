@@ -56,13 +56,13 @@
                                     <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
                                         <div class="btn-box">
                                             {{ Form::label('start_date', __('Start Date'), ['class' => 'form-label']) }}
-                                            {{ Form::date('start_date', isset($_GET['start_date']) ? \Auth::check() ? \Auth::user()->dateFormat($_GET['start_date']) : \Carbon\Carbon::parse($_GET['start_date'])->format('d-m-Y') : '', ['class' => 'month-btn form-control current_date', 'autocomplete' => 'off']) }}
+                                            {{ Form::date('start_date', isset($_GET['start_date']) ? $_GET['start_date'] : '', ['class' => 'month-btn form-control current_date', 'autocomplete' => 'off']) }}
                                         </div>
                                     </div>
                                     <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
                                         <div class="btn-box">
                                             {{ Form::label('end_date', __('End Date'), ['class' => 'form-label']) }}
-                                            {{ Form::date('end_date', isset($_GET['end_date']) ? \Auth::check() ? \Auth::user()->dateFormat($_GET['end_date']) : \Carbon\Carbon::parse($_GET['end_date'])->format('d-m-Y') : '', ['class' => 'month-btn form-control current_date', 'autocomplete' => 'off']) }}
+                                            {{ Form::date('end_date', isset($_GET['end_date']) ? $_GET['end_date'] : '', ['class' => 'month-btn form-control current_date', 'autocomplete' => 'off']) }}
                                         </div>
                                     </div>
                                 </div>

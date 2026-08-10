@@ -707,7 +707,7 @@
     @endif
 
     @include('layouts.pwa_styles')
-    @include('layouts.dateformat');
+    @include('layouts.dateformat')
 
 </body>
 

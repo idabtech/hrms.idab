@@ -7,6 +7,7 @@ use App\Models\Plan;
 use App\Models\Utility;
 use App\Models\PlanRequest;
 use App\Models\User;
+use App\Models\StorageAddon;
 use File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -19,13 +20,15 @@ class PlanController extends Controller
         if (\Auth::user()->can('Manage Plan')) {
             if (\Auth::user()->type == 'super admin') {
                 $plans                 = Plan::get();
+                $storageAddons         = StorageAddon::orderBy('id', 'desc')->get();
             } else {
-                $plans = Plan::where('is_disable', 1)->get();
+                $plans                 = Plan::where('is_disable', 1)->get();
+                $storageAddons         = StorageAddon::where('is_active', 1)->orderBy('id', 'desc')->get();
             }
 
             $admin_payment_setting = Utility::getAdminPaymentSetting();
 
-            return view('plan.index', compact('plans', 'admin_payment_setting'));
+            return view('plan.index', compact('plans', 'admin_payment_setting', 'storageAddons'));
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }

@@ -70,6 +70,27 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at' => 'datetime',
     ];
 
+    public function getTotalStorageLimitAttribute()
+    {
+        $plan = Plan::find($this->plan);
+        if (!$plan || $plan->storage_limit == -1) {
+            return -1;
+        }
+
+        $orders = \App\Models\StorageAddonOrder::where('user_id', $this->id)
+            ->whereIn('payment_status', ['succeeded', 'Approved'])
+            ->get();
+
+        $activeAddonStorage = 0;
+        foreach ($orders as $order) {
+            if (!$order->isExpired()) {
+                $activeAddonStorage += (float) $order->storage_amount;
+            }
+        }
+
+        return (float) $plan->storage_limit + (float) $activeAddonStorage;
+    }
+
 
     public static function defaultEmail()
     {
@@ -2871,23 +2892,34 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function dateFormat($date)
     {
+        if (empty($date) || $date == '0000-00-00' || $date == '0000-00-00 00:00:00') {
+            return '-';
+        }
         $settings = Utility::settings();
+        $site_date_format = !empty($settings['site_date_format']) ? $settings['site_date_format'] : 'd-m-Y';
 
-        return date($settings['site_date_format'], strtotime($date));
+        return date($site_date_format, strtotime($date));
     }
 
     public function timeFormat($time)
     {
+        if (empty($time)) {
+            return '-';
+        }
         $settings = Utility::settings();
+        $site_time_format = !empty($settings['site_time_format']) ? $settings['site_time_format'] : 'g:i A';
 
-        return date($settings['site_time_format'], strtotime($time));
+        return date($site_time_format, strtotime($time));
     }
 
     public function DateTimeFormat($date)
     {
+        if (empty($date) || $date == '0000-00-00' || $date == '0000-00-00 00:00:00') {
+            return '-';
+        }
         $settings = Utility::settings();
 
-        $date_formate = !empty($settings['site_date_format']) ? $settings['site_date_format'] : 'd-m-y';
+        $date_formate = !empty($settings['site_date_format']) ? $settings['site_date_format'] : 'd-m-Y';
         $time_formate = !empty($settings['site_time_format']) ? $settings['site_time_format'] : 'H:i';
 
         return date($date_formate . ' ' . $time_formate, strtotime($date));
