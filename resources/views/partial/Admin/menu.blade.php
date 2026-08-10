@@ -99,7 +99,7 @@
                                     <a class="dash-link" href="{{ route('roles.index') }}">{{ __('Role') }}</a>
                                 </li>
                             @endcan
-                            <!-- @can('Manage Employee Profile')
+                            {{-- @can('Manage Employee Profile')
                                 <li class="dash-item">
                                     <a class="dash-link"
                                         href="{{ route('employee.profile') }}">{{ __('Employee Profile') }}</a>
@@ -109,7 +109,7 @@
                                 <li class="dash-item">
                                     <a class="dash-link" href="{{ route('lastlogin') }}">{{ __('Last Login') }}</a>
                                 </li>
-                            @endcan -->
+                            @endcan --}}
 
                         </ul>
                     </li>
@@ -796,7 +796,7 @@ href="{{ route('report.timesheet') }}">{{ __('Timesheet') }}</a>
                                 class="ti ti-table"></i></span><span
                             class="dash-mtext">{{ __('HRM System Setup') }}</span></a>
                 </li>
-                <!-- <ul class="dash-submenu">
+                {{-- <ul class="dash-submenu">
 @can('Manage Branch')
 <li class="dash-item {{ request()->is('branch*') ? 'active' : '' }}">
 <a class="dash-link"
@@ -938,7 +938,7 @@ href="{{ route('performanceType.index') }}">{{ __('Performance Type') }}</a>
 href="{{ route('competencies.index') }}">{{ __('Competencies') }}</a>
 </li>
 @endcan
-</ul> -->
+</ul> --}}
             @endif
             <!--constant-->
 
