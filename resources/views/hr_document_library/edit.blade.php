@@ -1,11 +1,18 @@
 {{ Form::model($doc, ['route' => ['hr-document-library.update', $doc->id], 'method' => 'PUT', 'enctype' => 'multipart/form-data']) }}
 <div class="modal-body">
     <div class="row">
-        <div class="form-group col-md-8">
-            {{ Form::label('title', __('Document Title'), ['class' => 'form-label']) }}<x-required></x-required>
-            {{ Form::text('title', null, ['class' => 'form-control', 'placeholder' => __('e.g. Offer Letter - Software Engineer'), 'required' => 'required']) }}
+        <div class="form-group col-md-6">
+            {{ Form::label('folder_id', __('Folder'), ['class' => 'form-label']) }}<x-required></x-required>
+            <select name="folder_id" class="form-control select2" required>
+                <option value="" disabled {{ empty($doc->folder_id) ? 'selected' : '' }}>-- {{ __('Select Folder (Required)') }} --</option>
+                @foreach ($folders as $id => $name)
+                    <option value="{{ $id }}" {{ $doc->folder_id == $id ? 'selected' : '' }}>
+                        {{ $name }}
+                    </option>
+                @endforeach
+            </select>
         </div>
-        <div class="form-group col-md-4">
+        <div class="form-group col-md-6">
             {{ Form::label('category', __('Category'), ['class' => 'form-label']) }}
             {{ Form::text('category', null, ['class' => 'form-control', 'placeholder' => __('e.g. Offer Letter, Policy'), 'list' => 'edit_category_list']) }}
             <datalist id="edit_category_list">
@@ -17,16 +24,18 @@
                 <option value="Warning Letter">
             </datalist>
         </div>
+
         <div class="form-group col-md-12">
-            {{ Form::label('description', __('Description'), ['class' => 'form-label']) }}
-            {{ Form::textarea('description', null, ['class' => 'form-control', 'rows' => '3', 'placeholder' => __('Brief description or notes...')]) }}
+            {{ Form::label('title', __('Document Title'), ['class' => 'form-label']) }}<x-required></x-required>
+            {{ Form::text('title', null, ['class' => 'form-control', 'placeholder' => __('e.g. Offer Letter - Software Engineer'), 'required' => 'required']) }}
         </div>
+
         <div class="form-group col-md-12">
             {{ Form::label('document', __('Replace Document File (Optional)'), ['class' => 'form-label']) }}
             @if(!empty($doc->file_name))
                 <small class="text-muted d-block mb-1">{{ __('Current file:') }} <strong class="text-dark">{{ $doc->file_name }}</strong></small>
             @endif
-            <input type="file" class="form-control" name="document" id="document_edit" accept=".docx,.doc,.txt">
+            <input type="file" class="form-control" name="document" id="document_edit">
         </div>
     </div>
 </div>
