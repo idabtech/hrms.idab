@@ -57,6 +57,9 @@ return [
 
     'url' => env('APP_URL', 'http://localhost:8000'),
 
+    'super_admin_url' => env('SUPER_ADMIN_URL', 'https://admin.hrms.idabtech.com'),
+    'company_url'     => env('COMPANY_URL', 'https://hrms.idabtech.com'),
+
     'asset_url' => env('ASSET_URL'),
 
     /*
