@@ -64,6 +64,7 @@
         <div>
             <h2 class="mb-3 f-w-600">{{ __('Login') }}</h2>
         </div>
+
         <div class="custom-login-form">
             <form method="POST" action="{{ route('login') }}" class="needs-validation" novalidate="">
                 @csrf
