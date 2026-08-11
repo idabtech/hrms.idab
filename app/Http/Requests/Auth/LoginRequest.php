@@ -60,8 +60,8 @@ class LoginRequest extends FormRequest
 
     public function authenticate()
     {
-        $superAdminUrl = env('SUPER_ADMIN_URL', config('app.super_admin_url', 'https://admin.hrms.idabtech.com'));
-        $companyUrl    = env('COMPANY_URL', config('app.company_url', 'https://hrms.idabtech.com'));
+        $superAdminUrl = config('app.super_admin_url') ?? env('SUPER_ADMIN_URL', 'https://admin.hrms.idabtech.com');
+        $companyUrl    = config('app.company_url') ?? env('COMPANY_URL', 'https://hrms.idabtech.com');
 
         $parseHost = function ($url) {
             if (empty($url)) return '';
@@ -73,15 +73,36 @@ class LoginRequest extends FormRequest
         $adminHost   = $parseHost($superAdminUrl);
         $companyHost = $parseHost($companyUrl);
 
-        $currentHost = strtolower(explode(':', trim($this->getHost()))[0]);
-        $httpHost    = isset($_SERVER['HTTP_HOST']) ? strtolower(explode(':', trim($_SERVER['HTTP_HOST']))[0]) : $currentHost;
+        $candidates = array_filter([
+            $this->getHost(),
+            $this->header('host'),
+            $this->header('x-forwarded-host'),
+            $_SERVER['HTTP_HOST'] ?? '',
+            $_SERVER['HTTP_X_FORWARDED_HOST'] ?? '',
+            $_SERVER['SERVER_NAME'] ?? '',
+        ]);
 
-        $isLocal = in_array($currentHost, ['127.0.0.1', 'localhost']) || in_array($httpHost, ['127.0.0.1', 'localhost']);
+        $currentHosts = array_map(function ($h) {
+            $clean = preg_replace('#^https?://#i', '', trim($h));
+            $clean = explode('/', $clean)[0];
+            return strtolower(explode(':', $clean)[0]);
+        }, $candidates);
+
+        $isLocal = false;
+        foreach ($currentHosts as $h) {
+            if (in_array($h, ['127.0.0.1', 'localhost'])) {
+                $isLocal = true;
+                break;
+            }
+        }
 
         $isOnAdminDomain = false;
         if (!empty($adminHost)) {
-            if (!$isLocal || $currentHost === $adminHost || $httpHost === $adminHost) {
-                $isOnAdminDomain = ($currentHost === $adminHost || $httpHost === $adminHost);
+            foreach ($currentHosts as $h) {
+                if ($h === $adminHost) {
+                    $isOnAdminDomain = true;
+                    break;
+                }
             }
         }
 

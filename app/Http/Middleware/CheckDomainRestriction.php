@@ -17,8 +17,8 @@ class CheckDomainRestriction
      */
     public function handle(Request $request, Closure $next)
     {
-        $superAdminUrl = env('SUPER_ADMIN_URL', config('app.super_admin_url', 'https://admin.hrms.idabtech.com'));
-        $companyUrl    = env('COMPANY_URL', config('app.company_url', 'https://hrms.idabtech.com'));
+        $superAdminUrl = config('app.super_admin_url') ?? env('SUPER_ADMIN_URL', 'https://admin.hrms.idabtech.com');
+        $companyUrl    = config('app.company_url') ?? env('COMPANY_URL', 'https://hrms.idabtech.com');
 
         $parseHost = function ($url) {
             if (empty($url)) return '';
@@ -31,14 +31,38 @@ class CheckDomainRestriction
         $companyHost = $parseHost($companyUrl);
 
         if (!empty($adminHost)) {
-            $currentHost = strtolower(explode(':', trim($request->getHost()))[0]);
-            $httpHost    = isset($_SERVER['HTTP_HOST']) ? strtolower(explode(':', trim($_SERVER['HTTP_HOST']))[0]) : $currentHost;
+            $candidates = array_filter([
+                $request->getHost(),
+                $request->header('host'),
+                $request->header('x-forwarded-host'),
+                $_SERVER['HTTP_HOST'] ?? '',
+                $_SERVER['HTTP_X_FORWARDED_HOST'] ?? '',
+                $_SERVER['SERVER_NAME'] ?? '',
+            ]);
 
-            $isLocal = in_array($currentHost, ['127.0.0.1', 'localhost']) || in_array($httpHost, ['127.0.0.1', 'localhost']);
+            $currentHosts = array_map(function ($h) {
+                $clean = preg_replace('#^https?://#i', '', trim($h));
+                $clean = explode('/', $clean)[0];
+                return strtolower(explode(':', $clean)[0]);
+            }, $candidates);
 
-            if (!$isLocal || $currentHost === $adminHost || $httpHost === $adminHost) {
-                $isOnAdminDomain = ($currentHost === $adminHost || $httpHost === $adminHost);
+            $isLocal = false;
+            foreach ($currentHosts as $h) {
+                if (in_array($h, ['127.0.0.1', 'localhost'])) {
+                    $isLocal = true;
+                    break;
+                }
+            }
 
+            $isOnAdminDomain = false;
+            foreach ($currentHosts as $h) {
+                if ($h === $adminHost) {
+                    $isOnAdminDomain = true;
+                    break;
+                }
+            }
+
+            if (!$isLocal || $isOnAdminDomain) {
                 if (Auth::check()) {
                     $user = Auth::user();
 
