@@ -31,6 +31,93 @@ class Utility extends Model
         '30' => 'Monthly',
     ];
 
+    public static function getSuperAdminUrl(): string
+    {
+        if (file_exists(base_path('.env'))) {
+            $lines = @file(base_path('.env'), FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            if (is_array($lines)) {
+                foreach ($lines as $line) {
+                    if (str_starts_with(trim($line), 'SUPER_ADMIN_URL=')) {
+                        $val = trim(explode('=', $line, 2)[1], "\"'\r\n ");
+                        if (!empty($val)) {
+                            return $val;
+                        }
+                    }
+                }
+            }
+        }
+
+        $url = env('SUPER_ADMIN_URL');
+        if (!empty($url)) return $url;
+
+        $url = config('app.super_admin_url');
+        if (!empty($url)) return $url;
+
+        return 'https://admin.hrms.idabtech.com';
+    }
+
+    public static function getCompanyUrl(): string
+    {
+        if (file_exists(base_path('.env'))) {
+            $lines = @file(base_path('.env'), FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            if (is_array($lines)) {
+                foreach ($lines as $line) {
+                    if (str_starts_with(trim($line), 'COMPANY_URL=')) {
+                        $val = trim(explode('=', $line, 2)[1], "\"'\r\n ");
+                        if (!empty($val)) {
+                            return $val;
+                        }
+                    }
+                }
+            }
+        }
+
+        $url = env('COMPANY_URL');
+        if (!empty($url)) return $url;
+
+        $url = config('app.company_url');
+        if (!empty($url)) return $url;
+
+        return 'https://hrms.idabtech.com';
+    }
+
+    public static function parseCleanHost(string $url): string
+    {
+        if (empty($url)) return '';
+        $clean = preg_replace('#^https?://#i', '', trim($url));
+        $clean = explode('/', $clean)[0];
+        return strtolower(explode(':', $clean)[0]);
+    }
+
+    public static function isSuperAdminDomain(): bool
+    {
+        $adminHost   = self::parseCleanHost(self::getSuperAdminUrl());
+        $companyHost = self::parseCleanHost(self::getCompanyUrl());
+
+        $candidates = array_filter([
+            request()->getHost(),
+            request()->header('host'),
+            request()->header('x-forwarded-host'),
+            $_SERVER['HTTP_HOST'] ?? '',
+            $_SERVER['HTTP_X_FORWARDED_HOST'] ?? '',
+            $_SERVER['SERVER_NAME'] ?? '',
+        ]);
+
+        $currentHosts = array_map(function ($h) {
+            $clean = preg_replace('#^https?://#i', '', trim($h));
+            $clean = explode('/', $clean)[0];
+            return strtolower(explode(':', $clean)[0]);
+        }, $candidates);
+
+        foreach ($currentHosts as $h) {
+            if (!empty($adminHost) && $h === $adminHost) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static function settings()
     {
         $key = \Auth::check() ? \Auth::user()->creatorId() : 0;

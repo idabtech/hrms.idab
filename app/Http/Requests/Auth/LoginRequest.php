@@ -60,51 +60,9 @@ class LoginRequest extends FormRequest
 
     public function authenticate()
     {
-        $superAdminUrl = config('app.super_admin_url') ?? env('SUPER_ADMIN_URL', 'https://admin.hrms.idabtech.com');
-        $companyUrl    = config('app.company_url') ?? env('COMPANY_URL', 'https://hrms.idabtech.com');
-
-        $parseHost = function ($url) {
-            if (empty($url)) return '';
-            $clean = preg_replace('#^https?://#i', '', trim($url));
-            $clean = explode('/', $clean)[0];
-            return strtolower(explode(':', $clean)[0]);
-        };
-
-        $adminHost   = $parseHost($superAdminUrl);
-        $companyHost = $parseHost($companyUrl);
-
-        $candidates = array_filter([
-            $this->getHost(),
-            $this->header('host'),
-            $this->header('x-forwarded-host'),
-            $_SERVER['HTTP_HOST'] ?? '',
-            $_SERVER['HTTP_X_FORWARDED_HOST'] ?? '',
-            $_SERVER['SERVER_NAME'] ?? '',
-        ]);
-
-        $currentHosts = array_map(function ($h) {
-            $clean = preg_replace('#^https?://#i', '', trim($h));
-            $clean = explode('/', $clean)[0];
-            return strtolower(explode(':', $clean)[0]);
-        }, $candidates);
-
-        $isLocal = false;
-        foreach ($currentHosts as $h) {
-            if (in_array($h, ['127.0.0.1', 'localhost'])) {
-                $isLocal = true;
-                break;
-            }
-        }
-
-        $isOnAdminDomain = false;
-        if (!empty($adminHost)) {
-            foreach ($currentHosts as $h) {
-                if ($h === $adminHost) {
-                    $isOnAdminDomain = true;
-                    break;
-                }
-            }
-        }
+        $superAdminUrl   = Utility::getSuperAdminUrl();
+        $companyUrl      = Utility::getCompanyUrl();
+        $isOnAdminDomain = Utility::isSuperAdminDomain();
 
         // custom login
         $users = User::where('email', $this->email)->get();
@@ -115,16 +73,14 @@ class LoginRequest extends FormRequest
                 if (password_verify($this->password, $user->password)) {
 
                     // Domain restriction enforcement when password matches
-                    if (!empty($adminHost) && (!$isLocal || $isOnAdminDomain)) {
-                        if ($user->type === 'super admin' && !$isOnAdminDomain) {
-                            session()->flash('error', __('Access Denied: Super Admin can only log in through the Admin Portal: ') . $superAdminUrl);
-                            throw ValidationException::withMessages([]);
-                        }
+                    if ($user->type === 'super admin' && !$isOnAdminDomain) {
+                        session()->flash('error', __('Access Denied: Super Admin can only log in through the Admin Portal: ') . $superAdminUrl);
+                        throw ValidationException::withMessages([]);
+                    }
 
-                        if ($user->type !== 'super admin' && $isOnAdminDomain) {
-                            session()->flash('error', __('Access Denied: Company and Employee users must log in through the Company Portal: ') . $companyUrl);
-                            throw ValidationException::withMessages([]);
-                        }
+                    if ($user->type !== 'super admin' && $isOnAdminDomain) {
+                        session()->flash('error', __('Access Denied: Company and Employee users must log in through the Company Portal: ') . $companyUrl);
+                        throw ValidationException::withMessages([]);
                     }
 
                     if ($user->is_active != 1 || ($user->is_disable != 1 && $user->type != "super admin")) {
