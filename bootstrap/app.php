@@ -53,6 +53,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\FilterRequest::class,
             \App\Http\Middleware\DetectUserLanguage::class,
+            \App\Http\Middleware\CheckDomainRestriction::class,
         ]);
 
         // Append middleware to the 'api' group

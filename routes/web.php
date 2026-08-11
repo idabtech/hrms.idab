@@ -232,6 +232,30 @@ Route::get('/external-login', function (Request $request) {
         return redirect()->route('login');
     }
  
+    // Domain restriction enforcement
+    $superAdminUrl = env('SUPER_ADMIN_URL', config('app.super_admin_url', 'https://admin.hrms.idabtech.com'));
+    $companyUrl    = env('COMPANY_URL', config('app.company_url', 'https://hrms.idabtech.com'));
+
+    if (!empty($superAdminUrl)) {
+        $adminHost = parse_url($superAdminUrl, PHP_URL_HOST) ?? $superAdminUrl;
+        $adminHost = strtolower(explode(':', str_replace(['http://', 'https://'], '', $adminHost))[0]);
+
+        $currentHost = strtolower($request->getHost());
+        $isLocal     = in_array($currentHost, ['127.0.0.1', 'localhost']);
+
+        if (!$isLocal || $currentHost === $adminHost) {
+            $isOnAdminDomain = ($currentHost === $adminHost);
+
+            if ($user->type === 'super admin' && !$isOnAdminDomain) {
+                return redirect(rtrim($superAdminUrl, '/') . '/login')->with('error', __('Super Admin can only log in through the Admin Portal: ') . $superAdminUrl);
+            }
+
+            if ($user->type !== 'super admin' && $isOnAdminDomain) {
+                return redirect(rtrim($companyUrl, '/') . '/login')->with('error', __('Company and Employee users must log in through the Company Portal: ') . $companyUrl);
+            }
+        }
+    }
+
     // Login user
     Auth::login($user);
     // Regenerate session after login
