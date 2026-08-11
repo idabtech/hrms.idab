@@ -288,6 +288,11 @@ Route::group(['middleware' => ['verified']], function () {
             Route::resource('hr-document-library', HrDocumentLibraryController::class);
             Route::get('hr-document-library/{id}/download-doc', [HrDocumentLibraryController::class, 'downloadDoc'])->name('hr-document-library.download-doc');
             Route::get('hr-document-library/{id}/download-pdf', [HrDocumentLibraryController::class, 'downloadPdf'])->name('hr-document-library.download-pdf');
+            Route::get('hr-document-folders/create', [HrDocumentLibraryController::class, 'createFolder'])->name('hr-document-folders.create');
+            Route::post('hr-document-folders', [HrDocumentLibraryController::class, 'storeFolder'])->name('hr-document-folders.store');
+            Route::get('hr-document-folders/{id}/edit', [HrDocumentLibraryController::class, 'editFolder'])->name('hr-document-folders.edit');
+            Route::put('hr-document-folders/{id}', [HrDocumentLibraryController::class, 'updateFolder'])->name('hr-document-folders.update');
+            Route::delete('hr-document-folders/{id}', [HrDocumentLibraryController::class, 'destroyFolder'])->name('hr-document-folders.destroy');
             Route::post('email-settings', [SettingsController::class, 'saveEmailSettings'])->name('email.settings');
             Route::post('/pwa-settings', [SettingsController::class, 'pwaSettingStore'])->name('pwa.settings.store');
             Route::post('company-settings', [SettingsController::class, 'saveCompanySettings'])->name('company.settings');

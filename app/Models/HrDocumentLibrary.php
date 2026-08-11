@@ -12,12 +12,18 @@ class HrDocumentLibrary extends Model
     protected $fillable = [
         'title',
         'category',
+        'folder_id',
         'description',
         'file_name',
         'file_path',
         'content',
         'created_by',
     ];
+
+    public function folder()
+    {
+        return $this->belongsTo(HrDocumentFolder::class, 'folder_id');
+    }
 
     public function creator()
     {
