@@ -63,19 +63,25 @@ class LoginRequest extends FormRequest
         $superAdminUrl = env('SUPER_ADMIN_URL', config('app.super_admin_url', 'https://admin.hrms.idabtech.com'));
         $companyUrl    = env('COMPANY_URL', config('app.company_url', 'https://hrms.idabtech.com'));
 
-        $adminHost = '';
-        if (!empty($superAdminUrl)) {
-            $cleanUrl  = preg_replace('#^https?://#i', '', trim($superAdminUrl));
-            $adminHost = strtolower(explode('/', explode(':', $cleanUrl)[0])[0]);
-        }
+        $parseHost = function ($url) {
+            if (empty($url)) return '';
+            $clean = preg_replace('#^https?://#i', '', trim($url));
+            $clean = explode('/', $clean)[0];
+            return strtolower(explode(':', $clean)[0]);
+        };
+
+        $adminHost   = $parseHost($superAdminUrl);
+        $companyHost = $parseHost($companyUrl);
 
         $currentHost = strtolower(explode(':', trim($this->getHost()))[0]);
-        $isLocal     = in_array($currentHost, ['127.0.0.1', 'localhost']);
+        $httpHost    = isset($_SERVER['HTTP_HOST']) ? strtolower(explode(':', trim($_SERVER['HTTP_HOST']))[0]) : $currentHost;
+
+        $isLocal = in_array($currentHost, ['127.0.0.1', 'localhost']) || in_array($httpHost, ['127.0.0.1', 'localhost']);
 
         $isOnAdminDomain = false;
         if (!empty($adminHost)) {
-            if (!$isLocal || $currentHost === $adminHost) {
-                $isOnAdminDomain = ($currentHost === $adminHost);
+            if (!$isLocal || $currentHost === $adminHost || $httpHost === $adminHost) {
+                $isOnAdminDomain = ($currentHost === $adminHost || $httpHost === $adminHost);
             }
         }
 
@@ -88,7 +94,7 @@ class LoginRequest extends FormRequest
                 if (password_verify($this->password, $user->password)) {
 
                     // Domain restriction enforcement when password matches
-                    if (!empty($adminHost) && (!$isLocal || $currentHost === $adminHost)) {
+                    if (!empty($adminHost) && (!$isLocal || $isOnAdminDomain)) {
                         if ($user->type === 'super admin' && !$isOnAdminDomain) {
                             session()->flash('error', __('Access Denied: Super Admin can only log in through the Admin Portal: ') . $superAdminUrl);
                             throw ValidationException::withMessages([]);

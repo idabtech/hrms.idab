@@ -96,15 +96,24 @@ class AuthenticatedSessionController extends Controller
         $superAdminUrl = env('SUPER_ADMIN_URL', config('app.super_admin_url', 'https://admin.hrms.idabtech.com'));
         $companyUrl    = env('COMPANY_URL', config('app.company_url', 'https://hrms.idabtech.com'));
 
-        if (!empty($superAdminUrl)) {
-            $adminHost = parse_url($superAdminUrl, PHP_URL_HOST) ?? $superAdminUrl;
-            $adminHost = strtolower(explode(':', str_replace(['http://', 'https://'], '', $adminHost))[0]);
+        $parseHost = function ($url) {
+            if (empty($url)) return '';
+            $clean = preg_replace('#^https?://#i', '', trim($url));
+            $clean = explode('/', $clean)[0];
+            return strtolower(explode(':', $clean)[0]);
+        };
 
-            $currentHost = strtolower($request->getHost());
-            $isLocal     = in_array($currentHost, ['127.0.0.1', 'localhost']);
+        $adminHost   = $parseHost($superAdminUrl);
+        $companyHost = $parseHost($companyUrl);
 
-            if (!$isLocal || $currentHost === $adminHost) {
-                $isOnAdminDomain = ($currentHost === $adminHost);
+        if (!empty($adminHost)) {
+            $currentHost = strtolower(explode(':', trim($request->getHost()))[0]);
+            $httpHost    = isset($_SERVER['HTTP_HOST']) ? strtolower(explode(':', trim($_SERVER['HTTP_HOST']))[0]) : $currentHost;
+
+            $isLocal = in_array($currentHost, ['127.0.0.1', 'localhost']) || in_array($httpHost, ['127.0.0.1', 'localhost']);
+
+            if (!$isLocal || $currentHost === $adminHost || $httpHost === $adminHost) {
+                $isOnAdminDomain = ($currentHost === $adminHost || $httpHost === $adminHost);
 
                 if ($user->type === 'super admin' && !$isOnAdminDomain) {
                     auth()->logout();
