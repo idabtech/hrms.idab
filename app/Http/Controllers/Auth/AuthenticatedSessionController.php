@@ -93,68 +93,24 @@ class AuthenticatedSessionController extends Controller
         $user = Auth::user();
 
         // Domain restriction enforcement
-        $superAdminUrl = config('app.super_admin_url') ?? env('SUPER_ADMIN_URL', 'https://admin.hrms.idabtech.com');
-        $companyUrl    = config('app.company_url') ?? env('COMPANY_URL', 'https://hrms.idabtech.com');
+        $superAdminUrl   = Utility::getSuperAdminUrl();
+        $companyUrl      = Utility::getCompanyUrl();
+        $isOnAdminDomain = Utility::isSuperAdminDomain();
 
-        $parseHost = function ($url) {
-            if (empty($url)) return '';
-            $clean = preg_replace('#^https?://#i', '', trim($url));
-            $clean = explode('/', $clean)[0];
-            return strtolower(explode(':', $clean)[0]);
-        };
+        if ($user->type === 'super admin' && !$isOnAdminDomain) {
+            auth()->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
 
-        $adminHost   = $parseHost($superAdminUrl);
-        $companyHost = $parseHost($companyUrl);
+            return redirect()->back()->withInput($request->only('email'))->with('error', __('Access Denied: Super Admin can only log in through the Admin Portal: ') . $superAdminUrl);
+        }
 
-        if (!empty($adminHost)) {
-            $candidates = array_filter([
-                $request->getHost(),
-                $request->header('host'),
-                $request->header('x-forwarded-host'),
-                $_SERVER['HTTP_HOST'] ?? '',
-                $_SERVER['HTTP_X_FORWARDED_HOST'] ?? '',
-                $_SERVER['SERVER_NAME'] ?? '',
-            ]);
+        if ($user->type !== 'super admin' && $isOnAdminDomain) {
+            auth()->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
 
-            $currentHosts = array_map(function ($h) {
-                $clean = preg_replace('#^https?://#i', '', trim($h));
-                $clean = explode('/', $clean)[0];
-                return strtolower(explode(':', $clean)[0]);
-            }, $candidates);
-
-            $isLocal = false;
-            foreach ($currentHosts as $h) {
-                if (in_array($h, ['127.0.0.1', 'localhost'])) {
-                    $isLocal = true;
-                    break;
-                }
-            }
-
-            $isOnAdminDomain = false;
-            foreach ($currentHosts as $h) {
-                if ($h === $adminHost) {
-                    $isOnAdminDomain = true;
-                    break;
-                }
-            }
-
-            if (!$isLocal || $isOnAdminDomain) {
-                if ($user->type === 'super admin' && !$isOnAdminDomain) {
-                    auth()->logout();
-                    $request->session()->invalidate();
-                    $request->session()->regenerateToken();
-
-                    return redirect()->back()->withInput($request->only('email'))->with('error', __('Access Denied: Super Admin can only log in through the Admin Portal: ') . $superAdminUrl);
-                }
-
-                if ($user->type !== 'super admin' && $isOnAdminDomain) {
-                    auth()->logout();
-                    $request->session()->invalidate();
-                    $request->session()->regenerateToken();
-
-                    return redirect()->back()->withInput($request->only('email'))->with('error', __('Access Denied: Company and Employee users must log in through the Company Portal: ') . $companyUrl);
-                }
-            }
+            return redirect()->back()->withInput($request->only('email'))->with('error', __('Access Denied: Company and Employee users must log in through the Company Portal: ') . $companyUrl);
         }
 
         if ($user->is_active == 0) {
