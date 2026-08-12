@@ -193,10 +193,11 @@ Route::get('/external-login', function (Request $request) {
         abort(403, 'Missing SSO data');
     }
  
+    $secret = config('services.sso.secret') ?: 'idab_default_sso_secret';
     $expectedSignature = hash_hmac(
         'sha256',
         $payload,
-        config('services.sso.secret')
+        $secret
     );
  
     if (! hash_equals($expectedSignature, $signature)) {

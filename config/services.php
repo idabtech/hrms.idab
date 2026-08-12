@@ -38,7 +38,7 @@ return [
     ],
 
     'sso' => [
-        'secret' => env('SSO_SHARED_SECRET'),
+        'secret' => env('SSO_SHARED_SECRET', 'idab_default_sso_secret'),
     ],
 
     /*

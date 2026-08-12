@@ -56,13 +56,6 @@ class AuthenticatedSessionController extends Controller
 
     public function store(LoginRequest $request)
     {
-        dd([
-            'controller_store_hit'   => true,
-            'current_host'          => request()->getHost(),
-            'super_admin_url'       => Utility::getSuperAdminUrl(),
-            'company_url'           => Utility::getCompanyUrl(),
-            'is_super_admin_domain' => Utility::isSuperAdminDomain(),
-        ]);
         if (session('external_login_active')) {
             if ($request->email !== session('external_login_email')) {
                 return back()->withErrors([

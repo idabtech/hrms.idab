@@ -61,18 +61,6 @@ class LoginRequest extends FormRequest
 
     public function authenticate()
     {
-        dd([
-            'super_admin_url'       => Utility::getSuperAdminUrl(),
-            'parsed_admin_host'     => Utility::parseCleanHost(Utility::getSuperAdminUrl()),
-            'company_url'           => Utility::getCompanyUrl(),
-            'parsed_company_host'   => Utility::parseCleanHost(Utility::getCompanyUrl()),
-            'request_get_host'      => request()->getHost(),
-            'header_host'           => request()->header('host'),
-            'header_x_forwarded'    => request()->header('x-forwarded-host'),
-            'server_http_host'      => $_SERVER['HTTP_HOST'] ?? null,
-            'is_super_admin_domain' => Utility::isSuperAdminDomain(),
-        ]);
-
         $superAdminUrl   = Utility::getSuperAdminUrl();
         $companyUrl      = Utility::getCompanyUrl();
         $isOnAdminDomain = Utility::isSuperAdminDomain();
