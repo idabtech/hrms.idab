@@ -13,7 +13,7 @@
                 <a href="{{ route('hr-document-library.index', ['folder_id' => $ancestor->id]) }}">{{ $ancestor->name }}</a>
             </li>
         @endforeach
-        <li class="breadcrumb-item text-primary fw-bold">{{ $currentFolder->name }}</li>
+        <li class="breadcrumb-item text-primary fw-semibold">{{ $currentFolder->name }}</li>
     @endif
 @endsection
 
@@ -21,16 +21,16 @@
     <div class="d-flex align-items-center gap-2">
         @if ($currentFolder)
             <!-- Back Button -->
-            <a href="{{ route('hr-document-library.index', ['folder_id' => $currentFolder->parent_id]) }}" class="btn btn-sm btn-outline-secondary me-1">
+            <a href="{{ route('hr-document-library.index', ['folder_id' => $currentFolder->parent_id]) }}" class="btn btn-sm btn-outline-secondary me-1 shadow-sm px-3 rounded-2">
                 <i class="ti ti-arrow-left me-1"></i>{{ __('Back') }}
             </a>
         @endif
 
-        @can('Create HR Document Library')
+        @if (\Auth::user()->type === 'super admin')
             <!-- Create Folder Button -->
             <a href="javascript:void(0)" data-url="{{ route('hr-document-folders.create', ['parent_id' => $currentFolder ? $currentFolder->id : '']) }}" data-ajax-popup="true"
                 data-title="{{ __('Create New Folder') }}" data-size="md" data-bs-toggle="tooltip" title="{{ __('Create Folder') }}"
-                class="btn btn-sm btn-outline-primary me-1">
+                class="btn btn-sm btn-outline-primary me-1 shadow-sm px-3 rounded-2">
                 <i class="ti ti-folder-plus me-1"></i>{{ __('New Folder') }}
             </a>
 
@@ -38,25 +38,25 @@
             @if ($currentFolder || count($allFolders) > 0)
                 <a href="javascript:void(0)" data-url="{{ route('hr-document-library.create', ['folder_id' => $currentFolder ? $currentFolder->id : '']) }}" data-ajax-popup="true"
                     data-title="{{ __('Upload Documents') }}" data-size="lg" data-bs-toggle="tooltip" title="{{ __('Upload Documents') }}"
-                    class="btn btn-sm btn-primary">
+                    class="btn btn-sm btn-primary shadow-sm px-3 rounded-2">
                     <i class="ti ti-upload me-1"></i>{{ __('Upload Documents') }}
                 </a>
             @endif
-        @endcan
+        @endif
     </div>
 @endsection
 
 @section('content')
     <style>
         .folder-card {
-            transition: all 0.2s ease-in-out;
-            border: 1px solid #e9ecef;
+            transition: all 0.25s ease-in-out;
+            border: 1px solid #eaedf1;
             border-radius: 12px;
             background: #ffffff;
         }
         .folder-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05) !important;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.08) !important;
             border-color: #6366f1 !important;
         }
         .folder-card.active-folder {
@@ -64,8 +64,8 @@
             background-color: #f8f9ff !important;
         }
         .folder-icon-box {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             border-radius: 10px;
             background-color: #fff9e6;
             color: #ffa800;
@@ -74,27 +74,35 @@
             justify-content: center;
         }
         .doc-card {
-            transition: all 0.2s ease-in-out;
-            border: 1px solid #e9ecef;
+            transition: all 0.25s ease-in-out;
+            border: 1px solid #eaedf1;
             border-radius: 12px;
             background: #ffffff;
         }
         .doc-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05) !important;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.08) !important;
             border-color: #6366f1 !important;
+        }
+        .doc-title-text {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: #1e293b;
+            line-height: 1.35;
         }
     </style>
 
     <!-- Folders Directory Section -->
     <div class="row mb-4">
         <div class="col-12 d-flex align-items-center justify-content-between mb-3">
-            <h5 class="mb-0 fw-bold text-dark d-flex align-items-center">
-                <i class="ti ti-folder text-warning me-2 fs-3"></i>{{ __('Folders') }}
-                <span class="badge bg-light-primary text-primary rounded-pill px-2 py-1 fs-7 ms-2 fw-bold">
+            <div class="d-flex align-items-center gap-2">
+                <h5 class="mb-0 fw-semibold text-dark d-flex align-items-center" style="font-size: 1.1rem;">
+                    <i class="ti ti-folders text-warning me-2 fs-3"></i>{{ __('Folders') }}
+                </h5>
+                <span class="badge bg-light-primary text-primary rounded-pill px-2.5 py-1 fs-7 fw-semibold ms-1">
                     {{ sprintf('%02d', count($folders)) }}
                 </span>
-            </h5>
+            </div>
         </div>
 
         @if(count($folders) > 0)
@@ -103,17 +111,17 @@
                     $isActive = ($currentFolder && $currentFolder->id == $folder->id);
                 @endphp
                 <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
-                    <div class="card folder-card {{ $isActive ? 'active-folder' : '' }} h-100 shadow-sm mb-0">
+                    <div class="card folder-card {{ $isActive ? 'active-folder' : '' }} h-100 mb-0">
                         <div class="card-body p-3 d-flex align-items-center justify-content-between">
                             <a href="{{ route('hr-document-library.index', ['folder_id' => $folder->id]) }}" class="d-flex align-items-center text-decoration-none text-dark flex-grow-1 text-truncate me-2">
                                 <div class="folder-icon-box me-3 flex-shrink-0">
                                     <i class="ti ti-folder fs-2"></i>
                                 </div>
                                 <div class="text-truncate">
-                                    <h6 class="mb-1 fw-bold text-truncate text-dark" data-bs-toggle="tooltip" title="{{ $folder->name }}">
+                                    <h6 class="mb-1 fw-semibold text-truncate text-dark" style="font-size: 0.92rem;" data-bs-toggle="tooltip" title="{{ $folder->name }}">
                                         {{ $folder->name }}
                                     </h6>
-                                    <small class="text-muted d-block" style="font-size: 0.78rem;">
+                                    <small class="text-muted d-block fw-normal" style="font-size: 0.78rem;">
                                         {{ $folder->documents()->count() }} {{ __('Files') }} 
                                         <span class="mx-1">•</span> 
                                         {{ \Auth::user()->dateFormat($folder->created_at) }}
@@ -131,14 +139,12 @@
                                             <i class="ti ti-folder-open me-2 text-primary"></i>{{ __('Open Folder') }}
                                         </a>
                                     </li>
-                                    @can('Edit HR Document Library')
+                                    @if (\Auth::user()->type === 'super admin')
                                         <li>
                                             <a href="javascript:void(0)" data-url="{{ route('hr-document-folders.edit', $folder->id) }}" data-ajax-popup="true" data-title="{{ __('Edit Folder') }}" data-size="md" class="dropdown-item">
                                                 <i class="ti ti-edit me-2 text-info"></i>{{ __('Rename / Move') }}
                                             </a>
                                         </li>
-                                    @endcan
-                                    @can('Delete HR Document Library')
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
                                             {!! Form::open(['method' => 'DELETE', 'route' => ['hr-document-folders.destroy', $folder->id], 'id' => 'delete-folder-form-' . $folder->id]) !!}
@@ -147,7 +153,7 @@
                                                 </a>
                                             {!! Form::close() !!}
                                         </li>
-                                    @endcan
+                                    @endif
                                 </ul>
                             </div>
                         </div>
@@ -159,17 +165,17 @@
             <div class="col-12">
                 <div class="card border shadow-none bg-light text-center py-5 rounded-3">
                     <div class="card-body">
-                        <div class="avatar avatar-xl bg-light-primary text-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                        <div class="avatar avatar-xl bg-light-primary text-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 68px; height: 68px;">
                             <i class="ti ti-folder-plus display-5"></i>
                         </div>
-                        <h5 class="fw-bold text-dark mb-2">{{ __('No Folders Created Yet') }}</h5>
-                        <p class="text-muted mb-4 max-w-400 mx-auto">{{ __('Create your first HR document folder to start organizing offer letters, contracts, policies, and employee files.') }}</p>
-                        @can('Create HR Document Library')
+                        <h5 class="fw-semibold text-dark mb-2" style="font-size: 1.1rem;">{{ __('No Folders Created Yet') }}</h5>
+                        <p class="text-muted mb-4 max-w-400 mx-auto fw-normal">{{ __('Create your first HR document folder to start organizing offer letters, contracts, policies, and employee files.') }}</p>
+                        @if (\Auth::user()->type === 'super admin')
                             <a href="javascript:void(0)" data-url="{{ route('hr-document-folders.create', ['parent_id' => '']) }}" data-ajax-popup="true"
-                                data-title="{{ __('Create New Folder') }}" data-size="md" class="btn btn-primary px-4">
+                                data-title="{{ __('Create New Folder') }}" data-size="md" class="btn btn-primary px-4 shadow-sm rounded-2">
                                 <i class="ti ti-folder-plus me-1"></i>{{ __('Create First Folder') }}
                             </a>
-                        @endcan
+                        @endif
                     </div>
                 </div>
             </div>
@@ -180,30 +186,32 @@
     @if($currentFolder)
         <div class="row">
             <div class="col-12 d-flex align-items-center justify-content-between mb-3">
-                <h5 class="mb-0 fw-bold text-dark d-flex align-items-center">
-                    <i class="ti ti-files text-primary me-2 fs-3"></i>{{ $currentFolder->name }} {{ __('Documents') }}
-                    <span class="badge bg-light-primary text-primary rounded-pill px-2 py-1 fs-7 ms-2 fw-bold">
-                        {{ count($documents) }}
+                <div class="d-flex align-items-center gap-2">
+                    <h5 class="mb-0 fw-semibold text-dark d-flex align-items-center" style="font-size: 1.1rem;">
+                        <i class="ti ti-files text-primary me-2 fs-3"></i>{{ $currentFolder->name }} {{ __('Documents') }}
+                    </h5>
+                    <span class="badge bg-light-primary text-primary rounded-pill px-2.5 py-1 fs-7 fw-semibold ms-1">
+                        {{ sprintf('%02d', count($documents)) }}
                     </span>
-                </h5>
+                </div>
 
-                @can('Create HR Document Library')
+                @if (\Auth::user()->type === 'super admin')
                     <a href="javascript:void(0)" data-url="{{ route('hr-document-library.create', ['folder_id' => $currentFolder->id]) }}" data-ajax-popup="true"
-                        data-title="{{ __('Upload Documents') }}" data-size="lg" class="btn btn-sm btn-primary rounded-3 px-3">
+                        data-title="{{ __('Upload Documents') }}" data-size="lg" class="btn btn-sm btn-primary rounded-2 px-3 shadow-sm">
                         <i class="ti ti-upload me-1"></i>{{ __('Upload Files') }}
                     </a>
-                @endcan
+                @endif
             </div>
 
             @if(count($documents) > 0)
                 @foreach ($documents as $doc)
                     <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-                        <div class="card doc-card h-100 shadow-sm position-relative">
+                        <div class="card doc-card h-100 position-relative">
                             <div class="card-body p-3 d-flex flex-column justify-content-between">
                                 
                                 <!-- Top: Category Badge & Dropdown -->
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span class="badge bg-light-info text-info fw-semibold px-2 py-1 fs-7">
+                                    <span class="badge bg-light-primary text-primary fw-semibold px-2.5 py-1 fs-7 rounded-pill" style="font-size: 0.75rem;">
                                         {{ $doc->category ?: 'General' }}
                                     </span>
 
@@ -212,19 +220,26 @@
                                             <i class="ti ti-dots-vertical"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                                            <li>
-                                                <a href="{{ route('hr-document-library.download-doc', $doc->id) }}" class="dropdown-item">
-                                                    <i class="ti ti-download me-2 text-primary"></i>{{ __('Download') }}
-                                                </a>
-                                            </li>
-                                            @can('Edit HR Document Library')
+                                            @if (\Auth::user()->type === 'super admin' || \Auth::user()->can('View HR Document Library'))
+                                                <li>
+                                                    <a href="{{ route('hr-document-library.view-doc', $doc->id) }}" target="_blank" class="dropdown-item">
+                                                        <i class="ti ti-eye me-2 text-info"></i>{{ __('View Document') }}
+                                                    </a>
+                                                </li>
+                                            @endif
+                                            @if (\Auth::user()->type === 'super admin' || \Auth::user()->can('Download HR Document Library'))
+                                                <li>
+                                                    <a href="{{ route('hr-document-library.download-doc', $doc->id) }}" class="dropdown-item">
+                                                        <i class="ti ti-download me-2 text-primary"></i>{{ __('Download') }}
+                                                    </a>
+                                                </li>
+                                            @endif
+                                            @if (\Auth::user()->type === 'super admin')
                                                 <li>
                                                     <a href="javascript:void(0)" data-url="{{ route('hr-document-library.edit', $doc->id) }}" data-ajax-popup="true" data-title="{{ __('Edit HR Document') }}" data-size="lg" class="dropdown-item">
                                                         <i class="ti ti-edit me-2 text-info"></i>{{ __('Edit Details') }}
                                                     </a>
                                                 </li>
-                                            @endcan
-                                            @can('Delete HR Document Library')
                                                 <li><hr class="dropdown-divider"></li>
                                                 <li>
                                                     {!! Form::open(['method' => 'DELETE', 'route' => ['hr-document-library.destroy', $doc->id], 'id' => 'delete-doc-form-' . $doc->id]) !!}
@@ -233,38 +248,19 @@
                                                         </a>
                                                     {!! Form::close() !!}
                                                 </li>
-                                            @endcan
+                                            @endif
                                         </ul>
                                     </div>
                                 </div>
 
                                 <!-- Document Details -->
-                                <div class="text-center py-2">
-                                    @php
-                                        $ext = strtolower(pathinfo($doc->file_name ?? '', PATHINFO_EXTENSION));
-                                    @endphp
-                                    <div class="avatar avatar-lg rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center
-                                        {{ in_array($ext, ['pdf']) ? 'bg-light-danger text-danger' : (in_array($ext, ['doc', 'docx']) ? 'bg-light-primary text-primary' : (in_array($ext, ['jpg', 'png', 'jpeg', 'gif']) ? 'bg-light-success text-success' : (in_array($ext, ['xls', 'xlsx', 'csv']) ? 'bg-light-success text-success' : 'bg-light-info text-info'))) }}"
-                                        style="width: 54px; height: 54px;">
-                                        @if(in_array($ext, ['pdf']))
-                                            <i class="ti ti-file-text fs-2"></i>
-                                        @elseif(in_array($ext, ['doc', 'docx']))
-                                            <i class="ti ti-file-description fs-2"></i>
-                                        @elseif(in_array($ext, ['jpg', 'png', 'jpeg', 'gif']))
-                                            <i class="ti ti-photo fs-2"></i>
-                                        @elseif(in_array($ext, ['xls', 'xlsx', 'csv']))
-                                            <i class="ti ti-file-spreadsheet fs-2"></i>
-                                        @else
-                                            <i class="ti ti-file-text fs-2"></i>
-                                        @endif
-                                    </div>
-
-                                    <h6 class="mb-1 fw-bold text-dark text-truncate px-2" data-bs-toggle="tooltip" title="{{ $doc->title }}">
-                                        {{ $doc->title }}
+                                <div class="text-start py-2">
+                                    <h6 class="mb-1.5 doc-title-text text-truncate" data-bs-toggle="tooltip" title="{{ $doc->title }}">
+                                        <i class="ti ti-file-text text-primary me-1 fs-5"></i>{{ $doc->title }}
                                     </h6>
 
                                     @if(!empty($doc->file_name))
-                                        <p class="small text-muted text-truncate mb-0 px-2" style="font-size: 0.8rem;" data-bs-toggle="tooltip" title="{{ $doc->file_name }}">
+                                        <p class="small text-muted text-truncate mb-0 fw-normal" style="font-size: 0.78rem;" data-bs-toggle="tooltip" title="{{ $doc->file_name }}">
                                             <i class="ti ti-paperclip me-1"></i>{{ $doc->file_name }}
                                         </p>
                                     @endif
@@ -272,19 +268,26 @@
 
                                 <!-- Footer: Date & Quick Actions -->
                                 <div class="pt-3 border-top mt-3 d-flex justify-content-between align-items-center">
-                                    <small class="text-muted" style="font-size: 0.78rem;">
+                                    <small class="text-muted fw-normal" style="font-size: 0.78rem;">
                                         <i class="ti ti-calendar me-1"></i>{{ \Auth::user()->dateFormat($doc->created_at) }}
                                     </small>
 
                                     <div class="d-flex align-items-center gap-1">
-                                        <a href="{{ route('hr-document-library.download-doc', $doc->id) }}" class="btn btn-sm btn-light-primary p-1 px-2" data-bs-toggle="tooltip" title="{{ __('Download') }}">
-                                            <i class="ti ti-download"></i>
-                                        </a>
-                                        @can('Edit HR Document Library')
-                                            <a href="javascript:void(0)" data-url="{{ route('hr-document-library.edit', $doc->id) }}" data-ajax-popup="true" data-title="{{ __('Edit HR Document') }}" data-size="lg" class="btn btn-sm btn-light-info p-1 px-2" data-bs-toggle="tooltip" title="{{ __('Edit') }}">
+                                        @if (\Auth::user()->type === 'super admin' || \Auth::user()->can('View HR Document Library'))
+                                            <a href="{{ route('hr-document-library.view-doc', $doc->id) }}" target="_blank" class="btn btn-sm btn-light-info p-1.5 px-2.5 rounded-2" data-bs-toggle="tooltip" title="{{ __('View Document') }}">
+                                                <i class="ti ti-eye"></i>
+                                            </a>
+                                        @endif
+                                        @if (\Auth::user()->type === 'super admin' || \Auth::user()->can('Download HR Document Library'))
+                                            <a href="{{ route('hr-document-library.download-doc', $doc->id) }}" class="btn btn-sm btn-primary p-1.5 px-2.5 rounded-2 shadow-sm" data-bs-toggle="tooltip" title="{{ __('Download') }}">
+                                                <i class="ti ti-download"></i>
+                                            </a>
+                                        @endif
+                                        @if (\Auth::user()->type === 'super admin')
+                                            <a href="javascript:void(0)" data-url="{{ route('hr-document-library.edit', $doc->id) }}" data-ajax-popup="true" data-title="{{ __('Edit HR Document') }}" data-size="lg" class="btn btn-sm btn-light-secondary p-1.5 px-2.5 rounded-2" data-bs-toggle="tooltip" title="{{ __('Edit') }}">
                                                 <i class="ti ti-edit"></i>
                                             </a>
-                                        @endcan
+                                        @endif
                                     </div>
                                 </div>
 
@@ -299,14 +302,14 @@
                             <div class="avatar avatar-xl bg-light-primary text-primary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 65px; height: 65px;">
                                 <i class="ti ti-cloud-upload display-6"></i>
                             </div>
-                            <h6 class="fw-bold text-dark mb-1">{{ __('No Documents in this Folder') }}</h6>
-                            <p class="text-muted small mb-3">{{ __('Upload employee files or contracts to this folder.') }}</p>
-                            @can('Create HR Document Library')
+                            <h6 class="fw-semibold text-dark mb-1" style="font-size: 1rem;">{{ __('No Documents in this Folder') }}</h6>
+                            <p class="text-muted small mb-3 fw-normal">{{ __('Upload employee files or contracts to this folder.') }}</p>
+                            @if (\Auth::user()->type === 'super admin')
                                 <a href="javascript:void(0)" data-url="{{ route('hr-document-library.create', ['folder_id' => $currentFolder->id]) }}" data-ajax-popup="true"
-                                    data-title="{{ __('Upload Documents') }}" data-size="lg" class="btn btn-sm btn-primary px-3">
+                                    data-title="{{ __('Upload Documents') }}" data-size="lg" class="btn btn-sm btn-primary px-3 shadow-sm rounded-2">
                                     <i class="ti ti-upload me-1"></i>{{ __('Upload Documents Now') }}
                                 </a>
-                            @endcan
+                            @endif
                         </div>
                     </div>
                 </div>

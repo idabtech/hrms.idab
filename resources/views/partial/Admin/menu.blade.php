@@ -612,7 +612,7 @@
             <!-- Scheduling & Meetings-->
 
             <!-- Resources-->
-            @if (Gate::check('Manage Assets') || Gate::check('Manage Document') || Gate::check('Manage Company Policy') || Gate::check('Manage HR Document Library'))
+            @if (Gate::check('Manage Assets') || Gate::check('Manage Document') || Gate::check('Manage Company Policy') || Gate::check('Manage HR Document Library') || \Auth::user()->type == 'super admin')
                 <li class="dash-item dash-hasmenu {{ in_array(Request::segment(1), ['account-assets', 'document-upload', 'company-policy', 'hr-document-library']) ? 'dash-trigger active' : '' }}">
                     <a href="javascript:void(0)" class="dash-link">
                         <span class="dash-micon"><i class="ti ti-folders"></i></span>
@@ -635,11 +635,11 @@
                                 <a class="dash-link" href="{{ route('company-policy.index') }}">{{ __('Company Policy') }}</a>
                             </li>
                         @endcan
-                        @can('Manage HR Document Library')
+                        @if (Gate::check('Manage HR Document Library') || \Auth::user()->type == 'super admin')
                             <li class="dash-item {{ Request::segment(1) == 'hr-document-library' ? 'active' : '' }}">
                                 <a class="dash-link" href="{{ route('hr-document-library.index') }}">{{ __('HR Document Library') }}</a>
                             </li>
-                        @endcan
+                        @endif
                     </ul>
                 </li>
             @endif

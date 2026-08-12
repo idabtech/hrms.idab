@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\HrDocumentFolder;
 use App\Models\HrDocumentLibrary;
+use App\Models\User;
 use App\Services\HrDocumentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,21 +20,44 @@ class HrDocumentLibraryController extends Controller
     }
 
     /**
+     * Helper to scope queries by allowed creator IDs.
+     * Super Admin sees ALL folders & documents from all companies/creators.
+     * Company/Users see Super Admin created documents + their own company documents.
+     */
+    protected function applyAllowedCreatorFilter($query)
+    {
+        if (Auth::user()->type === 'super admin') {
+            return $query;
+        }
+
+        $superAdmin = User::where('type', 'super admin')->first();
+        $superAdminId = $superAdmin ? $superAdmin->id : 1;
+
+        $allowedIds = array_values(array_unique([
+            $superAdminId,
+            Auth::user()->creatorId(),
+            Auth::user()->id,
+        ]));
+
+        return $query->whereIn('created_by', $allowedIds);
+    }
+
+    /**
      * Display listing of HR documents and folders.
      */
     public function index(Request $request)
     {
-        if (Auth::user()->can('Manage HR Document Library')) {
-            $creatorId = Auth::user()->creatorId();
+        $user = Auth::user();
+        if ($user->type === 'super admin' || $user->can('Manage HR Document Library')) {
             $folderId = $request->get('folder_id', null);
 
             $currentFolder = null;
             if ($folderId) {
-                $currentFolder = HrDocumentFolder::where('created_by', $creatorId)->find($folderId);
+                $currentFolder = $this->applyAllowedCreatorFilter(HrDocumentFolder::query())->find($folderId);
             }
 
             // Fetch folders inside current active directory
-            $foldersQuery = HrDocumentFolder::where('created_by', $creatorId);
+            $foldersQuery = $this->applyAllowedCreatorFilter(HrDocumentFolder::query());
             if ($currentFolder) {
                 $foldersQuery->where('parent_id', $currentFolder->id);
             } else {
@@ -42,7 +66,7 @@ class HrDocumentLibraryController extends Controller
             $folders = $foldersQuery->orderBy('name', 'asc')->get();
 
             // Fetch documents inside current active directory
-            $docQuery = HrDocumentLibrary::where('created_by', $creatorId);
+            $docQuery = $this->applyAllowedCreatorFilter(HrDocumentLibrary::query());
             if ($currentFolder) {
                 $docQuery->where('folder_id', $currentFolder->id);
             } else {
@@ -63,12 +87,12 @@ class HrDocumentLibraryController extends Controller
 
             $documents = $docQuery->orderBy('created_at', 'desc')->get();
 
-            $categories = HrDocumentLibrary::where('created_by', $creatorId)
+            $categories = $this->applyAllowedCreatorFilter(HrDocumentLibrary::query())
                 ->whereNotNull('category')
                 ->pluck('category', 'category')
                 ->toArray();
 
-            $allFolders = HrDocumentFolder::where('created_by', $creatorId)
+            $allFolders = $this->applyAllowedCreatorFilter(HrDocumentFolder::query())
                 ->pluck('name', 'id')
                 ->toArray();
 
@@ -79,27 +103,26 @@ class HrDocumentLibraryController extends Controller
     }
 
     /**
-     * Show creation popup modal for document upload (single or multiple).
+     * Show creation popup modal for document upload (Super Admin Only).
      */
     public function create(Request $request)
     {
-        if (Auth::user()->can('Create HR Document Library')) {
-            $creatorId = Auth::user()->creatorId();
+        if (Auth::user()->type === 'super admin') {
             $folderId = $request->get('folder_id', null);
-            $folders = HrDocumentFolder::where('created_by', $creatorId)->pluck('name', 'id')->toArray();
+            $folders = $this->applyAllowedCreatorFilter(HrDocumentFolder::query())->pluck('name', 'id')->toArray();
 
             return view('hr_document_library.create', compact('folderId', 'folders'));
         }
 
-        return redirect()->back()->with('error', __('Permission denied.'));
+        return redirect()->back()->with('error', __('Permission denied. Only Super Admin can upload documents.'));
     }
 
     /**
-     * Store newly uploaded HR documents (supports multiple files).
+     * Store newly uploaded HR documents (Super Admin Only).
      */
     public function store(Request $request)
     {
-        if (Auth::user()->can('Create HR Document Library')) {
+        if (Auth::user()->type === 'super admin') {
             $validator = Validator::make(
                 $request->all(),
                 [
@@ -133,31 +156,30 @@ class HrDocumentLibraryController extends Controller
             }
         }
 
-        return redirect()->back()->with('error', __('Permission denied.'));
+        return redirect()->back()->with('error', __('Permission denied. Only Super Admin can upload documents.'));
     }
 
     /**
-     * Show popup modal to create a new Folder.
+     * Show popup modal to create a new Folder (Super Admin Only).
      */
     public function createFolder(Request $request)
     {
-        if (Auth::user()->can('Create HR Document Library')) {
-            $creatorId = Auth::user()->creatorId();
+        if (Auth::user()->type === 'super admin') {
             $parentId = $request->get('parent_id', null);
-            $folders = HrDocumentFolder::where('created_by', $creatorId)->pluck('name', 'id')->toArray();
+            $folders = $this->applyAllowedCreatorFilter(HrDocumentFolder::query())->pluck('name', 'id')->toArray();
 
             return view('hr_document_library.create_folder', compact('parentId', 'folders'));
         }
 
-        return redirect()->back()->with('error', __('Permission denied.'));
+        return redirect()->back()->with('error', __('Permission denied. Only Super Admin can create folders.'));
     }
 
     /**
-     * Store new folder in DB.
+     * Store new folder in DB (Super Admin Only).
      */
     public function storeFolder(Request $request)
     {
-        if (Auth::user()->can('Create HR Document Library')) {
+        if (Auth::user()->type === 'super admin') {
             $validator = Validator::make(
                 $request->all(),
                 [
@@ -173,25 +195,24 @@ class HrDocumentLibraryController extends Controller
             HrDocumentFolder::create([
                 'name' => $request->name,
                 'parent_id' => $request->parent_id ?: null,
-                'created_by' => Auth::user()->creatorId(),
+                'created_by' => Auth::user()->id,
             ]);
 
             return redirect()->route('hr-document-library.index', ['folder_id' => $request->parent_id])
                 ->with('success', __('Folder created successfully.'));
         }
 
-        return redirect()->back()->with('error', __('Permission denied.'));
+        return redirect()->back()->with('error', __('Permission denied. Only Super Admin can create folders.'));
     }
 
     /**
-     * Edit folder popup modal.
+     * Edit folder popup modal (Super Admin Only).
      */
     public function editFolder($id)
     {
-        if (Auth::user()->can('Edit HR Document Library')) {
-            $creatorId = Auth::user()->creatorId();
-            $folder = HrDocumentFolder::where('created_by', $creatorId)->findOrFail($id);
-            $folders = HrDocumentFolder::where('created_by', $creatorId)
+        if (Auth::user()->type === 'super admin') {
+            $folder = $this->applyAllowedCreatorFilter(HrDocumentFolder::query())->findOrFail($id);
+            $folders = $this->applyAllowedCreatorFilter(HrDocumentFolder::query())
                 ->where('id', '!=', $id)
                 ->pluck('name', 'id')
                 ->toArray();
@@ -199,17 +220,16 @@ class HrDocumentLibraryController extends Controller
             return view('hr_document_library.edit_folder', compact('folder', 'folders'));
         }
 
-        return redirect()->back()->with('error', __('Permission denied.'));
+        return redirect()->back()->with('error', __('Permission denied. Only Super Admin can edit folders.'));
     }
 
     /**
-     * Update folder details.
+     * Update folder details (Super Admin Only).
      */
     public function updateFolder(Request $request, $id)
     {
-        if (Auth::user()->can('Edit HR Document Library')) {
-            $creatorId = Auth::user()->creatorId();
-            $folder = HrDocumentFolder::where('created_by', $creatorId)->findOrFail($id);
+        if (Auth::user()->type === 'super admin') {
+            $folder = $this->applyAllowedCreatorFilter(HrDocumentFolder::query())->findOrFail($id);
 
             $validator = Validator::make(
                 $request->all(),
@@ -232,17 +252,16 @@ class HrDocumentLibraryController extends Controller
                 ->with('success', __('Folder updated successfully.'));
         }
 
-        return redirect()->back()->with('error', __('Permission denied.'));
+        return redirect()->back()->with('error', __('Permission denied. Only Super Admin can edit folders.'));
     }
 
     /**
-     * Delete folder and its contents.
+     * Delete folder and its contents (Super Admin Only).
      */
     public function destroyFolder($id)
     {
-        if (Auth::user()->can('Delete HR Document Library')) {
-            $creatorId = Auth::user()->creatorId();
-            $folder = HrDocumentFolder::where('created_by', $creatorId)->findOrFail($id);
+        if (Auth::user()->type === 'super admin') {
+            $folder = $this->applyAllowedCreatorFilter(HrDocumentFolder::query())->findOrFail($id);
             $parentId = $folder->parent_id;
 
             $folder->delete();
@@ -251,32 +270,31 @@ class HrDocumentLibraryController extends Controller
                 ->with('success', __('Folder deleted successfully.'));
         }
 
-        return redirect()->back()->with('error', __('Permission denied.'));
+        return redirect()->back()->with('error', __('Permission denied. Only Super Admin can delete folders.'));
     }
 
     /**
-     * Show edit form popup modal for document.
+     * Show edit form popup modal for document (Super Admin Only).
      */
     public function edit($id)
     {
-        if (Auth::user()->can('Edit HR Document Library')) {
-            $creatorId = Auth::user()->creatorId();
-            $doc = HrDocumentLibrary::where('created_by', $creatorId)->findOrFail($id);
-            $folders = HrDocumentFolder::where('created_by', $creatorId)->pluck('name', 'id')->toArray();
+        if (Auth::user()->type === 'super admin') {
+            $doc = $this->applyAllowedCreatorFilter(HrDocumentLibrary::query())->findOrFail($id);
+            $folders = $this->applyAllowedCreatorFilter(HrDocumentFolder::query())->pluck('name', 'id')->toArray();
 
             return view('hr_document_library.edit', compact('doc', 'folders'));
         }
 
-        return redirect()->back()->with('error', __('Permission denied.'));
+        return redirect()->back()->with('error', __('Permission denied. Only Super Admin can edit documents.'));
     }
 
     /**
-     * Update document metadata or replace file.
+     * Update document metadata or replace file (Super Admin Only).
      */
     public function update(Request $request, $id)
     {
-        if (Auth::user()->can('Edit HR Document Library')) {
-            $doc = HrDocumentLibrary::where('created_by', Auth::user()->creatorId())->findOrFail($id);
+        if (Auth::user()->type === 'super admin') {
+            $doc = $this->applyAllowedCreatorFilter(HrDocumentLibrary::query())->findOrFail($id);
 
             $validator = Validator::make(
                 $request->all(),
@@ -302,16 +320,16 @@ class HrDocumentLibraryController extends Controller
                 ->with('success', __('HR Document updated successfully.'));
         }
 
-        return redirect()->back()->with('error', __('Permission denied.'));
+        return redirect()->back()->with('error', __('Permission denied. Only Super Admin can edit documents.'));
     }
 
     /**
-     * Delete document.
+     * Delete document (Super Admin Only).
      */
     public function destroy($id)
     {
-        if (Auth::user()->can('Delete HR Document Library')) {
-            $doc = HrDocumentLibrary::where('created_by', Auth::user()->creatorId())->findOrFail($id);
+        if (Auth::user()->type === 'super admin') {
+            $doc = $this->applyAllowedCreatorFilter(HrDocumentLibrary::query())->findOrFail($id);
             $folderId = $doc->folder_id;
             $this->documentService->deleteDocument($doc);
 
@@ -319,7 +337,7 @@ class HrDocumentLibraryController extends Controller
                 ->with('success', __('HR Document deleted successfully.'));
         }
 
-        return redirect()->back()->with('error', __('Permission denied.'));
+        return redirect()->back()->with('error', __('Permission denied. Only Super Admin can delete documents.'));
     }
 
     /**
@@ -327,8 +345,9 @@ class HrDocumentLibraryController extends Controller
      */
     public function downloadDoc($id)
     {
-        if (Auth::user()->can('Manage HR Document Library')) {
-            $doc = HrDocumentLibrary::where('created_by', Auth::user()->creatorId())->findOrFail($id);
+        $user = Auth::user();
+        if ($user->type === 'super admin' || $user->can('Download HR Document Library')) {
+            $doc = $this->applyAllowedCreatorFilter(HrDocumentLibrary::query())->findOrFail($id);
             if (!empty($doc->file_path)) {
                 $filePath = public_path($doc->file_path);
                 if (!file_exists($filePath)) {
@@ -338,8 +357,36 @@ class HrDocumentLibraryController extends Controller
                     return response()->download($filePath, $doc->file_name ?? ($doc->title . '.docx'));
                 }
             }
+            return redirect()->back()->with('error', __('File not found.'));
         }
 
-        return redirect()->back()->with('error', __('File not found.'));
+        return redirect()->back()->with('error', __('Permission denied. You do not have permission to download documents.'));
+    }
+
+    /**
+     * View/Preview original uploaded document file in new browser tab.
+     */
+    public function viewDoc($id)
+    {
+        $user = Auth::user();
+        if ($user->type === 'super admin' || $user->can('View HR Document Library')) {
+            $doc = $this->applyAllowedCreatorFilter(HrDocumentLibrary::query())->findOrFail($id);
+            if (!empty($doc->file_path)) {
+                $filePath = public_path($doc->file_path);
+                if (!file_exists($filePath)) {
+                    $filePath = storage_path('app/public/' . $doc->file_path);
+                }
+                if (file_exists($filePath)) {
+                    $mimeType = @mime_content_type($filePath) ?: 'application/octet-stream';
+                    return response()->file($filePath, [
+                        'Content-Type' => $mimeType,
+                        'Content-Disposition' => 'inline; filename="' . ($doc->file_name ?? $doc->title) . '"',
+                    ]);
+                }
+            }
+            return redirect()->back()->with('error', __('File not found.'));
+        }
+
+        return redirect()->back()->with('error', __('Permission denied. You do not have permission to view documents.'));
     }
 }
