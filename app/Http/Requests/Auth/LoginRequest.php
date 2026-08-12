@@ -74,7 +74,7 @@ class LoginRequest extends FormRequest
 
         $matchedUser = null;
         foreach ($users as $user) {
-            if (\Illuminate\Support\Facades\Hash::check($this->password, $user->password) || password_verify($this->password, $user->password)) {
+            if (\Illuminate\Support\Facades\Hash::check($this->password, $user->password)) {
                 $matchedUser = $user;
                 break;
             }
