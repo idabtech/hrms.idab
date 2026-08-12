@@ -31,40 +31,14 @@ class Utility extends Model
         '30' => 'Monthly',
     ];
 
-    public static function readEnvFileVar(string $key): ?string
-    {
-        $envPath = base_path('.env');
-        if (file_exists($envPath)) {
-            $content = @file_get_contents($envPath);
-            if ($content !== false) {
-                if (preg_match('/^\s*' . preg_quote($key, '/') . '\s*=\s*(.*)$/m', $content, $matches)) {
-                    $val = trim($matches[1]);
-                    $val = preg_replace('/^["\'](.*)["\']\s*$/s', '$1', $val);
-                    $val = trim($val);
-                    if (!empty($val)) {
-                        return $val;
-                    }
-                }
-            }
-        }
-
-        $val = env($key);
-        if (!empty($val)) return trim($val);
-
-        $val = config('app.' . strtolower($key));
-        if (!empty($val)) return trim($val);
-
-        return null;
-    }
-
     public static function getSuperAdminUrl(): string
     {
-        return self::readEnvFileVar('SUPER_ADMIN_URL') ?? url('/');
+        return config('app.super_admin_url') ?: url('/');
     }
 
     public static function getCompanyUrl(): string
     {
-        return self::readEnvFileVar('COMPANY_URL') ?? url('/');
+        return config('app.company_url') ?: url('/');
     }
 
     public static function parseCleanHost(string $url): string
@@ -77,7 +51,7 @@ class Utility extends Model
 
     public static function isSuperAdminDomain(): bool
     {
-        $adminUrl = self::readEnvFileVar('SUPER_ADMIN_URL');
+        $adminUrl = config('app.super_admin_url');
         if (empty($adminUrl)) {
             return false;
         }
@@ -87,28 +61,9 @@ class Utility extends Model
             return false;
         }
 
-        $candidates = array_filter([
-            request()->getHost(),
-            request()->header('host'),
-            request()->header('x-forwarded-host'),
-            $_SERVER['HTTP_HOST'] ?? '',
-            $_SERVER['HTTP_X_FORWARDED_HOST'] ?? '',
-            $_SERVER['SERVER_NAME'] ?? '',
-        ]);
+        $currentHost = strtolower(request()->getHost());
 
-        $currentHosts = array_map(function ($h) {
-            $clean = preg_replace('#^https?://#i', '', trim($h));
-            $clean = explode('/', $clean)[0];
-            return strtolower(explode(':', $clean)[0]);
-        }, $candidates);
-
-        foreach ($currentHosts as $h) {
-            if ($h === $adminHost) {
-                return true;
-            }
-        }
-
-        return false;
+        return $currentHost === $adminHost;
     }
 
     public static function settings()
