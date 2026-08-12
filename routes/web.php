@@ -193,10 +193,11 @@ Route::get('/external-login', function (Request $request) {
         abort(403, 'Missing SSO data');
     }
  
+    $secret = config('services.sso.secret') ?: 'idab_default_sso_secret';
     $expectedSignature = hash_hmac(
         'sha256',
         $payload,
-        config('services.sso.secret')
+        $secret
     );
  
     if (! hash_equals($expectedSignature, $signature)) {
@@ -233,8 +234,8 @@ Route::get('/external-login', function (Request $request) {
     }
  
     // Domain restriction enforcement
-    $superAdminUrl = env('SUPER_ADMIN_URL', config('app.super_admin_url', 'https://admin.hrms.idabtech.com'));
-    $companyUrl    = env('COMPANY_URL', config('app.company_url', 'https://hrms.idabtech.com'));
+    $superAdminUrl = \App\Models\Utility::getSuperAdminUrl();
+    $companyUrl    = \App\Models\Utility::getCompanyUrl();
 
     if (!empty($superAdminUrl)) {
         $adminHost = parse_url($superAdminUrl, PHP_URL_HOST) ?? $superAdminUrl;

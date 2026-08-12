@@ -17,42 +17,27 @@ class CheckDomainRestriction
      */
     public function handle(Request $request, Closure $next)
     {
-        $superAdminUrl = env('SUPER_ADMIN_URL', config('app.super_admin_url', 'https://admin.hrms.idabtech.com'));
-        $companyUrl    = env('COMPANY_URL', config('app.company_url', 'https://hrms.idabtech.com'));
+        $superAdminUrl   = \App\Models\Utility::getSuperAdminUrl();
+        $companyUrl      = \App\Models\Utility::getCompanyUrl();
+        $isOnAdminDomain = \App\Models\Utility::isSuperAdminDomain();
 
-        if (!empty($superAdminUrl)) {
-            $adminHost = parse_url($superAdminUrl, PHP_URL_HOST) ?? $superAdminUrl;
-            $adminHost = strtolower(explode(':', str_replace(['http://', 'https://'], '', $adminHost))[0]);
+        if (Auth::check()) {
+            $user = Auth::user();
 
-            $currentHost = strtolower($request->getHost());
+            if ($user->type === 'super admin' && !$isOnAdminDomain) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
 
-            // Bypass on local environment unless running on the target domain
-            $isLocal = in_array($currentHost, ['127.0.0.1', 'localhost']);
+                return redirect()->route('login')->with('error', __('Access Denied: Super Admin can only log in through the Admin Portal: ') . $superAdminUrl);
+            }
 
-            if (!$isLocal || $currentHost === $adminHost) {
-                $isOnAdminDomain = ($currentHost === $adminHost);
+            if ($user->type !== 'super admin' && $isOnAdminDomain) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
 
-                if (Auth::check()) {
-                    $user = Auth::user();
-
-                    // Super Admin accessing non-admin domain
-                    if ($user->type === 'super admin' && !$isOnAdminDomain) {
-                        Auth::logout();
-                        $request->session()->invalidate();
-                        $request->session()->regenerateToken();
-
-                        return redirect()->route('login')->with('error', __('Access Denied: Super Admin can only log in through the Admin Portal: ') . $superAdminUrl);
-                    }
-
-                    // Non-Super Admin accessing Admin domain
-                    if ($user->type !== 'super admin' && $isOnAdminDomain) {
-                        Auth::logout();
-                        $request->session()->invalidate();
-                        $request->session()->regenerateToken();
-
-                        return redirect()->route('login')->with('error', __('Access Denied: Company and Employee users must log in through the Company Portal: ') . $companyUrl);
-                    }
-                }
+                return redirect()->route('login')->with('error', __('Access Denied: Company and Employee users must log in through the Company Portal: ') . $companyUrl);
             }
         }
 

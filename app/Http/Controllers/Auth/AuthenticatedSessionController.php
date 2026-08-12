@@ -93,35 +93,24 @@ class AuthenticatedSessionController extends Controller
         $user = Auth::user();
 
         // Domain restriction enforcement
-        $superAdminUrl = env('SUPER_ADMIN_URL', config('app.super_admin_url', 'https://admin.hrms.idabtech.com'));
-        $companyUrl    = env('COMPANY_URL', config('app.company_url', 'https://hrms.idabtech.com'));
+        $superAdminUrl   = Utility::getSuperAdminUrl();
+        $companyUrl      = Utility::getCompanyUrl();
+        $isOnAdminDomain = Utility::isSuperAdminDomain();
 
-        if (!empty($superAdminUrl)) {
-            $adminHost = parse_url($superAdminUrl, PHP_URL_HOST) ?? $superAdminUrl;
-            $adminHost = strtolower(explode(':', str_replace(['http://', 'https://'], '', $adminHost))[0]);
+        if ($user->type === 'super admin' && !$isOnAdminDomain) {
+            auth()->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
 
-            $currentHost = strtolower($request->getHost());
-            $isLocal     = in_array($currentHost, ['127.0.0.1', 'localhost']);
+            return redirect()->back()->withInput($request->only('email'))->with('error', __('Access Denied: Super Admin can only log in through the Admin Portal: ') . $superAdminUrl);
+        }
 
-            if (!$isLocal || $currentHost === $adminHost) {
-                $isOnAdminDomain = ($currentHost === $adminHost);
+        if ($user->type !== 'super admin' && $isOnAdminDomain) {
+            auth()->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
 
-                if ($user->type === 'super admin' && !$isOnAdminDomain) {
-                    auth()->logout();
-                    $request->session()->invalidate();
-                    $request->session()->regenerateToken();
-
-                    return redirect()->back()->withInput($request->only('email'))->with('error', __('Access Denied: Super Admin can only log in through the Admin Portal: ') . $superAdminUrl);
-                }
-
-                if ($user->type !== 'super admin' && $isOnAdminDomain) {
-                    auth()->logout();
-                    $request->session()->invalidate();
-                    $request->session()->regenerateToken();
-
-                    return redirect()->back()->withInput($request->only('email'))->with('error', __('Access Denied: Company and Employee users must log in through the Company Portal: ') . $companyUrl);
-                }
-            }
+            return redirect()->back()->withInput($request->only('email'))->with('error', __('Access Denied: Company and Employee users must log in through the Company Portal: ') . $companyUrl);
         }
 
         if ($user->is_active == 0) {
@@ -400,4 +389,6 @@ class AuthenticatedSessionController extends Controller
             return true; // network failure — don't block real users
         }
     }
+
+    
 }
