@@ -31,54 +31,40 @@ class Utility extends Model
         '30' => 'Monthly',
     ];
 
-    public static function getSuperAdminUrl(): string
+    public static function readEnvFileVar(string $key): ?string
     {
-        $url = env('SUPER_ADMIN_URL');
-        if (!empty($url)) return $url;
-
-        $url = config('app.super_admin_url');
-        if (!empty($url)) return $url;
-
-        if (file_exists(base_path('.env'))) {
-            $lines = @file(base_path('.env'), FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            if (is_array($lines)) {
-                foreach ($lines as $line) {
-                    if (str_starts_with(trim($line), 'SUPER_ADMIN_URL=')) {
-                        $val = trim(explode('=', $line, 2)[1], "\"'\r\n ");
-                        if (!empty($val)) {
-                            return $val;
-                        }
+        $envPath = base_path('.env');
+        if (file_exists($envPath)) {
+            $content = @file_get_contents($envPath);
+            if ($content !== false) {
+                if (preg_match('/^\s*' . preg_quote($key, '/') . '\s*=\s*(.*)$/m', $content, $matches)) {
+                    $val = trim($matches[1]);
+                    $val = preg_replace('/^["\'](.*)["\']\s*$/s', '$1', $val);
+                    $val = trim($val);
+                    if (!empty($val)) {
+                        return $val;
                     }
                 }
             }
         }
 
-        return url('/');
+        $val = env($key);
+        if (!empty($val)) return trim($val);
+
+        $val = config('app.' . strtolower($key));
+        if (!empty($val)) return trim($val);
+
+        return null;
+    }
+
+    public static function getSuperAdminUrl(): string
+    {
+        return self::readEnvFileVar('SUPER_ADMIN_URL') ?? url('/');
     }
 
     public static function getCompanyUrl(): string
     {
-        $url = env('COMPANY_URL');
-        if (!empty($url)) return $url;
-
-        $url = config('app.company_url');
-        if (!empty($url)) return $url;
-
-        if (file_exists(base_path('.env'))) {
-            $lines = @file(base_path('.env'), FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            if (is_array($lines)) {
-                foreach ($lines as $line) {
-                    if (str_starts_with(trim($line), 'COMPANY_URL=')) {
-                        $val = trim(explode('=', $line, 2)[1], "\"'\r\n ");
-                        if (!empty($val)) {
-                            return $val;
-                        }
-                    }
-                }
-            }
-        }
-
-        return url('/');
+        return self::readEnvFileVar('COMPANY_URL') ?? url('/');
     }
 
     public static function parseCleanHost(string $url): string

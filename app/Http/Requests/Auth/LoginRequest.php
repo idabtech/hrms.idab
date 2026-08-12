@@ -75,13 +75,19 @@ class LoginRequest extends FormRequest
 
                     // Domain restriction enforcement when password matches
                     if ($user->type === 'super admin' && !$isOnAdminDomain) {
-                        session()->flash('error', __('Access Denied: Super Admin can only log in through the Admin Portal: ') . $superAdminUrl);
-                        throw ValidationException::withMessages([]);
+                        $msg = __('Access Denied: Super Admin can only log in through the Admin Portal: ') . $superAdminUrl;
+                        session()->flash('error', $msg);
+                        throw ValidationException::withMessages([
+                            'email' => $msg,
+                        ]);
                     }
 
                     if ($user->type !== 'super admin' && $isOnAdminDomain) {
-                        session()->flash('error', __('Access Denied: Company and Employee users must log in through the Company Portal: ') . $companyUrl);
-                        throw ValidationException::withMessages([]);
+                        $msg = __('Access Denied: Company and Employee users must log in through the Company Portal: ') . $companyUrl;
+                        session()->flash('error', $msg);
+                        throw ValidationException::withMessages([
+                            'email' => $msg,
+                        ]);
                     }
 
                     if ($user->is_active != 1 || ($user->is_disable != 1 && $user->type != "super admin")) {
