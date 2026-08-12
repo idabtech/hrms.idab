@@ -233,8 +233,8 @@ Route::get('/external-login', function (Request $request) {
     }
  
     // Domain restriction enforcement
-    $superAdminUrl = env('SUPER_ADMIN_URL', config('app.super_admin_url', 'https://admin.hrms.idabtech.com'));
-    $companyUrl    = env('COMPANY_URL', config('app.company_url', 'https://hrms.idabtech.com'));
+    $superAdminUrl = \App\Models\Utility::getSuperAdminUrl();
+    $companyUrl    = \App\Models\Utility::getCompanyUrl();
 
     if (!empty($superAdminUrl)) {
         $adminHost = parse_url($superAdminUrl, PHP_URL_HOST) ?? $superAdminUrl;

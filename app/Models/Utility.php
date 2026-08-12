@@ -33,6 +33,12 @@ class Utility extends Model
 
     public static function getSuperAdminUrl(): string
     {
+        $url = env('SUPER_ADMIN_URL');
+        if (!empty($url)) return $url;
+
+        $url = config('app.super_admin_url');
+        if (!empty($url)) return $url;
+
         if (file_exists(base_path('.env'))) {
             $lines = @file(base_path('.env'), FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             if (is_array($lines)) {
@@ -47,17 +53,17 @@ class Utility extends Model
             }
         }
 
-        $url = env('SUPER_ADMIN_URL');
-        if (!empty($url)) return $url;
-
-        $url = config('app.super_admin_url');
-        if (!empty($url)) return $url;
-
-        return 'https://admin.hrms.idabtech.com';
+        return url('/');
     }
 
     public static function getCompanyUrl(): string
     {
+        $url = env('COMPANY_URL');
+        if (!empty($url)) return $url;
+
+        $url = config('app.company_url');
+        if (!empty($url)) return $url;
+
         if (file_exists(base_path('.env'))) {
             $lines = @file(base_path('.env'), FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             if (is_array($lines)) {
@@ -72,13 +78,7 @@ class Utility extends Model
             }
         }
 
-        $url = env('COMPANY_URL');
-        if (!empty($url)) return $url;
-
-        $url = config('app.company_url');
-        if (!empty($url)) return $url;
-
-        return 'https://hrms.idabtech.com';
+        return url('/');
     }
 
     public static function parseCleanHost(string $url): string
