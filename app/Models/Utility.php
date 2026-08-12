@@ -77,8 +77,15 @@ class Utility extends Model
 
     public static function isSuperAdminDomain(): bool
     {
-        $adminHost   = self::parseCleanHost(self::getSuperAdminUrl());
-        $companyHost = self::parseCleanHost(self::getCompanyUrl());
+        $adminUrl = self::readEnvFileVar('SUPER_ADMIN_URL');
+        if (empty($adminUrl)) {
+            return false;
+        }
+
+        $adminHost = self::parseCleanHost($adminUrl);
+        if (empty($adminHost)) {
+            return false;
+        }
 
         $candidates = array_filter([
             request()->getHost(),
@@ -96,7 +103,7 @@ class Utility extends Model
         }, $candidates);
 
         foreach ($currentHosts as $h) {
-            if (!empty($adminHost) && $h === $adminHost) {
+            if ($h === $adminHost) {
                 return true;
             }
         }

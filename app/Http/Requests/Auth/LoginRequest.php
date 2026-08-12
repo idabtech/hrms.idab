@@ -65,51 +65,56 @@ class LoginRequest extends FormRequest
         $companyUrl      = Utility::getCompanyUrl();
         $isOnAdminDomain = Utility::isSuperAdminDomain();
 
-        // custom login
         $users = User::where('email', $this->email)->get();
-        $id = 0;
-
-        if (count($users) > 0) {
-            foreach ($users as $key => $user) {
-                if (password_verify($this->password, $user->password)) {
-
-                    // Domain restriction enforcement when password matches
-                    if ($user->type === 'super admin' && !$isOnAdminDomain) {
-                        $msg = __('Access Denied: Super Admin can only log in through the Admin Portal: ') . $superAdminUrl;
-                        session()->flash('error', $msg);
-                        throw ValidationException::withMessages([
-                            'email' => $msg,
-                        ]);
-                    }
-
-                    if ($user->type !== 'super admin' && $isOnAdminDomain) {
-                        $msg = __('Access Denied: Company and Employee users must log in through the Company Portal: ') . $companyUrl;
-                        session()->flash('error', $msg);
-                        throw ValidationException::withMessages([
-                            'email' => $msg,
-                        ]);
-                    }
-
-                    if ($user->is_active != 1 || ($user->is_disable != 1 && $user->type != "super admin")) {
-                        throw ValidationException::withMessages([
-                            'email' => __("Your Account is disable, please contact your Administrate."),
-                        ]);
-                    } elseif ($user->is_login_enable != 1) {
-                        throw ValidationException::withMessages([
-                            'email' => __("Your account is disabled from company."),
-                        ]);
-                    }
-                    $id = $user->id;
-                    break;
-                }
-            }
-        } else {
+        if ($users->isEmpty()) {
             throw ValidationException::withMessages([
-                'email' => __("this email doesn't match"),
+                'email' => __("This email doesn't match our records."),
             ]);
         }
 
-        if (! Auth::attempt(['email' =>$this->email, 'password' =>$this->password,'id'=>$id], $this->boolean('remember'))) {
+        $matchedUser = null;
+        foreach ($users as $user) {
+            if (\Illuminate\Support\Facades\Hash::check($this->password, $user->password) || password_verify($this->password, $user->password)) {
+                $matchedUser = $user;
+                break;
+            }
+        }
+
+        if (!$matchedUser) {
+            RateLimiter::hit($this->throttleKey());
+            throw ValidationException::withMessages([
+                'email' => __('These credentials do not match our records.'),
+            ]);
+        }
+
+        // Domain restriction enforcement
+        if ($matchedUser->type === 'super admin' && !$isOnAdminDomain) {
+            $msg = __('Access Denied: Super Admin can only log in through the Admin Portal: ') . $superAdminUrl;
+            session()->flash('error', $msg);
+            throw ValidationException::withMessages([
+                'email' => $msg,
+            ]);
+        }
+
+        if ($matchedUser->type !== 'super admin' && $isOnAdminDomain) {
+            $msg = __('Access Denied: Company and Employee users must log in through the Company Portal: ') . $companyUrl;
+            session()->flash('error', $msg);
+            throw ValidationException::withMessages([
+                'email' => $msg,
+            ]);
+        }
+
+        if ($matchedUser->is_active != 1 || ($matchedUser->is_disable != 1 && $matchedUser->type != "super admin")) {
+            throw ValidationException::withMessages([
+                'email' => __("Your Account is disable, please contact your Administrate."),
+            ]);
+        } elseif ($matchedUser->is_login_enable != 1) {
+            throw ValidationException::withMessages([
+                'email' => __("Your account is disabled from company."),
+            ]);
+        }
+
+        if (! Auth::attempt(['email' => $this->email, 'password' => $this->password, 'id' => $matchedUser->id], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
