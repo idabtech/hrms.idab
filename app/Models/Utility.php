@@ -31,14 +31,37 @@ class Utility extends Model
         '30' => 'Monthly',
     ];
 
+    public static function readEnvFileVar(string $key): ?string
+    {
+        $val = env($key) ?: config('app.' . strtolower($key));
+        if (!empty($val)) return trim($val);
+
+        $envPath = base_path('.env');
+        if (file_exists($envPath)) {
+            $content = @file_get_contents($envPath);
+            if ($content !== false) {
+                if (preg_match('/^\s*' . preg_quote($key, '/') . '\s*=\s*(.*)$/m', $content, $matches)) {
+                    $val = trim($matches[1]);
+                    $val = preg_replace('/^["\'](.*)["\']\s*$/s', '$1', $val);
+                    $val = trim($val);
+                    if (!empty($val)) {
+                        return $val;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
     public static function getSuperAdminUrl(): string
     {
-        return config('app.super_admin_url') ?: url('/');
+        return self::readEnvFileVar('SUPER_ADMIN_URL') ?? url('/');
     }
 
     public static function getCompanyUrl(): string
     {
-        return config('app.company_url') ?: url('/');
+        return self::readEnvFileVar('COMPANY_URL') ?? url('/');
     }
 
     public static function parseCleanHost(string $url): string
@@ -51,19 +74,29 @@ class Utility extends Model
 
     public static function isSuperAdminDomain(): bool
     {
-        $adminUrl = config('app.super_admin_url');
-        if (empty($adminUrl)) {
-            return false;
-        }
-
+        $adminUrl = self::getSuperAdminUrl();
         $adminHost = self::parseCleanHost($adminUrl);
         if (empty($adminHost)) {
             return false;
         }
 
-        $currentHost = strtolower(request()->getHost());
+        $candidates = array_filter([
+            request()->getHost(),
+            request()->header('host'),
+            request()->header('x-forwarded-host'),
+            $_SERVER['HTTP_HOST'] ?? '',
+            $_SERVER['HTTP_X_FORWARDED_HOST'] ?? '',
+            $_SERVER['SERVER_NAME'] ?? '',
+        ]);
 
-        return $currentHost === $adminHost;
+        foreach ($candidates as $candidate) {
+            $cleanCandidate = self::parseCleanHost($candidate);
+            if (!empty($cleanCandidate) && $cleanCandidate === $adminHost) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static function settings()
