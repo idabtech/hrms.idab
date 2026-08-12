@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
+use App\Models\User;
 
 class HrDocumentLibraryPermissionSeeder extends Seeder
 {
@@ -17,26 +18,54 @@ class HrDocumentLibraryPermissionSeeder extends Seeder
         // Reset cached roles and permissions
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $permissions = [
+        $allPermissions = [
             'Manage HR Document Library',
             'Create HR Document Library',
             'Edit HR Document Library',
             'Delete HR Document Library',
+            'View HR Document Library',
+            'Download HR Document Library',
         ];
 
-        foreach ($permissions as $permissionName) {
+        foreach ($allPermissions as $permissionName) {
             Permission::firstOrCreate([
                 'name' => $permissionName,
                 'guard_name' => 'web',
             ]);
         }
 
-        $roleNames = ['super admin', 'company', 'hr'];
+        // Super Admin gets all permissions
+        $superAdminRole = Role::firstOrCreate(['name' => 'super admin', 'guard_name' => 'web']);
+        if ($superAdminRole) {
+            foreach ($allPermissions as $p) {
+                if (!$superAdminRole->hasPermissionTo($p)) {
+                    $superAdminRole->givePermissionTo($p);
+                }
+            }
+        }
 
-        foreach ($roleNames as $roleName) {
-            $role = Role::where('name', $roleName)->first();
-            if ($role) {
-                $role->givePermissionTo($permissions);
+        // Company gets Manage, View, Download permissions only
+        $companyPermissions = [
+            'Manage HR Document Library',
+            'View HR Document Library',
+            'Download HR Document Library',
+        ];
+
+        $companyRole = Role::firstOrCreate(['name' => 'company', 'guard_name' => 'web']);
+        if ($companyRole) {
+            foreach ($companyPermissions as $p) {
+                if (!$companyRole->hasPermissionTo($p)) {
+                    $companyRole->givePermissionTo($p);
+                }
+            }
+        }
+
+        $hrRole = Role::where('name', 'hr')->first();
+        if ($hrRole) {
+            foreach ($companyPermissions as $p) {
+                if (!$hrRole->hasPermissionTo($p)) {
+                    $hrRole->givePermissionTo($p);
+                }
             }
         }
     }

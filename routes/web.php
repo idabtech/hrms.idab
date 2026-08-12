@@ -2241,6 +2241,7 @@ Route::group(['middleware' => ['verified']], function () {
     // );
 
     // HR Document Library Routes
+    Route::get('hr-document-library/{id}/view-doc', [App\Http\Controllers\HrDocumentLibraryController::class, 'viewDoc'])->name('hr-document-library.view-doc')->middleware(['auth', 'XSS']);
     Route::get('hr-document-library/{id}/download-doc', [App\Http\Controllers\HrDocumentLibraryController::class, 'downloadDoc'])->name('hr-document-library.download-doc')->middleware(['auth', 'XSS']);
     Route::resource('hr-document-library', App\Http\Controllers\HrDocumentLibraryController::class)->middleware(['auth', 'XSS']);
 

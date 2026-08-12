@@ -141,12 +141,17 @@
                                     'Approve',
                                     'Decline',
                                     'Request',
+                                    'View',
+                                    'Download',
                                 ];
                             @endphp
                             @foreach ($modules as $module)
                                 @php
                                     $hasPermission = false;
                                     foreach ($permissionTypes as $type) {
+                                        if ($module == 'HR Document Library' && in_array($type, ['Create', 'Edit', 'Delete'])) {
+                                            continue;
+                                        }
                                         if (in_array($type . ' ' . $module, (array) $permissions)) {
                                             $hasPermission = true;
                                             break;
@@ -165,6 +170,9 @@
                                             <div class="row">
                                                 @foreach ($permissionTypes as $type)
                                                     @php
+                                                        if ($module == 'HR Document Library' && in_array($type, ['Create', 'Edit', 'Delete'])) {
+                                                            continue;
+                                                        }
                                                         $permissionKey = array_search(
                                                             $type . ' ' . $module,
                                                             (array) $permissions,
