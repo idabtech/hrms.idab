@@ -497,19 +497,44 @@ class UserController extends Controller
         return response()->json(['is_success' => true], 200);
     }
 
-    public function LoginWithCompany(Request $request, User $user,  $id)
+    public function LoginWithCompany(Request $request, User $user, $id)
     {
         $user = User::find($id);
-        if ($user && auth()->check()) {
-            Impersonate::take($request->user(), $user);
-            return redirect('/dashboard');
+        if ($user && auth()->check() && auth()->user()->type === 'super admin') {
+            $companyUrl = Utility::getCompanyUrl();
+            $companyUrl = rtrim($companyUrl, '/');
 
+            $secret = config('services.sso.secret', 'idab_default_sso_secret');
+            if (empty($secret)) {
+                $secret = 'idab_default_sso_secret';
+            }
+
+            $payloadData = [
+                'email' => $user->email,
+                'ts'    => now()->timestamp,
+            ];
+            $payload   = base64_encode(json_encode($payloadData));
+            $signature = hash_hmac('sha256', $payload, $secret);
+
+            $redirectUrl = $companyUrl . '/external-login?payload=' . urlencode($payload) . '&signature=' . urlencode($signature);
+            return redirect($redirectUrl);
+        }
+
+        return redirect()->back()->with('error', __('Permission denied.'));
     }
-    }
+
     public function ExitCompany(Request $request)
     {
-        \Auth::user()->leaveImpersonation($request->user());
-        return redirect('/dashboard');
+        $superAdminUrl = Utility::getSuperAdminUrl();
+        $superAdminUrl = rtrim($superAdminUrl, '/');
+
+        if (\Auth::check() && method_exists(\Auth::user(), 'leaveImpersonation')) {
+            \Auth::user()->leaveImpersonation($request->user());
+        } else {
+            \Auth::logout();
+        }
+
+        return redirect($superAdminUrl . '/login');
     }
 
     public function CompnayInfo($id)
