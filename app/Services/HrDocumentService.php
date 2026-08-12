@@ -20,7 +20,7 @@ class HrDocumentService
         $doc->folder_id = $request->folder_id ?: null;
         $doc->description = $request->description;
         $doc->content = $request->content ?? '';
-        $doc->created_by = Auth::user()->creatorId();
+        $doc->created_by = (Auth::user()->type === 'super admin') ? Auth::user()->id : Auth::user()->creatorId();
 
         if ($request->hasFile('document')) {
             $file = $request->file('document');
@@ -58,7 +58,7 @@ class HrDocumentService
         $folderId = $request->folder_id ?: null;
         $category = $request->category ?? 'General';
         $description = $request->description ?? null;
-        $creatorId = Auth::user()->creatorId();
+        $creatorId = (Auth::user()->type === 'super admin') ? Auth::user()->id : Auth::user()->creatorId();
 
         $dir = 'uploads/hr_document_library/';
         $publicDir = public_path($dir);
