@@ -15,7 +15,7 @@ class EmailTemplateController extends Controller
     {
         $usr = \Auth::user();
 
-        if ($usr->type == 'super admin' || $usr->type == 'company') {
+        if ($usr->type == 'super admin' || $usr->type == 'company' || ($usr->isSuperAdminSideUser() && $usr->can('Manage Email Template'))) {
             $EmailTemplates = EmailTemplate::all();
 
             return view('email_templates.index', compact('EmailTemplates'));
@@ -27,7 +27,8 @@ class EmailTemplateController extends Controller
 
     public function create()
     {
-        if (\Auth::user()->type == 'super admin') {
+        $usr = \Auth::user();
+        if ($usr->type == 'super admin' || ($usr->isSuperAdminSideUser() && $usr->can('Create Email Template'))) {
             return view('email_templates.create');
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
@@ -39,7 +40,7 @@ class EmailTemplateController extends Controller
     {
         $usr = \Auth::user();
 
-        if (\Auth::user()->type == 'super admin') {
+        if ($usr->type == 'super admin' || ($usr->isSuperAdminSideUser() && $usr->can('Create Email Template'))) {
             $validator = \Validator::make(
                 $request->all(),
                 [
@@ -80,10 +81,14 @@ class EmailTemplateController extends Controller
 
     public function update(Request $request, $id)
     {
-        $emailTemplate = EmailTemplate::find($id);
-        $emailTemplate->from = $request->from;
-        $emailTemplate->save();
-        return redirect()->back()->with('success', __('The email template details are updated successfully'));
+        $usr = \Auth::user();
+        if ($usr->type == 'super admin' || ($usr->isSuperAdminSideUser() && $usr->can('Edit Email Template'))) {
+            $emailTemplate = EmailTemplate::find($id);
+            $emailTemplate->from = $request->from;
+            $emailTemplate->save();
+            return redirect()->back()->with('success', __('The email template details are updated successfully'));
+        }
+        return redirect()->back()->with('error', __('Permission denied.'));
     }
 
     public function destroy(EmailTemplate $emailTemplate)
@@ -94,16 +99,18 @@ class EmailTemplateController extends Controller
     // Used For View Email Template Language Wise
     public function manageEmailLang($id, $lang = 'en')
     {
-        if (\Auth::user()->type == 'super admin') {
+        $usr = \Auth::user();
+        if ($usr->type == 'super admin' || ($usr->isSuperAdminSideUser() && $usr->can('Edit Email Template')) || ($usr->isSuperAdminSideUser() && $usr->can('Manage Email Template'))) {
             $languages         = Utility::languages();
             $emailTemplate     = EmailTemplate::getemailTemplate();
-            // $currEmailTempLang = EmailTemplateLang::where('lang', $lang)->first();
             $currEmailTempLang = EmailTemplateLang::where('parent_id', '=', $id)->where('lang', $lang)->first();
             if (!isset($currEmailTempLang) || empty($currEmailTempLang)) {
                 $currEmailTempLang       = EmailTemplateLang::where('parent_id', '=', $id)->where('lang', 'en')->first();
-                $currEmailTempLang->lang = $lang;
+                if ($currEmailTempLang) {
+                    $currEmailTempLang->lang = $lang;
+                }
             }
-            if (\Auth::user()->type == 'super admin') {
+            if ($usr->isSuperAdminSideUser()) {
                 $emailTemplate     = EmailTemplate::where('id', '=', $id)->first();
             } else {
                 $settings         = Utility::settings();
@@ -112,14 +119,15 @@ class EmailTemplateController extends Controller
             $EmailTemplates = EmailTemplate::all();
             return view('email_templates.show', compact('emailTemplate', 'languages', 'currEmailTempLang', 'EmailTemplates'));
         } else {
-            return redirect()->back()->with('error', 'Permission denied.');
+            return redirect()->back()->with('error', __('Permission denied.'));
         }
     }
 
     // Used For Store Email Template Language Wise
     public function storeEmailLang(Request $request, $id)
     {
-        if (\Auth::user()->type == 'super admin') {
+        $usr = \Auth::user();
+        if ($usr->type == 'super admin' || ($usr->isSuperAdminSideUser() && $usr->can('Edit Email Template'))) {
             $validator = \Validator::make(
                 $request->all(),
                 [
@@ -157,7 +165,7 @@ class EmailTemplateController extends Controller
                 ]
             )->with('success', __('The email template details are updated successfully.'));
         } else {
-            return redirect()->back()->with('error', 'Permission denied.');
+            return redirect()->back()->with('error', __('Permission denied.'));
         }
     }
 
@@ -168,12 +176,14 @@ class EmailTemplateController extends Controller
 
         $usr = \Auth::user();
 
-        if ($usr->type == 'super admin' || $usr->type == 'company') {
+        if ($usr->type == 'super admin' || $usr->type == 'company' || ($usr->isSuperAdminSideUser() && $usr->can('Edit Email Template'))) {
             UserEmailTemplate::where('user_id', $usr->id)->update(['is_active' => 0]);
             foreach ($post as $key => $value) {
                 $UserEmailTemplate  = UserEmailTemplate::where('user_id', $usr->id)->where('template_id', $key)->first();
-                $UserEmailTemplate->is_active = $value;
-                $UserEmailTemplate->save();
+                if ($UserEmailTemplate) {
+                    $UserEmailTemplate->is_active = $value;
+                    $UserEmailTemplate->save();
+                }
             }
             return redirect()->back()->with('success', __('Status successfully updated!'));
         } else {

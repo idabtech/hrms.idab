@@ -19,7 +19,7 @@ class StripePaymentController extends Controller
     public function index()
     {
         $objUser = \Auth::user();
-        if (\Auth::user()->type == 'super admin') {
+        if (\Auth::user()->type == 'super admin' || (\Auth::user()->isSuperAdminSideUser() && \Auth::user()->can('Manage Order'))) {
             $orders  = Order::select(
                 [
                     'orders.*',

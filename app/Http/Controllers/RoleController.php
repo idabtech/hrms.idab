@@ -26,14 +26,10 @@ class RoleController extends Controller
     {
         if (Auth::user()->can('Create Role')) {
             $user = Auth::user();
-            if ($user->type == 'super admin' || $user->type == 'company') {
+            if ($user->isSuperAdminSideUser()) {
                 $permissions = Permission::all()->pluck('name', 'id')->toArray();
             } else {
-                $permissions = new Collection();
-                foreach ($user->roles as $role) {
-                    $permissions = $permissions->merge($role->permissions);
-                }
-                $permissions = $permissions->pluck('name', 'id')->toArray();
+                $permissions = $user->getAllPermissions()->pluck('name', 'id')->toArray();
             }
 
             return view('role.create', ['permissions' => $permissions]);
@@ -88,14 +84,10 @@ class RoleController extends Controller
         if (Auth::user()->can('Edit Role')) {
 
             $user = Auth::user();
-            if ($user->type == 'super admin' || $user->type == 'company') {
+            if ($user->isSuperAdminSideUser()) {
                 $permissions = Permission::all()->pluck('name', 'id')->toArray();
             } else {
-                $permissions = new Collection();
-                foreach ($user->roles as $role1) {
-                    $permissions = $permissions->merge($role1->permissions);
-                }
-                $permissions = $permissions->pluck('name', 'id')->toArray();
+                $permissions = $user->getAllPermissions()->pluck('name', 'id')->toArray();
             }
 
 
@@ -160,6 +152,10 @@ class RoleController extends Controller
     public function destroy(Role $role)
     {
         if (\Auth::user()->can('Delete Role')) {
+            if (in_array(strtolower($role->name), ['company', 'employee', 'super admin'])) {
+                return redirect()->back()->with('error', __('System default roles (company, employee, super admin) cannot be deleted.'));
+            }
+
             $role->delete();
 
             return redirect()->route('roles.index')->with(

@@ -24,15 +24,15 @@ class CheckDomainRestriction
         if (Auth::check()) {
             $user = Auth::user();
 
-            if ($user->type === 'super admin' && !$isOnAdminDomain) {
+            if ($user->isSuperAdminSideUser() && !$isOnAdminDomain) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
-                return redirect()->route('login')->with('error', __('Access Denied: Super Admin can only log in through the Admin Portal: ') . $superAdminUrl);
+                return redirect()->route('login')->with('error', __('Access Denied: Super Admin and Super Admin Staff can only log in through the Admin Portal: ') . $superAdminUrl);
             }
 
-            if ($user->type !== 'super admin' && $isOnAdminDomain) {
+            if (!$user->isSuperAdminSideUser() && $isOnAdminDomain) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();

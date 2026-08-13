@@ -26,7 +26,7 @@
             </a>
         @endif
 
-        @if (\Auth::user()->type === 'super admin')
+        @if (\Auth::user()->type === 'super admin' || (\Auth::user()->isSuperAdminSideUser() && \Auth::user()->can('Create HR Document Library')))
             <!-- Create Folder Button -->
             <a href="javascript:void(0)" data-url="{{ route('hr-document-folders.create', ['parent_id' => $currentFolder ? $currentFolder->id : '']) }}" data-ajax-popup="true"
                 data-title="{{ __('Create New Folder') }}" data-size="md" data-bs-toggle="tooltip" title="{{ __('Create Folder') }}"
@@ -139,12 +139,14 @@
                                             <i class="ti ti-folder-open me-2 text-primary"></i>{{ __('Open Folder') }}
                                         </a>
                                     </li>
-                                    @if (\Auth::user()->type === 'super admin')
+                                    @if (\Auth::user()->type === 'super admin' || (\Auth::user()->isSuperAdminSideUser() && \Auth::user()->can('Edit HR Document Library')))
                                         <li>
                                             <a href="javascript:void(0)" data-url="{{ route('hr-document-folders.edit', $folder->id) }}" data-ajax-popup="true" data-title="{{ __('Edit Folder') }}" data-size="md" class="dropdown-item">
                                                 <i class="ti ti-edit me-2 text-info"></i>{{ __('Rename / Move') }}
                                             </a>
                                         </li>
+                                    @endif
+                                    @if (\Auth::user()->type === 'super admin' || (\Auth::user()->isSuperAdminSideUser() && \Auth::user()->can('Delete HR Document Library')))
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
                                             {!! Form::open(['method' => 'DELETE', 'route' => ['hr-document-folders.destroy', $folder->id], 'id' => 'delete-folder-form-' . $folder->id]) !!}
@@ -170,7 +172,7 @@
                         </div>
                         <h5 class="fw-semibold text-dark mb-2" style="font-size: 1.1rem;">{{ __('No Folders Created Yet') }}</h5>
                         <p class="text-muted mb-4 max-w-400 mx-auto fw-normal">{{ __('Create your first HR document folder to start organizing offer letters, contracts, policies, and employee files.') }}</p>
-                        @if (\Auth::user()->type === 'super admin')
+                        @if (\Auth::user()->type === 'super admin' || (\Auth::user()->isSuperAdminSideUser() && \Auth::user()->can('Create HR Document Library')))
                             <a href="javascript:void(0)" data-url="{{ route('hr-document-folders.create', ['parent_id' => '']) }}" data-ajax-popup="true"
                                 data-title="{{ __('Create New Folder') }}" data-size="md" class="btn btn-primary px-4 shadow-sm rounded-2">
                                 <i class="ti ti-folder-plus me-1"></i>{{ __('Create First Folder') }}
@@ -195,7 +197,7 @@
                     </span>
                 </div>
 
-                @if (\Auth::user()->type === 'super admin')
+                @if (\Auth::user()->type === 'super admin' || (\Auth::user()->isSuperAdminSideUser() && \Auth::user()->can('Create HR Document Library')))
                     <a href="javascript:void(0)" data-url="{{ route('hr-document-library.create', ['folder_id' => $currentFolder->id]) }}" data-ajax-popup="true"
                         data-title="{{ __('Upload Documents') }}" data-size="lg" class="btn btn-sm btn-primary rounded-2 px-3 shadow-sm">
                         <i class="ti ti-upload me-1"></i>{{ __('Upload Files') }}
@@ -234,12 +236,14 @@
                                                     </a>
                                                 </li>
                                             @endif
-                                            @if (\Auth::user()->type === 'super admin')
+                                            @if (\Auth::user()->type === 'super admin' || (\Auth::user()->isSuperAdminSideUser() && \Auth::user()->can('Edit HR Document Library')))
                                                 <li>
                                                     <a href="javascript:void(0)" data-url="{{ route('hr-document-library.edit', $doc->id) }}" data-ajax-popup="true" data-title="{{ __('Edit HR Document') }}" data-size="lg" class="dropdown-item">
                                                         <i class="ti ti-edit me-2 text-info"></i>{{ __('Edit Details') }}
                                                     </a>
                                                 </li>
+                                            @endif
+                                            @if (\Auth::user()->type === 'super admin' || (\Auth::user()->isSuperAdminSideUser() && \Auth::user()->can('Delete HR Document Library')))
                                                 <li><hr class="dropdown-divider"></li>
                                                 <li>
                                                     {!! Form::open(['method' => 'DELETE', 'route' => ['hr-document-library.destroy', $doc->id], 'id' => 'delete-doc-form-' . $doc->id]) !!}
@@ -283,7 +287,7 @@
                                                 <i class="ti ti-download"></i>
                                             </a>
                                         @endif
-                                        @if (\Auth::user()->type === 'super admin')
+                                        @if (\Auth::user()->type === 'super admin' || (\Auth::user()->isSuperAdminSideUser() && \Auth::user()->can('Edit HR Document Library')))
                                             <a href="javascript:void(0)" data-url="{{ route('hr-document-library.edit', $doc->id) }}" data-ajax-popup="true" data-title="{{ __('Edit HR Document') }}" data-size="lg" class="btn btn-sm btn-light-secondary p-1.5 px-2.5 rounded-2" data-bs-toggle="tooltip" title="{{ __('Edit') }}">
                                                 <i class="ti ti-edit"></i>
                                             </a>
@@ -304,7 +308,7 @@
                             </div>
                             <h6 class="fw-semibold text-dark mb-1" style="font-size: 1rem;">{{ __('No Documents in this Folder') }}</h6>
                             <p class="text-muted small mb-3 fw-normal">{{ __('Upload employee files or contracts to this folder.') }}</p>
-                            @if (\Auth::user()->type === 'super admin')
+                            @if (\Auth::user()->type === 'super admin' || (\Auth::user()->isSuperAdminSideUser() && \Auth::user()->can('Create HR Document Library')))
                                 <a href="javascript:void(0)" data-url="{{ route('hr-document-library.create', ['folder_id' => $currentFolder->id]) }}" data-ajax-popup="true"
                                     data-title="{{ __('Upload Documents') }}" data-size="lg" class="btn btn-sm btn-primary px-3 shadow-sm rounded-2">
                                     <i class="ti ti-upload me-1"></i>{{ __('Upload Documents Now') }}

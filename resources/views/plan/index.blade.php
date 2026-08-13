@@ -32,83 +32,86 @@
 @endsection
 
 @section('content')
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-inline-flex bg-white p-1 rounded border shadow-sm">
-                <ul class="nav nav-pills" id="planTab" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active fw-semibold py-2 px-3" id="plans-tab" data-bs-toggle="tab" data-bs-target="#plans-content" type="button" role="tab" aria-controls="plans-content" aria-selected="true" style="border-radius: 6px;">
-                            <i class="ti ti-trophy me-1"></i>{{ __('Subscription Plans') }}
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link fw-semibold py-2 px-3" id="storage-addons-tab" data-bs-toggle="tab" data-bs-target="#storage-addons-content" type="button" role="tab" aria-controls="storage-addons-content" aria-selected="false" style="border-radius: 6px;">
-                            <i class="ti ti-database me-1"></i>{{ __('Storage Addons') }}
-                        </button>
-                    </li>
-                </ul>
+    @if(!\Auth::user()->isSuperAdminSideUser())
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-inline-flex bg-white p-1 rounded border shadow-sm">
+                    <ul class="nav nav-pills" id="planTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-semibold py-2 px-3" id="plans-tab" data-bs-toggle="tab" data-bs-target="#plans-content" type="button" role="tab" aria-controls="plans-content" aria-selected="true" style="border-radius: 6px;">
+                                <i class="ti ti-trophy me-1"></i>{{ __('Subscription Plans') }}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-semibold py-2 px-3" id="storage-addons-tab" data-bs-toggle="tab" data-bs-target="#storage-addons-content" type="button" role="tab" aria-controls="storage-addons-content" aria-selected="false" style="border-radius: 6px;">
+                                <i class="ti ti-database me-1"></i>{{ __('Storage Addons') }}
+                            </button>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="tab-content" id="planTabContent">
-        {{-- Subscription Plans Tab --}}
-        <div class="tab-pane fade show active" id="plans-content" role="tabpanel" aria-labelledby="plans-tab">
-            <div class="row">
-                @foreach ($plans as $plan)
-                    <div class="col-lg-3 col-md-4 mb-4">
-                        <div class="card price-card price-1 h-100 wow animate__fadeInUp" data-wow-delay="0.2s"
-                            style="visibility: visible; animation-delay: 0.2s; animation-name: fadeInUp;">
-                            <div class="card-body d-flex flex-column justify-content-between">
-                                <div>
-                                    <span class="price-badge bg-primary">{{ $plan->name }}</span>
+        <div class="tab-content" id="planTabContent">
+            {{-- Subscription Plans Tab --}}
+            <div class="tab-pane fade show active" id="plans-content" role="tabpanel" aria-labelledby="plans-tab">
+    @endif
 
-                                    <div class="d-flex dt-buttons flex-row-reverse m-0 p-0">
-                                        @if (\Auth::user()->type == 'super admin' && $plan->price > 0)
-                                            <div class="action-btn bg-danger ms-2">
-                                                {!! Form::open([
-                                                    'method' => 'DELETE',
-                                                    'route' => ['plans.destroy', $plan->id],
-                                                    'id' => 'delete-form-' . $plan->id,
-                                                ]) !!}
-                                                <a href="javascript:void(0)" class="mx-3 btn btn-sm align-items-center bs-pass-para"
-                                                    data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
-                                                    aria-label="Delete"><span class="text-white"><i class="ti ti-trash"></i></span></a>
-                                                </form>
-                                            </div>
-                                        @endif
+    <div class="row">
+        @foreach ($plans as $plan)
+            <div class="col-lg-3 col-md-4 mb-4">
+                <div class="card price-card price-1 h-100 wow animate__fadeInUp" data-wow-delay="0.2s"
+                    style="visibility: visible; animation-delay: 0.2s; animation-name: fadeInUp;">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div>
+                            <span class="price-badge bg-primary">{{ $plan->name }}</span>
 
-                                        @if (\Auth::user()->type == 'super admin')
-                                            @can('Edit Plan')
-                                                <div class="action-btn bg-info me-1">
-                                                    <a href="javascript:void(0)" class="btn btn-sm d-inline-flex align-items-center"
-                                                        data-ajax-popup="true" data-title="{{ __('Edit Plan') }}"
-                                                        data-url="{{ route('plans.edit', $plan->id) }}" data-size="lg" data-bs-toggle="tooltip"
-                                                        data-bs-original-title="{{ __('Edit') }}" data-bs-placement="top"><span
-                                                            class="text-white"><i class="ti ti-pencil"></i></span></a>
-                                                </div>
-                                            @endcan
-                                        @endif
-
-                                        @if (\Auth::user()->type == 'super admin' && $plan->price > 0)
-                                            <div class="me-1 mt-1 justify-content-center active-tag">
-                                                <div class="form-check form-switch custom-switch-v1 float-end">
-                                                    <input type="checkbox" name="plan_disable" data-bs-toggle="tooltip" data-bs-original-title="{{ __('Enable / Disable') }}"
-                                                        class="form-check-input input-primary is_disable" value="1"
-                                                        data-id='{{ $plan->id }}' data-name="{{ __('plan') }}"
-                                                        {{ $plan->is_disable == 1 ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="plan_disable"></label>
-                                                </div>
-                                            </div>
-                                        @endif
-
-                                        @if (\Auth::user()->type == 'company' && \Auth::user()->plan == $plan->id)
-                                            <span class="d-flex align-items-center ms-2">
-                                                <i class="f-10 lh-1 fas fa-circle text-success"></i>
-                                                <span class="ms-2">{{ __('Active') }}</span>
-                                            </span>
-                                        @endif
+                            <div class="d-flex dt-buttons flex-row-reverse m-0 p-0">
+                                @if ((\Auth::user()->type == 'super admin' || (\Auth::user()->isSuperAdminSideUser() && \Auth::user()->can('Delete Plan'))) && $plan->price > 0)
+                                    <div class="action-btn bg-danger ms-2">
+                                        {!! Form::open([
+                                            'method' => 'DELETE',
+                                            'route' => ['plans.destroy', $plan->id],
+                                            'id' => 'delete-form-' . $plan->id,
+                                        ]) !!}
+                                        <a href="javascript:void(0)" class="mx-3 btn btn-sm align-items-center bs-pass-para"
+                                            data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
+                                            aria-label="Delete"><span class="text-white"><i class="ti ti-trash"></i></span></a>
+                                        </form>
                                     </div>
+                                @endif
+
+                                @if (\Auth::user()->type == 'super admin' || \Auth::user()->isSuperAdminSideUser())
+                                    @can('Edit Plan')
+                                        <div class="action-btn bg-info me-1">
+                                            <a href="javascript:void(0)" class="btn btn-sm d-inline-flex align-items-center"
+                                                data-ajax-popup="true" data-title="{{ __('Edit Plan') }}"
+                                                data-url="{{ route('plans.edit', $plan->id) }}" data-size="lg" data-bs-toggle="tooltip"
+                                                data-bs-original-title="{{ __('Edit') }}" data-bs-placement="top"><span
+                                                    class="text-white"><i class="ti ti-pencil"></i></span></a>
+                                        </div>
+                                    @endcan
+                                @endif
+
+                                @if ((\Auth::user()->type == 'super admin' || (\Auth::user()->isSuperAdminSideUser() && \Auth::user()->can('Edit Plan'))) && $plan->price > 0)
+                                    <div class="me-1 mt-1 justify-content-center active-tag">
+                                        <div class="form-check form-switch custom-switch-v1 float-end">
+                                            <input type="checkbox" name="plan_disable" data-bs-toggle="tooltip" data-bs-original-title="{{ __('Enable / Disable') }}"
+                                                class="form-check-input input-primary is_disable" value="1"
+                                                data-id='{{ $plan->id }}' data-name="{{ __('plan') }}"
+                                                {{ $plan->is_disable == 1 ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="plan_disable"></label>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                @if (\Auth::user()->type == 'company' && \Auth::user()->plan == $plan->id)
+                                    <span class="d-flex align-items-center ms-2">
+                                        <i class="f-10 lh-1 fas fa-circle text-success"></i>
+                                        <span class="ms-2">{{ __('Active') }}</span>
+                                    </span>
+                                @endif
+                            </div>
 
                                     <span class="mb-4 f-w-600 p-price">{{ !empty($admin_payment_setting['currency_symbol']) ? $admin_payment_setting['currency_symbol'] : '$' }}{{ $plan->price }}<small class="text-sm">/ {{ $plan->duration }}</small></span><br>
 
@@ -211,6 +214,7 @@
                     </div>
                 @endforeach
             </div>
+    @if(!\Auth::user()->isSuperAdminSideUser())
         </div>
 
         {{-- Storage Addons Tab --}}
@@ -269,6 +273,7 @@
             </div>
         </div>
     </div>
+    @endif
 @endsection
 
 @push('scripts')

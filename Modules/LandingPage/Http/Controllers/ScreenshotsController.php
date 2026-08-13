@@ -15,7 +15,7 @@ class ScreenshotsController extends Controller
      */
     public function index()
     {
-        if (\Auth::user()->type == 'super admin') {
+        if (\Auth::user()->type == 'super admin' || \Auth::user()->can('Manage Landing Page') || \Auth::user()->isSuperAdminSideUser()) {
             $settings = LandingPageSetting::settings();
             $screenshots = json_decode($settings['screenshots'], true) ?? [];
             return view('landingpage::landingpage.screenshots.index',compact('settings','screenshots'));

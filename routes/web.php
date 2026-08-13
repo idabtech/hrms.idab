@@ -5,6 +5,7 @@ use App\Http\Controllers\AttendanceRequestController;
 use App\Http\Controllers\SubDepartmentController;
 use App\Http\Controllers\HmrcController;
 use App\Http\Controllers\HrDocumentLibraryController;
+use App\Http\Controllers\SystemModuleController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -247,11 +248,11 @@ Route::get('/external-login', function (Request $request) {
         if (!$isLocal || $currentHost === $adminHost) {
             $isOnAdminDomain = ($currentHost === $adminHost);
 
-            if ($user->type === 'super admin' && !$isOnAdminDomain) {
-                return redirect(rtrim($superAdminUrl, '/') . '/login')->with('error', __('Super Admin can only log in through the Admin Portal: ') . $superAdminUrl);
+            if ($user->isSuperAdminSideUser() && !$isOnAdminDomain) {
+                return redirect(rtrim($superAdminUrl, '/') . '/login')->with('error', __('Super Admin and Super Admin Staff can only log in through the Admin Portal: ') . $superAdminUrl);
             }
 
-            if ($user->type !== 'super admin' && $isOnAdminDomain) {
+            if (!$user->isSuperAdminSideUser() && $isOnAdminDomain) {
                 return redirect(rtrim($companyUrl, '/') . '/login')->with('error', __('Company and Employee users must log in through the Company Portal: ') . $companyUrl);
             }
         }
@@ -310,6 +311,8 @@ Route::group(['middleware' => ['verified']], function () {
         function () {
 
             Route::resource('settings', SettingsController::class);
+            // Route::resource('system-modules', SystemModuleController::class);
+            // Route::post('system-modules/{system_module}/status', [SystemModuleController::class, 'statusToggle'])->name('system-modules.status-toggle');
             Route::resource('hr-document-library', HrDocumentLibraryController::class);
             Route::get('hr-document-library/{id}/download-doc', [HrDocumentLibraryController::class, 'downloadDoc'])->name('hr-document-library.download-doc');
             Route::get('hr-document-library/{id}/download-pdf', [HrDocumentLibraryController::class, 'downloadPdf'])->name('hr-document-library.download-pdf');
@@ -2244,6 +2247,11 @@ Route::group(['middleware' => ['verified']], function () {
     Route::get('hr-document-library/{id}/view-doc', [App\Http\Controllers\HrDocumentLibraryController::class, 'viewDoc'])->name('hr-document-library.view-doc')->middleware(['auth', 'XSS']);
     Route::get('hr-document-library/{id}/download-doc', [App\Http\Controllers\HrDocumentLibraryController::class, 'downloadDoc'])->name('hr-document-library.download-doc')->middleware(['auth', 'XSS']);
     Route::resource('hr-document-library', App\Http\Controllers\HrDocumentLibraryController::class)->middleware(['auth', 'XSS']);
+
+    // Super Admin Staff Routes
+    Route::get('superadmin-staff/{id}/reset-password-modal', [App\Http\Controllers\SuperAdminStaffController::class, 'resetPasswordModal'])->name('superadmin-staff.reset-password-modal')->middleware(['auth', 'XSS']);
+    Route::post('superadmin-staff/{id}/reset-password', [App\Http\Controllers\SuperAdminStaffController::class, 'resetPassword'])->name('superadmin-staff.reset-password')->middleware(['auth', 'XSS']);
+    Route::resource('superadmin-staff', App\Http\Controllers\SuperAdminStaffController::class)->middleware(['auth', 'XSS']);
 
     // cache
     Route::get('/config-cache', function () {
