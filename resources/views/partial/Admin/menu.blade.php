@@ -71,26 +71,49 @@
             <!--dashboard-->
 
             <!-- user-->
-            @if (\Auth::user()->type == 'super admin')
-                <li class="dash-item">
-                    <a href="{{ route('user.index') }}" class="dash-link"><span class="dash-micon"><i
-                                class="ti ti-user"></i></span><span class="dash-mtext">{{ __('Companies') }}</span></a>
-                </li>
+            <!-- user-->
+            @if (\Auth::user()->isSuperAdminSideUser())
+                @if (\Auth::user()->type == 'super admin' || \Auth::user()->can('Manage User'))
+                    <li class="dash-item {{ Request::routeIs('user.index') && Request::segment(1) == 'user' ? 'active' : '' }}">
+                        <a href="{{ route('user.index') }}" class="dash-link">
+                            <span class="dash-micon"><i class="ti ti-building"></i></span>
+                            <span class="dash-mtext">{{ __('Companies') }}</span>
+                        </a>
+                    </li>
+                @endif
+
+                @if (\Auth::user()->type == 'super admin' || \Auth::user()->can('Manage User') || \Auth::user()->can('Manage Role'))
+                    <li class="dash-item dash-hasmenu {{ Request::segment(1) == 'superadmin-staff' || Request::segment(1) == 'roles' ? 'active dash-trigger' : '' }}">
+                        <a href="javascript:void(0)" class="dash-link">
+                            <span class="dash-micon"><i class="ti ti-users"></i></span>
+                            <span class="dash-mtext">{{ __('Admin Staff') }}</span>
+                            <span class="dash-arrow"><i data-feather="chevron-right"></i></span>
+                        </a>
+                        <ul class="dash-submenu {{ Request::segment(1) == 'superadmin-staff' || Request::segment(1) == 'roles' ? 'active' : '' }}">
+                            @if (\Auth::user()->type == 'super admin' || \Auth::user()->can('Manage User'))
+                                <li class="dash-item {{ Request::segment(1) == 'superadmin-staff' ? 'active' : '' }}">
+                                    <a class="dash-link" href="{{ route('superadmin-staff.index') }}">{{ __('User') }}</a>
+                                </li>
+                            @endif
+                            @if (\Auth::user()->type == 'super admin' || \Auth::user()->can('Manage Role'))
+                                <li class="dash-item {{ Request::segment(1) == 'roles' ? 'active' : '' }}">
+                                    <a class="dash-link" href="{{ route('roles.index') }}">{{ __('Role') }}</a>
+                                </li>
+                            @endif
+                        </ul>
+                    </li>
+                @endif
             @else
-                @if (Gate::check('Manage User') ||
-                        Gate::check('Manage Role'))
-                    <li
-                        class="dash-item dash-hasmenu {{ Request::segment(1) == 'user' || Request::segment(1) == 'roles' || Request::segment(1) == 'lastlogin'
-                            ? ' active dash-trigger'
-                            : '' }} ">
-                        <a href="javascript:void(0)" class="dash-link"><span class="dash-micon"><i
-                                    class="ti ti-users"></i></span><span
-                                class="dash-mtext">{{ __('Admin Staff') }}</span><span class="dash-arrow"><i
-                                    data-feather="chevron-right"></i></span></a>
-                        <ul
-                            class="dash-submenu {{ Request::route()->getName() == 'user.index' || Request::route()->getName() == 'users.create' || Request::route()->getName() == 'user.edit' || Request::route()->getName() == 'lastlogin' ? ' active' : '' }} ">
+                @if (Gate::check('Manage User') || Gate::check('Manage Role'))
+                    <li class="dash-item dash-hasmenu {{ Request::segment(1) == 'user' || Request::segment(1) == 'roles' || Request::segment(1) == 'lastlogin' ? 'active dash-trigger' : '' }}">
+                        <a href="javascript:void(0)" class="dash-link">
+                            <span class="dash-micon"><i class="ti ti-users"></i></span>
+                            <span class="dash-mtext">{{ __('Admin Staff') }}</span>
+                            <span class="dash-arrow"><i data-feather="chevron-right"></i></span>
+                        </a>
+                        <ul class="dash-submenu {{ Request::route()->getName() == 'user.index' || Request::route()->getName() == 'users.create' || Request::route()->getName() == 'user.edit' || Request::route()->getName() == 'lastlogin' ? 'active' : '' }}">
                             @can('Manage User')
-                                <li class="dash-item {{ Request::segment(1) == 'lastlogin' ? 'active' : '' }} ">
+                                <li class="dash-item {{ Request::segment(1) == 'lastlogin' ? 'active' : '' }}">
                                     <a class="dash-link" href="{{ route('user.index') }}">{{ __('User') }}</a>
                                 </li>
                             @endcan
@@ -99,22 +122,11 @@
                                     <a class="dash-link" href="{{ route('roles.index') }}">{{ __('Role') }}</a>
                                 </li>
                             @endcan
-                            {{-- @can('Manage Employee Profile')
-                                <li class="dash-item">
-                                    <a class="dash-link"
-                                        href="{{ route('employee.profile') }}">{{ __('Employee Profile') }}</a>
-                                </li>
-                            @endcan
-                            @can('Manage Employee Last Login')
-                                <li class="dash-item">
-                                    <a class="dash-link" href="{{ route('lastlogin') }}">{{ __('Last Login') }}</a>
-                                </li>
-                            @endcan --}}
-
                         </ul>
                     </li>
                 @endif
             @endif
+            <!-- user-->
             <!-- user-->
 
             <!-- employee-->
@@ -335,12 +347,12 @@
                                     href="{{ route('accountlist.index') }}">{{ __('Account List') }}</a>
                             </li>
                         @endcan
-                        @can('View Balance Account List')
-                            <li class="dash-item">
+                        @if (\Auth::user()->type == 'company' || Gate::check('View Balance Account List') || Gate::check('Manage Account List'))
+                            <li class="dash-item {{ Request::route()->getName() == 'accountbalance' ? 'active' : '' }}">
                                 <a class="dash-link"
                                     href="{{ route('accountbalance') }}">{{ __('Account Balance') }}</a>
                             </li>
-                        @endcan
+                        @endif
                         @can('Manage Payee')
                             <li class="dash-item">
                                 <a class="dash-link" href="{{ route('payees.index') }}">{{ __('Payees') }}</a>
@@ -635,7 +647,7 @@
                                 <a class="dash-link" href="{{ route('company-policy.index') }}">{{ __('Company Policy') }}</a>
                             </li>
                         @endcan
-                        @if (Gate::check('Manage HR Document Library') || \Auth::user()->type == 'super admin')
+            @if (Gate::check('Manage HR Document Library') || \Auth::user()->isSuperAdminSideUser())
                             <li class="dash-item {{ Request::segment(1) == 'hr-document-library' ? 'active' : '' }}">
                                 <a class="dash-link" href="{{ route('hr-document-library.index') }}">{{ __('HR Document Library') }}</a>
                             </li>
@@ -645,7 +657,7 @@
             @endif
             <!-- Resources-->
             <!--chats-->
-            @if (\Auth::user()->type != 'super admin')
+            @if (!\Auth::user()->isSuperAdminSideUser())
                 <li class="dash-item {{ Request::segment(1) == 'chats' ? 'active' : '' }}">
                     <a href="{{ url('chats') }}" class="dash-link"><span class="dash-micon"><i
                                 class="ti ti-messages"></i></span><span
@@ -662,8 +674,8 @@
                 </li>
             @endif
 
-            @if (\Auth::user()->type == 'super admin')
-                @if (Gate::check('Manage Plan'))
+            @if (\Auth::user()->isSuperAdminSideUser())
+                @if (\Auth::user()->type == 'super admin' || Gate::check('Manage Plan'))
                     <li class="dash-item ">
                         <a href="{{ route('plans.index') }}" class="dash-link"><span
                                 class="dash-micon"><i class=" ti ti-trophy"></i></span><span
@@ -671,33 +683,34 @@
 
                     </li>
                 @endif
-            @endif
-            @if (\Auth::user()->type == 'super admin')
-                <li class="dash-item ">
-                    <a href="{{ route('plan_request.index') }}" class="dash-link"><span
-                            class="dash-micon"><i class="ti ti-arrow-down-right-circle"></i></span><span
-                            class="dash-mtext">{{ __('Plan Request') }}</span></a>
-                </li>
-                <li class="dash-item {{ Request::routeIs('storage-addons.*') ? 'active' : '' }}">
-                    <a href="{{ route('storage-addons.index') }}" class="dash-link">
-                        <span class="dash-micon"><i class="ti ti-database"></i></span>
-                        <span class="dash-mtext">{{ __('Storage Addons') }}</span>
-                    </a>
-                </li>
-            @endif
 
+                @if (\Auth::user()->type == 'super admin' || Gate::check('Manage Plan Request'))
+                    <li class="dash-item ">
+                        <a href="{{ route('plan_request.index') }}" class="dash-link"><span
+                                class="dash-micon"><i class="ti ti-arrow-down-right-circle"></i></span><span
+                                class="dash-mtext">{{ __('Plan Request') }}</span></a>
+                    </li>
+                @endif
 
-            @if (\Auth::user()->type == 'super admin')
-                <li class="dash-item dash-hasmenu  {{ Request::segment(1) == '' ? 'active' : '' }}">
-                    <a href="{{ route('referral-program.index') }}" class="dash-link">
-                        <span class="dash-micon"><i class="ti ti-discount-2"></i></span><span
-                            class="dash-mtext">{{ __('Referral Program') }}</span>
-                    </a>
-                </li>
-            @endif
+                @if (\Auth::user()->type == 'super admin' || Gate::check('Manage Storage Addons') || Gate::check('Manage Storage Addon'))
+                    <li class="dash-item {{ Request::routeIs('storage-addons.*') ? 'active' : '' }}">
+                        <a href="{{ route('storage-addons.index') }}" class="dash-link">
+                            <span class="dash-micon"><i class="ti ti-database"></i></span>
+                            <span class="dash-mtext">{{ __('Storage Addons') }}</span>
+                        </a>
+                    </li>
+                @endif
 
-            @if (Auth::user()->type == 'super admin')
-                @if (Gate::check('manage coupon'))
+                @if (\Auth::user()->type == 'super admin' || Gate::check('Manage Referral Program'))
+                    <li class="dash-item dash-hasmenu  {{ Request::segment(1) == '' ? 'active' : '' }}">
+                        <a href="{{ route('referral-program.index') }}" class="dash-link">
+                            <span class="dash-micon"><i class="ti ti-discount-2"></i></span><span
+                                class="dash-mtext">{{ __('Referral Program') }}</span>
+                        </a>
+                    </li>
+                @endif
+
+                @if (\Auth::user()->type == 'super admin' || Gate::check('manage coupon'))
                     <li
                         class="dash-item dash-hasmenu {{ Request::segment(1) == 'coupons' ? 'active' : '' }}">
                         <a href="{{ route('coupons.index') }}" class="dash-link"><span
@@ -706,27 +719,26 @@
 
                     </li>
                 @endif
-            @endif
-            @if (\Auth::user()->type == 'super admin')
-                {{-- @if (Gate::check('Manage Order')) --}}
-                <li class="dash-item ">
-                    <a href="{{ route('order.index') }}"
-                        class="dash-link {{ request()->is('orders*') ? 'active' : '' }}"><span
-                            class="dash-micon"><i class="ti ti-shopping-cart"></i></span><span
-                            class="dash-mtext">{{ __('Order') }}</span></a>
 
-                </li>
-                {{-- @endif --}}
-            @endif
+                @if (\Auth::user()->type == 'super admin' || Gate::check('Manage Order'))
+                    <li class="dash-item ">
+                        <a href="{{ route('order.index') }}"
+                            class="dash-link {{ request()->is('orders*') ? 'active' : '' }}"><span
+                                class="dash-micon"><i class="ti ti-shopping-cart"></i></span><span
+                                class="dash-mtext">{{ __('Order') }}</span></a>
 
-            @if (\Auth::user()->type == 'super admin')
-                <li
-                    class="dash-item {{ Request::route()->getName() == 'email_template.index' || Request::segment(1) == 'email_template_lang' || Request::route()->getName() == 'manageemail.lang' ? 'active' : '' }}">
-                    <a href="{{ route('email_template.index') }}" class="dash-link"><span
-                            class="dash-micon"><i class="ti ti-template"></i></span><span
-                            class="dash-mtext">{{ __('Email Templates') }}</span></a>
+                    </li>
+                @endif
 
-                </li>
+                @if (\Auth::user()->type == 'super admin' || Gate::check('Manage Email Template'))
+                    <li
+                        class="dash-item {{ Request::route()->getName() == 'email_template.index' || Request::segment(1) == 'email_template_lang' || Request::route()->getName() == 'manageemail.lang' ? 'active' : '' }}">
+                        <a href="{{ route('email_template.index') }}" class="dash-link"><span
+                                class="dash-micon"><i class="ti ti-template"></i></span><span
+                                class="dash-mtext">{{ __('Email Templates') }}</span></a>
+
+                    </li>
+                @endif
             @endif
             <!--report-->
             <!-- @if (Gate::check('Manage Report'))
@@ -942,22 +954,33 @@ href="{{ route('competencies.index') }}">{{ __('Competencies') }}</a>
             @endif
             <!--constant-->
 
-            @if (\Auth::user()->type == 'super admin')
-                @include('landingpage::menu.landingpage')
-            @endif
-
-            @if (Gate::check('Manage System Settings'))
-                <li class="dash-item ">
-                    <a href="{{ route('settings.index') }}" class="dash-link"><span
-                            class="dash-micon"><i class="ti ti-settings"></i></span><span
-                            class="dash-mtext">{{ __('Settings') }}</span></a>
+            @if (\Auth::user()->isSuperAdminSideUser())
+                {{-- 
+                <li class="dash-item {{ Request::route()->getName() == 'system-modules.index' ? 'active' : '' }}">
+                    <a href="{{ route('system-modules.index') }}" class="dash-link">
+                        <span class="dash-micon"><i class="ti ti-layout-grid"></i></span>
+                        <span class="dash-mtext">{{ __('System Modules') }}</span>
+                    </a>
                 </li>
+                --}}
+
+                @if (\Auth::user()->type == 'super admin' || Gate::check('Manage Landing Page'))
+                    @include('landingpage::menu.landingpage')
+                @endif
+
+                @if (\Auth::user()->type == 'super admin' || Gate::check('Manage System Setup') || Gate::check('Manage System Settings'))
+                    <li class="dash-item ">
+                        <a href="{{ route('settings.index') }}" class="dash-link"><span
+                                class="dash-micon"><i class="ti ti-settings"></i></span><span
+                                class="dash-mtext">{{ __('Settings') }}</span></a>
+                    </li>
+                @endif
             @endif
             <!--------------------- Start System Setup ----------------------------------->
 
-            @if (\Auth::user()->type != 'super admin')
+            @if (!\Auth::user()->isSuperAdminSideUser())
 
-                @if (Gate::check('Manage Plan') || Gate::check('Manage Order') || Gate::check('Manage Company Settings'))
+                @if (\Auth::user()->type == 'company' || Gate::check('Manage Plan') || Gate::check('Manage Order') || Gate::check('Manage Company Settings') || Gate::check('Manage System Settings'))
                     <li class="dash-item dash-hasmenu">
                         <a href="javascript:void(0)" class="dash-link ">
                             <span class="dash-micon"><i class="ti ti-settings"></i></span><span
@@ -966,9 +989,9 @@ href="{{ route('competencies.index') }}">{{ __('Competencies') }}</a>
                                 <i data-feather="chevron-right"></i></span>
                         </a>
                         <ul class="dash-submenu">
-                            @if (Gate::check('Manage Company Settings'))
+                            @if (\Auth::user()->type == 'company' || Gate::check('Manage Company Settings') || Gate::check('Manage System Settings'))
                                 <li
-                                    class="dash-item dash-hasmenu {{ Request::segment(1) == 'company-setting' ? ' active' : '' }}">
+                                    class="dash-item {{ Request::segment(1) == 'company-setting' || Request::route()->getName() == 'settings.index' ? ' active' : '' }}">
                                     <a href="{{ route('settings.index') }}"
                                         class="dash-link">{{ __('System Settings') }}</a>
                                 </li>

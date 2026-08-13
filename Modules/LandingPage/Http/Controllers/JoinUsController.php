@@ -17,7 +17,7 @@ class JoinUsController extends Controller
      */
     public function index()
     {
-        if (\Auth::user()->type == 'super admin') {
+        if (\Auth::user()->type == 'super admin' || \Auth::user()->can('Manage Landing Page') || \Auth::user()->isSuperAdminSideUser()) {
             $join_us = JoinUs::get();
             return view('landingpage::landingpage.joinus', compact('join_us'));
         } else {

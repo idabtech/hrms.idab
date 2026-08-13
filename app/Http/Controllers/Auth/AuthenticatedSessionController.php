@@ -97,15 +97,15 @@ class AuthenticatedSessionController extends Controller
         $companyUrl      = Utility::getCompanyUrl();
         $isOnAdminDomain = Utility::isSuperAdminDomain();
 
-        if ($user->type === 'super admin' && !$isOnAdminDomain) {
+        if ($user->isSuperAdminSideUser() && !$isOnAdminDomain) {
             auth()->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->back()->withInput($request->only('email'))->with('error', __('Access Denied: Super Admin can only log in through the Admin Portal: ') . $superAdminUrl);
+            return redirect()->back()->withInput($request->only('email'))->with('error', __('Access Denied: Super Admin and Super Admin Staff can only log in through the Admin Portal: ') . $superAdminUrl);
         }
 
-        if ($user->type !== 'super admin' && $isOnAdminDomain) {
+        if (!$user->isSuperAdminSideUser() && $isOnAdminDomain) {
             auth()->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

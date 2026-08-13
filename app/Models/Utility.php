@@ -56,12 +56,12 @@ class Utility extends Model
 
     public static function getSuperAdminUrl(): string
     {
-        return self::readEnvFileVar('SUPER_ADMIN_URL') ?? url('/');
+        return config('app.super_admin_url') ?? env('SUPER_ADMIN_URL') ?? self::readEnvFileVar('SUPER_ADMIN_URL') ?? 'http://admin.hrms.local:8000';
     }
 
     public static function getCompanyUrl(): string
     {
-        return self::readEnvFileVar('COMPANY_URL') ?? url('/');
+        return config('app.company_url') ?? env('COMPANY_URL') ?? self::readEnvFileVar('COMPANY_URL') ?? 'http://hrms.local:8000';
     }
 
     public static function parseCleanHost(string $url): string
@@ -76,9 +76,6 @@ class Utility extends Model
     {
         $adminUrl = self::getSuperAdminUrl();
         $adminHost = self::parseCleanHost($adminUrl);
-        if (empty($adminHost)) {
-            return false;
-        }
 
         $candidates = array_filter([
             request()->getHost(),
@@ -91,7 +88,13 @@ class Utility extends Model
 
         foreach ($candidates as $candidate) {
             $cleanCandidate = self::parseCleanHost($candidate);
-            if (!empty($cleanCandidate) && $cleanCandidate === $adminHost) {
+            if (empty($cleanCandidate)) continue;
+
+            if (!empty($adminHost) && $cleanCandidate === $adminHost) {
+                return true;
+            }
+
+            if (str_starts_with($cleanCandidate, 'admin.') || str_starts_with($cleanCandidate, 'devadmin.')) {
                 return true;
             }
         }

@@ -15,7 +15,7 @@ class StorageAddonController extends Controller
 {
     public function index()
     {
-        if (Auth::user()->type === 'super admin' || Auth::user()->can('Manage Storage Addon')) {
+        if (Auth::user()->type === 'super admin' || Auth::user()->isSuperAdminSideUser() || Auth::user()->can('Manage Storage Addon') || Auth::user()->can('Manage Storage Addons')) {
             $addons = StorageAddon::orderBy('id', 'desc')->get();
             $orders = StorageAddonOrder::with(['user', 'storageAddon'])->orderBy('id', 'desc')->get();
             return view('storage_addon.index', compact('addons', 'orders'));
@@ -26,7 +26,7 @@ class StorageAddonController extends Controller
 
     public function create()
     {
-        if (Auth::user()->type === 'super admin' || Auth::user()->can('Create Storage Addon')) {
+        if (Auth::user()->type === 'super admin' || Auth::user()->can('Create Storage Addon') || Auth::user()->can('Create Storage Addons')) {
             $addonTypes = StorageAddon::$addonTypes;
             $durationTypes = StorageAddon::$durationTypes;
             return view('storage_addon.create', compact('addonTypes', 'durationTypes'));
@@ -37,7 +37,7 @@ class StorageAddonController extends Controller
 
     public function store(Request $request)
     {
-        if (Auth::user()->type === 'super admin' || Auth::user()->can('Create Storage Addon')) {
+        if (Auth::user()->type === 'super admin' || Auth::user()->can('Create Storage Addon') || Auth::user()->can('Create Storage Addons')) {
             $validator = Validator::make($request->all(), [
                 'title'          => 'required|string|max:255',
                 'price'          => 'required|numeric|min:0',
@@ -72,7 +72,7 @@ class StorageAddonController extends Controller
 
     public function edit($id)
     {
-        if (Auth::user()->type === 'super admin' || Auth::user()->can('Edit Storage Addon')) {
+        if (Auth::user()->type === 'super admin' || Auth::user()->can('Edit Storage Addon') || Auth::user()->can('Edit Storage Addons')) {
             $addon = StorageAddon::findOrFail($id);
             $addonTypes = StorageAddon::$addonTypes;
             $durationTypes = StorageAddon::$durationTypes;
@@ -84,7 +84,7 @@ class StorageAddonController extends Controller
 
     public function update(Request $request, $id)
     {
-        if (Auth::user()->type === 'super admin' || Auth::user()->can('Edit Storage Addon')) {
+        if (Auth::user()->type === 'super admin' || Auth::user()->can('Edit Storage Addon') || Auth::user()->can('Edit Storage Addons')) {
             $addon = StorageAddon::findOrFail($id);
 
             $validator = Validator::make($request->all(), [
@@ -120,7 +120,7 @@ class StorageAddonController extends Controller
 
     public function destroy($id)
     {
-        if (Auth::user()->type === 'super admin' || Auth::user()->can('Delete Storage Addon')) {
+        if (Auth::user()->type === 'super admin' || Auth::user()->can('Delete Storage Addon') || Auth::user()->can('Delete Storage Addons')) {
             $addon = StorageAddon::findOrFail($id);
             $addon->delete();
 
@@ -132,7 +132,7 @@ class StorageAddonController extends Controller
 
     public function statusToggle($id)
     {
-        if (Auth::user()->type === 'super admin' || Auth::user()->can('Edit Storage Addon')) {
+        if (Auth::user()->type === 'super admin' || Auth::user()->can('Edit Storage Addon') || Auth::user()->can('Edit Storage Addons')) {
             $addon = StorageAddon::findOrFail($id);
             $addon->is_active = !$addon->is_active;
             $addon->save();

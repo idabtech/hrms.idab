@@ -12,50 +12,62 @@ class ReferralProgramController extends Controller
 {
     public function index()
     {
-        $setting = ReferralSetting::where('created_by', \Auth::user()->id)->first();
-        $payRequests = TransactionOrder::where('status', 1)->get();
+        $user = \Auth::user();
+        if ($user->type === 'super admin' || ($user->isSuperAdminSideUser() && $user->can('Manage Referral Program'))) {
+            $setting = ReferralSetting::where('created_by', 1)->first();
+            if (!$setting) {
+                $setting = ReferralSetting::where('created_by', $user->id)->first();
+            }
+            $payRequests = TransactionOrder::where('status', 1)->get();
+            $transactions = ReferralTransaction::get();
 
-        $transactions = ReferralTransaction::get();
+            return view('referral-program.index', compact('setting', 'payRequests', 'transactions'));
+        }
 
-        return view('referral-program.index', compact('setting', 'payRequests', 'transactions'));
+        return redirect()->back()->with('error', __('Permission denied.'));
     }
 
     public function store(Request $request)
     {
-        $validator = \Validator::make(
-            $request->all(),
-            [
-                'percentage' => 'required',
-                'minimum_threshold_amount' => 'required',
-                'guideline' => 'required',
-            ]
-        );
+        $user = \Auth::user();
+        if ($user->type === 'super admin' || ($user->isSuperAdminSideUser() && $user->can('Edit Referral Program'))) {
+            $validator = \Validator::make(
+                $request->all(),
+                [
+                    'percentage' => 'required',
+                    'minimum_threshold_amount' => 'required',
+                    'guideline' => 'required',
+                ]
+            );
 
-        if ($validator->fails()) {
-            $messages = $validator->getMessageBag();
+            if ($validator->fails()) {
+                $messages = $validator->getMessageBag();
 
-            return redirect()->back()->with('error', $messages->first());
+                return redirect()->back()->with('error', $messages->first());
+            }
+
+            if ($request->has('is_enable') && $request->is_enable == 'on') {
+                $is_enable = 1;
+            } else {
+                $is_enable = 0;
+            }
+
+            $setting = ReferralSetting::where('created_by', 1)->first();
+
+            if ($setting == null) {
+                $setting = new ReferralSetting();
+            }
+            $setting->percentage = $request->percentage;
+            $setting->minimum_threshold_amount = $request->minimum_threshold_amount;
+            $setting->is_enable  = $is_enable;
+            $setting->guideline = $request->guideline;
+            $setting->created_by = 1;
+            $setting->save();
+
+            return redirect()->route('referral-program.index')->with('success', __('Referral Program Setting successfully Updated.'));
         }
 
-        if ($request->has('is_enable') && $request->is_enable == 'on') {
-            $is_enable = 1;
-        } else {
-            $is_enable = 0;
-        }
-
-        $setting = ReferralSetting::where('created_by', \Auth::user()->id)->first();
-
-        if ($setting == null) {
-            $setting = new ReferralSetting();
-        }
-        $setting->percentage = $request->percentage;
-        $setting->minimum_threshold_amount = $request->minimum_threshold_amount;
-        $setting->is_enable  = $is_enable;
-        $setting->guideline = $request->guideline;
-        $setting->created_by = \Auth::user()->creatorId();
-        $setting->save();
-
-        return redirect()->route('referral-program.index')->with('success', __('Referral Program Setting successfully Updated.'));
+        return redirect()->back()->with('error', __('Permission denied.'));
     }
 
     public function companyIndex()
@@ -120,45 +132,48 @@ class ReferralProgramController extends Controller
 
     public function requestedAmount($id, $status)
     {
-        $setting = ReferralSetting::where('created_by', 1)->first();
+        $user = \Auth::user();
+        if ($user->type === 'super admin' || $user->isSuperAdminSideUser()) {
+            if ($status == 1 && $user->type !== 'super admin' && !$user->can('Approve Referral Program')) {
+                return redirect()->back()->with('error', __('Permission denied. You do not have permission to approve referral payout requests.'));
+            }
+            if ($status == 0 && $user->type !== 'super admin' && !$user->can('Delete Referral Program')) {
+                return redirect()->back()->with('error', __('Permission denied. You do not have permission to reject referral payout requests.'));
+            }
 
-        $transaction = TransactionOrder::find($id);
+            $setting = ReferralSetting::where('created_by', 1)->first();
 
-        $paidAmount = TransactionOrder::where('req_user_id', $transaction->req_user_id)->where('status', 2)->sum('req_amount');
-        $user = User::find($transaction->req_user_id);
+            $transaction = TransactionOrder::find($id);
 
-        $netAmount = $user->commission_amount - $paidAmount;
+            $paidAmount = TransactionOrder::where('req_user_id', $transaction->req_user_id)->where('status', 2)->sum('req_amount');
+            $userTarget = User::find($transaction->req_user_id);
 
-        $minAmount = isset($setting) ? $setting->minimum_threshold_amount : 0;
-        if($status == 0)
-        {
-            $transaction->status = 0;
+            $netAmount = $userTarget->commission_amount - $paidAmount;
 
-            $transaction->save();
+            $minAmount = isset($setting) ? $setting->minimum_threshold_amount : 0;
+            if ($status == 0) {
+                $transaction->status = 0;
+                $transaction->save();
 
-            return redirect()->route('referral-program.index')->with('error', __('Request Rejected Successfully.'));
+                return redirect()->route('referral-program.index')->with('error', __('Request Rejected Successfully.'));
+            } elseif ($transaction->req_amount > $netAmount) {
+                $transaction->status = 0;
+                $transaction->save();
+
+                return redirect()->route('referral-program.index')->with('error', __('This request cannot be accepted because it exceeds the commission amount.'));
+            } elseif ($transaction->req_amount < $minAmount) {
+                $transaction->status = 0;
+                $transaction->save();
+
+                return redirect()->route('referral-program.index')->with('error', __('This request cannot be accepted because it less than the threshold amount.'));
+            } else {
+                $transaction->status = 2;
+                $transaction->save();
+
+                return redirect()->route('referral-program.index')->with('success', __('Request Aceepted Successfully.'));
+            }
         }
-        elseif($transaction->req_amount > $netAmount)
-        {
-            $transaction->status = 0;
 
-            $transaction->save();
-
-            return redirect()->route('referral-program.index')->with('error', __('This request cannot be accepted because it exceeds the commission amount.'));
-        }
-        elseif($transaction->req_amount < $minAmount)
-        {
-            $transaction->status = 0;
-
-            $transaction->save();
-            return redirect()->route('referral-program.index')->with('error', __('This request cannot be accepted because it less than the threshold amount.'));
-        }
-        else
-        {
-            $transaction->status = 2;
-
-            $transaction->save();
-            return redirect()->route('referral-program.index')->with('success', __('Request Aceepted Successfully.'));
-        }
+        return redirect()->back()->with('error', __('Permission denied.'));
     }
 }

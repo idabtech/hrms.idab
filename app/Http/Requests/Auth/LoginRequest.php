@@ -88,15 +88,15 @@ class LoginRequest extends FormRequest
         }
 
         // Domain restriction enforcement
-        if ($matchedUser->type === 'super admin' && !$isOnAdminDomain) {
-            $msg = __('Access Denied: Super Admin can only log in through the Admin Portal: ') . $superAdminUrl;
+        if ($matchedUser->isSuperAdminSideUser() && !$isOnAdminDomain) {
+            $msg = __('Access Denied: Super Admin and Super Admin Staff can only log in through the Admin Portal: ') . $superAdminUrl;
             session()->flash('error', $msg);
             throw ValidationException::withMessages([
                 'email' => $msg,
             ]);
         }
 
-        if ($matchedUser->type !== 'super admin' && $isOnAdminDomain) {
+        if (!$matchedUser->isSuperAdminSideUser() && $isOnAdminDomain) {
             $msg = __('Access Denied: Company and Employee users must log in through the Company Portal: ') . $companyUrl;
             session()->flash('error', $msg);
             throw ValidationException::withMessages([

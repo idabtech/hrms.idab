@@ -106,7 +106,7 @@ class HomeController extends Controller
                 $officeTime['endTime']   = !empty(\Auth::user()->employee) && !empty(\Auth::user()->employee->company_end_time) ? \Auth::user()->employee->company_end_time : Utility::getValByName('company_end_time');
 
                 return view('dashboard.dashboard', compact('allCalendarEvents', 'arrHolidays', 'arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime', 'hasRequestedDocs', 'emp'));
-            } else if ($user->type == 'super admin') {
+            } else if ($user->isSuperAdminSideUser()) {
                 $user                       = \Auth::user();
                 $user['total_user']         = $user->countCompany();
                 $user['total_paid_user']    = $user->countPaidCompany();

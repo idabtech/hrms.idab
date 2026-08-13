@@ -5,7 +5,7 @@
 @endsection
 
 @section('action-button')
-    @if (\Auth::user()->type == 'super admin' || \Auth::user()->can('Create Storage Addon'))
+    @if (\Auth::user()->type == 'super admin' || \Auth::user()->can('Create Storage Addon') || \Auth::user()->can('Create Storage Addons'))
         <a href="javascript:void(0)" data-url="{{ route('storage-addons.create') }}" data-size="md" data-ajax-popup="true"
             data-title="{{ __('Create New Storage Addon') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
             data-bs-original-title="{{ __('Create') }}">
@@ -92,41 +92,47 @@
                                                 </td>
                                                 <td class="Action">
                                                     {{-- Status Toggle --}}
-                                                    <div class="action-btn me-2">
-                                                        <a href="{{ route('storage-addons.status', $addon->id) }}"
-                                                            class="btn btn-sm {{ $addon->is_active ? 'bg-warning' : 'bg-success' }} align-items-center"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="{{ $addon->is_active ? __('Disable') : __('Enable') }}">
-                                                            <span class="text-white"><i class="ti {{ $addon->is_active ? 'ti-power' : 'ti-circle-check' }}"></i></span>
-                                                        </a>
-                                                    </div>
+                                                    @if (\Auth::user()->type == 'super admin' || \Auth::user()->can('Edit Storage Addon') || \Auth::user()->can('Edit Storage Addons'))
+                                                        <div class="action-btn me-2">
+                                                            <a href="{{ route('storage-addons.status', $addon->id) }}"
+                                                                class="btn btn-sm {{ $addon->is_active ? 'bg-warning' : 'bg-success' }} align-items-center"
+                                                                data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                title="{{ $addon->is_active ? __('Disable') : __('Enable') }}">
+                                                                <span class="text-white"><i class="ti {{ $addon->is_active ? 'ti-power' : 'ti-circle-check' }}"></i></span>
+                                                            </a>
+                                                        </div>
+                                                    @endif
 
                                                     {{-- Edit --}}
-                                                    <div class="action-btn me-2">
-                                                        <a href="javascript:void(0)" class="btn btn-sm bg-info align-items-center"
-                                                            data-url="{{ route('storage-addons.edit', $addon->id) }}"
-                                                            data-size="md" data-ajax-popup="true"
-                                                            data-title="{{ __('Edit Storage Addon') }}"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="{{ __('Edit') }}">
-                                                            <span class="text-white"><i class="ti ti-pencil"></i></span>
-                                                        </a>
-                                                    </div>
+                                                    @if (\Auth::user()->type == 'super admin' || \Auth::user()->can('Edit Storage Addon') || \Auth::user()->can('Edit Storage Addons'))
+                                                        <div class="action-btn me-2">
+                                                            <a href="javascript:void(0)" class="btn btn-sm bg-info align-items-center"
+                                                                data-url="{{ route('storage-addons.edit', $addon->id) }}"
+                                                                data-size="md" data-ajax-popup="true"
+                                                                data-title="{{ __('Edit Storage Addon') }}"
+                                                                data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                title="{{ __('Edit') }}">
+                                                                <span class="text-white"><i class="ti ti-pencil"></i></span>
+                                                            </a>
+                                                        </div>
+                                                    @endif
 
                                                     {{-- Delete --}}
-                                                    <div class="action-btn">
-                                                        {!! Form::open([
-                                                            'method' => 'DELETE',
-                                                            'route' => ['storage-addons.destroy', $addon->id],
-                                                            'id' => 'delete-form-' . $addon->id,
-                                                        ]) !!}
-                                                        <a href="javascript:void(0)" data-bs-trigger="hover" class="btn btn-sm bg-danger align-items-center bs-pass-para"
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"
-                                                            title="{{ __('Delete') }}">
-                                                            <span class="text-white"><i class="ti ti-trash"></i></span>
-                                                        </a>
-                                                        {!! Form::close() !!}
-                                                    </div>
+                                                    @if (\Auth::user()->type == 'super admin' || \Auth::user()->can('Delete Storage Addon') || \Auth::user()->can('Delete Storage Addons'))
+                                                        <div class="action-btn">
+                                                            {!! Form::open([
+                                                                'method' => 'DELETE',
+                                                                'route' => ['storage-addons.destroy', $addon->id],
+                                                                'id' => 'delete-form-' . $addon->id,
+                                                            ]) !!}
+                                                            <a href="javascript:void(0)" data-bs-trigger="hover" class="btn btn-sm bg-danger align-items-center bs-pass-para"
+                                                                data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                title="{{ __('Delete') }}">
+                                                                <span class="text-white"><i class="ti ti-trash"></i></span>
+                                                            </a>
+                                                            {!! Form::close() !!}
+                                                        </div>
+                                                    @endif
                                                 </td>
                                             </tr>
                                         @empty
@@ -205,7 +211,7 @@
                                                     @endif
                                                 </td>
                                                 <td class="Action">
-                                                    @if($order->payment_status === 'Pending' && \Auth::user()->type === 'super admin')
+                                                    @if($order->payment_status === 'Pending' && (\Auth::user()->type === 'super admin' || \Auth::user()->isSuperAdminSideUser()))
                                                         <div class="action-btn bg-success me-2">
                                                             <a href="{{ route('storage-addons.approve-order', $order->id) }}"
                                                                 class="mx-3 btn btn-sm align-items-center"

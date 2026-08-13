@@ -45,19 +45,19 @@
                                         <td>{{ $order->plan_name }}</td>
                                         <td>{{ (!empty($admin_payment_setting['currency_symbol']) ? $admin_payment_setting['currency_symbol'] : '$') . $order->price }}
                                         </td>
-                                        <td>
+                                        <td class="text-nowrap">
                                             @if ($order->payment_status == 'Approved' || $order->payment_status == 'approved')
                                                 <span
-                                                    class="status_badge badge bg-primary p-2 px-3 order-status">{{ ucfirst($order->payment_status) }}</span>
-                                            @elseif($order->payment_status == 'success' || $order->payment_status == 'succeeded' || $order->payment_status == 'Success')
+                                                    class="badge bg-primary p-2 px-3 text-nowrap d-inline-block">{{ __('Approved') }}</span>
+                                            @elseif($order->payment_status == 'success' || $order->payment_status == 'succeeded' || $order->payment_status == 'Success' || $order->payment_status == 'Succeeded')
                                                 <span
-                                                    class="status_badge badge bg-primary p-2 px-3 order-status">{{ ucfirst($order->payment_status) }}</span>
+                                                    class="badge bg-primary p-2 px-3 text-nowrap d-inline-block">{{ __('Success') }}</span>
                                             @elseif($order->payment_status == 'Pending' || $order->payment_status == 'pending')
                                                 <span
-                                                    class="status_badge badge bg-warning p-2 px-3 order-status">{{ __('Pending') }}</span>
+                                                    class="badge bg-warning p-2 px-3 text-nowrap d-inline-block">{{ __('Pending') }}</span>
                                             @else
                                                 <span
-                                                    class="status_badge badge bg-danger p-2 px-3 order-status">{{ ucfirst($order->payment_status) }}</span>
+                                                    class="badge bg-danger p-2 px-3 text-nowrap d-inline-block">{{ ucfirst($order->payment_status) }}</span>
                                             @endif
                                         </td>
                                         <td>{{ \Auth::user()->dateFormat($order->created_at) }}</td>
@@ -79,7 +79,7 @@
                                         <td class="Action">
                                             <div class="dt-buttons">
                                                 <span>
-                                                    @if (\Auth::user()->type == 'super admin')
+                                                    @if (\Auth::user()->type == 'super admin' || \Auth::user()->isSuperAdminSideUser())
                                                         @if ($order->payment_status == 'Pending' && $order->payment_type == 'Bank Transfer')
                                                             <div class="action-btn bg-success me-2">
                                                                 <a href="javascript:void(0)"
@@ -115,7 +115,7 @@
                                                     @php
                                                         $user = App\Models\User::find($order->user_id);
                                                     @endphp
-                                                    @if (\Auth::user()->type == 'super admin')
+                                                    @if (\Auth::user()->type == 'super admin' || \Auth::user()->isSuperAdminSideUser())
                                                         <div class="action-btn bg-danger me-2">
                                                             {!! Form::open([
                                                                 'method' => 'DELETE',
