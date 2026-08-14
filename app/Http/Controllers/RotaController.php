@@ -375,11 +375,56 @@ class RotaController extends Controller
             return response()->json(['success' => false, 'message' => __('Permission denied.')], 403);
         }
 
-        $shifts = Shift::templates()
+        $templates = [];
+
+        // 1. Load company shifts configured in Company Settings
+        $settings = \App\Models\Utility::settings();
+        $companyShiftsJson = $settings['company_shifts'] ?? '';
+        $companyShiftsArr = !empty($companyShiftsJson) ? (json_decode($companyShiftsJson, true) ?? []) : [];
+
+        if (is_array($companyShiftsArr)) {
+            foreach ($companyShiftsArr as $idx => $cShift) {
+                if (($cShift['show_in_rota'] ?? 1) == 1) {
+                    $start = !empty($cShift['start']) ? $cShift['start'] : '09:00';
+                    $end   = !empty($cShift['end']) ? $cShift['end'] : '17:00';
+
+                    if (strlen($start) == 5) $start .= ':00';
+                    if (strlen($end) == 5)   $end .= ':00';
+
+                    $name = !empty($cShift['name']) ? $cShift['name'] : __('Shift') . ' ' . ($idx + 1);
+
+                    $templates[] = [
+                        'id'                 => 'company_shift_' . $idx,
+                        'name'               => $name,
+                        'company_start_time' => $start,
+                        'company_end_time'   => $end,
+                    ];
+                }
+            }
+        }
+
+        // 2. Load DB shift templates (excluding 00:00:00 empty templates)
+        $dbShifts = Shift::templates()
             ->where('created_by', Auth::user()->creatorId())
             ->get();
 
-        return response()->json(['success' => true, 'data' => $shifts]);
+        foreach ($dbShifts as $s) {
+            $sStart = $s->company_start_time;
+            $sEnd   = $s->company_end_time;
+
+            if (($sStart == '00:00:00' || empty($sStart)) && ($sEnd == '00:00:00' || empty($sEnd))) {
+                continue;
+            }
+
+            $templates[] = [
+                'id'                 => $s->id,
+                'name'               => $s->name,
+                'company_start_time' => $sStart ?: '00:00:00',
+                'company_end_time'   => $sEnd ?: '00:00:00',
+            ];
+        }
+
+        return response()->json(['success' => true, 'data' => $templates]);
     }
 
     // ── GET /rota/branches ────────────────────────────────────────────────────
@@ -407,6 +452,7 @@ class RotaController extends Controller
         }
 
         $request->validate([
+            'rota_id'     => 'nullable|integer',
             'employee_id' => 'required|integer',
             'date'        => 'nullable|date_format:Y-m-d',
             'is_default'  => 'nullable|boolean',
@@ -424,35 +470,62 @@ class RotaController extends Controller
 
         $isDefault = $request->boolean('is_default', false);
 
-        $startTime = strlen($request->start_time) == 5 ? $request->start_time . ':00' : $request->start_time; $endTime = strlen($request->end_time) == 5 ? $request->end_time . ':00' : $request->end_time;
+        $startTime = strlen($request->start_time) == 5 ? $request->start_time . ':00' : $request->start_time;
+        $endTime   = strlen($request->end_time) == 5 ? $request->end_time . ':00' : $request->end_time;
+        $shiftType = $request->type ?? 'regular';
 
         $payload = [
             'name'               => $request->name ?? null,
             'company_start_time' => $startTime,
             'company_end_time'   => $endTime,
-            'type'               => $request->type ?? 'regular',
+            'type'               => $shiftType,
             'notes'              => $request->notes,
             'is_deleted'         => false,
             'created_by'         => $user->creatorId(),
         ];
 
-        if ($isDefault) {
-            // Upsert the employee's default shift (date = null)
-            $rota = Shift::updateOrCreate(
-                ['employee_id' => $employee->id, 'date' => null],
-                $payload
-            );
-        } else {
-            // Date is required for a specific-day override
-            if (!$request->filled('date')) {
-                return response()->json(['success' => false, 'message' => 'Date is required for a date-specific shift.'], 422);
-            }
+        $targetShift = null;
+        if ($request->filled('rota_id')) {
+            $targetShift = Shift::where('id', $request->rota_id)
+                ->where('created_by', $user->creatorId())
+                ->first();
+        }
 
-            // updateOrCreate handles both: new override AND reactivating a deleted marker
-            $rota = Shift::updateOrCreate(
-                ['employee_id' => $employee->id, 'date' => $request->date],
-                $payload
-            );
+        if ($targetShift) {
+            if ($isDefault) {
+                $payload['date'] = null;
+            } elseif ($request->filled('date')) {
+                $payload['date'] = $request->date;
+            }
+            $targetShift->fill($payload)->save();
+            $rota = $targetShift;
+
+            if ($request->filled('date')) {
+                Shift::where('employee_id', $employee->id)
+                    ->where('date', $request->date)
+                    ->update([
+                        'type'               => $shiftType,
+                        'company_start_time' => $startTime,
+                        'company_end_time'   => $endTime,
+                        'is_deleted'         => false,
+                    ]);
+            }
+        } else {
+            if ($isDefault) {
+                $rota = Shift::updateOrCreate(
+                    ['employee_id' => $employee->id, 'date' => null],
+                    $payload
+                );
+            } else {
+                if (!$request->filled('date')) {
+                    return response()->json(['success' => false, 'message' => 'Date is required for a date-specific shift.'], 422);
+                }
+
+                $rota = Shift::updateOrCreate(
+                    ['employee_id' => $employee->id, 'date' => $request->date],
+                    $payload
+                );
+            }
         }
 
         // Fire-and-forget: failures are logged but never break the HRMS response.
@@ -612,11 +685,30 @@ class RotaController extends Controller
             'overwrite'      => 'nullable|boolean',
         ]);
 
-        $user     = Auth::user();
-        $template = Shift::templates()
-            ->where('id', $request->template_id)
-            ->where('created_by', $user->creatorId())
-            ->firstOrFail();
+        $user = Auth::user();
+        if (str_starts_with((string)$request->template_id, 'company_shift_')) {
+            $idx = (int) str_replace('company_shift_', '', $request->template_id);
+            $settings = \App\Models\Utility::settings();
+            $companyShiftsJson = $settings['company_shifts'] ?? '';
+            $companyShiftsArr = !empty($companyShiftsJson) ? (json_decode($companyShiftsJson, true) ?? []) : [];
+            $cShift = $companyShiftsArr[$idx] ?? null;
+            if (!$cShift) {
+                return response()->json(['success' => false, 'message' => 'Shift template not found.'], 422);
+            }
+            $templateStart = !empty($cShift['start']) ? $cShift['start'] : '09:00';
+            $templateEnd   = !empty($cShift['end']) ? $cShift['end'] : '17:00';
+            if (strlen($templateStart) == 5) $templateStart .= ':00';
+            if (strlen($templateEnd) == 5)   $templateEnd .= ':00';
+            $templateName  = !empty($cShift['name']) ? $cShift['name'] : __('Shift') . ' ' . ($idx + 1);
+        } else {
+            $templateObj = Shift::templates()
+                ->where('id', $request->template_id)
+                ->where('created_by', $user->creatorId())
+                ->firstOrFail();
+            $templateStart = $templateObj->company_start_time;
+            $templateEnd   = $templateObj->company_end_time;
+            $templateName  = $templateObj->name;
+        }
 
         $employees = Employee::whereIn('id', $request->employee_ids)
             ->where('created_by', $user->creatorId())
@@ -671,9 +763,9 @@ class RotaController extends Controller
                 Shift::updateOrCreate(
                     ['employee_id' => $emp->id, 'date' => $dateStr],
                     [
-                        'name'               => $template->name,
-                        'company_start_time' => $template->company_start_time,
-                        'company_end_time'   => $template->company_end_time,
+                        'name'               => $templateName,
+                        'company_start_time' => $templateStart,
+                        'company_end_time'   => $templateEnd,
                         'type'               => 'regular',
                         'is_deleted'         => false,
                         'created_by'         => $user->creatorId(),
