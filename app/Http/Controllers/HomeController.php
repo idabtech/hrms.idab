@@ -106,7 +106,7 @@ class HomeController extends Controller
                 $officeTime['endTime']   = !empty(\Auth::user()->employee) && !empty(\Auth::user()->employee->company_end_time) ? \Auth::user()->employee->company_end_time : Utility::getValByName('company_end_time');
 
                 return view('dashboard.dashboard', compact('allCalendarEvents', 'arrHolidays', 'arrEvents', 'announcements', 'employees', 'meetings', 'employeeAttendance', 'officeTime', 'hasRequestedDocs', 'emp'));
-            } else if ($user->type == 'super admin') {
+            } else if ($user->isSuperAdminSideUser()) {
                 $user                       = \Auth::user();
                 $user['total_user']         = $user->countCompany();
                 $user['total_paid_user']    = $user->countPaidCompany();
@@ -290,15 +290,7 @@ class HomeController extends Controller
                 header('location:install');
                 die;
             } else {
-                $settings = Utility::settings();
-                if ($settings['display_landing_page'] == 'on' && \Schema::hasTable('landing_page_settings')) {
-                    $plans = Plan::get();
-                    $get_section = LandingPageSection::orderBy('section_order', 'ASC')->get();
-
-                    return view('landingpage::layouts.landingpage', compact('plans', 'get_section'));
-                } else {
-                    return redirect('login');
-                }
+                return app(\App\Http\Controllers\Auth\AuthenticatedSessionController::class)->showLoginForm();
             }
         }
     }

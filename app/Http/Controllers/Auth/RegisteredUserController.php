@@ -273,7 +273,7 @@ class RegisteredUserController extends Controller
                 'lname' => 'required',
                 'dob' => 'required',
                 'gender' => 'required',
-                'phone' => 'required|numeric',
+                'phone' => 'required|regex:/^[0-9+\s\-()]+$/',
                 'address' => 'required',
                 'email' => 'required|unique:users',
                 'password' => 'required',
@@ -286,7 +286,7 @@ class RegisteredUserController extends Controller
                 'document.*' => 'required',
             ],
             [
-                'company_shift_time.required' => __('The Employee Zone Time field is required.'),
+                'company_shift_time.required' => __('The Employee Time Zone field is required.'),
             ]
         );
 

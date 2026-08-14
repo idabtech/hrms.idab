@@ -16,7 +16,7 @@ class LandingPageController extends Controller
      */
     public function index()
     {
-        if (\Auth::user()->type == 'super admin') {
+        if (\Auth::user()->type == 'super admin' || \Auth::user()->can('Manage Landing Page') || \Auth::user()->isSuperAdminSideUser()) {
             return view('landingpage::landingpage.topbar');
         } else {
             return redirect()->back()->with('error', 'Permission Denied');

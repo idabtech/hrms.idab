@@ -84,7 +84,7 @@
                                         <td>{{ $EmailTemplate->name }}</td>
                                         <td>
                                             <div class="dt-buttons">
-                                                @if (\Auth::user()->type == 'super admin')
+                                                @if (\Auth::user()->isSuperAdminSideUser())
                                                     <div class="text-end">
                                                         <div class="action-btn bg-warning">
                                                             <a href="{{ route('manage.email.language', [$EmailTemplate->id, \Auth::user()->lang]) }}"

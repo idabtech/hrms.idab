@@ -15,7 +15,7 @@ class HomeController extends Controller
      */
     public function index()
     {
-        if (\Auth::user()->type == 'super admin') {
+        if (\Auth::user()->type == 'super admin' || \Auth::user()->can('Manage Landing Page') || \Auth::user()->isSuperAdminSideUser()) {
             $settings = LandingPageSetting::settings();
             return view('landingpage::landingpage.homesection', compact('settings'));
         } else {

@@ -20,7 +20,7 @@ class PlanRequestController extends Controller
     public function index()
     {
 
-        if (Auth::user()->type == 'super admin') {
+        if (Auth::user()->type == 'super admin' || (Auth::user()->isSuperAdminSideUser() && Auth::user()->can('Manage Plan Request'))) {
             $plan_requests = PlanRequest::all();
 
             return view('plan_request.index', compact('plan_requests'));
@@ -87,26 +87,34 @@ class PlanRequestController extends Controller
     */
     public function acceptRequest($id, $response)
     {
-        if (Auth::user()->type == 'super admin') {
+        $user = Auth::user();
+        if ($user->type == 'super admin' || $user->isSuperAdminSideUser()) {
+            if ($response == 1 && $user->type !== 'super admin' && !$user->can('Approve Plan Request')) {
+                return redirect()->back()->with('error', __('Permission Denied. You do not have permission to approve plan requests.'));
+            }
+            if ($response == 0 && $user->type !== 'super admin' && !$user->can('Delete Plan Request')) {
+                return redirect()->back()->with('error', __('Permission Denied. You do not have permission to reject plan requests.'));
+            }
+
             $payment_setting = Utility::getAdminPaymentSetting();
             $plan_request = PlanRequest::find($id);
             if (!empty($plan_request)) {
-                $user = User::find($plan_request->user_id);
+                $userTarget = User::find($plan_request->user_id);
 
                 if ($response == 1) {
-                    $user->requested_plan = $plan_request->plan_id;
-                    $user->plan           = $plan_request->plan_id;
-                    $user->requested_plan = '0';
-                    $user->save();
+                    $userTarget->requested_plan = $plan_request->plan_id;
+                    $userTarget->plan           = $plan_request->plan_id;
+                    $userTarget->requested_plan = '0';
+                    $userTarget->save();
 
                     $plan       = Plan::find($plan_request->plan_id);
-                    $assignPlan = $user->assignPlan($plan_request->plan_id, $plan_request->duration);
+                    $assignPlan = $userTarget->assignPlan($plan_request->plan_id, $plan_request->duration);
                     $price      = $plan->price;
 
                     if ($assignPlan['is_success'] == true && !empty($plan)) {
-                        if (!empty($user->payment_subscription_id) && $user->payment_subscription_id != '') {
+                        if (!empty($userTarget->payment_subscription_id) && $userTarget->payment_subscription_id != '') {
                             try {
-                                $user->cancel_subscription($user->id);
+                                $userTarget->cancel_subscription($userTarget->id);
                             } catch (\Exception $exception) {
                                 \Log::debug($exception->getMessage());
                             }
@@ -128,7 +136,7 @@ class PlanRequestController extends Controller
                             'payment_type' => __('Manually Upgrade By Super Admin'),
                             'payment_status' => 'succeeded',
                             'receipt' => null,
-                            'user_id' => $user->id,
+                            'user_id' => $userTarget->id,
                         ]);
 
                         $plan_request->delete();
@@ -138,10 +146,8 @@ class PlanRequestController extends Controller
                         return redirect()->back()->with('error', __('Plan fail to upgrade.'));
                     }
                 } else {
-                    // $user->update(['requested_plan' => '0']);
-
-                    $user['requested_plan'] = 0;
-                    $user->update();
+                    $userTarget['requested_plan'] = 0;
+                    $userTarget->update();
 
                     $plan_request->delete();
 
@@ -160,15 +166,21 @@ class PlanRequestController extends Controller
     */
     public function cancelRequest($id)
     {
+        $user = Auth::user();
+        if ($user->type == 'super admin' || $user->can('Delete Plan Request') || $user->id == $id) {
+            $targetUser = User::find($id);
 
-        $user = User::find($id);
+            if ($targetUser) {
+                $targetUser['requested_plan'] = '0';
+                $targetUser->update();
+            }
 
-        $user['requested_plan'] = '0';
-        $user->update();
+            PlanRequest::where('user_id', $id)->delete();
 
-        PlanRequest::where('user_id', $id)->delete();
+            return redirect()->back()->with('success', __('Request Canceled Successfully.'));
+        }
 
-        return redirect()->back()->with('success', __('Request Canceled Successfully.'));
+        return redirect()->back()->with('error', __('Permission Denied.'));
     }
 
     public function show(PlanRequest $planRequest)

@@ -88,7 +88,77 @@ class User extends Authenticatable implements MustVerifyEmail
             }
         }
 
-        return (float) $plan->storage_limit + (float) $activeAddonStorage;
+        return (float) $plan->storage_limit + $activeAddonStorage;
+    }
+
+    public function isSuperAdminSideUser(): bool
+    {
+        if ($this->type === 'super admin' || $this->type === 'super admin staff') {
+            return true;
+        }
+
+        if ($this->type === 'company' || $this->type === 'employee') {
+            return false;
+        }
+
+        if ($this->created_by) {
+            $creator = self::find($this->created_by);
+            if ($creator) {
+                if ($creator->type === 'super admin' || $creator->type === 'super admin staff') {
+                    return true;
+                }
+                if ($creator->type === 'company' || $creator->type === 'employee') {
+                    return false;
+                }
+                return $creator->isSuperAdminSideUser();
+            }
+        }
+
+        $superAdmin = self::where('type', 'super admin')->first();
+        $superAdminId = $superAdmin ? (string)$superAdmin->id : '1';
+
+        if ((string)$this->created_by === $superAdminId || (string)$this->created_by === '0') {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function hasPermissionTo($permission, $guardName = null): bool
+    {
+        try {
+            $permObj = $permission;
+            if (is_string($permission) || is_numeric($permission)) {
+                $permissionClass = app(\Spatie\Permission\Contracts\Permission::class);
+                if (is_numeric($permission)) {
+                    $permObj = $permissionClass->findById($permission, $guardName ?? $this->getDefaultGuardName());
+                } else {
+                    $permObj = $permissionClass->findByName($permission, $guardName ?? $this->getDefaultGuardName());
+                }
+            }
+
+            if (!$permObj) {
+                return false;
+            }
+
+            $hasPerm = $this->hasDirectPermission($permObj) || $this->hasPermissionViaRole($permObj);
+            if (!$hasPerm) {
+                return false;
+            }
+
+            if ($this->isSuperAdminSideUser() || $this->type === 'company') {
+                return true;
+            }
+
+            $companyOwner = self::find($this->creatorId());
+            if ($companyOwner && $companyOwner->id !== $this->id && $companyOwner->type === 'company') {
+                return $companyOwner->hasPermissionTo($permObj->name, $guardName);
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
 

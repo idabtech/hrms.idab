@@ -147,16 +147,20 @@
                                                     <td>{{ $transaction->date }}</td>
                                                     <td>{{ $currency . $transaction->req_amount }}</td>
                                                     <td>
-                                                        <a href="{{ route('amount.request', [$transaction->id, 1]) }}"
-                                                            class="btn btn-success btn-sm me-1" data-bs-toggle="tooltip"
-                                                            data-bs-original-title="{{ __('Approved') }}">
-                                                            <i class="ti ti-check"></i>
-                                                        </a>
-                                                        <a href="{{ route('amount.request', [$transaction->id, 0]) }}"
-                                                            class="btn btn-danger btn-sm" data-bs-toggle="tooltip"
-                                                            data-bs-original-title="{{ __('Reject') }}">
-                                                            <i class="ti ti-x"></i>
-                                                        </a>
+                                                        @if (\Auth::user()->type == 'super admin' || \Auth::user()->can('Approve Referral Program'))
+                                                            <a href="{{ route('amount.request', [$transaction->id, 1]) }}"
+                                                                class="btn btn-success btn-sm me-1" data-bs-toggle="tooltip"
+                                                                data-bs-original-title="{{ __('Approved') }}">
+                                                                <i class="ti ti-check"></i>
+                                                            </a>
+                                                        @endif
+                                                        @if (\Auth::user()->type == 'super admin' || \Auth::user()->can('Delete Referral Program'))
+                                                            <a href="{{ route('amount.request', [$transaction->id, 0]) }}"
+                                                                class="btn btn-danger btn-sm" data-bs-toggle="tooltip"
+                                                                data-bs-original-title="{{ __('Reject') }}">
+                                                                <i class="ti ti-x"></i>
+                                                            </a>
+                                                        @endif
                                                     </td>
                                                 </tr>
                                             @endforeach

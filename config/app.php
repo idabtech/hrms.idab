@@ -17,6 +17,8 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
     'key' => env('APP_KEY'),
+    'super_admin_url' => env('SUPER_ADMIN_URL', 'http://admin.hrms.local:8000'),
+    'company_url' => env('COMPANY_URL', 'http://hrms.local:8000'),
 
     /*
     |--------------------------------------------------------------------------

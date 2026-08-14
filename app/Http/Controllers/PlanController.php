@@ -18,7 +18,7 @@ class PlanController extends Controller
     public function index()
     {
         if (\Auth::user()->can('Manage Plan')) {
-            if (\Auth::user()->type == 'super admin') {
+            if (\Auth::user()->type == 'super admin' || \Auth::user()->isSuperAdminSideUser()) {
                 $plans                 = Plan::get();
                 $storageAddons         = StorageAddon::orderBy('id', 'desc')->get();
             } else {
@@ -243,7 +243,7 @@ class PlanController extends Controller
 
     public function OrderDestroy(Request $request, $id)
     {
-        if (\Auth::user()->type == 'super admin') {
+        if (\Auth::user()->type == 'super admin' || (\Auth::user()->isSuperAdminSideUser() && \Auth::user()->can('Delete Order'))) {
             $order = Order::find($id);
             $file = $order->receipt;
             if (File::exists(storage_path('uploads/order/' . $file))) {

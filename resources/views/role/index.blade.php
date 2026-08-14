@@ -96,7 +96,7 @@
                                             @endcan
 
                                             @can('Delete Role')
-                                                @if ($role->name != 'employee')
+                                                @if (!in_array(strtolower($role->name), ['company', 'employee', 'super admin']))
                                                     <div class="action-btn">
                                                         {!! Form::open([
                                                             'method' => 'DELETE',

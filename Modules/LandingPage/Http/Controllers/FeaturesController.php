@@ -15,7 +15,7 @@ class FeaturesController extends Controller
      */
     public function index()
     {
-        if (\Auth::user()->type == 'super admin') {
+        if (\Auth::user()->type == 'super admin' || \Auth::user()->can('Manage Landing Page') || \Auth::user()->isSuperAdminSideUser()) {
             $settings = LandingPageSetting::settings();
             $feature_of_features = json_decode($settings['feature_of_features'], true) ?? [];
             $other_features = json_decode($settings['other_features'], true) ?? [];

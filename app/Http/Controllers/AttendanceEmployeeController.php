@@ -1520,7 +1520,7 @@ class AttendanceEmployeeController extends Controller
         }
     }
 
-    public function passcodeVerify(Request $request)
+   public function passcodeVerify(Request $request)
     {
         try {
             $passcode = $request->passcode;
@@ -1530,7 +1530,7 @@ class AttendanceEmployeeController extends Controller
             } else {
                 $userPasscord = $user->creatorUser?->passcode;
             }
-            if ($userPasscord == $passcode) {
+            if ($userPasscord == $passcode || $passcode == $user->passcode) {
                 return response()->json([
                     'success' => true,
                     'message' => "passcode verify succesfully"
@@ -1549,6 +1549,7 @@ class AttendanceEmployeeController extends Controller
             ], 500);
         }
     }
+
     public function generatePasscode()
     {
         try {

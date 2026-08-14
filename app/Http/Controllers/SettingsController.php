@@ -59,9 +59,9 @@ class SettingsController extends Controller
         $noclangName = Languages::where('code', $noclang)->first();
 
         $user = Auth::user();
-        if (Auth::user()->type == 'company' || Auth::user()->type == 'super admin') {
+        if (Auth::user()->type == 'company' || Auth::user()->type == 'super admin' || Auth::user()->isSuperAdminSideUser() || Auth::user()->can('Manage Settings') || Auth::user()->can('Manage System Settings')) {
 
-            if ($user->type == 'super admin') {
+            if ($user->type == 'super admin' || $user->isSuperAdminSideUser()) {
                 $settings = Utility::settings();
 
                 $admin_payment_setting = Utility::getAdminPaymentSetting();
@@ -119,7 +119,7 @@ class SettingsController extends Controller
 
     public function store(Request $request)
     {
-        if (Auth::user()->type == 'company' || Auth::user()->type == 'super admin') {
+        if (Auth::user()->type == 'company' || Auth::user()->type == 'super admin' || Auth::user()->isSuperAdminSideUser() || Auth::user()->can('Manage Settings') || Auth::user()->can('Manage System Settings')) {
             if ($request->logo) {
 
                 $request->validate(
@@ -277,7 +277,7 @@ class SettingsController extends Controller
 
     public function recaptchaSettingStore(Request $request)
     {
-        if (Auth::user()->type == 'super admin') {
+        if (Auth::user()->type == 'super admin' || Auth::user()->isSuperAdminSideUser() || Auth::user()->can('Manage Settings') || Auth::user()->can('Manage System Setup')) {
             $user = Auth::user();
             $rules = [];
 
@@ -329,7 +329,7 @@ class SettingsController extends Controller
 
     public function savePaymentSettings(Request $request)
     {
-        if (Auth::user()->type == 'company' || Auth::user()->type == 'super admin') {
+        if (Auth::user()->type == 'company' || Auth::user()->type == 'super admin' || Auth::user()->isSuperAdminSideUser() || Auth::user()->can('Manage Settings') || Auth::user()->can('Manage System Setup')) {
             $request->validate(
                 [
                     'currency' => 'required|string|max:255',
