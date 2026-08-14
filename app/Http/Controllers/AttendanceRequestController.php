@@ -51,8 +51,6 @@ class AttendanceRequestController extends Controller
             $query->whereYear('requested_at', $year)->whereMonth('requested_at', $month);
         }
 
-        $requests = $query->get();
-
         $statsQuery = clone $query;
         $stats = [
             'total'       => $statsQuery->count(),
@@ -60,6 +58,16 @@ class AttendanceRequestController extends Controller
             'this_week'   => (clone $statsQuery)->whereBetween('requested_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
             'last_30days' => (clone $statsQuery)->where('requested_at', '>=', now()->subDays(30))->count(),
         ];
+
+        $requests = $query->get();
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => true,
+                'data'    => $requests,
+                'stats'   => $stats,
+            ]);
+        }
 
         // Load leave types for the decline-as-leave modal
         $leaveTypes = LeaveType::where('created_by', Auth::user()->creatorId())
@@ -77,12 +85,46 @@ class AttendanceRequestController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        // Normalize type input (supports 'clock_in', 'clockin', 'in', 'clock_out', 'clockout', 'out')
+        $rawType = strtolower(trim($request->type ?? ''));
+        if (in_array($rawType, ['clock_in', 'clockin', 'clock-in', 'in'])) {
+            $request->merge(['type' => 'clock_in']);
+        } elseif (in_array($rawType, ['clock_out', 'clockout', 'clock-out', 'out'])) {
+            $request->merge(['type' => 'clock_out']);
+        }
+
+        $validator = \Validator::make($request->all(), [
             'type'   => 'required|in:clock_in,clock_out',
             'reason' => 'nullable|string|max:255',
         ]);
 
-        $employee = Employee::where('user_id', Auth::user()->id)->firstOrFail();
+        if ($validator->fails()) {
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first(),
+                    'errors'  => $validator->errors(),
+                ], 422);
+            }
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $employee = null;
+        if ($request->filled('employee_id')) {
+            $employee = Employee::where('id', $request->employee_id)
+                ->where('created_by', Auth::user()->creatorId())
+                ->first();
+        }
+        if (!$employee) {
+            $employee = Employee::where('user_id', Auth::user()->id)->first();
+        }
+
+        if (!$employee) {
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json(['success' => false, 'message' => __('Employee record not found for this user.')], 404);
+            }
+            return redirect()->back()->with('error', __('Employee record not found for this user.'));
+        }
 
         $settings = Utility::settings();
         if (isset($settings['timezone']) && !empty($settings['timezone']) && $settings['timezone'] != 'UTC') {
@@ -295,6 +337,14 @@ class AttendanceRequestController extends Controller
             }
         }
 
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => true,
+                'message' => __('Request approved successfully and attendance updated.'),
+                'data'    => $attendanceRequest,
+            ]);
+        }
+
         return redirect()->back()->with('success', __('Request approved successfully and attendance updated.'));
     }
 
@@ -438,6 +488,14 @@ class AttendanceRequestController extends Controller
         $message = __('Request declined.');
         if ($leaveCreated) {
             $message .= ' ' . __('Leave record created and auto-approved.');
+        }
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data'    => $attendanceRequest,
+            ]);
         }
 
         return back()->with('error', $message);
@@ -713,14 +771,25 @@ class AttendanceRequestController extends Controller
         ];
     }
 
-    public function destroy(AttendanceRequest $attendanceRequest)
+    public function destroy(Request $request, AttendanceRequest $attendanceRequest)
     {
         // Permission check
         if (!\Auth::user()->can('Delete Attendance Request')) {
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json(['success' => false, 'message' => __('Permission denied.')], 403);
+            }
             return redirect()->back()->with('error', __('Permission denied.'));
         }
 
         $attendanceRequest->delete();
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => true,
+                'message' => __('Request deleted successfully.'),
+            ]);
+        }
+
         return redirect()->route('attendance-requests.index')->with('success', __('Request deleted successfully.'));
     }
 
@@ -879,6 +948,4 @@ class AttendanceRequestController extends Controller
     //         }
     //     }
 
-    //     return redirect()->back()->with('success', __('Your request has been sent and is pending approval.'));
-    // }
 }
