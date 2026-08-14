@@ -1290,7 +1290,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
 
 
                                 <div class="form-group col-md-4">
-                                    {{ Form::label('defult_country', __('Country Base Setting'), ['class' => 'col-form-label']) }}
+                                    {{ Form::label('defult_country', __('Based Country Setting'), ['class' => 'col-form-label']) }}
                                     <select name="defult_country" id="defult_country" class="form-control select2">
                                         @php
                                             $currentCountry = strtolower($settings['defult_country'] ?? 'india');
