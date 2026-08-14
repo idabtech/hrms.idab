@@ -105,7 +105,7 @@ class EmployeeController extends Controller
                     'lname' => 'required',
                     'dob' => 'required',
                     'gender' => 'required',
-                    'phone' => 'required|numeric',
+                    'phone' => 'required|regex:/^[0-9+\s\-()]+$/',
                     'address' => 'required',
                     'email' => 'required|unique:users',
                     'password' => 'required',
@@ -126,7 +126,7 @@ class EmployeeController extends Controller
                     'document.*' => 'required',
                 ],
                 [
-                    'company_shift_time.required' => __('The Employee Zone Time field is required.'),
+                    'company_shift_time.required' => __('The Employee Time Zone field is required.'),
                     'refresh_type.required' => __('The Refresh Break Time field is required.'),
                     // 'refresh_type.in' => __('The selected Refresh Break Time is invalid.'),
                     // 'lunch_start.required_if' => __('Lunch start time is required when Refresh Break Time is fixed.'),
@@ -223,6 +223,27 @@ class EmployeeController extends Controller
                 $record['tea_minutes'] = $request->input('tea_minutes', 0);
             }
 
+            $rawPhone = trim($request['phone'] ?? '');
+            if (!empty($rawPhone)) {
+                $codes = ['+971', '+880', '+966', '+977', '+91', '+44', '+61', '+49', '+33', '+81', '+65', '+92', '+94', '+1', '+7'];
+                while (str_starts_with($rawPhone, '+')) {
+                    $stripped = false;
+                    foreach ($codes as $code) {
+                        if (str_starts_with($rawPhone, $code)) {
+                            $rawPhone = trim(substr($rawPhone, strlen($code)));
+                            $stripped = true;
+                            break;
+                        }
+                    }
+                    if (!$stripped) {
+                        $rawPhone = trim(ltrim($rawPhone, '+'));
+                        break;
+                    }
+                }
+            }
+            $countryCode = trim($request->country_code ?? '+91');
+            $phonePayload = !empty($rawPhone) ? ($countryCode . ' ' . $rawPhone) : null;
+
             $employee = Employee::create(
                 [
                     'user_id' => $user->id,
@@ -230,7 +251,7 @@ class EmployeeController extends Controller
                     'last_name' => $request['lname'],
                     'dob' => $request['dob'],
                     'gender' => $request['gender'],
-                    'phone' => $request['phone'] ?? null,
+                    'phone' => $phonePayload,
                     'address' => $request['address'],
                     'email' => $request['email'],
                     'password' => Hash::make($request['password']),
@@ -365,14 +386,21 @@ class EmployeeController extends Controller
     public function edit($id)
     {
         try {
-            $id = Crypt::decrypt($id);
+            $empId = Crypt::decrypt($id);
         } catch (\Throwable $th) {
-            return redirect()->back()->with('error', __('Employee Not Found.'));
+            if (is_numeric($id)) {
+                $empId = $id;
+            } else {
+                return redirect()->back()->with('error', __('Employee Not Found.'));
+            }
         }
-        if (Auth::user()->can('Edit Employee') || (Auth::user()->type == 'employee' && Auth::user()->employee && Auth::user()->employee->id == $id)) {
+        if (Auth::user()->can('Edit Employee') || (Auth::user()->type == 'employee' && Auth::user()->employee && Auth::user()->employee->id == $empId)) {
             $company_settings = Utility::settings();
             $company_shifts = isset($company_settings['company_shifts']) ? json_decode($company_settings['company_shifts'], true) : [];
-            $employee = Employee::find($id);
+            $employee = Employee::find($empId);
+            if (!$employee) {
+                return redirect()->back()->with('error', __('Employee Not Found.'));
+            }
             $documents = Document::where('created_by', Auth::user()->creatorId())->get();
             $employeeDocuments = EmployeeDocument::where('employee_id', $employee->employee_id)->get()->keyBy('document_id');
             $branches = Branch::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
@@ -511,7 +539,7 @@ class EmployeeController extends Controller
                     'dob' => 'required',
                     'email' => 'required|unique:employees,email,' . $id . ',id',
                     'gender' => 'required',
-                    'phone' => 'required|numeric',
+                    'phone' => 'required|regex:/^[0-9+\s\-()]+$/',
                     'address' => 'required',
                     'employment_type_id' => 'nullable|exists:employment_types,id',
                     'company_shift_time' => 'required',
@@ -524,7 +552,7 @@ class EmployeeController extends Controller
                     'tea_minutes' => 'required_if:refresh_type,flexible|integer|min:0',
                 ],
                 [
-                    'company_shift_time.required' => __('The Employee Zone Time field is required.'),
+                    'company_shift_time.required' => __('The Employee Time Zone field is required.'),
                     'refresh_type.required' => __('The Refresh Break Time field is required.'),
                     'refresh_type.in' => __('The selected Refresh Break Time is invalid.'),
                     'lunch_start.required_if' => __('Lunch start time is required when Refresh Break Time is fixed.'),
@@ -697,6 +725,27 @@ class EmployeeController extends Controller
                 $document_implode = null;
             }
 
+            if (!empty($request->phone)) {
+                $rawPhone = trim($request->phone);
+                $codes = ['+971', '+880', '+966', '+977', '+91', '+44', '+61', '+49', '+33', '+81', '+65', '+92', '+94', '+1', '+7'];
+                while (str_starts_with($rawPhone, '+')) {
+                    $stripped = false;
+                    foreach ($codes as $code) {
+                        if (str_starts_with($rawPhone, $code)) {
+                            $rawPhone = trim(substr($rawPhone, strlen($code)));
+                            $stripped = true;
+                            break;
+                        }
+                    }
+                    if (!$stripped) {
+                        $rawPhone = trim(ltrim($rawPhone, '+'));
+                        break;
+                    }
+                }
+                $countryCode = trim($request->country_code ?? '+91');
+                $input['phone'] = !empty($rawPhone) ? ($countryCode . ' ' . $rawPhone) : null;
+            }
+
             $input['documents'] = $document_implode;
 
             $employee->fill($input)->save();
@@ -787,16 +836,22 @@ class EmployeeController extends Controller
         if (Auth::user()->can('Show Employee')) {
             try {
                 $empId = Crypt::decrypt($id);
-            } catch (\RuntimeException $e) {
-                return redirect()->back()->with('error', __('Employee not avaliable'));
+            } catch (\Throwable $e) {
+                if (is_numeric($id)) {
+                    $empId = $id;
+                } else {
+                    return redirect()->back()->with('error', __('Employee not available'));
+                }
+            }
+            $employee = Employee::find($empId);
+            if (!$employee) {
+                return redirect()->back()->with('error', __('Employee not available'));
             }
             $documents = Document::where('created_by', Auth::user()->creatorId())->get();
             $branches = Branch::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
             $departments = Department::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
             $designations = Designation::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
-            $employee = Employee::find($empId);
             $employeesId = Auth::user()->employeeIdFormat($employee->employee_id);
-            $empId = Crypt::decrypt($id);
 
             return view('employee.show', compact('employee', 'employeesId', 'branches', 'departments', 'designations', 'documents'));
         } else {
@@ -1134,7 +1189,15 @@ class EmployeeController extends Controller
     public function profileShow($id)
     {
         if (Auth::user()->can('Show Employee Profile')) {
-            $empId = Crypt::decrypt($id);
+            try {
+                $empId = Crypt::decrypt($id);
+            } catch (\Throwable $th) {
+                if (is_numeric($id)) {
+                    $empId = $id;
+                } else {
+                    return redirect()->back()->with('error', __('Employee Not Found.'));
+                }
+            }
             $documents = Document::where('created_by', Auth::user()->creatorId())->get();
             $branches = Branch::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
             $departments = Department::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
@@ -1142,6 +1205,9 @@ class EmployeeController extends Controller
             $employee = Employee::find($empId);
             if ($employee == null) {
                 $employee = Employee::where('user_id', $empId)->first();
+            }
+            if (!$employee) {
+                return redirect()->back()->with('error', __('Employee Not Found.'));
             }
 
             $employeesId = Auth::user()->employeeIdFormat($employee->employee_id);

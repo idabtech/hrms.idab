@@ -1292,8 +1292,15 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                 <div class="form-group col-md-4">
                                     {{ Form::label('defult_country', __('Country Base Setting'), ['class' => 'col-form-label']) }}
                                     <select name="defult_country" id="defult_country" class="form-control select2">
-                                        <option value="india" {{ ($settings['defult_country'] ?? 'india') == 'india' ? 'selected' : '' }}>{{ __('India') }}</option>
-                                        <option value="uk" {{ ($settings['defult_country'] ?? 'india') == 'uk' ? 'selected' : '' }}>{{ __('United Kingdom (UK)') }}</option>
+                                        @php
+                                            $currentCountry = strtolower($settings['defult_country'] ?? 'india');
+                                            $countryList    = \App\Models\Utility::getCountryList();
+                                        @endphp
+                                        @foreach($countryList as $cKey => $cName)
+                                            <option value="{{ $cKey }}" {{ ($currentCountry == $cKey || $currentCountry == strtolower($cName)) ? 'selected' : '' }}>
+                                                {{ __($cName) }}
+                                            </option>
+                                        @endforeach
                                     </select>
                                     @error('defult_country')
                                     <span class="invalid-defult_country" role="alert">
