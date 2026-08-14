@@ -103,13 +103,13 @@
                                         <div class="form-check form-check-inline form-group">
                                             <input type="radio" id="monthly" value="monthly" name="type"
                                                 class="form-check-input"
-                                                {{ isset($_GET['type']) && $_GET['type'] == 'monthly' ? 'checked' : '' }}>
+                                                {{ request('type', 'monthly') == 'monthly' ? 'checked' : '' }}>
                                             <label class="form-check-label" for="monthly">{{ __('Monthly') }}</label>
                                         </div>
                                         <div class="form-check form-check-inline form-group">
                                             <input type="radio" id="daily" value="daily" name="type"
                                                 class="form-check-input"
-                                                {{ isset($_GET['type']) && $_GET['type'] == 'daily' ? 'checked' : '' }}>
+                                                {{ request('type') == 'daily' ? 'checked' : '' }}>
                                             <label class="form-check-label" for="daily">{{ __('Daily') }}</label>
                                         </div>
                                     </div>
@@ -365,9 +365,8 @@
 
 @push('script-page')
     <script>
-        $('input[name="type"]:radio').on('change', function(e) {
-            var type = $(this).val();
-
+        function toggleTypeFields() {
+            var type = $('input[name="type"]:checked').val() || 'monthly';
             if (type == 'monthly') {
                 $('.month').addClass('d-block').removeClass('d-none');
                 $('.date').addClass('d-none').removeClass('d-block');
@@ -376,12 +375,16 @@
                 $('.month').addClass('d-none').removeClass('d-block');
             }
 
-            // Keep bulk form filter inputs in sync with the visible filter
             var filterVal = type === 'monthly'
                 ? $('input[name="month"]').val()
                 : $('input[name="date"]').val();
 
             $('#bulk-approve-form input[name="type"], #bulk-decline-form input[name="type"]').val(type);
+        }
+
+        $(document).ready(function() {
+            $('input[name="type"]:radio').on('change', toggleTypeFields);
+            toggleTypeFields();
         });
 
         // Sync month/date/employee inputs into the bulk forms whenever they change

@@ -10,21 +10,6 @@ $company_settings = \App\Models\Utility::settings();
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
     var laravelFormat = "{{ $company_settings['site_date_format'] }}";
-
-    // var formatMap = {
-    //     "Y-m-d": "Y-m-d",
-    //     "d-m-Y": "d-m-Y",
-    //     "m-d-Y": "m-d-Y",
-    //     "d/m/Y": "d/m/Y",
-    //     "m/d/Y": "m/d/Y",
-    //     "M j, Y": "M j, Y"
-    // };
-
-    // flatpickr(".datepicker", {
-    //     dateFormat: formatMap[laravelFormat] || "Y-m-d",
-    //     maxDate: "today",
-    //     //defaultDate: "today"
-    // });
 </script>
 
 <script>
@@ -35,32 +20,26 @@ $company_settings = \App\Models\Utility::settings();
             .replace(/Y/g, 'YYYY')
             .replace(/y/g, 'YY')
             .replace(/F/g, 'Month')
-            .replace(/M/g, 'M')
+            .replace(/M/g, 'MMM')
             .replace(/D/g, 'Day')
             .replace(/m/g, 'MM')
             .replace(/n/g, 'M')
             .replace(/d/g, 'DD')
             .replace(/j/g, 'D');
 
-
         function initOne(el) {
-            if (el._flatpickr) return;
+            if (!el || el._flatpickr || el.classList.contains('flatpickr-input')) return;
             if (el.dataset.noFlatpickr !== undefined) return;
 
-            // Only use the existing value as default if it looks like a real date
-            // (not a browser-injected default like "2026-01-01" from an empty field)
             var existingValue = el.value && el.value.trim();
             var defaultDate = null;
             if (existingValue) {
-                // Treat it as a real default only if the field had a value attribute set in HTML
-                // i.e. the element has a non-empty value attribute (not just a browser default)
                 var attrValue = el.getAttribute('value');
                 if (attrValue && attrValue.trim()) {
                     defaultDate = attrValue.trim();
                 }
             }
 
-            // Clear any browser-injected value so flatpickr starts empty when no real default
             if (!defaultDate) {
                 el.value = '';
             }
@@ -76,7 +55,7 @@ $company_settings = \App\Models\Utility::settings();
                 onReady: function(selectedDates, dateStr, instance) {
                     if (instance.altInput) {
                         instance.altInput.placeholder = placeholder;
-                        instance.altInput.className = el.className;
+                        instance.altInput.className = el.className.replace(/\b(datepicker|d_week)\b/g, '').trim() + ' flatpickr-input';
 
                         // Open picker when clicking anywhere on the alt input
                         instance.altInput.addEventListener('click', function() {
@@ -116,8 +95,10 @@ $company_settings = \App\Models\Utility::settings();
             });
         }
 
+        var dateSelector = 'input[type="date"]:not(.flatpickr-input), input.datepicker:not(.flatpickr-input), input.d_week:not(.flatpickr-input)';
+
         function initAll(root) {
-            (root || document).querySelectorAll('input[type="date"]').forEach(initOne);
+            (root || document).querySelectorAll(dateSelector).forEach(initOne);
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
@@ -131,11 +112,13 @@ $company_settings = \App\Models\Utility::settings();
             mutations.forEach(function(mutation) {
                 mutation.addedNodes.forEach(function(node) {
                     if (node.nodeType !== 1) return;
-                    if (node.matches && node.matches('input[type="date"]')) {
+                    if (node.classList.contains('flatpickr-input') || node.classList.contains('flatpickr-input-group')) return;
+
+                    if (node.matches && node.matches(dateSelector)) {
                         initOne(node);
                     }
                     if (node.querySelectorAll) {
-                        node.querySelectorAll('input[type="date"]').forEach(initOne);
+                        node.querySelectorAll(dateSelector).forEach(initOne);
                     }
                 });
             });
