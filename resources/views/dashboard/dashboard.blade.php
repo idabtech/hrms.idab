@@ -1693,6 +1693,9 @@
                 </div>
             </div>
 
+            {{-- Celebrations: Work Anniversaries & Birthdays Widget (Positioned below Status & Calendar) --}}
+            @include('dashboard.celebrations_widget')
+
             @if (\Auth::user()->type != 'company')
                 <div class="col-xl-12 col-lg-12 col-md-12">
                     <div class="card">

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Models\User;
 use App\Models\IpRestrict;
 use App\Mail\TestMail;
 use App\Models\Utility;
@@ -1098,6 +1099,106 @@ class SettingsController extends Controller
     public function createIp()
     {
         return view('restrict_ip.create');
+    }
+
+    public function modalDisableCompanySecurity()
+    {
+        $user = Auth::user();
+        if ($user && $user->type === 'super admin') {
+            return view('setting.modal_disable_security_otp');
+        }
+        return redirect()->back()->with('error', __('Permission denied.'));
+    }
+
+    private function sendDisableCompanySecurityOtpInternal(User $user)
+    {
+        $otpCode = rand(100000, 999999);
+        session([
+            'disable_company_security_otp' => [
+                'code'       => (string) $otpCode,
+                'expires_at' => now()->addMinutes(5)->timestamp,
+            ]
+        ]);
+
+        $placeholders = [
+            'user_name'           => $user->name,
+            'otp_code'            => $otpCode,
+            'otp_expires_minutes' => 5,
+            'app_name'            => config('app.name', 'HRMS'),
+        ];
+
+        try {
+            Utility::sendEmailTemplate('disable_login_as_company_security_otp', [$user->email], $placeholders);
+        } catch (\Exception $e) {
+            \Log::error('Disable Company Security OTP Mail Error: ' . $e->getMessage());
+        }
+    }
+
+    public function sendDisableCompanySecurityOtp(Request $request)
+    {
+        $user = Auth::user();
+        if ($user && $user->type === 'super admin') {
+            $this->sendDisableCompanySecurityOtpInternal($user);
+            return response()->json(['status' => 'success', 'message' => __('A new OTP code has been sent to your email.')]);
+        }
+        return response()->json(['status' => 'error', 'message' => __('Permission denied.')], 403);
+    }
+
+    public function verifyDisableCompanySecurityOtp(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || $user->type !== 'super admin') {
+            return response()->json(['status' => 'error', 'message' => __('Permission denied.')], 403);
+        }
+
+        $otpCode = $request->input('otp_code');
+        $sessionData = session('disable_company_security_otp');
+
+        if (!$sessionData || !isset($sessionData['code'], $sessionData['expires_at'])) {
+            return response()->json(['status' => 'error', 'message' => __('No active OTP found. Please click Resend OTP.')], 422);
+        }
+
+        if (now()->timestamp > $sessionData['expires_at']) {
+            return response()->json(['status' => 'error', 'message' => __('OTP has expired. Please click Resend OTP.')], 422);
+        }
+
+        if ((string)$otpCode !== (string)$sessionData['code']) {
+            return response()->json(['status' => 'error', 'message' => __('Invalid OTP code. Please check your email and try again.')], 422);
+        }
+
+        DB::table('settings')->updateOrInsert(
+            ['name' => 'login_as_company_security', 'created_by' => 1],
+            ['value' => 'off', 'updated_at' => now()]
+        );
+
+        Utility::clearSettingsCache();
+        session()->forget('disable_company_security_otp');
+
+        return response()->json(['status' => 'success', 'message' => __('Login As Company Security disabled successfully.')]);
+    }
+
+    public function toggleCompanySecurity(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || $user->type !== 'super admin') {
+            return response()->json(['status' => 'error', 'message' => __('Permission denied.')], 403);
+        }
+
+        $status = $request->input('status');
+
+        if ($status === 'on') {
+            DB::table('settings')->updateOrInsert(
+                ['name' => 'login_as_company_security', 'created_by' => 1],
+                ['value' => 'on', 'updated_at' => now()]
+            );
+            Utility::clearSettingsCache();
+            return response()->json(['status' => 'success', 'message' => __('Login As Company Security activated successfully.')]);
+        } else {
+            return response()->json([
+                'status'    => 'require_otp',
+                'modal_url' => route('settings.disable.company.security.modal'),
+            ]);
+        }
     }
 
     public function storeIp(Request $request)

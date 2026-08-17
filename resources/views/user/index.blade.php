@@ -95,11 +95,25 @@
                                             </a>
                                             {!! Form::close() !!}
 
-                                            <a href="{{ route('login.with.company', $user->id) }}" class="dropdown-item"
-                                                data-bs-original-title="{{ __('Login As Company') }}">
-                                                <i class="ti ti-replace"></i>
-                                                <span class="ms-1">{{ __('Login As Company') }}</span>
-                                            </a>
+                                            @php
+                                                $adminSettings = \App\Models\Utility::settings();
+                                                $isLoginSecurityOn = ($adminSettings['login_as_company_security'] ?? 'on') === 'on';
+                                            @endphp
+
+                                            @if ($isLoginSecurityOn)
+                                                <a href="javascript:void(0)" data-url="{{ route('login.with.company', $user->id) }}"
+                                                    data-ajax-popup="true" data-size="md" data-title="{{ __('Login As Company Verification') }}"
+                                                    class="dropdown-item" data-bs-original-title="{{ __('Login As Company') }}">
+                                                    <i class="ti ti-replace"></i>
+                                                    <span class="ms-1">{{ __('Login As Company') }}</span>
+                                                </a>
+                                            @else
+                                                <a href="{{ route('login.with.company', $user->id) }}" class="dropdown-item"
+                                                    data-bs-original-title="{{ __('Login As Company') }}">
+                                                    <i class="ti ti-replace"></i>
+                                                    <span class="ms-1">{{ __('Login As Company') }}</span>
+                                                </a>
+                                            @endif
 
                                             <a href="javascript:void(0)" class="dropdown-item" data-ajax-popup="true"
                                                 data-size="md" data-title="{{ __('Change Password') }}"

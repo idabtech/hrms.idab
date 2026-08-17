@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Models\Utility;
 use AWS\CRT\HTTP\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 
 use App\Models\EmployeeDocument;
@@ -283,7 +284,18 @@ class HomeController extends Controller
                     $liveStatusData['not_clocked_in']
                 );
 
-                return view('dashboard.dashboard', compact('allCalendarEvents', 'arrHolidays', 'arrEvents', 'announcements', 'employees', 'activeJob', 'inActiveJOb', 'meetings', 'countEmployee', 'countUser', 'countTicket', 'countOpenTicket', 'countCloseTicket', 'notClockIns', 'accountBalance', 'totalPayee', 'totalPayer', 'users', 'plan', 'storage_limit', 'employeeAttendance', 'officeTime', 'liveStatusData', 'allEmployeeStatuses'));
+                $celebrationData = self::getBirthdayAndAnniversaryData(\Auth::user()->creatorId());
+                $birthdayData = $celebrationData['birthdays'];
+                $anniversaryData = $celebrationData['anniversaries'];
+                $celebrationSummary = $celebrationData;
+
+                return view('dashboard.dashboard', compact(
+                    'allCalendarEvents', 'arrHolidays', 'arrEvents', 'announcements', 'employees',
+                    'activeJob', 'inActiveJOb', 'meetings', 'countEmployee', 'countUser', 'countTicket',
+                    'countOpenTicket', 'countCloseTicket', 'notClockIns', 'accountBalance', 'totalPayee',
+                    'totalPayer', 'users', 'plan', 'storage_limit', 'employeeAttendance', 'officeTime',
+                    'liveStatusData', 'allEmployeeStatuses', 'birthdayData', 'anniversaryData', 'celebrationSummary'
+                ));
             }
         } else {
             if (!file_exists(storage_path() . "/installed")) {
@@ -319,5 +331,125 @@ class HomeController extends Controller
         }
 
         return $arrTask;
+    }
+
+    public static function getBirthdayAndAnniversaryData($creatorId)
+    {
+        $today = Carbon::today();
+        $employees = Employee::with('department', 'designation')
+            ->where('created_by', $creatorId)
+            ->where('is_active', 1)
+            ->whereHas('user', function ($q) {
+                $q->where('is_active', 1);
+            })
+            ->get();
+
+        $birthdays = [];
+        $anniversaries = [];
+
+        foreach ($employees as $emp) {
+            // 1. Process DOB / Birthday
+            if (!empty($emp->dob)) {
+                try {
+                    $dobClean = preg_replace('/[^0-9\-]/', '', $emp->dob);
+                    if (strlen($dobClean) == 8) {
+                        $dob = Carbon::createFromFormat('Ymd', $dobClean);
+                    } else {
+                        $dob = Carbon::parse($dobClean);
+                    }
+
+                    $bdayThisYear = Carbon::create($today->year, $dob->month, $dob->day);
+                    if ($bdayThisYear->isPast() && !$bdayThisYear->isToday()) {
+                        $nextBday = Carbon::create($today->year + 1, $dob->month, $dob->day);
+                    } else {
+                        $nextBday = $bdayThisYear;
+                    }
+
+                    $isToday = ($dob->month == $today->month && $dob->day == $today->day);
+                    $isThisMonth = ($dob->month == $today->month);
+                    $daysLeft = (int) $today->diffInDays($nextBday, false);
+                    $age = $nextBday->year - $dob->year;
+
+                    $birthdays[] = [
+                        'employee' => $emp,
+                        'dob' => $dob,
+                        'next_date' => $nextBday,
+                        'formatted_date' => $nextBday->format('d M'),
+                        'full_date_label' => $dob->format('d M, Y'),
+                        'is_today' => $isToday,
+                        'is_this_month' => $isThisMonth,
+                        'days_left' => $daysLeft,
+                        'age' => $age,
+                    ];
+                } catch (\Exception $e) {}
+            }
+
+            // 2. Process Company DOJ / Work Anniversary
+            if (!empty($emp->company_doj)) {
+                try {
+                    $dojClean = preg_replace('/[^0-9\-]/', '', $emp->company_doj);
+                    if (strlen($dojClean) == 8) {
+                        $doj = Carbon::createFromFormat('Ymd', $dojClean);
+                    } else {
+                        $doj = Carbon::parse($dojClean);
+                    }
+
+                    $annivThisYear = Carbon::create($today->year, $doj->month, $doj->day);
+                    if ($annivThisYear->isPast() && !$annivThisYear->isToday()) {
+                        $nextAnniv = Carbon::create($today->year + 1, $doj->month, $doj->day);
+                    } else {
+                        $nextAnniv = $annivThisYear;
+                    }
+
+                    $isToday = ($doj->month == $today->month && $doj->day == $today->day);
+                    $isThisMonth = ($doj->month == $today->month);
+                    $daysLeft = (int) $today->diffInDays($nextAnniv, false);
+                    $yearsCompleted = $nextAnniv->year - $doj->year;
+
+                    $anniversaries[] = [
+                        'employee' => $emp,
+                        'doj' => $doj,
+                        'next_date' => $nextAnniv,
+                        'formatted_date' => $nextAnniv->format('d M'),
+                        'full_date_label' => $doj->format('d M, Y'),
+                        'is_today' => $isToday,
+                        'is_this_month' => $isThisMonth,
+                        'days_left' => $daysLeft,
+                        'years_completed' => $yearsCompleted,
+                    ];
+                } catch (\Exception $e) {}
+            }
+        }
+
+        // Sort Birthdays: Today first, then remaining this month, then rest of year by days_left
+        usort($birthdays, function ($a, $b) {
+            if ($a['is_today'] !== $b['is_today']) {
+                return $a['is_today'] ? -1 : 1;
+            }
+            if ($a['is_this_month'] !== $b['is_this_month']) {
+                return $a['is_this_month'] ? -1 : 1;
+            }
+            return $a['days_left'] <=> $b['days_left'];
+        });
+
+        // Sort Anniversaries: Today first, then remaining this month, then rest of year by days_left
+        usort($anniversaries, function ($a, $b) {
+            if ($a['is_today'] !== $b['is_today']) {
+                return $a['is_today'] ? -1 : 1;
+            }
+            if ($a['is_this_month'] !== $b['is_this_month']) {
+                return $a['is_this_month'] ? -1 : 1;
+            }
+            return $a['days_left'] <=> $b['days_left'];
+        });
+
+        return [
+            'birthdays' => $birthdays,
+            'anniversaries' => $anniversaries,
+            'today_birthdays_count' => count(array_filter($birthdays, fn($b) => $b['is_today'])),
+            'today_anniversaries_count' => count(array_filter($anniversaries, fn($a) => $a['is_today'])),
+            'this_month_birthdays_count' => count(array_filter($birthdays, fn($b) => $b['is_this_month'])),
+            'this_month_anniversaries_count' => count(array_filter($anniversaries, fn($a) => $a['is_this_month'])),
+        ];
     }
 }
