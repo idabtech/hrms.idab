@@ -3178,14 +3178,15 @@ $lang = \App\Models\Utility::getValByName('default_language');
                     </h6>
                     <ul class="mb-0 ps-3 small">
                         <li class="mb-1">{{ __('Clicking "Sync Employees Now" connects via SSO and fetches all staff from the iDAB system.') }}</li>
-                        <li class="mb-1">{{ __('Employees that already exist in HRMS (matched by email) are skipped/updated.') }}</li>
-                        <li class="mb-1">{{ __('New employees are created as Employee entries for your company in HRMS.') }}</li>
-                        <li><strong class="text-warning">{{ __('Action required:') }}</strong> {{ __('After sync, go to Employee > Staff to review assigned roles and employee details.') }}</li>
+                        <li class="mb-1">{{ __('Staff with working status (is_working_staff: true) are assigned the "Employee" role and placed under Employees.') }}</li>
+                        <li class="mb-1">{{ __('Staff with non-working status (is_working_staff: false) are moved to Admin Staff with no role assigned.') }}</li>
+                        <li><strong class="text-warning">{{ __('Action required:') }}</strong> {{ __('After sync, review your Employee and Admin Staff lists to verify assigned records.') }}</li>
                     </ul>
                 </div>
 
                 <div id="idab-sync-result-box" class="mt-3 d-none">
-                    <div class="alert alert-success border-0 shadow-sm" id="idab-sync-result-msg"></div>
+                    <div class="alert alert-success border-0 shadow-sm mb-2" id="idab-sync-result-msg"></div>
+                    <div class="alert alert-warning border-0 shadow-sm mb-0 d-none" id="idab-sync-warning-msg"></div>
                 </div>
             </div>
         </div>
@@ -3461,12 +3462,25 @@ function syncIdabEmployeesNow(btn) {
                     show_toastr('Success', res.message, 'success');
                 }
                 $msg.removeClass('alert-danger').addClass('alert-success').html(res.message);
+
+                if (res.warning) {
+                    $('#idab-sync-warning-msg').removeClass('d-none').html('<i class="ti ti-alert-triangle me-1"></i> ' + res.warning);
+                    if (typeof show_toastr === 'function') {
+                        setTimeout(function() {
+                            show_toastr('Warning', res.warning, 'warning');
+                        }, 500);
+                    }
+                } else {
+                    $('#idab-sync-warning-msg').addClass('d-none');
+                }
+
                 $box.removeClass('d-none');
             } else {
                 if (typeof show_toastr === 'function') {
                     show_toastr('Error', res.message, 'error');
                 }
                 $msg.removeClass('alert-success').addClass('alert-danger').html(res.message);
+                $('#idab-sync-warning-msg').addClass('d-none');
                 $box.removeClass('d-none');
             }
         },

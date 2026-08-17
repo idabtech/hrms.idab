@@ -2414,6 +2414,7 @@ class SettingsController extends Controller
             $createdCount = 0;
             $updatedCount = 0;
             $skippedCount = 0;
+            $adminStaffNoRoleCount = 0;
 
             foreach ($staffList as $staffItem) {
                 $email = trim($staffItem['email'] ?? '');
@@ -2426,7 +2427,26 @@ class SettingsController extends Controller
                 $mobile  = trim($staffItem['mobile'] ?? '');
                 $isLogin = !empty($staffItem['is_enable_login']) ? 1 : 0;
 
-                // Check existing User (globally by email since users.email is unique)
+                // Determine working staff vs admin staff from is_working_staff API property
+                $rawWorkingStaff = $staffItem['is_working_staff'] ?? null;
+                if (is_bool($rawWorkingStaff)) {
+                    $isWorkingStaff = $rawWorkingStaff;
+                } elseif (is_numeric($rawWorkingStaff)) {
+                    $isWorkingStaff = ((int) $rawWorkingStaff) === 1;
+                } elseif (is_string($rawWorkingStaff)) {
+                    $isWorkingStaff = in_array(strtolower(trim($rawWorkingStaff)), ['true', '1', 'yes']);
+                } else {
+                    $isWorkingStaff = false;
+                }
+
+                $targetUserType     = $isWorkingStaff ? 'employee' : 'staff';
+                $targetIsAdminStaff = $isWorkingStaff ? 0 : 1;
+
+                if (!$isWorkingStaff) {
+                    $adminStaffNoRoleCount++;
+                }
+
+                // Check existing User (globally by email)
                 $existingUser = \App\Models\User::where('email', $email)->first();
 
                 // Check existing Employee for this company
@@ -2434,64 +2454,138 @@ class SettingsController extends Controller
                     ->where('created_by', $creatorId)
                     ->first();
 
-                if ($existingEmployee) {
-                    $updated = false;
-                    if (empty($existingEmployee->phone) && !empty($mobile)) {
-                        $existingEmployee->phone = $mobile;
-                        $updated = true;
-                    }
-                    if ($existingEmployee->name !== $name && !empty($name)) {
-                        $existingEmployee->name = $name;
-                        $updated = true;
-                    }
-                    if ($updated) {
-                        $existingEmployee->save();
-                        $updatedCount++;
-                    } else {
-                        $skippedCount++;
-                    }
-                    continue;
+                if (!$existingEmployee && $existingUser) {
+                    $existingEmployee = Employee::where('user_id', $existingUser->id)->first();
                 }
 
-                // If user doesn't exist, create User
-                if (!$existingUser) {
+                if ($existingUser) {
+                    // Update User
+                    $userUpdated = false;
+
+                    if ($existingUser->name !== $name && !empty($name)) {
+                        $existingUser->name = $name;
+                        $userUpdated = true;
+                    }
+                    if ($existingUser->type !== $targetUserType) {
+                        $existingUser->type = $targetUserType;
+                        $userUpdated = true;
+                    }
+                    if ($existingUser->is_login_enable != $isLogin) {
+                        $existingUser->is_login_enable = $isLogin;
+                        $userUpdated = true;
+                    }
+
+                    if ($userUpdated) {
+                        $existingUser->save();
+                    }
+
+                    // Role handling: Employee gets 'Employee' role, Admin Staff gets NO role currently
+                    if ($isWorkingStaff) {
+                        $existingUser->syncRoles(['Employee']);
+                    } else {
+                        $existingUser->syncRoles([]);
+                    }
+
+                    if ($existingEmployee) {
+                        $empUpdated = false;
+                        if ($existingEmployee->name !== $name && !empty($name)) {
+                            $existingEmployee->name = $name;
+                            $empUpdated = true;
+                        }
+                        if (empty($existingEmployee->phone) && !empty($mobile)) {
+                            $existingEmployee->phone = $mobile;
+                            $empUpdated = true;
+                        }
+                        if ($existingEmployee->is_admin_staff != $targetIsAdminStaff) {
+                            $existingEmployee->is_admin_staff = $targetIsAdminStaff;
+                            $empUpdated = true;
+                        }
+                        if ($existingEmployee->user_id != $existingUser->id) {
+                            $existingEmployee->user_id = $existingUser->id;
+                            $empUpdated = true;
+                        }
+
+                        if ($empUpdated) {
+                            $existingEmployee->save();
+                        }
+
+                        if ($userUpdated || $empUpdated) {
+                            $updatedCount++;
+                        } else {
+                            $skippedCount++;
+                        }
+                    } else {
+                        // Create employee record for existing user
+                        $lastEmployee = Employee::where('created_by', $creatorId)->latest('id')->first();
+                        $nextEmpId    = $lastEmployee ? ((int)$lastEmployee->employee_id + 1) : 1;
+
+                        Employee::create([
+                            'user_id'        => $existingUser->id,
+                            'name'           => $name,
+                            'dob'            => null,
+                            'gender'         => 'Male',
+                            'phone'          => $mobile,
+                            'address'        => '',
+                            'email'          => $email,
+                            'password'       => \Illuminate\Support\Facades\Hash::make('12345678'),
+                            'employee_id'    => $nextEmpId,
+                            'branch_id'      => $defaultBranch?->id ?? 0,
+                            'department_id'  => $defaultDepartment?->id ?? 0,
+                            'designation_id' => $defaultDesignation?->id ?? 0,
+                            'company_doj'    => date('Y-m-d'),
+                            'salary_type'    => $defaultSalaryType?->id ?? 1,
+                            'salary'         => 0,
+                            'created_by'     => $creatorId,
+                            'is_admin_staff' => $targetIsAdminStaff,
+                        ]);
+
+                        $createdCount++;
+                    }
+                } else {
+                    // Create User
                     $existingUser = \App\Models\User::create([
                         'name'              => $name,
                         'email'             => $email,
                         'password'          => \Illuminate\Support\Facades\Hash::make('12345678'),
-                        'type'              => 'employee',
+                        'type'              => $targetUserType,
                         'lang'              => 'en',
                         'created_by'        => $creatorId,
-                        'is_enable_login'   => $isLogin,
+                        'is_login_enable'   => $isLogin,
                         'email_verified_at' => date('Y-m-d H:i:s'),
                     ]);
-                    $existingUser->assignRole('Employee');
+
+                    if ($isWorkingStaff) {
+                        $existingUser->assignRole('Employee');
+                    } else {
+                        $existingUser->syncRoles([]);
+                    }
+
+                    // Create Employee record
+                    $lastEmployee = Employee::where('created_by', $creatorId)->latest('id')->first();
+                    $nextEmpId    = $lastEmployee ? ((int)$lastEmployee->employee_id + 1) : 1;
+
+                    Employee::create([
+                        'user_id'        => $existingUser->id,
+                        'name'           => $name,
+                        'dob'            => null,
+                        'gender'         => 'Male',
+                        'phone'          => $mobile,
+                        'address'        => '',
+                        'email'          => $email,
+                        'password'       => \Illuminate\Support\Facades\Hash::make('12345678'),
+                        'employee_id'    => $nextEmpId,
+                        'branch_id'      => $defaultBranch?->id ?? 0,
+                        'department_id'  => $defaultDepartment?->id ?? 0,
+                        'designation_id' => $defaultDesignation?->id ?? 0,
+                        'company_doj'    => date('Y-m-d'),
+                        'salary_type'    => $defaultSalaryType?->id ?? 1,
+                        'salary'         => 0,
+                        'created_by'     => $creatorId,
+                        'is_admin_staff' => $targetIsAdminStaff,
+                    ]);
+
+                    $createdCount++;
                 }
-
-                // Create Employee record
-                $lastEmployee = Employee::where('created_by', $creatorId)->latest('id')->first();
-                $nextEmpId    = $lastEmployee ? ((int)$lastEmployee->employee_id + 1) : 1;
-
-                Employee::create([
-                    'user_id'        => $existingUser->id,
-                    'name'           => $name,
-                    'dob'            => null,
-                    'gender'         => 'Male',
-                    'phone'          => $mobile,
-                    'address'        => '',
-                    'email'          => $email,
-                    'password'       => \Illuminate\Support\Facades\Hash::make('12345678'),
-                    'employee_id'    => $nextEmpId,
-                    'branch_id'      => $defaultBranch?->id ?? 0,
-                    'department_id'  => $defaultDepartment?->id ?? 0,
-                    'designation_id' => $defaultDesignation?->id ?? 0,
-                    'company_doj'    => date('Y-m-d'),
-                    'salary_type'    => $defaultSalaryType?->id ?? 1,
-                    'salary'         => 0,
-                    'created_by'     => $creatorId,
-                ]);
-
-                $createdCount++;
             }
 
             $totalFetched = count($staffList);
@@ -2502,9 +2596,18 @@ class SettingsController extends Controller
                 'skipped' => $skippedCount,
             ]);
 
+            $warningMsg = null;
+            if ($adminStaffNoRoleCount > 0) {
+                $warningMsg = __("Attention: :count Admin Staff user(s) currently have no role assigned. You need to assign roles to them from Staff / User management.", [
+                    'count' => $adminStaffNoRoleCount,
+                ]);
+            }
+
             return response()->json([
-                'success' => true,
-                'message' => $msg,
+                'success'                  => true,
+                'message'                  => $msg,
+                'warning'                  => $warningMsg,
+                'admin_staff_no_role_count' => $adminStaffNoRoleCount,
             ]);
 
         } catch (\Throwable $e) {

@@ -57,6 +57,7 @@ class EmployeeController extends Controller
             } else {
                 $employees = Employee::where('created_by', Auth::user()->creatorId())
                     ->where('is_active', 1)
+                    ->where('is_admin_staff', 0)
                     ->whereHas('user', function ($q) {
                         $q->where('is_active', 1);
                     })
