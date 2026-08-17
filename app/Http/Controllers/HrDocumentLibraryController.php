@@ -84,8 +84,10 @@ class HrDocumentLibraryController extends Controller
                       ->orWhere('file_name', 'like', '%' . $searchTerm . '%');
                 });
             }
-
             $documents = $docQuery->orderBy('created_at', 'desc')->get();
+
+            $totalFoldersCount = $this->applyAllowedCreatorFilter(HrDocumentFolder::query())->count();
+            $totalDocumentsCount = $this->applyAllowedCreatorFilter(HrDocumentLibrary::query())->count();
 
             $categories = $this->applyAllowedCreatorFilter(HrDocumentLibrary::query())
                 ->whereNotNull('category')
@@ -96,7 +98,7 @@ class HrDocumentLibraryController extends Controller
                 ->pluck('name', 'id')
                 ->toArray();
 
-            return view('hr_document_library.index', compact('documents', 'folders', 'currentFolder', 'categories', 'allFolders'));
+            return view('hr_document_library.index', compact('documents', 'folders', 'currentFolder', 'categories', 'allFolders', 'totalFoldersCount', 'totalDocumentsCount'));
         }
 
         return redirect()->back()->with('error', __('Permission denied.'));
@@ -110,9 +112,10 @@ class HrDocumentLibraryController extends Controller
         $user = Auth::user();
         if ($user->type === 'super admin' || ($user->isSuperAdminSideUser() && $user->can('Create HR Document Library'))) {
             $folderId = $request->get('folder_id', null);
+            $uploadType = $request->get('upload_type', 'folder'); // 'folder' or 'files'
             $folders = $this->applyAllowedCreatorFilter(HrDocumentFolder::query())->pluck('name', 'id')->toArray();
 
-            return view('hr_document_library.create', compact('folderId', 'folders'));
+            return view('hr_document_library.create', compact('folderId', 'folders', 'uploadType'));
         }
 
         return redirect()->back()->with('error', __('Permission denied. You do not have permission to upload documents.'));
@@ -130,24 +133,42 @@ class HrDocumentLibraryController extends Controller
                 [
                     'title' => 'nullable|string|max:255',
                     'category' => 'nullable|string|max:100',
-                    'folder_id' => 'required|exists:hr_document_folders,id',
+                    'folder_id' => 'nullable|exists:hr_document_folders,id',
                     'documents' => 'nullable|array',
-                    'documents.*' => 'file|max:20480',
                     'document' => 'nullable|file|max:20480',
-                ],
-                [
-                    'folder_id.required' => __('Please select a folder. Documents cannot be uploaded to Root directory.'),
                 ]
             );
 
             if ($validator->fails()) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['status' => 'error', 'message' => $validator->errors()->first()], 422);
+                }
                 return redirect()->back()->with('error', $validator->errors()->first());
             }
 
+            if ($request->ajax() || $request->wantsJson()) {
+                if ($request->hasFile('documents') || $request->has('folder_paths')) {
+                    $createdDocs = $this->documentService->storeMultipleDocuments($request);
+                    return response()->json([
+                        'status'  => 'success',
+                        'count'   => count($createdDocs),
+                        'message' => __(':count file(s) and associated folder(s) uploaded successfully.', ['count' => count($createdDocs)]),
+                    ]);
+                }
+                return response()->json(['status' => 'error', 'message' => __('No files uploaded.')], 422);
+            }
+
             if ($request->hasFile('documents')) {
-                $this->documentService->storeMultipleDocuments($request);
-                return redirect()->route('hr-document-library.index', ['folder_id' => $request->folder_id])
-                    ->with('success', __('Documents uploaded successfully.'));
+                $createdDocs = $this->documentService->storeMultipleDocuments($request);
+                $uploadedCount = count($createdDocs);
+
+                if ($uploadedCount > 0) {
+                    $msg = __(':count file(s) and associated folder(s) uploaded successfully.', ['count' => $uploadedCount]);
+                    return redirect()->route('hr-document-library.index', ['folder_id' => $request->folder_id])
+                        ->with('success', $msg);
+                } else {
+                    return redirect()->back()->with('error', __('No valid files were uploaded. Please try again.'));
+                }
             } else {
                 if (empty($request->title)) {
                     $request->merge(['title' => 'Untitled Document']);
@@ -374,7 +395,7 @@ class HrDocumentLibraryController extends Controller
     }
 
     /**
-     * View/Preview original uploaded document file in new browser tab.
+     * View/Preview document in Google Docs Viewer or inline browser viewer.
      */
     public function viewDoc($id)
     {
@@ -387,6 +408,15 @@ class HrDocumentLibraryController extends Controller
                     $filePath = storage_path('app/public/' . $doc->file_path);
                 }
                 if (file_exists($filePath)) {
+                    $extension = strtolower(pathinfo($doc->file_name ?? $filePath, PATHINFO_EXTENSION));
+
+                    // If file is Office document (doc, docx, xls, xlsx, ppt, pptx): open in Google Docs Viewer!
+                    if (in_array($extension, ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'])) {
+                        $fileUrl = asset($doc->file_path);
+                        $googleViewerUrl = 'https://docs.google.com/viewer?url=' . urlencode($fileUrl);
+                        return redirect()->away($googleViewerUrl);
+                    }
+
                     $mimeType = @mime_content_type($filePath) ?: 'application/octet-stream';
                     return response()->file($filePath, [
                         'Content-Type' => $mimeType,

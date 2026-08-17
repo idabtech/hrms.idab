@@ -501,6 +501,13 @@ class UserController extends Controller
     {
         $user = User::find($id);
         if ($user && auth()->check() && auth()->user()->type === 'super admin') {
+            $settings = Utility::settings();
+            $securityOn = ($settings['login_as_company_security'] ?? 'on') === 'on';
+
+            if ($securityOn) {
+                return view('user.modal_login_company_otp', ['company' => $user]);
+            }
+
             $companyUrl = Utility::getCompanyUrl();
             $companyUrl = rtrim($companyUrl, '/');
 
@@ -521,6 +528,89 @@ class UserController extends Controller
         }
 
         return redirect()->back()->with('error', __('Permission denied.'));
+    }
+
+    private function sendCompanyLoginOtpInternal(User $company)
+    {
+        $otpCode = rand(100000, 999999);
+        session([
+            'company_login_otp_' . $company->id => [
+                'code'       => (string) $otpCode,
+                'expires_at' => now()->addMinutes(5)->timestamp,
+            ]
+        ]);
+
+        $placeholders = [
+            'company_name'        => $company->name,
+            'otp_code'            => $otpCode,
+            'otp_expires_minutes' => 5,
+            'app_name'            => config('app.name', 'HRMS'),
+        ];
+
+        try {
+            Utility::sendEmailTemplate('login_as_company_otp', [$company->email], $placeholders);
+        } catch (\Exception $e) {
+            \Log::error('Company Login OTP Mail Error: ' . $e->getMessage());
+        }
+    }
+
+    public function sendCompanyLoginOtp(Request $request, $id)
+    {
+        $company = User::find($id);
+        if (!$company) {
+            return response()->json(['status' => 'error', 'message' => __('Company not found.')], 404);
+        }
+
+        $this->sendCompanyLoginOtpInternal($company);
+        return response()->json(['status' => 'success', 'message' => __('A new OTP has been sent to the company registered email.')]);
+    }
+
+    public function verifyCompanyLoginOtp(Request $request, $id)
+    {
+        $company = User::find($id);
+        if (!$company) {
+            return response()->json(['status' => 'error', 'message' => __('Company not found.')], 404);
+        }
+
+        $otpCode = $request->input('otp_code');
+        $sessionData = session('company_login_otp_' . $company->id);
+
+        if (!$sessionData || !isset($sessionData['code'], $sessionData['expires_at'])) {
+            return response()->json(['status' => 'error', 'message' => __('No active OTP found. Please request a new one.')], 422);
+        }
+
+        if (now()->timestamp > $sessionData['expires_at']) {
+            return response()->json(['status' => 'error', 'message' => __('OTP has expired. Please click Resend OTP.')], 422);
+        }
+
+        if ((string)$otpCode !== (string)$sessionData['code']) {
+            return response()->json(['status' => 'error', 'message' => __('Invalid OTP code. Please check your email and try again.')], 422);
+        }
+
+        session()->forget('company_login_otp_' . $company->id);
+
+        $companyUrl = Utility::getCompanyUrl();
+        $companyUrl = rtrim($companyUrl, '/');
+
+        $secret = config('services.sso.secret', 'idab_default_sso_secret');
+        if (empty($secret)) {
+            $secret = 'idab_default_sso_secret';
+        }
+
+        $payloadData = [
+            'email' => $company->email,
+            'ts'    => now()->timestamp,
+        ];
+        $payload   = base64_encode(json_encode($payloadData));
+        $signature = hash_hmac('sha256', $payload, $secret);
+
+        $redirectUrl = $companyUrl . '/external-login?payload=' . urlencode($payload) . '&signature=' . urlencode($signature);
+
+        return response()->json([
+            'status'       => 'success',
+            'message'      => __('OTP verified successfully.'),
+            'redirect_url' => $redirectUrl,
+        ]);
     }
 
     public function ExitCompany(Request $request)
