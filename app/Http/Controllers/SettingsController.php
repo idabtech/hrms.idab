@@ -2415,13 +2415,21 @@ class SettingsController extends Controller
             $updatedCount = 0;
             $skippedCount = 0;
             $adminStaffNoRoleCount = 0;
+            $processedEmails = [];
 
             foreach ($staffList as $staffItem) {
-                $email = trim($staffItem['email'] ?? '');
+                $email = strtolower(trim($staffItem['email'] ?? ''));
                 if (empty($email)) {
                     $skippedCount++;
                     continue;
                 }
+
+                // If this email was already processed in the current loop iteration, update existing or skip to avoid duplicates
+                if (in_array($email, $processedEmails)) {
+                    $skippedCount++;
+                    continue;
+                }
+                $processedEmails[] = $email;
 
                 $name    = trim($staffItem['name'] ?? 'Staff');
                 $mobile  = trim($staffItem['mobile'] ?? '');
@@ -2446,11 +2454,11 @@ class SettingsController extends Controller
                     $adminStaffNoRoleCount++;
                 }
 
-                // Check existing User (globally by email)
-                $existingUser = \App\Models\User::where('email', $email)->first();
+                // Check existing User (globally by email, case-insensitive)
+                $existingUser = \App\Models\User::whereRaw('LOWER(email) = ?', [$email])->first();
 
-                // Check existing Employee for this company
-                $existingEmployee = Employee::where('email', $email)
+                // Check existing Employee for this company (case-insensitive)
+                $existingEmployee = Employee::whereRaw('LOWER(email) = ?', [$email])
                     ->where('created_by', $creatorId)
                     ->first();
 
@@ -2542,6 +2550,13 @@ class SettingsController extends Controller
                         $createdCount++;
                     }
                 } else {
+                    // Double-check to ensure no duplicate email is created
+                    $doubleCheckUser = \App\Models\User::whereRaw('LOWER(email) = ?', [$email])->first();
+                    if ($doubleCheckUser) {
+                        $skippedCount++;
+                        continue;
+                    }
+
                     // Create User
                     $existingUser = \App\Models\User::create([
                         'name'              => $name,
