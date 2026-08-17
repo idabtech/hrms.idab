@@ -2470,8 +2470,8 @@ class SettingsController extends Controller
                         $existingUser->type = $targetUserType;
                         $userUpdated = true;
                     }
-                    if ($existingUser->is_enable_login != $isLogin) {
-                        $existingUser->is_enable_login = $isLogin;
+                    if ($existingUser->is_login_enable != $isLogin) {
+                        $existingUser->is_login_enable = $isLogin;
                         $userUpdated = true;
                     }
 
@@ -2550,7 +2550,7 @@ class SettingsController extends Controller
                         'type'              => $targetUserType,
                         'lang'              => 'en',
                         'created_by'        => $creatorId,
-                        'is_enable_login'   => $isLogin,
+                        'is_login_enable'   => $isLogin,
                         'email_verified_at' => date('Y-m-d H:i:s'),
                     ]);
 
