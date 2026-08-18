@@ -402,6 +402,10 @@
                                 class="list-group-item list-group-item-action border-0">{{ __('Company Career Settings') }}
                                 <div class="float-end"><i class="ti ti-chevron-right"></i></div>
                             </a>
+                            <a href="#login-company-security-settings" id="login-company-security-tab"
+                                class="list-group-item list-group-item-action border-0">{{ __('Login As Company Security Settings') }}
+                                <div class="float-end"><i class="ti ti-chevron-right"></i></div>
+                            </a>
                             {{-- <a href="#hmrc-settings" id="hmrc-setting-tab"
                                 class="list-group-item list-group-item-action border-0">{{ __('HMRC Settings') }}
                                 <div class="float-end"><i class="ti ti-chevron-right"></i></div>
@@ -4395,7 +4399,104 @@
                             </div>
                         </div>
                     </div> --}}
-                    {{-- ═══ HMRC API Settings End --}}
+                    {{-- ═══ Login As Company Security Settings ═══ --}}
+                    @php
+                        $sysSettings = \App\Models\Utility::settings();
+                        $loginCompanySecurity = $sysSettings['login_as_company_security'] ?? 'on';
+                    @endphp
+                    <div class="mt-4" id="login-company-security-settings">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="mb-1 d-flex align-items-center">
+                                            <i class="ti ti-shield-lock text-primary me-2"></i>{{ __('Login As Company Security Settings') }}
+                                        </h5>
+                                        <small class="text-muted font-weight-bold">
+                                            {{ __('Enforce email OTP verification when Super Admin logs into any company account. Disabling security requires Super Admin email OTP verification.') }}
+                                        </small>
+                                    </div>
+                                    <div>
+                                        <span class="badge {{ $loginCompanySecurity == 'on' ? 'bg-success' : 'bg-danger' }} px-3 py-2 text-white" id="security-status-badge">
+                                            <i class="ti ti-shield-check me-1"></i> {{ $loginCompanySecurity == 'on' ? __('Active (Protected)') : __('Disabled') }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded-3 border">
+                                        <div>
+                                            <h6 class="fw-bold text-dark mb-1">{{ __('Email OTP Verification for Login As Company') }}</h6>
+                                            <p class="text-muted small mb-0">
+                                                {{ __('When enabled, Super Admin must enter a 5-minute OTP code sent to the company email before accessing the company account.') }}
+                                            </p>
+                                        </div>
+                                        <div class="form-check form-switch custom-switch-v1">
+                                            <input type="checkbox" class="form-check-input input-primary" id="toggle-login-company-security" style="width: 50px; height: 26px; cursor: pointer;" {{ $loginCompanySecurity == 'on' ? 'checked' : '' }}>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const securitySwitch = document.getElementById('toggle-login-company-security');
+                        const statusBadge = document.getElementById('security-status-badge');
+
+                        if (securitySwitch) {
+                            securitySwitch.addEventListener('change', function (e) {
+                                e.preventDefault();
+                                const isChecking = this.checked;
+                                const targetStatus = isChecking ? 'on' : 'off';
+
+                                if (targetStatus === 'on') {
+                                    fetch("{{ route('settings.toggle.company.security') }}", {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                            'X-Requested-With': 'XMLHttpRequest'
+                                        },
+                                        body: JSON.stringify({ status: 'on' })
+                                    })
+                                    .then(res => res.json())
+                                    .then(data => {
+                                        if (data.status === 'success') {
+                                            statusBadge.className = 'badge bg-success px-3 py-2 text-white';
+                                            statusBadge.innerHTML = '<i class="ti ti-shield-check me-1"></i> {{ __("Active (Protected)") }}';
+                                            if (typeof show_toastr !== 'undefined') {
+                                                show_toastr('Success', data.message, 'success');
+                                            } else {
+                                                alert(data.message);
+                                            }
+                                        } else {
+                                            securitySwitch.checked = false;
+                                            alert(data.message || 'Error updating setting');
+                                        }
+                                    });
+                                } else {
+                                    securitySwitch.checked = true; // revert checkbox state until OTP is verified
+                                    const modalUrl = "{{ route('settings.disable.company.security.modal') }}";
+
+                                    $.ajax({
+                                        url: modalUrl,
+                                        type: 'GET',
+                                        success: function (data) {
+                                            $("#commonModal .modal-title").html('{{ __("Security Verification Required") }}');
+                                            $("#commonModal .modal-dialog").removeClass('modal-md modal-lg modal-sm modal-xl').addClass('modal-md');
+                                            $('#commonModal .body').html(data);
+                                            $("#commonModal").modal('show');
+                                        },
+                                        error: function (err) {
+                                            alert('Failed to load security verification modal.');
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                    </script>
                 </div>
             </div>
         @endsection

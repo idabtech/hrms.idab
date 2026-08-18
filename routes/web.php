@@ -2125,7 +2125,15 @@ Route::group(['middleware' => ['verified']], function () {
 
     // Login As Company
     Route::get('users/{id}/login-with-company', [UserController::class, 'LoginWithCompany'])->name('login.with.company');
+    Route::post('users/{id}/send-company-login-otp', [UserController::class, 'sendCompanyLoginOtp'])->name('send.company.login.otp');
+    Route::post('users/{id}/verify-company-login-otp', [UserController::class, 'verifyCompanyLoginOtp'])->name('verify.company.login.otp');
     Route::get('login-with-company/exit', [UserController::class, 'ExitCompany'])->name('exit.company');
+
+    // Super Admin Security Disable OTP Routes
+    Route::get('settings/disable-company-security/modal', [SettingsController::class, 'modalDisableCompanySecurity'])->name('settings.disable.company.security.modal');
+    Route::post('settings/disable-company-security/send', [SettingsController::class, 'sendDisableCompanySecurityOtp'])->name('settings.disable.company.security.send');
+    Route::post('settings/disable-company-security/verify', [SettingsController::class, 'verifyDisableCompanySecurityOtp'])->name('settings.disable.company.security.verify');
+    Route::post('settings/toggle-company-security', [SettingsController::class, 'toggleCompanySecurity'])->name('settings.toggle.company.security');
 
     // Adminhub
     Route::get('company-info/{id}', [UserController::class, 'CompnayInfo'])->name('company.info');

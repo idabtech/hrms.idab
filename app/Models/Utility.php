@@ -2559,15 +2559,30 @@ class Utility extends Model
 
         foreach ($obj as $key => $val) {
             $arrValue[$key] = $val;
+            $varTag = '{' . $key . '}';
+            if (!in_array($varTag, $arrVariable)) {
+                $arrVariable[] = $varTag;
+            }
         }
         $settings = Utility::settings();
         $company_name = !empty($settings['company_name']) ? $settings['company_name'] : 'IDAB TECH - (HRMS)';
-        $arrValue['app_name'] = env('APP_NAME');
-        $arrValue['company_name'] = $company_name;
-        // $arrValue['company_name'] = self::settings()['company_name'];
+        if (!isset($obj['app_name'])) {
+            $arrValue['app_name'] = env('APP_NAME', 'HRMS');
+        }
+        if (!isset($obj['company_name'])) {
+            $arrValue['company_name'] = $company_name;
+        }
         $arrValue['app_url'] = '<a href="' . env('APP_URL') . '" target="_blank">' . env('APP_URL') . '</a>';
 
-        return str_replace($arrVariable, array_values($arrValue), $content);
+        $searchKeys = [];
+        $replaceValues = [];
+        foreach ($arrVariable as $tag) {
+            $rawKey = trim($tag, '{}');
+            $searchKeys[] = $tag;
+            $replaceValues[] = isset($arrValue[$rawKey]) ? $arrValue[$rawKey] : '-';
+        }
+
+        return str_replace($searchKeys, $replaceValues, $content);
     }
     public static function makeEmailLang($lang)
     {

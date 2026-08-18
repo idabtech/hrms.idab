@@ -34,14 +34,19 @@
                 <i class="ti ti-folder-plus me-1"></i>{{ __('New Folder') }}
             </a>
 
-            <!-- Upload Documents Button -->
-            @if ($currentFolder || count($allFolders) > 0)
-                <a href="javascript:void(0)" data-url="{{ route('hr-document-library.create', ['folder_id' => $currentFolder ? $currentFolder->id : '']) }}" data-ajax-popup="true"
-                    data-title="{{ __('Upload Documents') }}" data-size="lg" data-bs-toggle="tooltip" title="{{ __('Upload Documents') }}"
-                    class="btn btn-sm btn-primary shadow-sm px-3 rounded-2">
-                    <i class="ti ti-upload me-1"></i>{{ __('Upload Documents') }}
-                </a>
-            @endif
+            <!-- Upload Folder Button -->
+            <a href="javascript:void(0)" data-url="{{ route('hr-document-library.create', ['folder_id' => $currentFolder ? $currentFolder->id : '', 'upload_type' => 'folder']) }}" data-ajax-popup="true"
+                data-title="{{ __('Upload Entire Folder') }}" data-size="lg" data-bs-toggle="tooltip" title="{{ __('Upload Folder & Auto-Create Hierarchy') }}"
+                class="btn btn-sm btn-outline-primary me-1 shadow-sm px-3 rounded-2">
+                <i class="ti ti-folder-upload me-1"></i>{{ __('Upload Folder') }}
+            </a>
+
+            <!-- Upload Files Button -->
+            <a href="javascript:void(0)" data-url="{{ route('hr-document-library.create', ['folder_id' => $currentFolder ? $currentFolder->id : '', 'upload_type' => 'files']) }}" data-ajax-popup="true"
+                data-title="{{ __('Upload Documents') }}" data-size="lg" data-bs-toggle="tooltip" title="{{ __('Upload Documents') }}"
+                class="btn btn-sm btn-primary shadow-sm px-3 rounded-2">
+                <i class="ti ti-upload me-1"></i>{{ __('Upload Files') }}
+            </a>
         @endif
     </div>
 @endsection
@@ -53,15 +58,27 @@
             border: 1px solid #eaedf1;
             border-radius: 12px;
             background: #ffffff;
+            position: relative;
+            z-index: 1;
         }
         .folder-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(99, 102, 241, 0.08) !important;
             border-color: #6366f1 !important;
+            z-index: 2;
         }
         .folder-card.active-folder {
             border: 2px solid #6366f1 !important;
             background-color: #f8f9ff !important;
+        }
+        .folder-card .dropdown.show,
+        .doc-card .dropdown.show {
+            position: relative;
+            z-index: 1060 !important;
+        }
+        .dropdown-menu.show {
+            z-index: 1070 !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
         }
         .folder-icon-box {
             width: 44px;
@@ -78,11 +95,14 @@
             border: 1px solid #eaedf1;
             border-radius: 12px;
             background: #ffffff;
+            position: relative;
+            z-index: 1;
         }
         .doc-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(99, 102, 241, 0.08) !important;
             border-color: #6366f1 !important;
+            z-index: 2;
         }
         .doc-title-text {
             font-size: 0.92rem;
@@ -100,8 +120,17 @@
                     <i class="ti ti-folders text-warning me-2 fs-3"></i>{{ __('Folders') }}
                 </h5>
                 <span class="badge bg-light-primary text-primary rounded-pill px-2.5 py-1 fs-7 fw-semibold ms-1">
-                    {{ sprintf('%02d', count($folders)) }}
+                    {{ sprintf('%02d', count($folders)) }} {{ __('Folders') }}
                 </span>
+                @if(!$currentFolder)
+                    <span class="badge bg-light-info text-info rounded-pill px-2.5 py-1 fs-7 fw-semibold ms-1">
+                        <i class="ti ti-files me-1"></i>{{ sprintf('%02d', $totalDocumentsCount ?? 0) }} {{ __('Total Files') }}
+                    </span>
+                @else
+                    <span class="badge bg-light-info text-info rounded-pill px-2.5 py-1 fs-7 fw-semibold ms-1">
+                        <i class="ti ti-files me-1"></i>{{ sprintf('%02d', $currentFolder->total_files_count) }} {{ __('Total Files') }}
+                    </span>
+                @endif
             </div>
         </div>
 
@@ -109,6 +138,8 @@
             @foreach($folders as $folder)
                 @php
                     $isActive = ($currentFolder && $currentFolder->id == $folder->id);
+                    $childCount = $folder->children()->count();
+                    $totalFiles = $folder->total_files_count;
                 @endphp
                 <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
                     <div class="card folder-card {{ $isActive ? 'active-folder' : '' }} h-100 mb-0">
@@ -122,7 +153,10 @@
                                         {{ $folder->name }}
                                     </h6>
                                     <small class="text-muted d-block fw-normal" style="font-size: 0.78rem;">
-                                        {{ $folder->documents()->count() }} {{ __('Files') }} 
+                                        @if($childCount > 0)
+                                            {{ $childCount }} {{ $childCount == 1 ? __('Folder') : __('Folders') }} <span class="mx-1">•</span>
+                                        @endif
+                                        {{ $totalFiles }} {{ $totalFiles == 1 ? __('File') : __('Files') }} 
                                         <span class="mx-1">•</span> 
                                         {{ \Auth::user()->dateFormat($folder->created_at) }}
                                     </small>
@@ -320,4 +354,17 @@
             @endif
         </div>
     @endif
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof $ !== 'undefined') {
+                $(document).on('show.bs.dropdown', '.dropdown', function () {
+                    $(this).closest('.col-xl-3, .col-lg-4, .col-md-6, .col-12, .card, .folder-card, .doc-card').css('z-index', 1050);
+                });
+                $(document).on('hidden.bs.dropdown', '.dropdown', function () {
+                    $(this).closest('.col-xl-3, .col-lg-4, .col-md-6, .col-12, .card, .folder-card, .doc-card').css('z-index', '');
+                });
+            }
+        });
+    </script>
 @endsection
