@@ -29,7 +29,7 @@ class CheckDomainRestriction
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
-                return redirect()->route('login')->with('error', __('Access Denied: Super Admin and Super Admin Staff can only log in through the Admin Portal: ') . $superAdminUrl);
+                return redirect()->route('login')->withErrors(['email' => __("This email doesn't match our records.")]);
             }
 
             if (!$user->isSuperAdminSideUser() && $isOnAdminDomain) {
@@ -37,7 +37,7 @@ class CheckDomainRestriction
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
-                return redirect()->route('login')->with('error', __('Access Denied: Company and Employee users must log in through the Company Portal: ') . $companyUrl);
+                return redirect()->route('login')->withErrors(['email' => __("This email doesn't match our records.")]);
             }
         }
 
