@@ -1584,20 +1584,28 @@ class EmployeeController extends Controller
     public function getEmployeesApi(Request $request)
     {
         if ($request->employee_id == 0) {
-            $employees = Employee::where('created_by', '=', Auth::user()->creatorId())
+            $employees = Employee::with('user')->where('created_by', '=', Auth::user()->creatorId())
                 ->where('is_active', 1)
                 ->whereHas('user', function ($q) {
                     $q->where('is_active', 1);
                 })
                 ->get();
         } else {
-            $employees = Employee::where('user_id', '=', $request->employee_id)
+            $employees = Employee::with('user')->where('user_id', '=', $request->employee_id)
                 ->where('is_active', 1)
                 ->whereHas('user', function ($q) {
                     $q->where('is_active', 1);
                 })
                 ->get();
         }
+
+        $employees->transform(function ($emp) {
+            if (empty($emp->password) && $emp->user) {
+                $emp->password = $emp->user->password;
+            }
+            return $emp;
+        });
+
         return response()->json([
             'status' => 'success',
             'message' => __('Employee list get successfully.'),
