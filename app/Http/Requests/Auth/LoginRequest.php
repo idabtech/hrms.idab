@@ -89,18 +89,14 @@ class LoginRequest extends FormRequest
 
         // Domain restriction enforcement
         if ($matchedUser->isSuperAdminSideUser() && !$isOnAdminDomain) {
-            $msg = __('Access Denied: Super Admin and Super Admin Staff can only log in through the Admin Portal: ') . $superAdminUrl;
-            session()->flash('error', $msg);
             throw ValidationException::withMessages([
-                'email' => $msg,
+                'email' => __('User not found.'),
             ]);
         }
 
         if (!$matchedUser->isSuperAdminSideUser() && $isOnAdminDomain) {
-            $msg = __('Access Denied: Company and Employee users must log in through the Company Portal: ') . $companyUrl;
-            session()->flash('error', $msg);
             throw ValidationException::withMessages([
-                'email' => $msg,
+                'email' => __('User not found.'),
             ]);
         }
 

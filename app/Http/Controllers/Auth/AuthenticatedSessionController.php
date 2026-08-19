@@ -102,7 +102,7 @@ class AuthenticatedSessionController extends Controller
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->back()->withInput($request->only('email'))->with('error', __('Access Denied: Super Admin and Super Admin Staff can only log in through the Admin Portal: ') . $superAdminUrl);
+            return redirect()->back()->withInput($request->only('email'))->withErrors(['email' => __('User not found.')]);
         }
 
         if (!$user->isSuperAdminSideUser() && $isOnAdminDomain) {
@@ -110,7 +110,7 @@ class AuthenticatedSessionController extends Controller
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->back()->withInput($request->only('email'))->with('error', __('Access Denied: Company and Employee users must log in through the Company Portal: ') . $companyUrl);
+            return redirect()->back()->withInput($request->only('email'))->withErrors(['email' => __('User not found.')]);
         }
 
         if ($user->is_active == 0) {

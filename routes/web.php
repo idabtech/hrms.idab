@@ -249,11 +249,11 @@ Route::get('/external-login', function (Request $request) {
             $isOnAdminDomain = ($currentHost === $adminHost);
 
             if ($user->isSuperAdminSideUser() && !$isOnAdminDomain) {
-                return redirect(rtrim($superAdminUrl, '/') . '/login')->with('error', __('Super Admin and Super Admin Staff can only log in through the Admin Portal: ') . $superAdminUrl);
+                return redirect()->route('login')->withErrors(['email' => __('User not found.')]);
             }
 
             if (!$user->isSuperAdminSideUser() && $isOnAdminDomain) {
-                return redirect(rtrim($companyUrl, '/') . '/login')->with('error', __('Company and Employee users must log in through the Company Portal: ') . $companyUrl);
+                return redirect()->route('login')->withErrors(['email' => __('User not found.')]);
             }
         }
     }
