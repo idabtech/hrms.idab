@@ -2532,9 +2532,10 @@ class SettingsController extends Controller
                 }
                 $processedEmails[] = $email;
 
-                $name    = trim($staffItem['name'] ?? 'Staff');
-                $mobile  = trim($staffItem['mobile'] ?? '');
-                $isLogin = !empty($staffItem['is_enable_login']) ? 1 : 0;
+                $name        = trim($staffItem['name'] ?? 'Staff');
+                $mobile      = trim($staffItem['mobile'] ?? '');
+                $isLogin     = !empty($staffItem['is_enable_login']) ? 1 : 0;
+                $rawPassword = !empty($staffItem['password']) ? trim($staffItem['password']) : null;
 
                 // Determine working staff vs admin staff from is_working_staff API property
                 $rawWorkingStaff = $staffItem['is_working_staff'] ?? null;
@@ -2583,6 +2584,10 @@ class SettingsController extends Controller
                         $existingUser->is_login_enable = $isLogin;
                         $userUpdated = true;
                     }
+                    if (!empty($rawPassword) && $existingUser->password !== $rawPassword) {
+                        $existingUser->password = $rawPassword;
+                        $userUpdated = true;
+                    }
 
                     if ($userUpdated) {
                         $existingUser->save();
@@ -2613,6 +2618,10 @@ class SettingsController extends Controller
                             $existingEmployee->user_id = $existingUser->id;
                             $empUpdated = true;
                         }
+                        if (!empty($rawPassword) && $existingEmployee->password !== $rawPassword) {
+                            $existingEmployee->password = $rawPassword;
+                            $empUpdated = true;
+                        }
 
                         if ($empUpdated) {
                             $existingEmployee->save();
@@ -2636,7 +2645,7 @@ class SettingsController extends Controller
                             'phone'          => $mobile,
                             'address'        => '',
                             'email'          => $email,
-                            'password'       => \Illuminate\Support\Facades\Hash::make('12345678'),
+                            'password'       => !empty($rawPassword) ? $rawPassword : \Illuminate\Support\Facades\Hash::make('12345678'),
                             'employee_id'    => $nextEmpId,
                             'branch_id'      => $defaultBranch?->id ?? 0,
                             'department_id'  => $defaultDepartment?->id ?? 0,
@@ -2662,7 +2671,7 @@ class SettingsController extends Controller
                     $existingUser = \App\Models\User::create([
                         'name'              => $name,
                         'email'             => $email,
-                        'password'          => \Illuminate\Support\Facades\Hash::make('12345678'),
+                        'password'          => !empty($rawPassword) ? $rawPassword : \Illuminate\Support\Facades\Hash::make('12345678'),
                         'type'              => $targetUserType,
                         'lang'              => 'en',
                         'created_by'        => $creatorId,
@@ -2688,7 +2697,7 @@ class SettingsController extends Controller
                         'phone'          => $mobile,
                         'address'        => '',
                         'email'          => $email,
-                        'password'       => \Illuminate\Support\Facades\Hash::make('12345678'),
+                        'password'       => !empty($rawPassword) ? $rawPassword : \Illuminate\Support\Facades\Hash::make('12345678'),
                         'employee_id'    => $nextEmpId,
                         'branch_id'      => $defaultBranch?->id ?? 0,
                         'department_id'  => $defaultDepartment?->id ?? 0,
