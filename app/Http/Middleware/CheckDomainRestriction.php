@@ -29,7 +29,7 @@ class CheckDomainRestriction
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
-                return redirect()->route('login')->withErrors(['email' => __('User not found.')]);
+                return redirect()->route('login')->withErrors(['email' => __("This email doesn't match our records.")]);
             }
 
             if (!$user->isSuperAdminSideUser() && $isOnAdminDomain) {
@@ -37,7 +37,7 @@ class CheckDomainRestriction
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
-                return redirect()->route('login')->withErrors(['email' => __('User not found.')]);
+                return redirect()->route('login')->withErrors(['email' => __("This email doesn't match our records.")]);
             }
         }
 

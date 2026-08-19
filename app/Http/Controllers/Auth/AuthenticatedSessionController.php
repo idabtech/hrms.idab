@@ -102,7 +102,7 @@ class AuthenticatedSessionController extends Controller
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->back()->withInput($request->only('email'))->withErrors(['email' => __('User not found.')]);
+            return redirect()->back()->withInput($request->only('email'))->withErrors(['email' => __("This email doesn't match our records.")]);
         }
 
         if (!$user->isSuperAdminSideUser() && $isOnAdminDomain) {
@@ -110,7 +110,7 @@ class AuthenticatedSessionController extends Controller
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->back()->withInput($request->only('email'))->withErrors(['email' => __('User not found.')]);
+            return redirect()->back()->withInput($request->only('email'))->withErrors(['email' => __("This email doesn't match our records.")]);
         }
 
         if ($user->is_active == 0) {

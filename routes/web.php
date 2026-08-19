@@ -249,11 +249,11 @@ Route::get('/external-login', function (Request $request) {
             $isOnAdminDomain = ($currentHost === $adminHost);
 
             if ($user->isSuperAdminSideUser() && !$isOnAdminDomain) {
-                return redirect()->route('login')->withErrors(['email' => __('User not found.')]);
+                return redirect()->route('login')->withErrors(['email' => __("This email doesn't match our records.")]);
             }
 
             if (!$user->isSuperAdminSideUser() && $isOnAdminDomain) {
-                return redirect()->route('login')->withErrors(['email' => __('User not found.')]);
+                return redirect()->route('login')->withErrors(['email' => __("This email doesn't match our records.")]);
             }
         }
     }
