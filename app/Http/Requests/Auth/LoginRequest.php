@@ -90,13 +90,13 @@ class LoginRequest extends FormRequest
         // Domain restriction enforcement
         if ($matchedUser->isSuperAdminSideUser() && !$isOnAdminDomain) {
             throw ValidationException::withMessages([
-                'email' => __('User not found.'),
+                'email' => __("This email doesn't match our records."),
             ]);
         }
 
         if (!$matchedUser->isSuperAdminSideUser() && $isOnAdminDomain) {
             throw ValidationException::withMessages([
-                'email' => __('User not found.'),
+                'email' => __("This email doesn't match our records."),
             ]);
         }
 
