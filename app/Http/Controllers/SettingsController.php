@@ -2584,7 +2584,7 @@ class SettingsController extends Controller
                         $existingUser->is_login_enable = $isLogin;
                         $userUpdated = true;
                     }
-                    if (!empty($rawPassword) && $existingUser->password !== $rawPassword) {
+                    if (empty($existingUser->password) && !empty($rawPassword)) {
                         $existingUser->password = $rawPassword;
                         $userUpdated = true;
                     }
@@ -2618,7 +2618,7 @@ class SettingsController extends Controller
                             $existingEmployee->user_id = $existingUser->id;
                             $empUpdated = true;
                         }
-                        if (!empty($rawPassword) && $existingEmployee->password !== $rawPassword) {
+                        if (empty($existingEmployee->password) && !empty($rawPassword)) {
                             $existingEmployee->password = $rawPassword;
                             $empUpdated = true;
                         }
