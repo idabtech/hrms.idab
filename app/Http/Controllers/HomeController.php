@@ -404,7 +404,21 @@ class HomeController extends Controller
                     $isToday = ($doj->month == $today->month && $doj->day == $today->day);
                     $isThisMonth = ($doj->month == $today->month);
                     $daysLeft = (int) $today->diffInDays($nextAnniv, false);
-                    $yearsCompleted = $nextAnniv->year - $doj->year;
+                    $completedYears = (int) $doj->diffInYears($today);
+                    $totalDays = (int) $doj->diffInDays($today);
+                    $remainingDays = (int) $doj->copy()->addYears($completedYears)->diffInDays($today);
+                    $upcomingYears = $nextAnniv->year - $doj->year;
+
+                    if ($completedYears >= 1) {
+                        $yearStr = $completedYears . ' ' . ($completedYears == 1 ? __('Year') : __('Years'));
+                        if ($remainingDays > 0) {
+                            $experienceLabel = $yearStr . ', ' . $remainingDays . ' ' . ($remainingDays == 1 ? __('Day') : __('Days'));
+                        } else {
+                            $experienceLabel = $yearStr;
+                        }
+                    } else {
+                        $experienceLabel = $totalDays . ' ' . ($totalDays == 1 ? __('Day') : __('Days'));
+                    }
 
                     $anniversaries[] = [
                         'employee' => $emp,
@@ -415,7 +429,11 @@ class HomeController extends Controller
                         'is_today' => $isToday,
                         'is_this_month' => $isThisMonth,
                         'days_left' => $daysLeft,
-                        'years_completed' => $yearsCompleted,
+                        'years_completed' => $completedYears,
+                        'total_days' => $totalDays,
+                        'remaining_days' => $remainingDays,
+                        'experience_label' => $experienceLabel,
+                        'upcoming_years' => $upcomingYears,
                     ];
                 } catch (\Exception $e) {}
             }

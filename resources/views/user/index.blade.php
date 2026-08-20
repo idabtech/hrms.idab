@@ -18,6 +18,17 @@
 @endsection
 
 @section('action-button')
+    @if (\Auth::user()->type == 'super admin')
+        <a href="javascript:void(0)" class="btn btn-sm btn-primary active me-1" id="btn-grid-view" data-bs-toggle="tooltip"
+            title="{{ __('Grid View') }}" onclick="switchCompanyView('grid')">
+            <i class="ti ti-layout-grid"></i>
+        </a>
+        <a href="javascript:void(0)" class="btn btn-sm btn-outline-primary me-1" id="btn-table-view" data-bs-toggle="tooltip"
+            title="{{ __('List View') }}" onclick="switchCompanyView('table')">
+            <i class="ti ti-list"></i>
+        </a>
+    @endif
+
     @if (Gate::check('Manage Employee Last Login'))
         @can('Manage Employee Last Login')
             <a href="{{ route('lastlogin') }}" class="btn btn-primary btn-sm me-1" data-bs-toggle="tooltip" data-bs-placement="top"
@@ -41,8 +52,6 @@
             </a>
         @endif
     @endcan
-
-
 @endsection
 
 
@@ -52,12 +61,41 @@
 @endphp
 @section('content')
     <div class="">
+        @if (\Auth::user()->type == 'super admin')
+            {{-- ═══ GRID VIEW SEARCH FILTER BAR ═══ --}}
+            <div id="company-grid-search-bar" class="row mt-4 mb-2">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm mb-2" style="border-radius: 10px;">
+                        <div class="card-body py-3 px-4">
+                            <div class="row align-items-center">
+                                <div class="col-md-6 col-sm-8 col-12">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-end-0 text-primary px-3">
+                                            <i class="ti ti-search fs-5" id="icon-search-default"></i>
+                                            <i class="ti ti-loader ti-spin fs-5 text-primary d-none" id="icon-search-loader"></i>
+                                        </span>
+                                        <input type="text" id="company-grid-search-input" class="form-control border-start-0 ps-1" placeholder="{{ __('Search company by name or email...') }}" style="box-shadow: none;">
+                                        <button type="button" class="btn btn-outline-secondary d-none border-start-0" id="btn-clear-grid-search" onclick="clearCompanyGridSearch()">
+                                            <i class="ti ti-x"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-sm-4 col-12 text-sm-end text-start mt-sm-0 mt-2">
+                                    <span class="badge bg-light-primary text-primary px-3 py-2.5 fw-semibold fs-7 border" id="grid-search-count-info">
+                                        <i class="ti ti-building me-1"></i> {{ __('Total Companies:') }} {{ count($users) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        <div class="row mt-4">
-            @if (\Auth::user()->type == 'super admin')
+            {{-- ═══ 1. GRID VIEW (DEFAULT) ═══ --}}
+            <div id="company-grid-view" class="row">
                 @foreach ($users as $user)
-                    <div class="col-xxl-3 col-lg-4 col-sm-6 col-12">
-                        <div class="card  text-center">
+                    <div class="col-xxl-3 col-lg-4 col-sm-6 col-12 company-card-item" data-search="{{ strtolower($user->name . ' ' . $user->email) }}">
+                        <div class="card text-center">
                             <div class="card-header border-0 pb-0">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0">
@@ -191,7 +229,15 @@
                         </div>
                     </div>
                 @endforeach
-                <div class="col-xl-3 col-lg-4 col-sm-6">
+
+                <div class="col-12 text-center py-5 d-none" id="company-no-results-msg">
+                    <div class="alert alert-info border-0 shadow-sm d-inline-block px-4 py-3">
+                        <i class="ti ti-search-off fs-3 d-block mb-2 text-info"></i>
+                        <span class="fw-semibold">{{ __('No matching companies found for your search.') }}</span>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-lg-4 col-sm-6 company-card-add-new">
                     <a href="javascript:void(0)" class="btn-addnew-project border-primary" data-ajax-popup="true"
                         data-url="{{ route('user.create') }}" data-title="{{ __('Create New Company') }}"
                         data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary">
@@ -201,13 +247,136 @@
                         <h6 class="mt-4 mb-2">{{ __('New Company') }}</h6>
                         <p class="text-muted text-center">{{ __('Click here to add new company') }}</p>
                     </a>
-                </div>                            @else
+                </div>
+            </div>
+
+            {{-- ═══ 2. TABLE (DATATABLE) VIEW ═══ --}}
+            <div id="company-table-view" class="row mt-4 d-none">
+                <div class="col-xl-12">
+                    <div class="card">
+                        <div class="card-header card-body table-border-style">
+                            <div class="table-responsive">
+                                <table class="table pc-dt-simple" id="pc-dt-simple">
+                                    <thead>
+                                        <tr>
+                                            <th>{{ __('Company') }}</th>
+                                            <th>{{ __('Email') }}</th>
+                                            <th>{{ __('Current Plan') }}</th>
+                                            <th>{{ __('Users') }}</th>
+                                            <th>{{ __('Employees') }}</th>
+                                            <th>{{ __('Plan Expire') }}</th>
+                                            <th width="240px">{{ __('Action') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($users as $user)
+                                            @php
+                                                $adminSettings = \App\Models\Utility::settings();
+                                                $isLoginSecurityOn = ($adminSettings['login_as_company_security'] ?? 'on') === 'on';
+                                            @endphp
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar avatar-sm me-2">
+                                                            <img src="{{ !empty($user->avatar) ? $profile . $user->avatar : $logo . 'avatar.png' }}"
+                                                                class="rounded-circle border" width="36px" height="36px" style="object-fit: cover;">
+                                                        </div>
+                                                        <span class="fw-semibold text-dark">{{ $user->name }}</span>
+                                                    </div>
+                                                </td>
+                                                <td>{{ $user->email }}</td>
+                                                <td>
+                                                    <span class="badge bg-primary p-2 px-3">
+                                                        {{ !empty($user->currentPlan) ? $user->currentPlan->name : __('Free Plan') }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ $user->countUsers() }}</td>
+                                                <td>{{ $user->countEmployees() }}</td>
+                                                <td>
+                                                    {{ !empty($user->plan_expire_date) ? \Auth::user()->dateFormat($user->plan_expire_date) : __('Lifetime') }}
+                                                </td>
+                                                <td class="Action">
+                                                    <span>
+                                                        <div class="action-btn bg-info me-2">
+                                                            <a href="javascript:void(0)" class="mx-3 btn btn-sm align-items-center"
+                                                                data-url="{{ route('user.edit', $user->id) }}" data-size="md"
+                                                                data-ajax-popup="true" data-title="{{ __('Update User') }}"
+                                                                data-bs-toggle="tooltip" title="{{ __('Edit') }}">
+                                                                <i class="ti ti-pencil text-white"></i>
+                                                            </a>
+                                                        </div>
+
+                                                        <div class="action-btn bg-primary me-2">
+                                                            <a href="javascript:void(0)" class="mx-3 btn btn-sm align-items-center"
+                                                                data-url="{{ route('plan.upgrade', $user->id) }}" data-size="lg"
+                                                                data-ajax-popup="true" data-title="{{ __('Upgrade Plan') }}"
+                                                                data-bs-toggle="tooltip" title="{{ __('Upgrade Plan') }}">
+                                                                <i class="ti ti-trophy text-white"></i>
+                                                            </a>
+                                                        </div>
+
+                                                        <div class="action-btn bg-secondary me-2">
+                                                            <a href="javascript:void(0)" class="mx-3 btn btn-sm align-items-center"
+                                                                data-url="{{ route('company.info', $user->id) }}" data-size="lg"
+                                                                data-ajax-popup="true" data-title="{{ __('Company Info') }}"
+                                                                data-bs-toggle="tooltip" title="{{ __('AdminHub') }}">
+                                                                <i class="ti ti-info-circle text-white"></i>
+                                                            </a>
+                                                        </div>
+
+                                                        @if ($isLoginSecurityOn)
+                                                            <div class="action-btn bg-dark me-2">
+                                                                <a href="javascript:void(0)" data-url="{{ route('login.with.company', $user->id) }}"
+                                                                    data-ajax-popup="true" data-size="md" data-title="{{ __('Login As Company Verification') }}"
+                                                                    class="mx-3 btn btn-sm align-items-center" data-bs-toggle="tooltip" title="{{ __('Login As Company') }}">
+                                                                    <i class="ti ti-replace text-white"></i>
+                                                                </a>
+                                                            </div>
+                                                        @else
+                                                            <div class="action-btn bg-dark me-2">
+                                                                <a href="{{ route('login.with.company', $user->id) }}" class="mx-3 btn btn-sm align-items-center"
+                                                                    data-bs-toggle="tooltip" title="{{ __('Login As Company') }}">
+                                                                    <i class="ti ti-replace text-white"></i>
+                                                                </a>
+                                                            </div>
+                                                        @endif
+
+                                                        <div class="action-btn bg-warning me-2">
+                                                            <a href="javascript:void(0)" class="mx-3 btn btn-sm align-items-center"
+                                                                data-url="{{ route('user.reset', \Crypt::encrypt($user->id)) }}"
+                                                                data-ajax-popup="true" data-size="md" data-title="{{ __('Change Password') }}"
+                                                                data-bs-toggle="tooltip" title="{{ __('Reset Password') }}">
+                                                                <i class="ti ti-key text-white"></i>
+                                                            </a>
+                                                        </div>
+
+                                                        <div class="action-btn bg-danger">
+                                                            {!! Form::open(['method' => 'DELETE', 'route' => ['user.destroy', $user->id], 'id' => 'delete-form-table-' . $user->id]) !!}
+                                                            <a href="javascript:void(0)" class="mx-3 btn btn-sm align-items-center bs-pass-para"
+                                                                data-bs-toggle="tooltip" title="{{ $user->delete_status == 0 ? __('Delete') : __('Restore') }}">
+                                                                <i class="ti ti-trash text-white"></i>
+                                                            </a>
+                                                            {!! Form::close() !!}
+                                                        </div>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @else
+            <div class="row mt-4">
                 @foreach ($users as $user)
                     @php
                         $employeeRecord = \App\Models\Employee::where('user_id', $user->id)->first();
                     @endphp
                     <div class="col-xl-3 col-lg-4 col-sm-6 col-12">
-                        <div class="card  text-center">
+                        <div class="card text-center">
                             <div class="card-header border-0 pb-0">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0">
@@ -232,7 +401,6 @@
                                                                 class="ms-2">{{ __('Edit') }}</span></a>
                                                     @endcan
 
-                                                    {{-- Edit Employee Profile (to assign leave types, etc.) --}}
                                                     @if ($employeeRecord && \Auth::user()->can('Edit Employee'))
                                                         <a href="{{ route('employee.edit', \Illuminate\Support\Facades\Crypt::encrypt($employeeRecord->id)) }}"
                                                             class="dropdown-item">
@@ -330,12 +498,91 @@
                         <p class="text-muted text-center">{{ __('Click here to add new user') }}</p>
                     </a>
                 </div>
-            @endif
-        </div>
+            </div>
+        @endif
     </div>
 @endsection
 
 @push('scripts')
+    {{-- View Switcher & Live Search Script --}}
+    <script>
+        function switchCompanyView(view) {
+            if (view === 'table') {
+                $('#company-grid-view').addClass('d-none');
+                $('#company-grid-search-bar').addClass('d-none');
+                $('#company-table-view').removeClass('d-none');
+                $('#btn-grid-view').removeClass('btn-primary active').addClass('btn-outline-primary');
+                $('#btn-table-view').removeClass('btn-outline-primary').addClass('btn-primary active');
+                localStorage.setItem('company_view_pref', 'table');
+            } else {
+                $('#company-table-view').addClass('d-none');
+                $('#company-grid-search-bar').removeClass('d-none');
+                $('#company-grid-view').removeClass('d-none');
+                $('#btn-table-view').removeClass('btn-primary active').addClass('btn-outline-primary');
+                $('#btn-grid-view').removeClass('btn-outline-primary').addClass('btn-primary active');
+                localStorage.setItem('company_view_pref', 'grid');
+            }
+        }
+
+        var gridSearchTimeout = null;
+
+        $(document).on('keyup input', '#company-grid-search-input', function() {
+            var $input = $(this);
+            var query = $.trim($input.val()).toLowerCase();
+
+            // Show spinning loader icon while searching
+            $('#icon-search-default').addClass('d-none');
+            $('#icon-search-loader').removeClass('d-none');
+
+            if (gridSearchTimeout) {
+                clearTimeout(gridSearchTimeout);
+            }
+
+            gridSearchTimeout = setTimeout(function() {
+                var visibleCount = 0;
+
+                if (query.length > 0) {
+                    $('#btn-clear-grid-search').removeClass('d-none');
+                } else {
+                    $('#btn-clear-grid-search').addClass('d-none');
+                }
+
+                $('.company-card-item').each(function() {
+                    var searchData = $(this).attr('data-search') || '';
+                    if (searchData.indexOf(query) !== -1) {
+                        $(this).removeClass('d-none');
+                        visibleCount++;
+                    } else {
+                        $(this).addClass('d-none');
+                    }
+                });
+
+                if (visibleCount === 0) {
+                    $('#company-no-results-msg').removeClass('d-none');
+                    $('.company-card-add-new').addClass('d-none');
+                } else {
+                    $('#company-no-results-msg').addClass('d-none');
+                    $('.company-card-add-new').removeClass('d-none');
+                }
+
+                $('#grid-search-count-info').html('<i class="ti ti-building me-1"></i> {{ __("Found:") }} <strong>' + visibleCount + '</strong> {{ __("companies") }}');
+
+                // Hide spinner and restore search icon
+                $('#icon-search-loader').addClass('d-none');
+                $('#icon-search-default').removeClass('d-none');
+            }, 180);
+        });
+
+        function clearCompanyGridSearch() {
+            $('#company-grid-search-input').val('').trigger('input');
+        }
+
+        $(document).ready(function() {
+            var pref = localStorage.getItem('company_view_pref') || 'grid';
+            switchCompanyView(pref);
+        });
+    </script>
+
     {{-- Password  --}}
     <script>
         $(document).on('change', '#password_switch', function() {

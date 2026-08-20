@@ -2275,16 +2275,32 @@ class Utility extends Model
                     $content->content = self::replaceVariable($content->content, $obj);
 
                     try {
+                        $mailDriver = !empty($settings['mail_driver']) ? $settings['mail_driver'] : (!empty($setting['mail_driver']) ? $setting['mail_driver'] : 'smtp');
+                        $mailHost = !empty($settings['mail_host']) ? $settings['mail_host'] : (!empty($setting['mail_host']) ? $setting['mail_host'] : '');
+                        $mailPort = !empty($settings['mail_port']) ? $settings['mail_port'] : (!empty($setting['mail_port']) ? $setting['mail_port'] : '');
+                        $mailEncryption = !empty($settings['mail_encryption']) ? $settings['mail_encryption'] : (!empty($setting['mail_encryption']) ? $setting['mail_encryption'] : '');
+                        $mailUsername = !empty($settings['mail_username']) ? $settings['mail_username'] : (!empty($setting['mail_username']) ? $setting['mail_username'] : '');
+                        $mailPassword = !empty($settings['mail_password']) ? $settings['mail_password'] : (!empty($setting['mail_password']) ? $setting['mail_password'] : '');
+                        $mailFromAddress = !empty($settings['mail_from_address']) ? $settings['mail_from_address'] : (!empty($setting['mail_from_address']) ? $setting['mail_from_address'] : '');
+                        $mailFromName = !empty($settings['mail_from_name']) ? $settings['mail_from_name'] : (!empty($setting['mail_from_name']) ? $setting['mail_from_name'] : '');
+
                         config(
                             [
-                                'mail.driver' => $settings['mail_driver'] ? $settings['mail_driver'] : $setting['mail_driver'],
-                                'mail.host' => $settings['mail_host'] ? $settings['mail_host'] : $setting['mail_host'],
-                                'mail.port' => $settings['mail_port'] ? $settings['mail_port'] : $setting['mail_port'],
-                                'mail.encryption' => $settings['mail_encryption'] ? $settings['mail_encryption'] : $setting['mail_encryption'],
-                                'mail.username' => $settings['mail_username'] ? $settings['mail_username'] : $setting['mail_username'],
-                                'mail.password' => $settings['mail_password'] ? $settings['mail_password'] : $setting['mail_password'],
-                                'mail.from.address' => $settings['mail_from_address'] ? $settings['mail_from_address'] : $setting['mail_from_address'],
-                                'mail.from.name' => $settings['mail_from_name'] ? $settings['mail_from_name'] : $setting['mail_from_name'],
+                                'mail.default' => $mailDriver,
+                                'mail.driver' => $mailDriver,
+                                'mail.mailers.smtp.transport' => $mailDriver,
+                                'mail.mailers.smtp.host' => $mailHost,
+                                'mail.mailers.smtp.port' => $mailPort,
+                                'mail.mailers.smtp.encryption' => $mailEncryption,
+                                'mail.mailers.smtp.username' => $mailUsername,
+                                'mail.mailers.smtp.password' => $mailPassword,
+                                'mail.host' => $mailHost,
+                                'mail.port' => $mailPort,
+                                'mail.encryption' => $mailEncryption,
+                                'mail.username' => $mailUsername,
+                                'mail.password' => $mailPassword,
+                                'mail.from.address' => $mailFromAddress,
+                                'mail.from.name' => $mailFromName,
                             ]
                         );
                         $mailable = new CommonEmailTemplate($content, $settings, is_array($mailTo) ? $mailTo : $mailTo[0]);
@@ -3973,13 +3989,21 @@ class Utility extends Model
     {
         $settings = Utility::settings($user_id);
         if ($settings) {
+            $driver = !empty($settings['mail_driver']) ? $settings['mail_driver'] : 'smtp';
             config([
-                'mail.default' => isset($settings['mail_driver']) ? $settings['mail_driver'] : '',
+                'mail.default' => $driver,
+                'mail.driver' => $driver,
+                'mail.mailers.smtp.transport' => $driver,
                 'mail.mailers.smtp.host' => isset($settings['mail_host']) ? $settings['mail_host'] : '',
                 'mail.mailers.smtp.port' => isset($settings['mail_port']) ? $settings['mail_port'] : '',
                 'mail.mailers.smtp.encryption' => isset($settings['mail_encryption']) ? $settings['mail_encryption'] : '',
                 'mail.mailers.smtp.username' => isset($settings['mail_username']) ? $settings['mail_username'] : '',
                 'mail.mailers.smtp.password' => isset($settings['mail_password']) ? $settings['mail_password'] : '',
+                'mail.host' => isset($settings['mail_host']) ? $settings['mail_host'] : '',
+                'mail.port' => isset($settings['mail_port']) ? $settings['mail_port'] : '',
+                'mail.encryption' => isset($settings['mail_encryption']) ? $settings['mail_encryption'] : '',
+                'mail.username' => isset($settings['mail_username']) ? $settings['mail_username'] : '',
+                'mail.password' => isset($settings['mail_password']) ? $settings['mail_password'] : '',
                 'mail.from.address' => isset($settings['mail_from_address']) ? $settings['mail_from_address'] : '',
                 'mail.from.name' => isset($settings['mail_from_name']) ? $settings['mail_from_name'] : '',
             ]);
