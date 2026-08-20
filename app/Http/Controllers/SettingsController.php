@@ -270,6 +270,9 @@ class SettingsController extends Controller
                     );
                 }
             }
+
+            Utility::getSMTPDetails($creatorId);
+
             return redirect()->back()->with('success', __('Setting successfully updated.'));
         } else {
             return redirect()->back()->with('error', 'Permission denied.');
@@ -1067,9 +1070,17 @@ class SettingsController extends Controller
         }
 
         try {
+            $driver = !empty($request->mail_driver) ? $request->mail_driver : 'smtp';
             config(
                 [
-                    'mail.driver' => $request->mail_driver,
+                    'mail.default' => $driver,
+                    'mail.driver' => $driver,
+                    'mail.mailers.smtp.transport' => $driver,
+                    'mail.mailers.smtp.host' => $request->mail_host,
+                    'mail.mailers.smtp.port' => $request->mail_port,
+                    'mail.mailers.smtp.encryption' => $request->mail_encryption,
+                    'mail.mailers.smtp.username' => $request->mail_username,
+                    'mail.mailers.smtp.password' => $request->mail_password,
                     'mail.host' => $request->mail_host,
                     'mail.port' => $request->mail_port,
                     'mail.encryption' => $request->mail_encryption,

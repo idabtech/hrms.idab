@@ -24,7 +24,7 @@
                                 <thead>
                                     <tr>
                                         <th>{{ __('Employee') }}</th>
-                                        <th>{{ __('Milestone') }}</th>
+                                        <th>{{ __('Tenure') }}</th>
                                         <th class="text-end">{{ __('Date') }}</th>
                                     </tr>
                                 </thead>
@@ -33,6 +33,8 @@
                                         @php
                                             $emp = $item['employee'];
                                             $rowBg = $item['is_today'] ? 'style="background-color: #fff8e1;"' : ($item['is_this_month'] ? 'style="background-color: #f8f9fa;"' : '');
+                                            $completedYrs = $item['years_completed'] ?? 0;
+                                            $totalD = $item['total_days'] ?? 0;
                                         @endphp
                                         <tr {!! $rowBg !!}>
                                             <td>
@@ -51,16 +53,12 @@
                                             <td>
                                                 @if($item['is_today'])
                                                     <span class="badge bg-warning text-dark fw-bold px-2.5 py-1">
-                                                        🏅 {{ $item['years_completed'] }} {{ __('Years Completed Today!') }}
-                                                    </span>
-                                                @elseif($item['is_this_month'])
-                                                    <span class="badge bg-light-warning text-warning border border-warning-subtle fw-semibold px-2.5 py-1">
-                                                        🏅 {{ $item['years_completed'] }} {{ __('Years') }} (In {{ $item['days_left'] }} days)
+                                                        🏅 {{ $completedYrs }} {{ $completedYrs == 1 ? __('Year') : __('Years') }} {{ __('Completed Today!') }}
                                                     </span>
                                                 @else
-                                                    <small class="text-muted fw-semibold">
-                                                        🏅 {{ $item['years_completed'] }} {{ __('Years') }}
-                                                    </small>
+                                                    <span class="badge bg-light-warning text-warning border border-warning-subtle fw-semibold px-2.5 py-1">
+                                                        🏅 {{ $item['experience_label'] ?? '' }}
+                                                    </span>
                                                 @endif
                                             </td>
                                             <td class="text-end">
