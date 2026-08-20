@@ -389,24 +389,37 @@ class HomeController extends Controller
                 try {
                     $dojClean = preg_replace('/[^0-9\-]/', '', $emp->company_doj);
                     if (strlen($dojClean) == 8) {
-                        $doj = Carbon::createFromFormat('Ymd', $dojClean);
+                        $doj = Carbon::createFromFormat('Ymd', $dojClean)->startOfDay();
                     } else {
-                        $doj = Carbon::parse($dojClean);
+                        $doj = Carbon::parse($dojClean)->startOfDay();
                     }
 
-                    $annivThisYear = Carbon::create($today->year, $doj->month, $doj->day);
+                    $annivThisYear = Carbon::create($today->year, $doj->month, $doj->day)->startOfDay();
                     if ($annivThisYear->isPast() && !$annivThisYear->isToday()) {
-                        $nextAnniv = Carbon::create($today->year + 1, $doj->month, $doj->day);
+                        $nextAnniv = Carbon::create($today->year + 1, $doj->month, $doj->day)->startOfDay();
                     } else {
                         $nextAnniv = $annivThisYear;
                     }
 
-                    $isToday = ($doj->month == $today->month && $doj->day == $today->day);
+                    $isJoinedToday = ($doj->toDateString() == $today->toDateString());
+                    $isAnniversaryToday = ($doj->month == $today->month && $doj->day == $today->day && $doj->year < $today->year);
+                    $isToday = $isJoinedToday || $isAnniversaryToday;
                     $isThisMonth = ($doj->month == $today->month);
+
+                    if ($doj->gt($today)) {
+                        $completedYears = 0;
+                        $totalDays = 0;
+                        $remainingDays = 0;
+                    } else {
+                        $completedYears = (int) $doj->diffInYears($today);
+                        $totalDays = (int) $doj->diffInDays($today);
+                        $remainingDays = (int) $doj->copy()->addYears($completedYears)->diffInDays($today);
+                    }
+
                     $daysLeft = (int) $today->diffInDays($nextAnniv, false);
-                    $completedYears = (int) $doj->diffInYears($today);
-                    $totalDays = (int) $doj->diffInDays($today);
-                    $remainingDays = (int) $doj->copy()->addYears($completedYears)->diffInDays($today);
+                    if ($daysLeft < 0) {
+                        $daysLeft = 0;
+                    }
                     $upcomingYears = $nextAnniv->year - $doj->year;
 
                     if ($completedYears >= 1) {
@@ -427,6 +440,8 @@ class HomeController extends Controller
                         'formatted_date' => $nextAnniv->format('d M'),
                         'full_date_label' => $doj->format('d M, Y'),
                         'is_today' => $isToday,
+                        'is_joined_today' => $isJoinedToday,
+                        'is_anniversary_today' => $isAnniversaryToday,
                         'is_this_month' => $isThisMonth,
                         'days_left' => $daysLeft,
                         'years_completed' => $completedYears,
