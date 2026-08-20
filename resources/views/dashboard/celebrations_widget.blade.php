@@ -51,9 +51,13 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                @if($item['is_today'])
+                                                @if(!empty($item['is_anniversary_today']))
                                                     <span class="badge bg-warning text-dark fw-bold px-2.5 py-1">
                                                         🏅 {{ $completedYrs }} {{ $completedYrs == 1 ? __('Year') : __('Years') }} {{ __('Completed Today!') }}
+                                                    </span>
+                                                @elseif(!empty($item['is_joined_today']))
+                                                    <span class="badge bg-success text-white fw-bold px-2.5 py-1">
+                                                        🎉 {{ __('Joined Today!') }}
                                                     </span>
                                                 @else
                                                     <span class="badge bg-light-warning text-warning border border-warning-subtle fw-semibold px-2.5 py-1">
