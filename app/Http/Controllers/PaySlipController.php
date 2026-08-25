@@ -273,7 +273,8 @@ class PaySlipController extends Controller
             $join->leftJoin('payslip_types', 'payslip_types.id', '=', 'employees.salary_type');
         })->where('employees.created_by', \Auth::user()->creatorId())->get();
 
-        $data = [];
+        $totalSalarySum = 0;
+        $totalNetSalarySum = 0;
 
         // Process employee and payslip data
         foreach ($paylip_employee as $employee) {
@@ -312,6 +313,9 @@ class PaySlipController extends Controller
 
             if (\Auth::user()->type == 'employee') {
                 if (\Auth::user()->id == $employee->user_id) {
+                    $totalSalarySum += (float)($employee->basic_salary ?? $employee->salary ?? 0);
+                    $totalNetSalarySum += (float)($liveNet ?? 0);
+
                     $tmp = [];
                     $tmp[] = $employee->id;
                     $tmp[] = $employee->name;
@@ -334,6 +338,9 @@ class PaySlipController extends Controller
                     $data[] = $tmp;
                 }
             } else {
+                $totalSalarySum += (float)($employee->salary ?? 0);
+                $totalNetSalarySum += (float)($liveNet ?? 0);
+
                 $tmp = [];
                 $tmp[] = $employee->id;
                 $tmp[] = \Auth::user()->employeeIdFormat($employee->employee_id);
@@ -358,7 +365,11 @@ class PaySlipController extends Controller
         }
 
         // Return the data as a JSON response with status 200
-        return response()->json($data, 200);
+        return response()->json([
+            'data' => $data,
+            'total_salary' => \Auth::user()->priceFormat($totalSalarySum),
+            'total_net_salary' => \Auth::user()->priceFormat($totalNetSalarySum),
+        ], 200);
     }
 
 
