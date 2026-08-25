@@ -979,12 +979,14 @@ a > i.ti-plus{
 
 /* google recapcha  */
 
-.grecaptcha-badge{
-    z-index: 2;
- }.border-grey {
-    border: 1px solid #CBCBCB
- !important;
- }
+.grecaptcha-badge {
+    bottom: 85px !important;
+    right: 15px !important;
+    z-index: 10000 !important;
+}
+.border-grey {
+    border: 1px solid #CBCBCB !important;
+}
  .upgrade-line hr {
     flex: 1;
  }

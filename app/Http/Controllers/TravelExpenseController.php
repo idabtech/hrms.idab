@@ -17,28 +17,41 @@ class TravelExpenseController extends Controller
         if (Auth::user()->can('Manage Travel Expense')) {
             if (Auth::user()->type == 'employee') {
                 $emp = Employee::where('user_id', Auth::user()->id)->first();
-                $travelExpenses = TravelExpense::where('employee_id', $emp ? $emp->id : 0)
-                    ->with(['employee', 'documents'])
-                    ->orderBy('id', 'desc')
-                    ->get();
+                $query = TravelExpense::where('employee_id', $emp ? $emp->id : 0)
+                    ->with(['employee', 'documents']);
             } else {
                 $query = TravelExpense::where('created_by', Auth::user()->creatorId())
                     ->with(['employee', 'documents']);
 
-                if ($request->has('type') && !empty($request->type)) {
-                    $query->where('type', $request->type);
-                }
-
-                if ($request->has('employee_id') && !empty($request->employee_id)) {
+                if ($request->filled('employee_id')) {
                     $query->where('employee_id', $request->employee_id);
                 }
-
-                $travelExpenses = $query->orderBy('id', 'desc')->get();
             }
 
-            $employees = Employee::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
+            if ($request->filled('type')) {
+                $query->where('type', $request->type);
+            }
 
-            return view('travel_expense.index', compact('travelExpenses', 'employees'));
+            if ($request->filled('start_date')) {
+                $query->where('start_date', '>=', $request->start_date);
+            }
+
+            if ($request->filled('end_date')) {
+                $query->where('end_date', '<=', $request->end_date);
+            }
+
+            $travelExpenses = $query->orderBy('id', 'desc')->get();
+
+            $employeesList = Employee::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id')->toArray();
+            $employees = ['' => __('All')] + $employeesList;
+
+            $types = [
+                '' => __('All'),
+                'travel' => __('Travel'),
+                'voucher' => __('Voucher'),
+            ];
+
+            return view('travel_expense.index', compact('travelExpenses', 'employees', 'types'));
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }

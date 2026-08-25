@@ -61,6 +61,7 @@
                                     <th>{{ __('Name') }}</th>
                                 @endif
                                 <th>{{ __('Payroll Type') }}</th>
+                                <th>{{ __('Salary') }}</th>
                                 <th>{{ __('Net Salary') }}</th>
                                 <th>{{ __('Status') }}</th>
                                 <th>{{ __('Action') }}</th>
@@ -69,6 +70,23 @@
                         <tbody>
                         </tbody>
                     </table>
+                </div>
+
+                {{-- Summary Footer Card --}}
+                <div class="card-footer bg-light border-0 py-3 mt-3 rounded" id="payslip_summary_bar" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <h6 class="mb-0 text-dark fw-bold"><i class="ti ti-calculator me-1 text-primary"></i> {{ __('Payroll Summary') }}</h6>
+                        <div class="d-flex align-items-center gap-4 flex-wrap">
+                            <div class="d-flex align-items-center">
+                                <span class="text-muted fw-bold me-2">{{ __('Total Salary:') }}</span>
+                                <span class="badge bg-primary fs-6 p-2 px-3 shadow-sm" id="footer_total_salary">-</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="text-muted fw-bold me-2">{{ __('Total Net Salary:') }}</span>
+                                <span class="badge bg-success fs-6 p-2 px-3 shadow-sm" id="footer_total_net_salary">-</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -109,8 +127,10 @@
                     data: { "datePicker": datePicker, "_token": "{{ csrf_token() }}" },
                     success: function(data) {
                         var tr = '';
-                        if (data.length > 0) {
-                            $.each(data, function(idx, v) {
+                        var payslips = Array.isArray(data) ? data : (data.data || []);
+
+                        if (payslips.length > 0) {
+                            $.each(payslips, function(idx, v) {
                                 var id = v[0];
                                 var payslip_id = v[16];
                                 var url_employee = v['url'];
@@ -148,7 +168,8 @@
                                     '<td><a class="btn btn-outline-primary btn-sm" href="' + url_employee + '">' + v[1] + '</a></td>' +
                                     '<td>' + v[2] + '</td>' +
                                     '<td>' + v[3] + '</td>' +
-                                    '<td><strong>' + v[6] + '</strong></td>' +
+                                    '<td>' + (v[4] ? v[4] : '-') + '</td>' +
+                                    '<td><strong>' + (v[6] ? v[6] : '-') + '</strong></td>' +
                                     '<td>' + status + '</td>' +
                                     '<td>' + actions + '</td>' +
                                     '</tr>';
@@ -156,7 +177,8 @@
                                 tr += '<tr>' +
                                     '<td><a class="btn btn-outline-primary btn-sm" href="' + url_employee + '">' + v[1] + '</a></td>' +
                                     '<td>' + v[2] + '</td>' +
-                                    '<td><strong>' + v[6] + '</strong></td>' +
+                                    '<td>' + (v[4] ? v[4] : '-') + '</td>' +
+                                    '<td><strong>' + (v[6] ? v[6] : '-') + '</strong></td>' +
                                     '<td>' + status + '</td>' +
                                     '<td>' + actions + '</td>' +
                                     '</tr>';
@@ -168,8 +190,47 @@
                         }
 
                         $('#pc-dt-render-column-cells tbody').html(tr);
+
                         var table = document.querySelector("#pc-dt-render-column-cells");
-                        var datatable = new simpleDatatables.DataTable(table);
+                        var datatable = new simpleDatatables.DataTable(table, {
+                            perPage: 10,
+                            perPageSelect: [10, 25, 50, 100],
+                            paging: true,
+                            firstLast: true,
+                            truncatePager: false
+                        });
+
+                        // Ensure Next/Prev pagination navigation is visible
+                        var pagerContainer = $(table).closest('.card-body').find('.dataTable-bottom');
+                        if (pagerContainer.length > 0 && pagerContainer.find('.dataTable-pagination-list').length === 0) {
+                            var navHtml = '<nav class="dataTable-pagination"><ul class="dataTable-pagination-list">' +
+                                '<li class="pager disabled"><a href="javascript:void(0)" data-page="1">‹</a></li>' +
+                                '<li class="active"><a href="javascript:void(0)" data-page="1">1</a></li>' +
+                                '<li class="pager disabled"><a href="javascript:void(0)" data-page="1">›</a></li>' +
+                                '</ul></nav>';
+                            pagerContainer.append(navHtml);
+                        }
+
+                        if (!Array.isArray(data) && payslips.length > 0) {
+                            $('#footer_total_salary').html(data.total_salary || '-');
+                            $('#footer_total_net_salary').html(data.total_net_salary || '-');
+                            $('#payslip_summary_bar').show();
+
+                            var tfootHtml = '<tfoot><tr class="fw-bold bg-light" style="border-top: 2px solid #dee2e6;">' +
+                                '<td colspan="{{ \Auth::user()->type != 'employee' ? 3 : 2 }}" class="text-end fw-bold fs-6">{{ __('Total:') }}</td>' +
+                                '<td class="fw-bold text-primary fs-6">' + (data.total_salary || '-') + '</td>' +
+                                '<td class="fw-bold text-success fs-6">' + (data.total_net_salary || '-') + '</td>' +
+                                '<td colspan="2"></td>' +
+                                '</tr></tfoot>';
+
+                            $('#pc-dt-render-column-cells tfoot').remove();
+                            $('.dataTable-container table tfoot').remove();
+                            $('.dataTable-container table, #pc-dt-render-column-cells').append(tfootHtml);
+                        } else {
+                            $('#payslip_summary_bar').hide();
+                            $('#pc-dt-render-column-cells tfoot').remove();
+                            $('.dataTable-container table tfoot').remove();
+                        }
                     },
                     error: function(data) {
                         data = data.responseJSON;
