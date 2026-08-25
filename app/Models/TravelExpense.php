@@ -17,6 +17,8 @@ class TravelExpense extends Model
         'start_date',
         'end_date',
         'description',
+        'document_requested',
+        'document_requested_at',
         'created_by',
     ];
 

@@ -113,13 +113,69 @@
                                     <td>{{ \Auth::user()->priceFormat($travelExpense->amount) }}</td>
                                     <td>{{ \Auth::user()->dateFormat($travelExpense->start_date) }} - {{ \Auth::user()->dateFormat($travelExpense->end_date) }}</td>
                                     <td>
-                                        <span class="badge bg-secondary p-2 px-3 rounded">
-                                            <i class="ti ti-paperclip me-1"></i>
-                                            {{ $travelExpense->documents->count() }} {{ __('Files') }}
-                                        </span>
+                                        @if ($travelExpense->document_requested == 1)
+                                            <span class="badge bg-warning p-2 px-3 rounded" data-bs-toggle="tooltip" title="{{ __('Document Requested by HR/Company') }}">
+                                                <i class="ti ti-clock me-1"></i> {{ __('Doc Requested') }}
+                                            </span>
+                                        @elseif ($travelExpense->documents->count() > 0)
+                                            <span class="badge bg-success p-2 px-3 rounded">
+                                                <i class="ti ti-paperclip me-1"></i> {{ $travelExpense->documents->count() }} {{ __('Files') }}
+                                            </span>
+                                        @else
+                                            <span class="badge bg-secondary p-2 px-3 rounded">
+                                                <i class="ti ti-paperclip me-1"></i> 0 {{ __('Files') }}
+                                            </span>
+                                        @endif
                                     </td>
                                     <td class="Action">
                                         <div class="d-flex align-items-center">
+                                            @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR' || \Auth::user()->type == 'super admin')
+                                                @if ($travelExpense->document_requested == 1)
+                                                    <div class="action-btn bg-danger me-2">
+                                                        {!! Form::open(['method' => 'POST', 'route' => ['travel-expenses.cancel-document-request', $travelExpense->id], 'id' => 'cancel-req-doc-form-' . $travelExpense->id]) !!}
+                                                        <a href="javascript:void(0)"
+                                                            class="mx-3 btn btn-sm align-items-center bs-pass-para"
+                                                            data-bs-toggle="tooltip"
+                                                            title="{{ __('Cancel Document Request') }}"
+                                                            data-original-title="{{ __('Cancel Document Request') }}"
+                                                            data-confirm="{{ __('Cancel Request?') . '|' . __('Do you want to cancel the document request for this employee?') }}"
+                                                            data-confirm-yes="document.getElementById('cancel-req-doc-form-{{ $travelExpense->id }}').submit();">
+                                                            <i class="ti ti-file-off text-white"></i>
+                                                        </a>
+                                                        {!! Form::close() !!}
+                                                    </div>
+                                                @else
+                                                    <div class="action-btn bg-dark me-2">
+                                                        {!! Form::open(['method' => 'POST', 'route' => ['travel-expenses.request-document', $travelExpense->id], 'id' => 'req-doc-form-' . $travelExpense->id]) !!}
+                                                        <a href="javascript:void(0)"
+                                                            class="mx-3 btn btn-sm align-items-center bs-pass-para"
+                                                            data-bs-toggle="tooltip"
+                                                            title="{{ __('Call Request Document') }}"
+                                                            data-original-title="{{ __('Call Request Document') }}"
+                                                            data-confirm="{{ __('Request Document?') . '|' . __('Do you want to send a document upload request to the employee?') }}"
+                                                            data-confirm-yes="document.getElementById('req-doc-form-{{ $travelExpense->id }}').submit();">
+                                                            <i class="ti ti-file-upload text-white"></i>
+                                                        </a>
+                                                        {!! Form::close() !!}
+                                                    </div>
+                                                @endif
+                                            @endif
+
+                                            @if (\Auth::user()->type == 'employee' && $travelExpense->document_requested == 1)
+                                                <div class="action-btn bg-primary me-2">
+                                                    <a href="javascript:void(0)"
+                                                        class="mx-3 btn btn-sm align-items-center"
+                                                        data-url="{{ route('travel-expenses.upload-document-modal', $travelExpense->id) }}"
+                                                        data-ajax-popup="true"
+                                                        data-title="{{ __('Upload Bills & Documents') }}"
+                                                        data-size="lg"
+                                                        data-bs-toggle="tooltip"
+                                                        title="{{ __('Upload Document') }}">
+                                                        <i class="ti ti-upload text-white"></i>
+                                                    </a>
+                                                </div>
+                                            @endif
+
                                             @can('Manage Travel Expense')
                                                 <div class="action-btn bg-warning me-2">
                                                     <a href="javascript:void(0)"
