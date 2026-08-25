@@ -1,3 +1,4 @@
+@if(!Auth::check() || Auth::user()->type == 'super admin')
 @php
     $iconPath = \Illuminate\Support\Facades\DB::table('settings')->where('name', 'pwa_icon')->value('value');
     $iconUrl = $iconPath ? asset(app()->environment('local') ? "storage/{$iconPath}" : "public/storage/{$iconPath}") : asset(app()->environment('local') ? 'logo.png' : 'public/logo.png');
@@ -54,15 +55,8 @@
     #install-button:hover { background-color: #4338ca; }
     #install-button img { height: 28px; width: 28px; filter: brightness(0) invert(1); }
     #install-text { font-size: 14px; font-weight: 500; color: #111827; }
-    .grecaptcha-badge {
-        bottom: 85px !important;
-        right: 15px !important;
-        z-index: 10000 !important;
-        transition: all 0.3s ease-in-out;
-    }
     @media (max-width: 640px) {
         #install-prompt { bottom: 10px; right: 10px; padding: 8px 12px; }
-        .grecaptcha-badge { bottom: 75px !important; right: 10px !important; }
     }
 </style>
 
@@ -100,17 +94,6 @@
         if (window.matchMedia("(display-mode: standalone)").matches) {
             installPrompt.style.display = "none";
         }
-
-        // Script to ensure Google reCAPTCHA badge doesn't overlap PWA icon
-        var checkRecaptchaBadge = setInterval(function() {
-            var badge = document.querySelector('.grecaptcha-badge');
-            if (badge) {
-                badge.style.setProperty('bottom', '85px', 'important');
-                badge.style.setProperty('right', '15px', 'important');
-                badge.style.setProperty('z-index', '10000', 'important');
-            }
-        }, 500);
-        setTimeout(function() { clearInterval(checkRecaptchaBadge); }, 15000);
     });
     window.addEventListener("beforeinstallprompt", (e) => {
         e.preventDefault();
@@ -133,3 +116,4 @@
         sessionStorage.setItem("pwa_install_dismissed", "1");
     });
 </script>
+@endif

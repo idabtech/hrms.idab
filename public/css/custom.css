@@ -980,9 +980,9 @@ a > i.ti-plus{
 /* google recapcha  */
 
 .grecaptcha-badge {
-    bottom: 85px !important;
-    right: 15px !important;
-    z-index: 10000 !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 .border-grey {
     border: 1px solid #CBCBCB !important;
