@@ -46,6 +46,7 @@
                                     <div class="btn-group btn-group-sm w-100">
                                         <a href="{{ $fileUrl }}" target="_blank" class="btn btn-outline-info p-1" title="{{ __('View') }}"><i class="ti ti-eye"></i></a>
                                         <a href="{{ $fileUrl }}" download="{{ $doc->file_name }}" class="btn btn-outline-success p-1" title="{{ __('Download') }}"><i class="ti ti-download"></i></a>
+                                        <button type="button" class="btn btn-outline-danger p-1" onclick="deleteTravelDocument({{ $doc->id }})" title="{{ __('Delete') }}"><i class="ti ti-trash"></i></button>
                                     </div>
                                 </div>
                             </div>
@@ -67,3 +68,45 @@
     <input type="submit" value="{{ __('Upload Documents') }}" class="btn btn-primary">
 </div>
 {{ Form::close() }}
+
+<script>
+    window.deleteTravelDocument = function(docId) {
+        if (confirm("{{ __('Are you sure you want to delete this file?') }}")) {
+            $.ajax({
+                url: "{{ url('travel-expenses/document') }}/" + docId,
+                type: 'DELETE',
+                data: {
+                    "_token": "{{ csrf_token() }}"
+                },
+                success: function(response) {
+                    if(response.success) {
+                        $('#doc-row-' + docId).remove();
+                        $('.document-item-' + docId).remove();
+                        if (typeof show_toastr === 'function') {
+                            show_toastr('Success', response.message, 'success');
+                        } else {
+                            alert(response.message);
+                        }
+                    } else {
+                        if (typeof show_toastr === 'function') {
+                            show_toastr('Error', response.message, 'error');
+                        } else {
+                            alert(response.message);
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    var errorMsg = "{{ __('Failed to delete document.') }}";
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    if (typeof show_toastr === 'function') {
+                        show_toastr('Error', errorMsg, 'error');
+                    } else {
+                        alert(errorMsg);
+                    }
+                }
+            });
+        }
+    };
+</script>

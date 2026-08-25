@@ -279,27 +279,37 @@ class TravelExpenseController extends Controller
 
     public function destroyDocument($id)
     {
-        if (Auth::user()->can('Edit Travel Expense')) {
-            $document = TravelExpenseDocument::find($id);
+        $document = TravelExpenseDocument::with('travelExpense')->find($id);
 
-            if ($document) {
-                $dir = 'travel_expenses/';
-                $filePath = storage_path('app/public/' . $dir . $document->file_path);
-                if (File::exists($filePath)) {
-                    File::delete($filePath);
-                }
-                $document->delete();
+        if (!$document) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Document not found.')
+            ], 404);
+        }
 
-                return response()->json([
-                    'success' => true,
-                    'message' => __('Document deleted successfully.')
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => __('Document not found.')
-                ], 404);
+        $canDelete = false;
+        if (Auth::user()->can('Edit Travel Expense') || Auth::user()->can('Manage Travel Expense') || Auth::user()->type == 'company' || Auth::user()->type == 'super admin') {
+            $canDelete = true;
+        } else if (Auth::user()->type == 'employee') {
+            $emp = Employee::where('user_id', Auth::user()->id)->first();
+            if ($emp && $document->travelExpense && $document->travelExpense->employee_id == $emp->id) {
+                $canDelete = true;
             }
+        }
+
+        if ($canDelete) {
+            $dir = 'travel_expenses/';
+            $filePath = storage_path('app/public/' . $dir . $document->file_path);
+            if (File::exists($filePath)) {
+                File::delete($filePath);
+            }
+            $document->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => __('Document deleted successfully.')
+            ]);
         } else {
             return response()->json([
                 'success' => false,
