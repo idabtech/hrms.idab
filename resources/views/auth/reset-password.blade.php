@@ -5,7 +5,7 @@
 @section('content')
     <div class="card-body">
         <div>
-            <h2 class="mb-3 f-w-600">{{ __('Reset Password') }}</h2>
+            <h2 class="mb-4 text-center">{{ __('Reset Password') }}</h2>
             @if (session('status'))
                 <div class="alert alert-primary">
                     {{ session('status') }}
@@ -47,8 +47,8 @@
                         </span>
                     @enderror
                 </div>
-                <div class="d-grid">
-                    <button class="btn btn-primary mt-2" type="submit">
+                <div class="d-grid mt-4">
+                    <button class="btn btn-primary" type="submit">
                         {{ __('Reset Password') }}
                     </button>
                 </div>

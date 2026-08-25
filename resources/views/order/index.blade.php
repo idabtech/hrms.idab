@@ -65,15 +65,19 @@
                                         </td>
                                         <td>{{ $order->payment_type }}</td>
                                         <td class="Id text-center">
+                                            <a href="javascript:void(0)" data-url="{{ route('plan.order.invoice', $order->id) }}"
+                                                data-size="lg" data-ajax-popup="true" data-title="{{ __('Plan Order Invoice') }}"
+                                                class="btn btn-sm btn-primary shadow-sm me-1" data-bs-toggle="tooltip" title="{{ __('View & Download Invoice') }}">
+                                                <i class="ti ti-file-invoice me-1"></i> {{ __('Invoice') }}
+                                            </a>
+
                                             @if (!empty($order->receipt && !empty($order->payment_type == 'STRIPE')))
-                                                <a href="{{ $order->receipt }}" class="btn  btn-outline-primary" data-bs-toggle="tooltip" title="{{ __('Show Invoice') }}"
-                                                    target="_blank"><i class="fas fa-file-invoice"></i></a>
+                                                <a href="{{ $order->receipt }}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="{{ __('Show Stripe Invoice') }}"
+                                                    target="_blank"><i class="ti ti-external-link"></i></a>
                                             @elseif(!empty($order->receipt && !empty($order->payment_type == 'Bank Transfer')))
                                                 <a href="{{ $file . '' . $order->receipt }}"
-                                                    class="btn btn-outline-primary" target="_blank" data-bs-toggle="tooltip" title="{{ __('Show Invoice') }}"><i
-                                                        class="fas fa-file-invoice"></i></a>
-                                            @else
-                                                <p>-</p>
+                                                    class="btn btn-sm btn-outline-secondary" target="_blank" data-bs-toggle="tooltip" title="{{ __('Show Bank Slip') }}"><i
+                                                        class="ti ti-paperclip"></i></a>
                                             @endif
                                         </td>
                                         <td class="Action">

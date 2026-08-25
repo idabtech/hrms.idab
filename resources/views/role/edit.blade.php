@@ -83,6 +83,7 @@
                                     'Employee',
                                     'Set Salary',
                                     'Pay Slip',
+                                    'Travel Expense',
                                     'TimeSheet',
                                     'Leave',
                                     'Leave Document',

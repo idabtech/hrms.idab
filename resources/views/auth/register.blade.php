@@ -69,7 +69,7 @@
         @endif
         {{ Form::open(['route' => 'register', 'method' => 'post', 'id' => 'loginForm', 'class' => 'needs-validation', 'novalidate']) }}
         <div class="">
-            <h2 class="mb-3 f-w-600">{{ __('Register') }}</h2>
+            <h2 class="mb-4 text-center">{{ __('Register') }}</h2>
         </div>
         <div class="custom-login-form">
             <div class="form-group mb-3">
@@ -135,41 +135,15 @@
                 @endif
             @endif
 
-            {{-- @if (count($keyArray) > 0)
-                <div class="form-check custom-checkbox">
-                    <input type="checkbox" class="form-check-input" id="termsCheckbox" name="terms_condition_check"
-                        required>
-                    <label class="form-check-label text-sm" for="termsCheckbox">{{ __('I agree to the ') }}
-                        @if (is_array(json_decode($setting['menubar_page'])) || is_object(json_decode($setting['menubar_page'])))
-                            @foreach (json_decode($setting['menubar_page']) as $key => $value)
-                                @if (in_array($value->menubar_page_name, ['Terms and Conditions']) && isset($value->template_name))
-                                    <a href="{{ $value->template_name == 'page_content' ? route('custom.page', $value->page_slug) : $value->page_url }}"
-                                        target="_blank">{{ $value->menubar_page_name }}</a>
-                                @endif
-                            @endforeach
-                            @if (count($keyArray) == 2)
-                                {{ __('and the ') }}
-                            @endif
-                            @foreach (json_decode($setting['menubar_page']) as $key => $value)
-                                @if (in_array($value->menubar_page_name, ['Privacy Policy']) && isset($value->template_name))
-                                    <a href="{{ $value->template_name == 'page_content' ? route('custom.page', $value->page_slug) : $value->page_url }}"
-                                        target="_blank">{{ $value->menubar_page_name }}</a>
-                                @endif
-                            @endforeach
-                        @endif
-                    </label>
-                </div>
-            @endif --}}
-
-            <div class="d-grid">
+            <div class="d-grid mt-4">
                 <input type="hidden" name="ref_code" value="{{ $ref }}">
                 <input type="hidden" name="plan_id" value="{{ $plan_id }}">
-                <button class="btn btn-primary mt-2" type="submit">
+                <button class="btn btn-primary" type="submit">
                     {{ __('Register') }}
                 </button>
             </div>
             </form>
-            <p class="my-4 text-center">{{ __('Already have an account?') }}
+            <p class="my-4 text-center auth-switch-text">{{ __('Already have an account?') }}
                 <a href="{{ route('login', $lang) }}" tabindex="0">{{ __('Login') }}</a>
             </p>
         </div>

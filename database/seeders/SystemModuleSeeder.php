@@ -58,6 +58,7 @@ class SystemModuleSeeder extends Seeder
             'TimeSheet' => 'ti ti-clock-hour-4',
             'Set Salary' => 'ti ti-cash',
             'Pay Slip' => 'ti ti-file-text',
+            'Travel Expense' => 'ti ti-plane-departure',
             'Leave' => 'ti ti-calendar-minus',
             'Leave Document' => 'ti ti-file-certificate',
             'Report' => 'ti ti-chart-bar',
