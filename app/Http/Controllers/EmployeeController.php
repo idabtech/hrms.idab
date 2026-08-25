@@ -171,7 +171,13 @@ class EmployeeController extends Controller
                     ]
                 );
                 $user->save();
-                $user->assignRole('Employee');
+                $compEmpRole = \Spatie\Permission\Models\Role::where('created_by', Auth::user()->creatorId())
+                    ->where(function($q) { $q->where('name', 'employee')->orWhere('name', 'Employee'); })->first();
+                if ($compEmpRole) {
+                    $user->syncRoles([$compEmpRole->id]);
+                } else {
+                    $user->assignRole('Employee');
+                }
             } else {
                 return redirect()->back()->with('error', __('Your employee limit is over, Please upgrade plan.'));
             }
@@ -803,7 +809,13 @@ class EmployeeController extends Controller
                     $user->lang = 'en';
                     $user->created_by = Auth::user()->creatorId();
                     $user->save();
-                    $user->assignRole('Employee');
+                    $compEmpRole = \Spatie\Permission\Models\Role::where('created_by', Auth::user()->creatorId())
+                        ->where(function($q) { $q->where('name', 'employee')->orWhere('name', 'Employee'); })->first();
+                    if ($compEmpRole) {
+                        $user->syncRoles([$compEmpRole->id]);
+                    } else {
+                        $user->assignRole('Employee');
+                    }
 
                     $employee = new Employee();
                     $employee->employee_id = $this->employeeNumber();

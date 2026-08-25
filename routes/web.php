@@ -1115,6 +1115,30 @@ Route::group(['middleware' => ['verified']], function () {
             'XSS',
         ]
     );
+    Route::post('travel-expenses/{id}/request-document', [\App\Http\Controllers\TravelExpenseController::class, 'requestDocument'])->name('travel-expenses.request-document')->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+    Route::get('travel-expenses/{id}/upload-document', [\App\Http\Controllers\TravelExpenseController::class, 'uploadDocumentModal'])->name('travel-expenses.upload-document-modal')->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+    Route::post('travel-expenses/{id}/upload-document', [\App\Http\Controllers\TravelExpenseController::class, 'storeRequestedDocument'])->name('travel-expenses.store-requested-document')->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+    Route::post('travel-expenses/{id}/cancel-document-request', [\App\Http\Controllers\TravelExpenseController::class, 'cancelDocumentRequest'])->name('travel-expenses.cancel-document-request')->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
     Route::resource('promotion', PromotionController::class)->middleware(
         [
             'auth',

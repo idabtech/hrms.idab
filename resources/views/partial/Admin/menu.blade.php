@@ -170,7 +170,7 @@
             <!-- employee-->
 
             <!-- payroll-->
-            @if (Gate::check('Manage Set Salary') || (Gate::check('Manage Pay Slip') && \Auth::user()->type != 'employee') || Gate::check('Manage Travel Expense'))
+            @if (\Auth::user()->type != 'employee' && (Gate::check('Manage Set Salary') || Gate::check('Manage Pay Slip') || Gate::check('Manage Travel Expense')))
                 <li
                     class="dash-item dash-hasmenu  {{ in_array(Request::segment(1), ['setsalary', 'travel-expenses']) ? 'dash-trigger active' : '' }}">
                     <a href="javascript:void(0)" class="dash-link">
