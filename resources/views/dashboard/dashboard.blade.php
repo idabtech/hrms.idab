@@ -71,8 +71,69 @@
                         </div>
                     </div>
                     <a href="{{ route('leave.index') }}" class="btn btn-warning text-dark font-weight-bold shadow-sm">
-                        <i class="ti ti-file-upload me-1"></i> {{ __('Please Submit Document') }}
+                        <i class="ti ti-upload me-1"></i> {{ __('Upload Leave Document') }}
                     </a>
+                </div>
+            </div>
+        @endif
+
+        {{-- Travel Expense Document Request Alert Banner for Employee & Company --}}
+        @php
+            $dashUserType = \Auth::user()->type;
+            $dashEmpRecordForTravel = \App\Models\Employee::where('user_id', \Auth::id())->first();
+            
+            if ($dashUserType == 'employee') {
+                $pendingTravelDocRequests = \App\Models\TravelExpense::where('employee_id', $dashEmpRecordForTravel ? $dashEmpRecordForTravel->id : 0)
+                    ->where('document_requested', 1)
+                    ->get();
+            } else {
+                $pendingTravelDocRequests = \App\Models\TravelExpense::where('created_by', \Auth::user()->creatorId())
+                    ->where('document_requested', 1)
+                    ->with('employee')
+                    ->get();
+            }
+        @endphp
+
+        @if ($pendingTravelDocRequests && $pendingTravelDocRequests->count() > 0)
+            <div class="col-12 mb-3">
+                <div class="alert alert-warning d-flex align-items-center justify-content-between p-3 rounded" style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; box-shadow: 0 2px 6px rgba(255, 193, 7, 0.25);">
+                    <div class="d-flex align-items-center">
+                        <i class="ti ti-file-upload fs-1 me-3 text-warning"></i>
+                        <div>
+                            <h6 class="alert-heading mb-1 text-dark font-weight-bold" style="font-size: 1rem;">
+                                <i class="ti ti-bell-ringing text-warning me-1"></i>
+                                @if ($dashUserType == 'employee')
+                                    {{ __('Travel Expense / Voucher Document Requested') }} ({{ $pendingTravelDocRequests->count() }})
+                                @else
+                                    {{ __('Pending Travel Expense Document Requests') }} ({{ $pendingTravelDocRequests->count() }})
+                                @endif
+                            </h6>
+                            <span class="fw-bold" style="font-size: 0.92rem; color: #856404;">
+                                @if ($dashUserType == 'employee')
+                                    {{ __('HR/Company has requested bill/document uploads for your travel expense(s):') }}
+                                    <strong>
+                                        {{ implode(', ', $pendingTravelDocRequests->pluck('title')->toArray()) }}
+                                    </strong>
+                                @else
+                                    {{ __('Document requests pending for employees:') }}
+                                    <strong>
+                                        {{ implode(', ', $pendingTravelDocRequests->map(function($t){ return ($t->employee ? $t->employee->name : 'Emp') . ' (' . $t->title . ')'; })->toArray()) }}
+                                    </strong>
+                                @endif
+                            </span>
+                        </div>
+                    </div>
+                    <div>
+                        @if ($dashUserType == 'employee')
+                            <a href="{{ route('travel-expenses.index') }}" class="btn btn-warning text-dark font-weight-bold shadow-sm">
+                                <i class="ti ti-upload me-1"></i> {{ __('Upload Documents Now') }}
+                            </a>
+                        @else
+                            <a href="{{ route('travel-expenses.index') }}" class="btn btn-dark text-white font-weight-bold shadow-sm">
+                                <i class="ti ti-eye me-1"></i> {{ __('View Requests') }}
+                            </a>
+                        @endif
+                    </div>
                 </div>
             </div>
         @endif

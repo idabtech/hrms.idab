@@ -143,6 +143,18 @@ class RoleController extends Controller
                 $role->givePermissionTo($p);
             }
 
+            app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+
+            // Dynamically sync users of this company whose type matches the updated role
+            $users = \App\Models\User::where('created_by', Auth::user()->creatorId())
+                ->where(function($q) use ($role) {
+                    $q->where('type', strtolower($role->name))->orWhere('type', $role->name);
+                })->get();
+
+            foreach ($users as $u) {
+                $u->syncRoles([$role->id]);
+            }
+
             return redirect()->route('roles.index')->with('success', 'Role successfully updated.');
         } else {
             return redirect()->back()->with('error', 'Permission denied.');

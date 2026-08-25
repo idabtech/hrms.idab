@@ -307,4 +307,101 @@ class TravelExpenseController extends Controller
             ], 401);
         }
     }
+
+    public function requestDocument($id)
+    {
+        if (Auth::user()->type == 'company' || Auth::user()->type == 'hr' || Auth::user()->type == 'HR' || Auth::user()->type == 'super admin') {
+            $travelExpense = TravelExpense::find($id);
+            if ($travelExpense) {
+                $travelExpense->document_requested = 1;
+                $travelExpense->document_requested_at = now();
+                $travelExpense->save();
+
+                return redirect()->back()->with('success', __('Document request sent to employee successfully.'));
+            }
+            return redirect()->back()->with('error', __('Travel Expense / Voucher not found.'));
+        }
+        return redirect()->back()->with('error', __('Permission denied.'));
+    }
+
+    public function uploadDocumentModal($id)
+    {
+        $travelExpense = TravelExpense::with(['employee', 'documents'])->find($id);
+
+        if ($travelExpense) {
+            if (Auth::user()->type == 'employee') {
+                $emp = Employee::where('user_id', Auth::user()->id)->first();
+                if (!$emp || $travelExpense->employee_id != $emp->id) {
+                    return response()->json(['error' => __('Permission denied.')], 401);
+                }
+            }
+
+            return view('travel_expense.upload_document', compact('travelExpense'));
+        }
+
+        return response()->json(['error' => __('Record not found.')], 404);
+    }
+
+    public function storeRequestedDocument(Request $request, $id)
+    {
+        $travelExpense = TravelExpense::find($id);
+
+        if (!$travelExpense) {
+            return redirect()->back()->with('error', __('Travel Expense / Voucher not found.'));
+        }
+
+        if (Auth::user()->type == 'employee') {
+            $emp = Employee::where('user_id', Auth::user()->id)->first();
+            if (!$emp || $travelExpense->employee_id != $emp->id) {
+                return redirect()->back()->with('error', __('Permission denied.'));
+            }
+        }
+
+        $request->validate([
+            'documents' => 'required|array',
+            'documents.*' => 'file|max:20480',
+        ]);
+
+        if ($request->hasFile('documents')) {
+            $dir = 'travel_expenses/';
+            foreach ($request->file('documents') as $file) {
+                $fileName = time() . '_' . rand(1000, 9999) . '_' . $file->getClientOriginalName();
+                $uploadRequest = new Request();
+                $uploadRequest->files->set('file', $file);
+
+                $path = Utility::upload_file($uploadRequest, 'file', $fileName, $dir, []);
+                if ($path['flag'] == 1) {
+                    $category = $travelExpense->type == 'travel' ? 'bill' : 'document';
+                    TravelExpenseDocument::create([
+                        'travel_expense_id' => $travelExpense->id,
+                        'category' => $category,
+                        'file_name' => $file->getClientOriginalName(),
+                        'file_path' => $path['url'],
+                    ]);
+                }
+            }
+
+            $travelExpense->document_requested = 0;
+            $travelExpense->save();
+
+            return redirect()->route('travel-expenses.index')->with('success', __('Documents uploaded successfully.'));
+        }
+
+        return redirect()->back()->with('error', __('Please select files to upload.'));
+    }
+
+    public function cancelDocumentRequest($id)
+    {
+        if (Auth::user()->type == 'company' || Auth::user()->type == 'hr' || Auth::user()->type == 'HR' || Auth::user()->type == 'super admin') {
+            $travelExpense = TravelExpense::find($id);
+            if ($travelExpense) {
+                $travelExpense->document_requested = 0;
+                $travelExpense->save();
+
+                return redirect()->back()->with('success', __('Document request canceled successfully.'));
+            }
+            return redirect()->back()->with('error', __('Travel Expense / Voucher not found.'));
+        }
+        return redirect()->back()->with('error', __('Permission denied.'));
+    }
 }
