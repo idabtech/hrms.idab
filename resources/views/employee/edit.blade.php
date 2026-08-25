@@ -3,22 +3,98 @@
         float: right;
     }
 
-    /* Document preview styles */
-    .doc-preview-area {
-        min-height: 30px;
+    /* Uniform Document Gallery Styles */
+    .doc-gallery-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        align-items: center;
+        margin-top: 10px;
     }
-    .doc-preview-img {
-        border-radius: 6px;
-        border: 1px solid #dee2e6;
+    .doc-card-item {
+        position: relative;
+        width: 120px;
+        height: 85px;
+        border-radius: 10px;
+        border: 1.5px solid #e2e8f0;
+        background: #ffffff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        overflow: visible !important;
+        transition: all 0.2s ease-in-out;
     }
-    .doc-file-icon-link {
-        text-decoration: none;
+    .doc-card-item:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        border-color: #cbd5e1;
     }
-    .doc-file-icon {
+    .doc-card-img-wrapper {
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8fafc;
+    }
+    .doc-card-img-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.25s ease;
+    }
+    .doc-card-item:hover .doc-card-img-wrapper img {
+        transform: scale(1.06);
+    }
+    .doc-card-remove-btn {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 22px;
+        height: 22px;
+        background: #ef4444;
+        color: #ffffff;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        z-index: 10;
         line-height: 1;
+        padding: 0;
+        transition: transform 0.15s ease, background-color 0.15s ease;
     }
-    .doc-file-icon-link:hover .doc-file-icon {
-        opacity: 0.8;
+    .doc-card-remove-btn:hover {
+        background: #dc2626;
+        transform: scale(1.15);
+    }
+    .doc-card-file-wrapper {
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 6px;
+        text-align: center;
+        background: #f1f5f9;
+    }
+    .doc-card-file-icon {
+        font-size: 1.6rem;
+        margin-bottom: 2px;
+    }
+    .doc-card-file-name {
+        font-size: 0.68rem;
+        color: #334155;
+        font-weight: 500;
+        max-width: 100px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 </style>
 @extends('layouts.admin')
@@ -446,50 +522,12 @@
                             @php
                                 $logo        = \App\Models\Utility::get_file('uploads/document');
                                 $docType     = $document->document_type ?? 'file';
-                                $rawValue    = $employeedoc[$document->id] ?? null;
                                 $docRecord   = $employeeDocuments[$document->id] ?? null;
                                 $isRequested = $docRecord ? (int)$docRecord->is_requested : 0;
-
-                                // Safe decode: supports old plain-path records, plain-text records, and new JSON records
-                                $parsed    = null;
-                                if ($rawValue && $rawValue[0] === '{') {
-                                    $decoded = json_decode($rawValue, true);
-                                    if (json_last_error() === JSON_ERROR_NONE) {
-                                        $parsed = $decoded;
-                                    }
-                                }
-                                if ($docType === 'text') {
-                                    $textValue = $parsed['text'] ?? $rawValue;
-                                    $fileValue = null;
-                                } elseif ($docType === 'both') {
-                                    $textValue = $parsed['text'] ?? null;
-                                    // Old records for 'both' type are plain file paths
-                                    $fileValue = $parsed['file'] ?? ($parsed === null ? $rawValue : null);
-                                } else {
-                                    // 'file' type — always a plain path (old or new)
-                                    $textValue = null;
-                                    $fileValue = $parsed['file'] ?? $rawValue;
-                                }
-
-                                $ext         = $fileValue ? strtolower(pathinfo($fileValue, PATHINFO_EXTENSION)) : null;
-                                $isImage     = in_array($ext, ['jpg','jpeg','png','gif','webp','bmp','svg']);
+                                $parsed      = $docRecord ? $docRecord->getParsedValue($docType) : ['text' => null, 'file' => null, 'files' => []];
+                                $textValue   = $parsed['text'];
+                                $filesList   = $parsed['files'];
                                 $previewId   = 'prev_' . $document->id . '_' . $key;
-                                $fileUrl     = $fileValue ? $logo . '/' . $fileValue : null;
-
-                                $fileIconMap = [
-                                    'pdf'  => ['icon' => 'ti ti-file-type-pdf',  'color' => '#e74c3c', 'label' => 'PDF'],
-                                    'doc'  => ['icon' => 'ti ti-file-type-doc',  'color' => '#2980b9', 'label' => 'DOC'],
-                                    'docx' => ['icon' => 'ti ti-file-type-docx', 'color' => '#2980b9', 'label' => 'DOCX'],
-                                    'xls'  => ['icon' => 'ti ti-file-type-xls',  'color' => '#27ae60', 'label' => 'XLS'],
-                                    'xlsx' => ['icon' => 'ti ti-file-type-xlsx', 'color' => '#27ae60', 'label' => 'XLSX'],
-                                    'csv'  => ['icon' => 'ti ti-file-spreadsheet','color'=> '#27ae60', 'label' => 'CSV'],
-                                    'txt'  => ['icon' => 'ti ti-file-text',       'color' => '#7f8c8d', 'label' => 'TXT'],
-                                    'zip'  => ['icon' => 'ti ti-file-zip',        'color' => '#8e44ad', 'label' => 'ZIP'],
-                                    'rar'  => ['icon' => 'ti ti-file-zip',        'color' => '#8e44ad', 'label' => 'RAR'],
-                                ];
-                                $iconInfo = $ext && isset($fileIconMap[$ext])
-                                    ? $fileIconMap[$ext]
-                                    : ['icon' => 'ti ti-file', 'color' => '#95a5a6', 'label' => strtoupper($ext ?? 'FILE')];
                             @endphp
                             <div class="row mb-3 pb-2 border-bottom">
                                 <div class="form-group col-12">
@@ -506,14 +544,14 @@
                                         <button type="button" 
                                                 class="btn btn-sm {{ $isRequested ? 'btn-warning' : 'btn-primary' }} request-doc-btn" 
                                                 data-doc-id="{{ $document->id }}" 
-                                                data-emp-id="{{ $employee->employee_id }}" 
+                                                data-emp-id="{{ $employee->id }}" 
                                                 data-is-requested="{{ $isRequested }}">
                                             <i class="ti ti-send me-1"></i><span class="btn-text">{{ $isRequested ? __('Requested') : __('Request Document') }}</span>
                                         </button>
                                     </div>
                                     <input type="hidden" name="emp_doc_id[{{ $document->id }}]" value="{{ $document->id }}">
 
-                                    {{-- TEXT field — shown for 'text' and 'both' types --}}
+                                    {{-- TEXT field --}}
                                     @if ($docType === 'text' || $docType === 'both')
                                         <input type="text"
                                             class="form-control mb-2"
@@ -523,47 +561,52 @@
                                             placeholder="{{ __('Enter') }} {{ $document->name }}">
                                     @endif
 
-                                    {{-- FILE field — shown for 'file' and 'both' types --}}
+                                    {{-- FILE field (multiple uploads allowed) --}}
                                     @if ($docType === 'file' || $docType === 'both')
-                                        <div class="choose-files">
-                                            <label for="document[{{ $document->id }}]">
-                                                <div class="bg-primary document">
+                                        <div class="choose-files mb-2">
+                                            <label for="document_{{ $document->id }}" class="mb-0">
+                                                <div class="bg-primary document btn btn-primary btn-sm py-1 px-3">
                                                     <i class="ti ti-upload px-1"></i>{{ __('Choose file here') }}
                                                 </div>
-                                                {{-- No required on hidden file inputs — browser can't focus hidden fields --}}
                                                 <input type="file"
-                                                    class="form-control file d-none @error('document') is-invalid @enderror"
-                                                    name="document[{{ $document->id }}]"
-                                                    id="document[{{ $document->id }}]"
-                                                    data-filename="{{ $document->id . '_filename' }}"
+                                                    class="form-control file d-none"
+                                                    name="document[{{ $document->id }}][]"
+                                                    id="document_{{ $document->id }}"
                                                     data-preview-id="{{ $previewId }}"
+                                                    multiple
                                                     onchange="handleDocPreview(this)">
                                             </label>
+                                        </div>
 
-                                            {{-- Preview area: show existing file if already uploaded --}}
-                                            <div id="{{ $previewId }}" class="doc-preview-area mt-2">
-                                                @if ($fileValue)
-                                                    @if ($isImage)
-                                                        <a href="{{ $fileUrl }}" target="_blank">
-                                                            <img src="{{ $fileUrl }}"
-                                                                 class="img-thumbnail doc-preview-img"
-                                                                 style="max-height:80px; max-width:120px; object-fit:cover;"
-                                                                 alt="{{ $document->name }}">
-                                                        </a>
-                                                    @else
-                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                           class="doc-file-icon-link d-inline-flex align-items-center gap-1 text-decoration-none"
-                                                           data-bs-toggle="tooltip" title="{{ $fileValue }}">
-                                                            <i class="{{ $iconInfo['icon'] }} doc-file-icon"
-                                                               style="font-size:2.2rem; color:{{ $iconInfo['color'] }};"></i>
-                                                            <span class="badge"
-                                                                  style="background:{{ $iconInfo['color'] }}; font-size:0.7rem;">
-                                                                {{ $iconInfo['label'] }}
-                                                            </span>
-                                                        </a>
+                                        {{-- Gallery Preview Area --}}
+                                        <div id="{{ $previewId }}" class="doc-gallery-grid">
+                                            @if (!empty($filesList))
+                                                @foreach ($filesList as $fIdx => $fName)
+                                                    @php
+                                                        $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
+                                                        $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
+                                                        $fUrl = $logo . '/' . $fName;
+                                                        $fExists = file_exists(storage_path('app/public/uploads/document/' . $fName)) || file_exists(public_path('uploads/document/' . $fName));
+                                                    @endphp
+                                                    @if ($fExists)
+                                                        <div class="doc-card-item">
+                                                            <button type="button" class="doc-card-remove-btn" title="{{ __('Remove file') }}" onclick="deleteDocFile({{ $employee->id }}, {{ $document->id }}, '{{ $fName }}', this)">
+                                                                &times;
+                                                            </button>
+                                                            @if ($fIsImg)
+                                                                <a href="{{ $fUrl }}" target="_blank" class="doc-card-img-wrapper" title="{{ $fName }}">
+                                                                    <img src="{{ $fUrl }}" alt="{{ $document->name }}">
+                                                                </a>
+                                                            @else
+                                                                <a href="{{ $fUrl }}" target="_blank" class="doc-card-file-wrapper text-decoration-none" title="{{ $fName }}">
+                                                                    <i class="ti ti-file-description doc-card-file-icon text-primary"></i>
+                                                                    <span class="doc-card-file-name">{{ $fName }}</span>
+                                                                </a>
+                                                            @endif
+                                                        </div>
                                                     @endif
-                                                @endif
-                                            </div>
+                                                @endforeach
+                                            @endif
                                         </div>
                                     @endif
                                 </div>
@@ -627,46 +670,19 @@
                                 <div class="card-body">
                                     <div class="row">
                                         @php
-                                        $employeedoc = $employee
-                                        ->documents()
-                                        ->pluck('document_value', 'document_id');
-                                        $logo = \App\Models\Utility::get_file('uploads/document/');
-                                        $hasAnyRequested = false;
+                                         $logo = \App\Models\Utility::get_file('uploads/document/');
+                                         $hasAnyRequested = false;
                                         @endphp
                                         @foreach ($documents as $key => $document)
                                         @php
                                             $docType     = $document->document_type ?? 'file';
-                                            $rawValue    = $employeedoc[$document->id] ?? null;
                                             $docRecord   = $employeeDocuments[$document->id] ?? null;
                                             $isRequested = $docRecord ? (int)$docRecord->is_requested : 0;
                                             if ($isRequested) { $hasAnyRequested = true; }
-                                            $parsed      = null;
-                                            if ($rawValue && $rawValue[0] === '{') {
-                                                $dec = json_decode($rawValue, true);
-                                                if (json_last_error() === JSON_ERROR_NONE) { $parsed = $dec; }
-                                            }
-                                            $textValue   = $docType === 'text'  ? ($parsed['text'] ?? $rawValue) : ($parsed['text'] ?? null);
-                                            $fileValue   = $docType === 'file'  ? ($parsed['file'] ?? $rawValue) : ($parsed['file'] ?? ($parsed === null && $docType === 'both' ? $rawValue : null));
-
-                                            $ext         = $fileValue ? strtolower(pathinfo($fileValue, PATHINFO_EXTENSION)) : null;
-                                            $isImage     = in_array($ext, ['jpg','jpeg','png','gif','webp','bmp','svg']);
+                                            $parsed      = $docRecord ? $docRecord->getParsedValue($docType) : ['text' => null, 'file' => null, 'files' => []];
+                                            $textValue   = $parsed['text'];
+                                            $filesList   = $parsed['files'];
                                             $previewId   = 'emp_prev_' . $document->id . '_' . $key;
-                                            $fileUrl     = $fileValue ? $logo . '/' . $fileValue : null;
-
-                                            $fileIconMap = [
-                                                'pdf'  => ['icon' => 'ti ti-file-type-pdf',  'color' => '#e74c3c', 'label' => 'PDF'],
-                                                'doc'  => ['icon' => 'ti ti-file-type-doc',  'color' => '#2980b9', 'label' => 'DOC'],
-                                                'docx' => ['icon' => 'ti ti-file-type-docx', 'color' => '#2980b9', 'label' => 'DOCX'],
-                                                'xls'  => ['icon' => 'ti ti-file-type-xls',  'color' => '#27ae60', 'label' => 'XLS'],
-                                                'xlsx' => ['icon' => 'ti ti-file-type-xlsx', 'color' => '#27ae60', 'label' => 'XLSX'],
-                                                'csv'  => ['icon' => 'ti ti-file-spreadsheet','color'=> '#27ae60', 'label' => 'CSV'],
-                                                'txt'  => ['icon' => 'ti ti-file-text',       'color' => '#7f8c8d', 'label' => 'TXT'],
-                                                'zip'  => ['icon' => 'ti ti-file-zip',        'color' => '#8e44ad', 'label' => 'ZIP'],
-                                                'rar'  => ['icon' => 'ti ti-file-zip',        'color' => '#8e44ad', 'label' => 'RAR'],
-                                            ];
-                                            $iconInfo = $ext && isset($fileIconMap[$ext])
-                                                ? $fileIconMap[$ext]
-                                                : ['icon' => 'ti ti-file', 'color' => '#95a5a6', 'label' => strtoupper($ext ?? 'FILE')];
                                         @endphp
                                         <div class="col-md-12 mb-3 pb-2 border-bottom">
                                             <div class="form-group">
@@ -695,69 +711,102 @@
                                                     @endif
 
                                                     @if ($docType === 'file' || $docType === 'both')
-                                                        <div class="choose-files">
-                                                            <label for="document[{{ $document->id }}]">
-                                                                <div class="bg-primary document">
+                                                        <div class="choose-files mb-2">
+                                                            <label for="document_{{ $document->id }}" class="mb-0">
+                                                                <div class="bg-primary document btn btn-primary btn-sm py-1 px-3">
                                                                     <i class="ti ti-upload px-1"></i>{{ __('Choose file here') }}
                                                                 </div>
                                                                 <input type="file"
-                                                                    class="form-control file d-none @error('document') is-invalid @enderror"
-                                                                    name="document[{{ $document->id }}]"
-                                                                    id="document[{{ $document->id }}]"
-                                                                    data-filename="{{ $document->id . '_filename' }}"
+                                                                    class="form-control file d-none"
+                                                                    name="document[{{ $document->id }}][]"
+                                                                    id="document_{{ $document->id }}"
                                                                     data-preview-id="{{ $previewId }}"
+                                                                    multiple
                                                                     onchange="handleDocPreview(this)">
                                                             </label>
+                                                        </div>
 
-                                                            <div id="{{ $previewId }}" class="doc-preview-area mt-2">
-                                                                @if ($fileValue)
-                                                                    @if ($isImage)
-                                                                        <a href="{{ $fileUrl }}" target="_blank">
-                                                                            <img src="{{ $fileUrl }}"
-                                                                                 class="img-thumbnail doc-preview-img"
-                                                                                 style="max-height:80px; max-width:120px; object-fit:cover;"
-                                                                                 alt="{{ $document->name }}">
-                                                                        </a>
-                                                                    @else
-                                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                                           class="doc-file-icon-link d-inline-flex align-items-center gap-1 text-decoration-none"
-                                                                           data-bs-toggle="tooltip" title="{{ $fileValue }}">
-                                                                            <i class="{{ $iconInfo['icon'] }} doc-file-icon"
-                                                                               style="font-size:2.2rem; color:{{ $iconInfo['color'] }};"></i>
-                                                                            <span class="badge"
-                                                                                  style="background:{{ $iconInfo['color'] }}; font-size:0.7rem;">
-                                                                                {{ $iconInfo['label'] }}
-                                                                            </span>
-                                                                        </a>
+                                                        <div id="{{ $previewId }}" class="doc-gallery-grid">
+                                                            @if (!empty($filesList))
+                                                                @foreach ($filesList as $fIdx => $fName)
+                                                                    @php
+                                                                        $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
+                                                                        $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
+                                                                        $fUrl = $logo . '/' . $fName;
+                                                                        $fExists = file_exists(storage_path('app/public/uploads/document/' . $fName)) || file_exists(public_path('uploads/document/' . $fName));
+                                                                    @endphp
+                                                                    @if ($fExists)
+                                                                        <div class="doc-card-item">
+                                                                            <button type="button" class="doc-card-remove-btn" title="{{ __('Remove file') }}" onclick="deleteDocFile({{ $employee->id }}, {{ $document->id }}, '{{ $fName }}', this)">
+                                                                                &times;
+                                                                            </button>
+                                                                            @if ($fIsImg)
+                                                                                <a href="{{ $fUrl }}" target="_blank" class="doc-card-img-wrapper" title="{{ $fName }}">
+                                                                                    <img src="{{ $fUrl }}" alt="{{ $document->name }}">
+                                                                                </a>
+                                                                            @else
+                                                                                <a href="{{ $fUrl }}" target="_blank" class="doc-card-file-wrapper text-decoration-none" title="{{ $fName }}">
+                                                                                    <i class="ti ti-file-description doc-card-file-icon text-primary"></i>
+                                                                                    <span class="doc-card-file-name">{{ $fName }}</span>
+                                                                                </a>
+                                                                            @endif
+                                                                        </div>
                                                                     @endif
-                                                                @endif
-                                                            </div>
+                                                                @endforeach
+                                                            @endif
                                                         </div>
                                                     @endif
                                                 @else
-                                                    {{-- Not requested: Show read-only display --}}
-                                                    <div class="info mt-1">
+                                                    {{-- Not requested: Show read-only display gallery --}}
+                                                    <div class="info mt-1 doc-gallery-grid">
                                                         @if ($docType === 'text')
                                                             <span>{{ !empty($textValue) ? $textValue : '-' }}</span>
                                                         @elseif ($docType === 'both')
-                                                            @if ($textValue) <div><span>{{ $textValue }}</span></div> @endif
-                                                            @if ($fileValue)
-                                                                <div><span><a href="{{ $fileUrl }}" target="_blank">{{ $fileValue }}</a></span></div>
+                                                            @if ($textValue) <div class="w-100 mb-1"><span>{{ $textValue }}</span></div> @endif
+                                                            @if (!empty($filesList))
+                                                                @foreach ($filesList as $fName)
+                                                                    @php
+                                                                        $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
+                                                                        $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
+                                                                        $fUrl = $logo . '/' . $fName;
+                                                                    @endphp
+                                                                    <div class="doc-card-item">
+                                                                        @if ($fIsImg)
+                                                                            <a href="{{ $fUrl }}" target="_blank" class="doc-card-img-wrapper" title="{{ $fName }}">
+                                                                                <img src="{{ $fUrl }}" alt="{{ $document->name }}">
+                                                                            </a>
+                                                                        @else
+                                                                            <a href="{{ $fUrl }}" target="_blank" class="doc-card-file-wrapper text-decoration-none" title="{{ $fName }}">
+                                                                                <i class="ti ti-file-description doc-card-file-icon text-primary"></i>
+                                                                                <span class="doc-card-file-name">{{ $fName }}</span>
+                                                                            </a>
+                                                                        @endif
+                                                                    </div>
+                                                                @endforeach
                                                             @elseif (!$textValue)
                                                                 <span>-</span>
                                                             @endif
                                                         @else
-                                                            @if ($fileValue)
-                                                                @if ($isImage)
-                                                                    <a href="{{ $fileUrl }}" target="_blank">
-                                                                        <img src="{{ $fileUrl }}" class="img-thumbnail doc-preview-img" style="max-height:80px; max-width:120px; object-fit:cover;" alt="{{ $document->name }}">
-                                                                    </a>
-                                                                @else
-                                                                    <a href="{{ $fileUrl }}" target="_blank" class="doc-file-icon-link d-inline-flex align-items-center gap-1 text-decoration-none">
-                                                                        <i class="{{ $iconInfo['icon'] }} doc-file-icon" style="font-size:2.2rem; color:{{ $iconInfo['color'] }};"></i>
-                                                                        <span class="badge" style="background:{{ $iconInfo['color'] }}; font-size:0.7rem;">{{ $iconInfo['label'] }}</span>
-                                                                    </a>
-                                                                @endif
+                                                            @if (!empty($filesList))
+                                                                @foreach ($filesList as $fName)
+                                                                    @php
+                                                                        $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
+                                                                        $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
+                                                                        $fUrl = $logo . '/' . $fName;
+                                                                    @endphp
+                                                                    <div class="doc-card-item">
+                                                                        @if ($fIsImg)
+                                                                            <a href="{{ $fUrl }}" target="_blank" class="doc-card-img-wrapper" title="{{ $fName }}">
+                                                                                <img src="{{ $fUrl }}" alt="{{ $document->name }}">
+                                                                            </a>
+                                                                        @else
+                                                                            <a href="{{ $fUrl }}" target="_blank" class="doc-card-file-wrapper text-decoration-none" title="{{ $fName }}">
+                                                                                <i class="ti ti-file-description doc-card-file-icon text-primary"></i>
+                                                                                <span class="doc-card-file-name">{{ $fName }}</span>
+                                                                            </a>
+                                                                        @endif
+                                                                    </div>
+                                                                @endforeach
                                                             @else
                                                                 <span>-</span>
                                                             @endif
@@ -1300,50 +1349,63 @@
             toggleRefreshBreakType();
         });
 
-        // Document preview handler — shows image preview or file-type icon on new file selection
+        // Document preview handler — shows uniform card previews for multiple selected files
         function handleDocPreview(input) {
             var previewId = input.getAttribute('data-preview-id');
             var previewArea = document.getElementById(previewId);
-            if (!input.files || !input.files[0]) return;
+            if (!input.files || !input.files.length) return;
 
-            var file = input.files[0];
-            var fileName = file.name;
-            var ext = fileName.split('.').pop().toLowerCase();
             var imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
 
-            var fileIconMap = {
-                'pdf':  { icon: 'ti ti-file-type-pdf',   color: '#e74c3c', label: 'PDF'  },
-                'doc':  { icon: 'ti ti-file-type-doc',   color: '#2980b9', label: 'DOC'  },
-                'docx': { icon: 'ti ti-file-type-docx',  color: '#2980b9', label: 'DOCX' },
-                'xls':  { icon: 'ti ti-file-type-xls',   color: '#27ae60', label: 'XLS'  },
-                'xlsx': { icon: 'ti ti-file-type-xlsx',  color: '#27ae60', label: 'XLSX' },
-                'csv':  { icon: 'ti ti-file-spreadsheet',color: '#27ae60', label: 'CSV'  },
-                'txt':  { icon: 'ti ti-file-text',       color: '#7f8c8d', label: 'TXT'  },
-                'zip':  { icon: 'ti ti-file-zip',        color: '#8e44ad', label: 'ZIP'  },
-                'rar':  { icon: 'ti ti-file-zip',        color: '#8e44ad', label: 'RAR'  },
-            };
+            for (var i = 0; i < input.files.length; i++) {
+                (function(file) {
+                    var fileName = file.name;
+                    var ext = fileName.split('.').pop().toLowerCase();
 
-            previewArea.innerHTML = '';
+                    var container = document.createElement('div');
+                    container.className = 'doc-card-item new-preview-item';
 
-            if (imageExts.indexOf(ext) !== -1) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    previewArea.innerHTML =
-                        '<img src="' + e.target.result + '" ' +
-                        'class="img-thumbnail doc-preview-img" ' +
-                        'style="max-height:80px; max-width:120px; object-fit:cover;" ' +
-                        'alt="' + fileName + '">';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                var info = fileIconMap[ext] || { icon: 'ti ti-file', color: '#95a5a6', label: ext.toUpperCase() };
-                previewArea.innerHTML =
-                    '<span class="doc-file-icon-link d-inline-flex align-items-center gap-1">' +
-                        '<i class="' + info.icon + ' doc-file-icon" style="font-size:2.2rem; color:' + info.color + ';"></i>' +
-                        '<span class="badge" style="background:' + info.color + '; font-size:0.7rem;">' + info.label + '</span>' +
-                    '</span>' +
-                    '<div class="text-muted small mt-1" style="word-break:break-all; max-width:160px;">' + fileName + '</div>';
+                    if (imageExts.indexOf(ext) !== -1) {
+                        var reader = new FileReader();
+                        reader.onload = function(e) {
+                            container.innerHTML = '<div class="doc-card-img-wrapper"><img src="' + e.target.result + '" alt="' + fileName + '" title="' + fileName + '"></div>';
+                            previewArea.appendChild(container);
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        container.innerHTML = '<div class="doc-card-file-wrapper"><i class="ti ti-file-description doc-card-file-icon text-primary"></i><span class="doc-card-file-name">' + fileName + '</span></div>';
+                        previewArea.appendChild(container);
+                    }
+                })(input.files[i]);
             }
+        }
+
+        // AJAX file deletion handler
+        function deleteDocFile(employeeId, documentId, fileName, btn) {
+            if (!confirm('{{ __("Are you sure you want to remove this file?") }}')) return;
+
+            var $item = $(btn).closest('.doc-card-item');
+            $.ajax({
+                url: "{{ route('employee.delete-document-file') }}",
+                type: 'POST',
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    employee_id: employeeId,
+                    document_id: documentId,
+                    file_name: fileName
+                },
+                success: function(res) {
+                    if (res.success) {
+                        $item.fadeOut(300, function() { $(this).remove(); });
+                        show_toastr('Success', res.message, 'success');
+                    } else {
+                        show_toastr('Error', res.message, 'error');
+                    }
+                },
+                error: function() {
+                    show_toastr('Error', '{{ __("Failed to remove file.") }}', 'error');
+                }
+            });
         }
 
         // Select All leave types checkbox

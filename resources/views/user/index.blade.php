@@ -68,7 +68,7 @@
                     <div class="card border-0 shadow-sm mb-2" style="border-radius: 10px;">
                         <div class="card-body py-3 px-4">
                             <div class="row align-items-center">
-                                <div class="col-md-6 col-sm-8 col-12">
+                                <div class="col-md-6 col-sm-6 col-12">
                                     <div class="input-group">
                                         <span class="input-group-text bg-white border-end-0 text-primary px-3">
                                             <i class="ti ti-search fs-5" id="icon-search-default"></i>
@@ -80,9 +80,16 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div class="col-md-6 col-sm-4 col-12 text-sm-end text-start mt-sm-0 mt-2">
+                                <div class="col-md-6 col-sm-6 col-12 text-sm-end text-start mt-sm-0 mt-2 d-flex align-items-center justify-content-sm-end justify-content-between gap-2">
+                                    <button type="button" id="btn-bulk-delete-companies" onclick="submitCompanyBulkDelete()" class="btn btn-sm btn-danger shadow-sm d-none">
+                                        <i class="ti ti-trash me-1"></i> {{ __('Delete Selected') }} (<span id="bulk-selected-count">0</span>)
+                                    </button>
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input cursor-pointer" type="checkbox" id="select-all-companies-check" onchange="toggleSelectAllCompanies(this)">
+                                        <label class="form-check-label small fw-semibold text-muted cursor-pointer" for="select-all-companies-check">{{ __('Select All') }}</label>
+                                    </div>
                                     <span class="badge bg-light-primary text-primary px-3 py-2.5 fw-semibold fs-7 border" id="grid-search-count-info">
-                                        <i class="ti ti-building me-1"></i> {{ __('Total Companies:') }} {{ count($users) }}
+                                        <i class="ti ti-building me-1"></i> {{ __('Total:') }} {{ count($users) }}
                                     </span>
                                 </div>
                             </div>
@@ -91,18 +98,27 @@
                 </div>
             </div>
 
+            {{-- Hidden Bulk Delete Form --}}
+            <form id="form-bulk-delete-companies" action="{{ route('user.bulk-destroy') }}" method="POST" class="d-none">
+                @csrf
+                <input type="hidden" name="ids" id="bulk-delete-company-ids">
+            </form>
+
             {{-- ═══ 1. GRID VIEW (DEFAULT) ═══ --}}
             <div id="company-grid-view" class="row">
                 @foreach ($users as $user)
                     <div class="col-xxl-3 col-lg-4 col-sm-6 col-12 company-card-item" data-search="{{ strtolower($user->name . ' ' . $user->email) }}">
-                        <div class="card text-center">
+                        <div class="card text-center position-relative">
                             <div class="card-header border-0 pb-0">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h6 class="mb-0">
-                                        <div class="badge bg-primary p-2 px-3 ">
-                                            {{ !empty($user->currentPlan) ? $user->currentPlan->name : '' }}
-                                        </div>
-                                    </h6>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <input type="checkbox" class="form-check-input company-select-checkbox cursor-pointer me-1" value="{{ $user->id }}" onchange="updateCompanySelectionState()">
+                                        <h6 class="mb-0">
+                                            <div class="badge bg-primary p-2 px-3 ">
+                                                {{ !empty($user->currentPlan) ? $user->currentPlan->name : '' }}
+                                            </div>
+                                        </h6>
+                                    </div>
                                 </div>
                                 <div class="card-header-right">
                                     <div class="btn-group card-option">
@@ -259,6 +275,7 @@
                                 <table class="table pc-dt-simple" id="pc-dt-simple">
                                     <thead>
                                         <tr>
+                                            <th width="40px"><input type="checkbox" class="form-check-input cursor-pointer" id="table-select-all-companies" onchange="toggleSelectAllCompanies(this)"></th>
                                             <th>{{ __('Company') }}</th>
                                             <th>{{ __('Email') }}</th>
                                             <th>{{ __('Current Plan') }}</th>
@@ -275,6 +292,7 @@
                                                 $isLoginSecurityOn = ($adminSettings['login_as_company_security'] ?? 'on') === 'on';
                                             @endphp
                                             <tr>
+                                                <td><input type="checkbox" class="form-check-input company-select-checkbox cursor-pointer" value="{{ $user->id }}" onchange="updateCompanySelectionState()"></td>
                                                 <td>
                                                     <div class="d-flex align-items-center">
                                                         <div class="avatar avatar-sm me-2">
@@ -504,6 +522,77 @@
 @endsection
 
 @push('scripts')
+    {{-- Company Bulk Selection & Deletion Script --}}
+    <script>
+        function updateCompanySelectionState() {
+            var selectedIds = [];
+            $('.company-select-checkbox:checked').each(function() {
+                var val = $(this).val();
+                if (selectedIds.indexOf(val) === -1) {
+                    selectedIds.push(val);
+                }
+            });
+
+            $('#bulk-selected-count').text(selectedIds.length);
+            if (selectedIds.length > 0) {
+                $('#btn-bulk-delete-companies').removeClass('d-none');
+            } else {
+                $('#btn-bulk-delete-companies').addClass('d-none');
+            }
+        }
+
+        function toggleSelectAllCompanies(masterCheck) {
+            var isChecked = $(masterCheck).is(':checked');
+            $('.company-select-checkbox').prop('checked', isChecked);
+            $('#select-all-companies-check').prop('checked', isChecked);
+            $('#table-select-all-companies').prop('checked', isChecked);
+            updateCompanySelectionState();
+        }
+
+        function submitCompanyBulkDelete() {
+            var selectedIds = [];
+            $('.company-select-checkbox:checked').each(function() {
+                var val = $(this).val();
+                if (selectedIds.indexOf(val) === -1) {
+                    selectedIds.push(val);
+                }
+            });
+
+            if (selectedIds.length === 0) return;
+
+            var titleText = '{{ __("Are you sure?") }}';
+            var bodyText = '{{ __("Are you sure you want to delete the selected ") }}' + selectedIds.length + ' {{ __("companies? This action cannot be undone and will delete all associated employees and users.") }}';
+
+            if (typeof Swal !== 'undefined') {
+                const swalWithBootstrapButtons = Swal.mixin({
+                    customClass: {
+                        confirmButton: 'btn btn-success mx-2',
+                        cancelButton: 'btn btn-danger mx-2'
+                    },
+                    buttonsStyling: false
+                });
+
+                swalWithBootstrapButtons.fire({
+                    title: titleText,
+                    text: bodyText,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: '{{ __("Yes, Delete All") }}',
+                    cancelButtonText: '{{ __("Cancel") }}',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#bulk-delete-company-ids').val(selectedIds.join(','));
+                        $('#form-bulk-delete-companies').submit();
+                    }
+                });
+            } else if (confirm(bodyText)) {
+                $('#bulk-delete-company-ids').val(selectedIds.join(','));
+                $('#form-bulk-delete-companies').submit();
+            }
+        }
+    </script>
+
     {{-- View Switcher & Live Search Script --}}
     <script>
         function switchCompanyView(view) {

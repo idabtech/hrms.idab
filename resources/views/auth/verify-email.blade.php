@@ -28,6 +28,9 @@
 @endsection
 @section('content')
     <div class="card-body">
+        <div>
+            <h2 class="auth-card-title">{{ __('Verify Email') }}</h2>
+        </div>
         @if (session('status') == 'verification-link-sent')
             <div class="mb-4 font-medium text-sm text-green-600 text-primary">
                 {{ __('A new verification link has been sent to the email address you provided during registration.') }}
@@ -39,16 +42,16 @@
         <div class="custom-login-form">
             <form method="POST" action="{{ route('verification.send') }}">
                 @csrf
-                <div class="d-grid">
-                    <button class="btn btn-primary mt-2" type="submit">
+                <div class="d-grid mb-3">
+                    <button class="btn btn-primary-custom" type="submit">
                         {{ __('Resend Verification Email') }}
                     </button>
                 </div>
             </form>
-            <form method="POST" action="{{ route('logout') }}">
+            <form method="POST" action="{{ route('logout') }}" class="text-center">
                 @csrf
 
-                <button type="submit" class="btn btn-danger btn-sm mt-2">
+                <button type="submit" class="btn btn-link text-muted text-sm">
                     {{ __('Logout') }}
                 </button>
             </form>

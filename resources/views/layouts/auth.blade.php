@@ -86,6 +86,11 @@
     <!-- Favicon icon -->
     <link rel="icon" href="{{ $logo . '/favicon.png' . '?' . time() }}" type="image/x-icon" />
 
+    <!-- Google Fonts: Comfortaa -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <!-- font css -->
     <link rel="stylesheet" href="{{ asset('assets/fonts/tabler-icons.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/fonts/feather.css') }}">
@@ -144,7 +149,7 @@
         <div class="custom-login-inner">
             <header class="dash-header">
                 <nav class="navbar navbar-expand-md default">
-                    <div class="container">
+                    <div class="container-fluid px-2 d-flex align-items-center justify-content-between">
                         <div class="navbar-brand">
                             <a href="javascript:void(0)">
                                 <img src="{{ $logo . '/' . (isset($company_logo) && !empty($company_logo) ? $company_logo . '?' . time() : 'logo_dark.png' . '?' . time()) }}"
@@ -167,8 +172,13 @@
             </header>
             <main class="custom-wrapper">
                 <div class="custom-row">
-                    <div class="card">
-                        @yield('content')
+                    <div class="auth-left-illustration">
+                        <img src="{{ asset('assets/images/login-as-company.svg') }}" class="auth-illustration-img" alt="Welcome Illustration">
+                    </div>
+                    <div class="auth-right-card">
+                        <div class="card">
+                            @yield('content')
+                        </div>
                     </div>
                 </div>
             </main>

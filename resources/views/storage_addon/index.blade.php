@@ -211,6 +211,16 @@
                                                     @endif
                                                 </td>
                                                 <td class="Action">
+                                                    {{-- Invoice View & Download --}}
+                                                    <div class="action-btn bg-info me-2">
+                                                        <a href="javascript:void(0)" data-url="{{ route('storage-addons.order.invoice', $order->id) }}"
+                                                            data-size="lg" data-ajax-popup="true" data-title="{{ __('Storage Addon Invoice') }}"
+                                                            class="mx-3 btn btn-sm align-items-center text-white" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                            title="{{ __('View & Download Invoice') }}">
+                                                            <span class="text-white"><i class="ti ti-file-invoice"></i></span>
+                                                        </a>
+                                                    </div>
+
                                                     @if($order->payment_status === 'Pending' && (\Auth::user()->type === 'super admin' || \Auth::user()->isSuperAdminSideUser()))
                                                         <div class="action-btn bg-success me-2">
                                                             <a href="{{ route('storage-addons.approve-order', $order->id) }}"
@@ -230,8 +240,6 @@
                                                                 <span class="text-white"><i class="ti ti-x"></i></span>
                                                             </a>
                                                         </div>
-                                                    @else
-                                                        -
                                                     @endif
                                                 </td>
                                             </tr>

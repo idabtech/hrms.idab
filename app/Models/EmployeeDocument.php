@@ -16,38 +16,57 @@ class EmployeeDocument extends Model
 
     /**
      * Safely decode document_value.
-     * Old records: plain file path string  → returns ['text' => null, 'file' => 'path/to/file.jpg']
-     * New text-only records: plain string  → returns ['text' => 'some text', 'file' => null]
-     * New both records: JSON string        → returns ['text' => '...', 'file' => '...']
+     * Supports:
+     * - Single file string: 'file.jpg'
+     * - Comma-separated file strings: 'file1.jpg,file2.jpg'
+     * - Text-only string: 'some text'
+     * - JSON object: {"text":"...", "file":"file1.jpg", "files":["file1.jpg","file2.jpg"]}
      *
-     * @param  string|null  $docType  The document_type from the Document model ('file','text','both')
-     * @return array{text: string|null, file: string|null}
+     * @param  string|null  $docType  The document_type from Document model ('file','text','both')
+     * @return array{text: string|null, file: string|null, files: array}
      */
     public function getParsedValue(string $docType = 'file'): array
     {
         $raw = $this->document_value;
 
         if (empty($raw)) {
-            return ['text' => null, 'file' => null];
+            return ['text' => null, 'file' => null, 'files' => []];
         }
 
-        // Try JSON decode first (new 'both' records)
-        if ($raw[0] === '{') {
+        $text  = null;
+        $files = [];
+
+        if ($raw[0] === '{' || $raw[0] === '[') {
             $decoded = json_decode($raw, true);
             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                return [
-                    'text' => $decoded['text'] ?? null,
-                    'file' => $decoded['file'] ?? null,
-                ];
+                $text = $decoded['text'] ?? null;
+
+                if (isset($decoded['files']) && is_array($decoded['files'])) {
+                    $files = array_values(array_filter($decoded['files']));
+                } elseif (isset($decoded['file']) && !empty($decoded['file'])) {
+                    $files = [$decoded['file']];
+                }
             }
         }
 
-        // Plain string — determine meaning from document_type
-        if ($docType === 'text') {
-            return ['text' => $raw, 'file' => null];
+        if (empty($files) && empty($text)) {
+            if ($docType === 'text') {
+                $text = $raw;
+            } else {
+                if (str_contains($raw, ',')) {
+                    $files = array_map('trim', explode(',', $raw));
+                } else {
+                    $files = [$raw];
+                }
+            }
         }
 
-        // 'file' or 'both' with old/plain record — treat as file path
-        return ['text' => null, 'file' => $raw];
+        $primaryFile = !empty($files) ? $files[0] : null;
+
+        return [
+            'text'  => $text,
+            'file'  => $primaryFile,
+            'files' => $files,
+        ];
     }
 }

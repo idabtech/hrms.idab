@@ -389,6 +389,7 @@ Route::group(['middleware' => ['verified']], function () {
         function () {
 
             Route::get('/orders', [StripePaymentController::class, 'index'])->name('order.index');
+            Route::get('plan/order/{id}/invoice', [StripePaymentController::class, 'invoice'])->name('plan.order.invoice');
             Route::get('/refund/{id}/{user_id}', [StripePaymentController::class, 'refund'])->name('order.refund');
             Route::get('/stripe/{code}', [StripePaymentController::class, 'stripe'])->name('stripe');
             Route::get('/stripe_request/{code}', [StripePaymentController::class, 'stripe_request'])->name('stripe_request');
@@ -463,6 +464,15 @@ Route::group(['middleware' => ['verified']], function () {
         );
     // End
 
+    Route::post('user/bulk-destroy', [UserController::class, 'bulkDestroy'])
+        ->name('user.bulk-destroy')
+        ->middleware(
+            [
+                'auth',
+                'XSS',
+            ]
+        );
+
     Route::resource('user', UserController::class)
         ->middleware(
             [
@@ -527,6 +537,13 @@ Route::group(['middleware' => ['verified']], function () {
     );
 
     Route::post('employee/request-document', [EmployeeController::class, 'requestDocument'])->name('employee.request-document')->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+
+    Route::post('employee/delete-document-file', [EmployeeController::class, 'deleteDocumentFile'])->name('employee.delete-document-file')->middleware(
         [
             'auth',
             'XSS',
@@ -1086,6 +1103,18 @@ Route::group(['middleware' => ['verified']], function () {
             'XSS',
         ]
     );
+    Route::resource('travel-expenses', \App\Http\Controllers\TravelExpenseController::class)->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+    Route::delete('travel-expenses/document/{id}', [\App\Http\Controllers\TravelExpenseController::class, 'destroyDocument'])->name('travel-expenses.document.destroy')->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
     Route::resource('promotion', PromotionController::class)->middleware(
         [
             'auth',
@@ -1378,6 +1407,7 @@ Route::group(['middleware' => ['verified']], function () {
 
     // Storage Addons Module
     Route::get('storage-addons/my-orders', [StorageAddonController::class, 'myOrders'])->name('storage-addons.my-orders')->middleware(['auth', 'XSS']);
+    Route::get('storage-addons/order/{id}/invoice', [StorageAddonController::class, 'invoice'])->name('storage-addons.order.invoice')->middleware(['auth', 'XSS']);
     Route::get('storage-addons/{id}/status', [StorageAddonController::class, 'statusToggle'])->name('storage-addons.status')->middleware(['auth', 'XSS']);
     Route::get('storage-addons/pay/{code}', [StorageAddonController::class, 'pay'])->name('storage-addons.pay')->middleware(['auth', 'XSS']);
     Route::post('storage-addons/process-payment/{code}', [StorageAddonController::class, 'processPayment'])->name('storage-addons.process-payment')->middleware(['auth', 'XSS']);

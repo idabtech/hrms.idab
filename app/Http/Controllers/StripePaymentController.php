@@ -285,4 +285,20 @@ class StripePaymentController extends Controller
             return redirect()->back()->with('error', __('Permission denied.'));
         }
     }
+
+    /**
+     * Display Printable / Downloadable Invoice for Plan Subscription Order
+     */
+    public function invoice($id)
+    {
+        $order = Order::findOrFail($id);
+
+        if (\Auth::check() && (\Auth::user()->type === 'super admin' || \Auth::user()->isSuperAdminSideUser() || \Auth::id() == $order->user_id)) {
+            $admin_payment_setting = Utility::getAdminPaymentSetting();
+            $company_settings      = Utility::getCompanySettings(1);
+            return view('order.invoice', compact('order', 'admin_payment_setting', 'company_settings'));
+        }
+
+        return response()->json(['error' => __('Permission denied.')], 403);
+    }
 }

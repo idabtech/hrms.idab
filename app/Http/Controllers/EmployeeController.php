@@ -403,7 +403,7 @@ class EmployeeController extends Controller
                 return redirect()->back()->with('error', __('Employee Not Found.'));
             }
             $documents = Document::where('created_by', Auth::user()->creatorId())->get();
-            $employeeDocuments = EmployeeDocument::where('employee_id', $employee->employee_id)->get()->keyBy('document_id');
+            $employeeDocuments = EmployeeDocument::where('employee_id', $employee->id)->get()->keyBy('document_id');
             $branches = Branch::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
             $departments = Department::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
             $subdepartments = SubDepartment::where(['department' => $employee->department_id, 'created_by' => Auth::user()->creatorId()])->get()->pluck('name', 'id');
@@ -463,72 +463,23 @@ class EmployeeController extends Controller
 
     public function update(Request $request, $id)
     {
+        try {
+            $empId = Crypt::decrypt($id);
+        } catch (\Throwable $th) {
+            if (is_numeric($id)) {
+                $empId = $id;
+            } else {
+                return redirect()->back()->with('error', __('Employee Not Found.'));
+            }
+        }
+
         $isEmployeeUser = (Auth::user()->type == 'employee');
-        if (Auth::user()->can('Edit Employee') || ($isEmployeeUser && Auth::user()->employee && Auth::user()->employee->id == $id)) {
-            $employee = Employee::findOrFail($id);
+        if (Auth::user()->can('Edit Employee') || ($isEmployeeUser && Auth::user()->employee && Auth::user()->employee->id == $empId)) {
+            $employee = Employee::findOrFail($empId);
 
             // Handle Employee-only document upload submission
             if ($isEmployeeUser) {
-                if ($request->hasFile('document')) {
-                    foreach ($request->file('document') as $key => $fileObj) {
-                        if (!empty($fileObj) && $fileObj->isValid()) {
-                            $employee_document = EmployeeDocument::where('employee_id', $employee->employee_id)->where('document_id', $key)->first();
-                            $dir = 'uploads/document/';
-                            $fileNameWithExt = $fileObj->getClientOriginalName();
-                            $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
-                            $extension = $fileObj->getClientOriginalExtension();
-                            $fileNameToStore = $filename . '_' . time() . '.' . $extension;
-
-                            $path = Utility::upload_coustom_file($request, 'document', $fileNameToStore, $dir, $key, []);
-
-                            $textVal = $request->input("document_text.{$key}");
-                            if (!is_null($textVal) && $textVal !== '') {
-                                $storeValue = json_encode(['text' => $textVal, 'file' => $fileNameToStore]);
-                            } else {
-                                $storeValue = $fileNameToStore;
-                            }
-
-                            if (!empty($employee_document)) {
-                                $employee_document->document_value = $storeValue;
-                                $employee_document->is_requested = 0;
-                                $employee_document->save();
-                            } else {
-                                $employee_document = new EmployeeDocument();
-                                $employee_document->employee_id = $employee->employee_id;
-                                $employee_document->document_id = $key;
-                                $employee_document->document_value = $storeValue;
-                                $employee_document->is_requested = 0;
-                                $employee_document->created_by = Auth::user()->creatorId();
-                                $employee_document->save();
-                            }
-                        }
-                    }
-                }
-
-                if ($request->has('document_text')) {
-                    foreach ($request->document_text as $key => $textValue) {
-                        if ($request->hasFile('document') && isset($request->file('document')[$key])) {
-                            continue;
-                        }
-                        if (!is_null($textValue) && $textValue !== '') {
-                            $empDoc = EmployeeDocument::where('employee_id', $employee->employee_id)->where('document_id', $key)->first();
-                            if ($empDoc) {
-                                $empDoc->document_value = $textValue;
-                                $empDoc->is_requested = 0;
-                                $empDoc->save();
-                            } else {
-                                EmployeeDocument::create([
-                                    'employee_id' => $employee->employee_id,
-                                    'document_id' => $key,
-                                    'document_value' => $textValue,
-                                    'is_requested' => 0,
-                                    'created_by' => Auth::user()->creatorId(),
-                                ]);
-                            }
-                        }
-                    }
-                }
-
+                $this->processDocumentUploads($request, $employee->id);
                 return redirect()->back()->with('success', __('Document updated successfully.'));
             }
 
@@ -538,7 +489,7 @@ class EmployeeController extends Controller
                     'name' => 'required',
                     'last_name' => 'required',
                     'dob' => 'required',
-                    'email' => 'required|unique:employees,email,' . $id . ',id',
+                    'email' => 'required|unique:employees,email,' . $empId . ',id',
                     'gender' => 'required',
                     'phone' => 'required|regex:/^[0-9+\s\-()]+$/',
                     'address' => 'required',
@@ -570,7 +521,7 @@ class EmployeeController extends Controller
                 return redirect()->back()->with('error', $messages->first());
             }
 
-            $employee = Employee::findOrFail($id);
+            $employee = Employee::findOrFail($empId);
             $input = $request->all();
 
             $company_start_time = null;
@@ -617,108 +568,8 @@ class EmployeeController extends Controller
                 $input['tea_minutes'] = $request->input('tea_minutes', 0);
             }
 
-            // // Handle refresh break type
-            // $refresh_type = $request->input('refresh_type', 'fixed');
-            // $input['refresh_type'] = $refresh_type;
-
-            // if ($refresh_type === 'fixed') {
-            //     $input['refresh_start'] = $request->input('refresh_start');
-            //     $input['refresh_end'] = $request->input('refresh_end');
-            //     $input['refresh_minutes'] = null;
-            // } else if ($refresh_type === 'flexible') {
-            //     $input['refresh_start'] = null;
-            //     $input['refresh_end'] = null;
-            //     $input['refresh_minutes'] = $request->input('refresh_minutes', 0);
-            // }
-
-            if ($request->document) {
-
-                foreach ($request->document as $key => $document) {
-                    $employee_document = EmployeeDocument::where('employee_id', $employee->employee_id)->where('document_id', $key)->first();
-                    if (!empty($document)) {
-
-                        //storage limit
-                        $dir = 'uploads/document/';
-                        if (!empty($employee_document)) {
-                            // Safely extract file path — old records are plain strings, new 'both' records are JSON
-                            $parsed    = $employee_document->getParsedValue();
-                            $file_path = $parsed['file'] ? $dir . $parsed['file'] : null;
-                        }
-                        $image_size = $request->file('document')[$key]->getSize();
-                        $result = Utility::updateStorageLimit(Auth::user()->creatorId(), $image_size);
-
-                        if ($result == 1) {
-                            if (!empty($file_path)) {
-                                Utility::changeStorageLimit(Auth::user()->creatorId(), $file_path);
-                            }
-
-                            $filenameWithExt = $request->file('document')[$key]->getClientOriginalName();
-                            $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
-                            $extension = $request->file('document')[$key]->getClientOriginalExtension();
-                            $fileNameToStore = $filename . '_' . time() . '.' . $extension;
-                            $dir = 'uploads/document/';
-
-                            $image_path = $dir . $fileNameToStore;
-
-                            $path = Utility::upload_coustom_file($request, 'document', $fileNameToStore, $dir, $key, []);
-
-                            // Check if this document also has a text value (both type)
-                            $textVal = $request->input("document_text.{$key}");
-                            if (!is_null($textVal) && $textVal !== '') {
-                                $storeValue = json_encode(['text' => $textVal, 'file' => $fileNameToStore]);
-                            } else {
-                                $storeValue = $fileNameToStore;
-                            }
-
-                            if (!empty($employee_document)) {
-                                $employee_document->document_value = $storeValue;
-                                $employee_document->is_requested = 0;
-                                $employee_document->save();
-                            } else {
-                                $employee_document = new EmployeeDocument();
-                                $employee_document->employee_id = $employee->employee_id;
-                                $employee_document->document_id = $key;
-                                $employee_document->document_value = $storeValue;
-                                $employee_document->is_requested = 0;
-                                $employee_document->created_by = Auth::user()->creatorId();
-                                $employee_document->save();
-                            }
-
-                            if ($path['flag'] == 1) {
-                                $url = $path['url'];
-                            } else {
-                                return redirect()->back()->with('error', __($path['msg']));
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Handle text-only document values (type = 'text', no file uploaded)
-            if ($request->has('document_text')) {
-                foreach ($request->document_text as $key => $textValue) {
-                    // Skip if a file was also uploaded for this key (already handled above)
-                    if ($request->hasFile('document') && isset($request->file('document')[$key])) {
-                        continue;
-                    }
-                    if (!is_null($textValue) && $textValue !== '') {
-                        $empDoc = EmployeeDocument::where('employee_id', $employee->employee_id)->where('document_id', $key)->first();
-                        if ($empDoc) {
-                            $empDoc->document_value = $textValue;
-                            $empDoc->is_requested = 0;
-                            $empDoc->save();
-                        } else {
-                            EmployeeDocument::create([
-                                'employee_id'    => $employee->employee_id,
-                                'document_id'    => $key,
-                                'document_value' => $textValue,
-                                'is_requested'   => 0,
-                                'created_by'     => Auth::user()->creatorId(),
-                            ]);
-                        }
-                    }
-                }
-            }
+            // Process multi-file and text document uploads
+            $this->processDocumentUploads($request, $employee->id);
 
             if (!empty($request->document) && !is_null($request->document)) {
                 $document_implode = implode(',', array_keys($request->document));
@@ -1611,5 +1462,151 @@ class EmployeeController extends Controller
             'message' => __('Employee list get successfully.'),
             'employee' => $employees
         ]);
+    }
+
+    public function deleteDocumentFile(Request $request)
+    {
+        $employee_id = $request->input('employee_id');
+        $document_id = $request->input('document_id');
+        $file_name   = $request->input('file_name');
+
+        $empDoc = EmployeeDocument::where('employee_id', $employee_id)
+            ->where('document_id', $document_id)
+            ->first();
+
+        if ($empDoc) {
+            $parsed = $empDoc->getParsedValue();
+            $files = $parsed['files'];
+
+            if (!empty($file_name)) {
+                $files = array_values(array_filter($files, function($f) use ($file_name) {
+                    return $f !== $file_name;
+                }));
+            }
+
+            $textVal = $parsed['text'];
+            if (!empty($files) || !empty($textVal)) {
+                $storeValue = json_encode([
+                    'text'  => $textVal,
+                    'file'  => $files[0] ?? null,
+                    'files' => $files,
+                ]);
+            } else {
+                $storeValue = '';
+            }
+
+            $empDoc->document_value = $storeValue;
+            $empDoc->save();
+
+            return response()->json(['success' => true, 'message' => __('Document file removed successfully.')]);
+        }
+
+        return response()->json(['success' => false, 'message' => __('Document record not found.')], 404);
+    }
+
+    private function processDocumentUploads(Request $request, int $employeeId)
+    {
+        $creatorId = Auth::user()->creatorId();
+        $dir = 'uploads/document/';
+        $storagePath = storage_path('app/public/' . $dir);
+        $publicPath  = public_path($dir);
+
+        if (!file_exists($storagePath)) {
+            @mkdir($storagePath, 0777, true);
+        }
+        if (!file_exists($publicPath)) {
+            @mkdir($publicPath, 0777, true);
+        }
+
+        if ($request->file('document') || $request->hasFile('document')) {
+            foreach ($request->file('document') as $docId => $fileOrArray) {
+                if (empty($fileOrArray)) continue;
+
+                $empDoc = EmployeeDocument::where('employee_id', $employeeId)
+                    ->where('document_id', $docId)
+                    ->first();
+
+                $parsed = $empDoc ? $empDoc->getParsedValue() : ['text' => null, 'file' => null, 'files' => []];
+                $currentFiles = $parsed['files'];
+                $textVal = $request->input("document_text.{$docId}", $parsed['text']);
+
+                $fileList = is_array($fileOrArray) ? $fileOrArray : [$fileOrArray];
+
+                foreach ($fileList as $fileObj) {
+                    if (!empty($fileObj) && $fileObj->isValid()) {
+                        $filenameWithExt = $fileObj->getClientOriginalName();
+                        $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
+                        $extension = $fileObj->getClientOriginalExtension();
+                        $fileNameToStore = $filename . '_' . time() . '_' . rand(10, 99) . '.' . $extension;
+
+                        // Save to storage/app/public/uploads/document/
+                        $fileObj->move($storagePath, $fileNameToStore);
+
+                        // Copy to public/uploads/document/ as mirror fallback
+                        @copy($storagePath . '/' . $fileNameToStore, $publicPath . '/' . $fileNameToStore);
+
+                        $currentFiles[] = $fileNameToStore;
+                    }
+                }
+
+                $currentFiles = array_values(array_unique($currentFiles));
+
+                $storeValue = json_encode([
+                    'text'  => $textVal,
+                    'file'  => $currentFiles[0] ?? null,
+                    'files' => $currentFiles,
+                ]);
+
+                if ($empDoc) {
+                    $empDoc->document_value = $storeValue;
+                    $empDoc->is_requested   = 0;
+                    $empDoc->save();
+                } else {
+                    EmployeeDocument::create([
+                        'employee_id'    => $employeeId,
+                        'document_id'    => $docId,
+                        'document_value' => $storeValue,
+                        'is_requested'   => 0,
+                        'created_by'     => $creatorId,
+                    ]);
+                }
+            }
+        }
+
+        if ($request->has('document_text')) {
+            foreach ($request->document_text as $docId => $textValue) {
+                if ($request->file('document') && isset($request->file('document')[$docId])) {
+                    continue;
+                }
+                if (!is_null($textValue) && $textValue !== '') {
+                    $empDoc = EmployeeDocument::where('employee_id', $employeeId)->where('document_id', $docId)->first();
+                    if ($empDoc) {
+                        $parsed = $empDoc->getParsedValue();
+                        $files = $parsed['files'];
+                        $storeValue = json_encode([
+                            'text'  => $textValue,
+                            'file'  => $files[0] ?? null,
+                            'files' => $files,
+                        ]);
+                        $empDoc->document_value = $storeValue;
+                        $empDoc->is_requested   = 0;
+                        $empDoc->save();
+                    } else {
+                        $storeValue = json_encode([
+                            'text'  => $textValue,
+                            'file'  => null,
+                            'files' => [],
+                        ]);
+                        EmployeeDocument::create([
+                            'employee_id'    => $employeeId,
+                            'document_id'    => $docId,
+                            'document_value' => $storeValue,
+                            'is_requested'   => 0,
+                            'created_by'     => $creatorId,
+                        ]);
+                    }
+                }
+            }
+        }
     }
 }

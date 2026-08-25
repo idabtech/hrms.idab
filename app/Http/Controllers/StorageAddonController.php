@@ -294,4 +294,20 @@ class StorageAddonController extends Controller
 
         return response()->json(['error' => __('Permission denied.')], 403);
     }
+
+    /**
+     * Display Printable / Downloadable Invoice for Storage Addon Order
+     */
+    public function invoice($id)
+    {
+        $order = StorageAddonOrder::with(['user', 'storageAddon'])->findOrFail($id);
+
+        if (Auth::user()->type === 'super admin' || Auth::user()->isSuperAdminSideUser() || Auth::id() == $order->user_id) {
+            $admin_payment_setting = Utility::getAdminPaymentSetting();
+            $company_settings      = Utility::settings();
+            return view('storage_addon.invoice', compact('order', 'admin_payment_setting', 'company_settings'));
+        }
+
+        return response()->json(['error' => __('Permission denied.')], 403);
+    }
 }

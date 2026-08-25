@@ -188,46 +188,62 @@
                             <hr>
                             <div class="row g-3">
                                 @php
-                                    $employeedoc = $employee->documents()->pluck('document_value', 'document_id');
+                                    $employeedoc = \App\Models\EmployeeDocument::where('employee_id', $employee->id)->get()->keyBy('document_id');
                                     $logo = \App\Models\Utility::get_file('uploads/document');
                                 @endphp
                                 @if (!$documents->isEmpty())
                                     @foreach ($documents as $key => $document)
                                     @php
-                                        $docType  = $document->document_type ?? 'file';
-                                        $rawValue = $employeedoc[$document->id] ?? null;
-                                        $parsed   = null;
-                                        if ($rawValue && $rawValue[0] === '{') {
-                                            $dec = json_decode($rawValue, true);
-                                            if (json_last_error() === JSON_ERROR_NONE) { $parsed = $dec; }
-                                        }
-                                        $textValue = $docType === 'text'  ? ($parsed['text'] ?? $rawValue) : ($parsed['text'] ?? null);
-                                        $fileValue = $docType === 'file'  ? ($parsed['file'] ?? $rawValue) : ($parsed['file'] ?? ($parsed === null && $docType === 'both' ? $rawValue : null));
+                                        $docType   = $document->document_type ?? 'file';
+                                        $docRecord = $employeedoc[$document->id] ?? null;
+                                        $parsed    = $docRecord ? $docRecord->getParsedValue($docType) : ['text' => null, 'file' => null, 'files' => []];
+                                        $textValue = $parsed['text'];
+                                        $filesList = $parsed['files'];
                                     @endphp
-                                        <div class="col-md-6 col-12">
-                                            <div class="info text-sm text-break" style="word-break: break-all; overflow-wrap: anywhere;">
+                                        <div class="col-md-6 col-12 mb-3">
+                                            <div class="info text-sm">
                                                 <strong class="font-bold d-block mb-1">{{ $document->name }} : </strong>
                                                 @if ($docType === 'text')
-                                                    <span class="text-muted">{{ $textValue }}</span>
+                                                    <span class="text-muted">{{ $textValue ?? '-' }}</span>
                                                 @elseif ($docType === 'both')
-                                                    @if ($textValue) <span class="d-block text-muted">{{ $textValue }}</span> @endif
-                                                    @if ($fileValue)
-                                                        <span class="d-block text-break">
-                                                            <a href="{{ $logo . '/' . $fileValue }}" target="_blank" class="text-primary text-decoration-underline" style="word-break: break-all;">
-                                                                <i class="ti ti-file me-1"></i>{{ $fileValue }}
-                                                            </a>
-                                                        </span>
+                                                    @if ($textValue) <span class="d-block text-muted mb-1">{{ $textValue }}</span> @endif
+                                                    @if (!empty($filesList))
+                                                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                                                            @foreach ($filesList as $fName)
+                                                                @php
+                                                                    $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
+                                                                    $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
+                                                                    $fUrl = $logo . '/' . $fName;
+                                                                @endphp
+                                                                @if ($fIsImg)
+                                                                    <a href="{{ $fUrl }}" target="_blank"><img src="{{ $fUrl }}" class="img-thumbnail" style="max-height:70px; max-width:100px; object-fit:cover;"></a>
+                                                                @else
+                                                                    <a href="{{ $fUrl }}" target="_blank" class="btn btn-sm btn-outline-primary py-1 px-2"><i class="ti ti-file me-1"></i>{{ $fName }}</a>
+                                                                @endif
+                                                            @endforeach
+                                                        </div>
+                                                    @elseif (!$textValue)
+                                                        <span class="text-muted">-</span>
                                                     @endif
                                                 @else
-                                                    <span class="d-block text-break">
-                                                        @if(!empty($fileValue))
-                                                            <a href="{{ $logo . '/' . $fileValue }}" target="_blank" class="text-primary text-decoration-underline" style="word-break: break-all;">
-                                                                <i class="ti ti-file me-1"></i>{{ $fileValue }}
-                                                            </a>
-                                                        @else
-                                                            <span class="text-muted">-</span>
-                                                        @endif
-                                                    </span>
+                                                    @if (!empty($filesList))
+                                                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                                                            @foreach ($filesList as $fName)
+                                                                @php
+                                                                    $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
+                                                                    $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
+                                                                    $fUrl = $logo . '/' . $fName;
+                                                                @endphp
+                                                                @if ($fIsImg)
+                                                                    <a href="{{ $fUrl }}" target="_blank"><img src="{{ $fUrl }}" class="img-thumbnail" style="max-height:70px; max-width:100px; object-fit:cover;"></a>
+                                                                @else
+                                                                    <a href="{{ $fUrl }}" target="_blank" class="btn btn-sm btn-outline-primary py-1 px-2"><i class="ti ti-file me-1"></i>{{ $fName }}</a>
+                                                                @endif
+                                                            @endforeach
+                                                        </div>
+                                                    @else
+                                                        <span class="text-muted">-</span>
+                                                    @endif
                                                 @endif
                                             </div>
                                         </div>
