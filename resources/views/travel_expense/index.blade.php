@@ -21,6 +21,65 @@
 
 @section('content')
 <div class="row">
+
+    {{-- Filter Card --}}
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-body">
+                {{ Form::open(['route' => ['travel-expenses.index'], 'method' => 'GET', 'id' => 'travel_expense_filter']) }}
+                <div class="row align-items-center justify-content-end">
+                    <div class="col">
+                        <div class="row">
+                            @if (\Auth::user()->type != 'employee')
+                                <div class="col-xl col-lg-3 col-md-6 col-sm-12 col-12">
+                                    <div class="btn-box">
+                                        {{ Form::label('employee_id', __('Employee'), ['class' => 'form-label']) }}
+                                        {{ Form::select('employee_id', $employees, isset($_GET['employee_id']) ? $_GET['employee_id'] : '', ['class' => 'form-control select', 'id' => 'filter_employee_id']) }}
+                                    </div>
+                                </div>
+                            @endif
+                            <div class="col-xl col-lg-3 col-md-6 col-sm-12 col-12">
+                                <div class="btn-box">
+                                    {{ Form::label('type', __('Type'), ['class' => 'form-label']) }}
+                                    {{ Form::select('type', $types, isset($_GET['type']) ? $_GET['type'] : '', ['class' => 'form-control select', 'id' => 'filter_type']) }}
+                                </div>
+                            </div>
+                            <div class="col-xl col-lg-3 col-md-6 col-sm-12 col-12">
+                                <div class="btn-box">
+                                    {{ Form::label('start_date', __('Start Date'), ['class' => 'form-label']) }}
+                                    {{ Form::date('start_date', isset($_GET['start_date']) ? $_GET['start_date'] : null, ['class' => 'form-control w-100', 'autocomplete' => 'off']) }}
+                                </div>
+                            </div>
+                            <div class="col-xl col-lg-3 col-md-6 col-sm-12 col-12">
+                                <div class="btn-box">
+                                    {{ Form::label('end_date', __('End Date'), ['class' => 'form-label']) }}
+                                    {{ Form::date('end_date', isset($_GET['end_date']) ? $_GET['end_date'] : null, ['class' => 'form-control w-100', 'autocomplete' => 'off']) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <div class="row">
+                            <div class="col-auto mt-4">
+                                <a href="javascript:void(0)" class="btn btn-sm btn-primary me-1"
+                                    onclick="document.getElementById('travel_expense_filter').submit(); return false;"
+                                    data-bs-toggle="tooltip" title="" data-bs-original-title="{{ __('Apply') }}">
+                                    <span class="btn-inner--icon"><i class="ti ti-search"></i></span>
+                                </a>
+                                <a href="{{ route('travel-expenses.index') }}" class="btn btn-sm btn-danger"
+                                    data-bs-toggle="tooltip" title="" data-bs-original-title="{{ __('Reset') }}">
+                                    <span class="btn-inner--icon"><i class="ti ti-refresh text-white-off"></i></span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {{ Form::close() }}
+            </div>
+        </div>
+    </div>
+
+    {{-- Data Table Card --}}
     <div class="col-xl-12">
         <div class="card">
             <div class="card-header card-body table-border-style">
@@ -118,3 +177,30 @@
     </div>
 </div>
 @endsection
+
+@push('script-page')
+    <script>
+        $(document).ready(function() {
+            var table = document.querySelector("#pc-dt-simple");
+            if (table && typeof simpleDatatables !== 'undefined') {
+                var datatable = new simpleDatatables.DataTable(table, {
+                    perPage: 10,
+                    perPageSelect: [10, 25, 50, 100],
+                    paging: true,
+                    firstLast: true,
+                    truncatePager: false
+                });
+
+                var pagerContainer = $(table).closest('.card-body').find('.dataTable-bottom');
+                if (pagerContainer.length > 0 && pagerContainer.find('.dataTable-pagination-list').length === 0) {
+                    var navHtml = '<nav class="dataTable-pagination"><ul class="dataTable-pagination-list">' +
+                        '<li class="pager disabled"><a href="javascript:void(0)" data-page="1">‹</a></li>' +
+                        '<li class="active"><a href="javascript:void(0)" data-page="1">1</a></li>' +
+                        '<li class="pager disabled"><a href="javascript:void(0)" data-page="1">›</a></li>' +
+                        '</ul></nav>';
+                    pagerContainer.append(navHtml);
+                }
+            }
+        });
+    </script>
+@endpush
