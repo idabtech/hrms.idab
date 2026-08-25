@@ -31,7 +31,7 @@ class TravelExpensePermissionSeeder extends Seeder
             ]);
         }
 
-        $roles = Role::all();
+        $roles = Role::whereIn('name', ['company', 'super admin'])->get();
 
         foreach ($roles as $role) {
             $role->givePermissionTo($permissions);
