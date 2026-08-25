@@ -62,7 +62,7 @@
 @section('content')
     <div class="card-body">
         <div>
-            <h2 class="mb-3 f-w-600">{{ __('Login') }}</h2>
+            <h2 class="mb-4 text-center">{{ __('Login') }}</h2>
         </div>
 
         <div class="custom-login-form">
@@ -70,7 +70,7 @@
                 @csrf
                 <div class="form-group mb-3">
                     <label class="form-label">{{ __('Email') }}</label>
-                    <input id="email" type="email" class="form-control  @error('email') is-invalid @enderror"
+                    <input id="email" type="email" class="form-control @error('email') is-invalid @enderror"
                         name="email" value="{{ session('external_login_email') }}" placeholder="{{ __('Enter your email') }}" required autofocus  
                         {{ session('external_login_active') ? 'readonly' : '' }}>
                     @error('email')
@@ -81,7 +81,7 @@
                 </div>
                 <div class="form-group mb-3 pss-field">
                     <label class="form-label">{{ __('Password') }}</label>
-                    <input id="password" type="password" class="form-control  @error('password') is-invalid @enderror"
+                    <input id="password" type="password" class="form-control @error('password') is-invalid @enderror"
                         name="password" placeholder="{{ __('Password') }}" required>
                     @error('password')
                         <span class="error invalid-password text-danger" role="alert">
@@ -89,11 +89,11 @@
                         </span>
                     @enderror
                 </div>
-                <div class="form-group mb-4">
-                    <div class="d-flex flex-wrap align-items-center justify-content-between">
+                <div class="form-group mb-3">
+                    <div class="d-flex flex-wrap align-items-center justify-content-end text-end">
                         @if (Route::has('password.request'))
                             <span>
-                                <a href="{{ route('password.request', $lang) }}"
+                                <a href="{{ route('password.request', $lang) }}" class="forgot-pwd-link"
                                     tabindex="0">{{ __('Forgot Your Password?') }}</a>
                             </span>
                         @endif
@@ -121,14 +121,14 @@
                         </div>
                     @endif
                 @endif
-                <div class="d-grid">
-                    <button class="btn btn-primary mt-2" type="submit">
+                <div class="d-grid mt-4">
+                    <button class="btn btn-primary" type="submit">
                         {{ __('Login') }}
                     </button>
                 </div>
             </form>
             @if (App\Models\Utility::getValByName('disable_signup_button') == 'on')
-                <p class="my-4 text-center">{{ __("Don't have an account?") }}
+                <p class="my-4 text-center auth-switch-text">{{ __("Don't have an account?") }}
                     <a href="{{ route('register', $lang) }}" tabindex="0">{{ __('Register') }}</a>
                 </p>
             @endif

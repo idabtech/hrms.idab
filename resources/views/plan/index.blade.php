@@ -14,6 +14,16 @@
 @endsection
 
 @section('action-button')
+    @if(\Auth::user()->type === 'super admin' || (\Auth::user()->isSuperAdminSideUser() && \Auth::user()->can('Manage Order')))
+        <a href="{{ route('order.index') }}" class="btn btn-sm btn-primary me-2" id="my-plan-orders-btn" data-bs-toggle="tooltip" title="{{ __('Order Management') }}">
+            <i class="ti ti-shopping-cart me-1"></i> {{ __('Order Management') }}
+        </a>
+    @elseif(\Auth::user()->type === 'company')
+        <a href="{{ route('order.index') }}" class="btn btn-sm btn-primary me-2" id="my-plan-orders-btn" data-bs-toggle="tooltip" title="{{ __('My Orders') }}">
+            <i class="ti ti-shopping-cart me-1"></i> {{ __('My Orders') }}
+        </a>
+    @endif
+
     @can('Create Plan')
         <a href="javascript:void(0)" data-url="{{ route('plans.create') }}" data-size="lg" data-ajax-popup="true"
             data-title="{{ __('Create New Plan') }}" data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
@@ -24,7 +34,7 @@
 
     @if(\Auth::user()->type === 'company')
         <a href="javascript:void(0)" data-url="{{ route('storage-addons.my-orders') }}" data-size="xl" data-ajax-popup="true"
-            data-title="{{ __('My Storage Addon Orders & Requests') }}" data-bs-toggle="tooltip" title="{{ __('My Orders') }}"
+            data-title="{{ __('My Storage Addon Orders & Requests') }}" data-bs-toggle="tooltip" title="{{ __('My Storage Orders') }}"
             class="btn btn-sm btn-primary d-none" id="my-storage-orders-btn">
             <i class="ti ti-shopping-cart me-1"></i> {{ __('My Orders') }}
         </a>
@@ -282,7 +292,9 @@
             function toggleMyOrdersBtn() {
                 if ($('#storage-addons-tab').hasClass('active')) {
                     $('#my-storage-orders-btn').removeClass('d-none');
+                    $('#my-plan-orders-btn').addClass('d-none');
                 } else {
+                    $('#my-plan-orders-btn').removeClass('d-none');
                     $('#my-storage-orders-btn').addClass('d-none');
                 }
             }

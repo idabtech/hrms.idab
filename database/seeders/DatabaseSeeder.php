@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
         $this->call(NotificationSeeder::class);
         $this->call(HrDocumentLibraryPermissionSeeder::class);
         $this->call(LeaveDocumentPermissionSeeder::class);
+        $this->call(TravelExpensePermissionSeeder::class);
         $this->call(LoginAsCompanySecuritySeeder::class);
         Artisan::call('module:migrate LandingPage');
         Artisan::call('module:seed LandingPage');

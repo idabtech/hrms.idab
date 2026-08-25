@@ -50,7 +50,7 @@
 @section('content')
     <div class="card-body">
         <div>
-            <h2 class="mb-3 f-w-600">{{ __('Forgot Password') }}</h2>
+            <h2 class="mb-4 text-center">{{ __('Forgot Password') }}</h2>
             @if (session('status'))
                 <div class="alert alert-primary">
                     {{ session('status') }}
@@ -92,12 +92,12 @@
                         </div>
                     @endif
                 @endif
-                <div class="d-grid">
-                    <button class="btn btn-primary mt-2" type="submit">
+                <div class="d-grid mt-4">
+                    <button class="btn btn-primary" type="submit">
                         {{ __('Send Password Reset Link') }}
                     </button>
-                    <p class="my-4 text-center">{{ __('Back to ') }} <a href="{{ route('login', $lang) }}"
-                            tabindex="0">{{ __('Login') }}</a>
+                    <p class="my-4 text-center auth-switch-text">{{ __('Back to ') }} <a href="{{ route('login', $lang) }}"
+                            tabindex="0">{{ __('Login') }}</a></p>
                 </div>
             </form>
         </div>

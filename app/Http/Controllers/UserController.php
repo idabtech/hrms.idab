@@ -262,6 +262,36 @@ class UserController extends Controller
         }
     }
 
+    public function bulkDestroy(Request $request)
+    {
+        if (\Auth::user()->type === 'super admin' || \Auth::user()->can('Delete User')) {
+            $ids = $request->ids;
+            if (is_string($ids)) {
+                $ids = explode(',', $ids);
+            }
+            $ids = array_filter(array_map('intval', (array) $ids));
+
+            if (empty($ids)) {
+                return redirect()->back()->with('error', __('Please select at least one company to delete.'));
+            }
+
+            $count = 0;
+            foreach ($ids as $id) {
+                $user = User::find($id);
+                if ($user && $user->id != \Auth::id()) {
+                    Employee::where('created_by', $user->id)->delete();
+                    User::where('created_by', $user->id)->delete();
+                    $user->delete();
+                    $count++;
+                }
+            }
+
+            return redirect()->route('user.index')->with('success', __(':count companies deleted successfully.', ['count' => $count]));
+        }
+
+        return redirect()->back()->with('error', __('Permission denied.'));
+    }
+
     public function profile()
     {
         $userDetail = \Auth::user();

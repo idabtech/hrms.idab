@@ -19,6 +19,7 @@
                             <th class="py-3">{{ __('Start Date') }}</th>
                             <th class="py-3">{{ __('Expiry Date') }}</th>
                             <th class="py-3 text-center">{{ __('Receipt / Txn ID') }}</th>
+                            <th class="py-3 text-center" width="120px">{{ __('Action') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -46,8 +47,8 @@
                                 <td class="py-3 text-muted text-sm"><i class="ti ti-calendar-due me-1 text-danger"></i>{{ $order->expire_date_formatted }}</td>
                                 <td class="py-3 text-center">
                                     @if(($order->payment_type == 'Bank Transfer' || $order->payment_type == 'Manual') && !empty($order->receipt))
-                                        <a href="{{ asset($order->receipt) }}" class="btn btn-sm btn-outline-primary shadow-sm" target="_blank" data-bs-toggle="tooltip" title="{{ __('Show Receipt') }}">
-                                            <i class="fas fa-file-invoice me-1"></i> {{ __('View') }}
+                                        <a href="{{ asset($order->receipt) }}" class="btn btn-sm btn-outline-secondary shadow-sm" target="_blank" data-bs-toggle="tooltip" title="{{ __('Show Receipt') }}">
+                                            <i class="ti ti-paperclip me-1"></i> {{ __('Slip') }}
                                         </a>
                                     @elseif(!empty($order->receipt))
                                         <span class="badge bg-light text-dark border font-monospace px-2 py-1">{{ $order->receipt }}</span>
@@ -55,10 +56,17 @@
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
+                                <td class="py-3 text-center">
+                                    <a href="javascript:void(0)" data-url="{{ route('storage-addons.order.invoice', $order->id) }}"
+                                        data-size="lg" data-ajax-popup="true" data-title="{{ __('Storage Addon Invoice') }}"
+                                        class="btn btn-sm btn-primary shadow-sm" data-bs-toggle="tooltip" title="{{ __('View & Download Invoice') }}">
+                                        <i class="ti ti-file-invoice me-1"></i> {{ __('Invoice') }}
+                                    </a>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="text-center py-5 text-muted">
+                                <td colspan="10" class="text-center py-5 text-muted">
                                     <i class="ti ti-shopping-cart-x fs-1 d-block mb-3 text-muted"></i>
                                     <h6 class="fw-semibold">{{ __('No Storage Addon Orders Found.') }}</h6>
                                 </td>
