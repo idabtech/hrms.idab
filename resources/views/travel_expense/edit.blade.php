@@ -72,7 +72,7 @@
                                         <a href="{{ $fileUrl }}" download="{{ $doc->file_name }}" class="btn btn-sm btn-primary me-1" title="{{ __('Download') }}">
                                             <i class="ti ti-download text-white"></i>
                                         </a>
-                                        <button type="button" class="btn btn-sm btn-danger delete-doc-btn" data-id="{{ $doc->id }}" title="{{ __('Delete') }}">
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="deleteTravelDocument({{ $doc->id }})" title="{{ __('Delete') }}">
                                             <i class="ti ti-trash text-white"></i>
                                         </button>
                                     </td>
@@ -98,29 +98,45 @@
                 dropdownParent: $('.modal-body')
             });
         }
+    });
 
-        $('.delete-doc-btn').on('click', function() {
-            var docId = $(this).data('id');
-            if (confirm("{{ __('Are you sure you want to delete this file?') }}")) {
-                $.ajax({
-                    url: "{{ url('travel-expenses/document') }}/" + docId,
-                    type: 'DELETE',
-                    data: {
-                        "_token": "{{ csrf_token() }}"
-                    },
-                    success: function(response) {
-                        if(response.success) {
-                            $('#doc-row-' + docId).remove();
+    window.deleteTravelDocument = function(docId) {
+        if (confirm("{{ __('Are you sure you want to delete this file?') }}")) {
+            $.ajax({
+                url: "{{ url('travel-expenses/document') }}/" + docId,
+                type: 'DELETE',
+                data: {
+                    "_token": "{{ csrf_token() }}"
+                },
+                success: function(response) {
+                    if(response.success) {
+                        $('#doc-row-' + docId).remove();
+                        $('.document-item-' + docId).remove();
+                        if (typeof show_toastr === 'function') {
                             show_toastr('Success', response.message, 'success');
                         } else {
-                            show_toastr('Error', response.message, 'error');
+                            alert(response.message);
                         }
-                    },
-                    error: function(xhr) {
-                        show_toastr('Error', "{{ __('Failed to delete document.') }}", 'error');
+                    } else {
+                        if (typeof show_toastr === 'function') {
+                            show_toastr('Error', response.message, 'error');
+                        } else {
+                            alert(response.message);
+                        }
                     }
-                });
-            }
-        });
-    });
+                },
+                error: function(xhr) {
+                    var errorMsg = "{{ __('Failed to delete document.') }}";
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    if (typeof show_toastr === 'function') {
+                        show_toastr('Error', errorMsg, 'error');
+                    } else {
+                        alert(errorMsg);
+                    }
+                }
+            });
+        }
+    };
 </script>
