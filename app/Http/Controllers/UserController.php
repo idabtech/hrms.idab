@@ -437,10 +437,16 @@ class UserController extends Controller
             $request_data     = $request->All();
             $current_password = $objUser->password;
             if (Hash::check($request_data['current_password'], $current_password)) {
+                if (Hash::check($request_data['new_password'], $current_password)) {
+                    return redirect()->route('profile', $objUser->id)->with('error', __('New password cannot be the same as your current password.'));
+                }
+
                 $user_id            = Auth::User()->id;
                 $obj_user           = User::find($user_id);
-                $obj_user->password = Hash::make($request_data['new_password']);;
+                $obj_user->password = Hash::make($request_data['new_password']);
                 $obj_user->save();
+
+                Auth::login($obj_user);
 
                 return redirect()->route('profile', $objUser->id)->with('success', __('Password successfully updated.'));
             } else {

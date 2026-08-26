@@ -308,8 +308,8 @@
             <!--timesheet-->
 
             <!-- performance-->
-            @if (Gate::check('Manage Indicator') || Gate::check('Manage Appraisal') || Gate::check('Manage Goal Tracking'))
-                <li class="dash-item dash-hasmenu">
+            @if (Gate::check('Manage Indicator') || Gate::check('Manage Appraisal') || Gate::check('Manage Goal Tracking') || Gate::check('Manage Self Assessment'))
+                <li class="dash-item dash-hasmenu {{ in_array(Request::segment(1), ['indicator', 'appraisal', 'goaltracking', 'self-assessments']) ? 'dash-trigger active' : '' }}">
                     <a href="javascript:void(0)" class="dash-link"><span class="dash-micon"><i
                                 class="ti ti-3d-cube-sphere"></i></span><span
                             class="dash-mtext">{{ __('Performance') }}</span><span class="dash-arrow"><i
@@ -331,6 +331,13 @@
                             <li class="dash-item">
                                 <a class="dash-link"
                                     href="{{ route('goaltracking.index') }}">{{ __('Goal Tracking') }}</a>
+                            </li>
+                        @endcan
+
+                        @can('Manage Self Assessment')
+                            <li class="dash-item {{ Request::segment(1) == 'self-assessments' ? 'active' : '' }}">
+                                <a class="dash-link"
+                                    href="{{ route('self-assessments.index') }}">{{ __('Self Assessment') }}</a>
                             </li>
                         @endcan
                     </ul>

@@ -90,6 +90,7 @@
                                     'Attendance',
                                     'Indicator',
                                     'Appraisal',
+                                    'Self Assessment',
                                     'Goal Tracking',
                                     'Account List',
                                     'Balance Account List',
@@ -185,6 +186,7 @@
                                 'Request',
                                 'View',
                                 'Download',
+                                'Review',
                             ];
                             $rolePermissions = $role->permissions()->pluck('id')->toArray();
                         @endphp
