@@ -188,7 +188,7 @@ class AttendanceRequestController extends Controller
         return redirect()->back()->with('success', __('Your request has been sent and is pending approval.'));
     }
 
-    public function approve(AttendanceRequest $attendanceRequest)
+    public function approve(Request $request, AttendanceRequest $attendanceRequest)
     {
         // Permission check
         if (!\Auth::user()->can('Approve Attendance Request')) {

@@ -87,6 +87,7 @@
                                         'Attendance',
                                         'Indicator',
                                         'Appraisal',
+                                        'Self Assessment',
                                         'Goal Tracking',
                                         'Account List',
                                         'Balance Account List',
@@ -182,6 +183,7 @@
                                     'Request',
                                     'View',
                                     'Download',
+                                    'Review',
                                 ];
                             @endphp
                             @foreach ($modules as $module)

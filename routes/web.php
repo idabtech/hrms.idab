@@ -1139,6 +1139,24 @@ Route::group(['middleware' => ['verified']], function () {
             'XSS',
         ]
     );
+    Route::resource('self-assessments', \App\Http\Controllers\SelfAssessmentController::class)->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+    Route::post('self-assessments/{id}/submit', [\App\Http\Controllers\SelfAssessmentController::class, 'submit'])->name('self-assessments.submit')->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+    Route::put('self-assessments/{id}/review', [\App\Http\Controllers\SelfAssessmentController::class, 'review'])->name('self-assessments.review')->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
     Route::resource('promotion', PromotionController::class)->middleware(
         [
             'auth',
