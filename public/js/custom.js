@@ -140,15 +140,29 @@ function select2() {
 //     });
 // })();
 
-function show_toastr(type, message) {
+function show_toastr(title, message, type) {
     var f = document.getElementById('liveToast');
-    var a = new bootstrap.Toast(f).show();
-    if (type == 'success' || type == 'Success') {
-        $('#liveToast').addClass('bg-primary');
-    } else {
-        $('#liveToast').addClass('bg-danger');
+    if (!f) return;
+
+    var msg = message || title;
+    var status = type || title || 'success';
+
+    if (title && !message) {
+        msg = title;
     }
-    $('#liveToast .toast-body').html(message);
+
+    var $toast = $('#liveToast');
+    $toast.removeClass('bg-primary bg-danger bg-success bg-warning');
+
+    if (status == 'success' || status == 'Success' || title == 'Success') {
+        $toast.addClass('bg-success');
+    } else {
+        $toast.addClass('bg-danger');
+    }
+
+    $toast.find('.toast-body').html(msg);
+    var a = new bootstrap.Toast(f, { delay: 5000 });
+    a.show();
 }
 
 

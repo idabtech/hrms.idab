@@ -213,7 +213,7 @@
                                     @endphp
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $req->employee?->name }}</td>
+                                        <td>{{ $req->employee ? trim(($req->employee->name ?? '') . ' ' . ($req->employee->last_name ?? '')) : __('Deleted Employee') }}</td>
                                         <td>{{ Str::title(str_replace('_', ' ', $req->type)) }}</td>
                                         <td data-bs-toggle="tooltip" data-bs-placement="top"
                                             title="{{ $req->reason ?? '-' }}"
