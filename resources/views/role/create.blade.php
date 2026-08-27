@@ -184,6 +184,7 @@
                                     'View',
                                     'Download',
                                     'Review',
+                                    'Bulk Generate',
                                 ];
                             @endphp
                             @foreach ($modules as $module)

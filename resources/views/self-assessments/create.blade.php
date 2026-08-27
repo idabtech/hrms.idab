@@ -13,6 +13,17 @@
 @section('content')
     <div class="row">
         <div class="col-xl-12">
+            @if ($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                    <h6 class="alert-heading font-weight-bold mb-1"><i class="ti ti-alert-circle me-1"></i> {{ __('Please correct the errors below:') }}</h6>
+                    <ul class="mb-0 ps-3">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
             {{ Form::model($assessment, ['route' => ['self-assessments.store'], 'method' => 'POST', 'class' => 'self-assessment-form', 'novalidate']) }}
                 <div class="card">
                     <div class="card-header">

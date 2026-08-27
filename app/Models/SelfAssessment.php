@@ -19,6 +19,7 @@ class SelfAssessment extends Model
         'designation',
         'department',
         'assessment_month',
+        'due_date',
         'reporting_manager',
         'status',
         'submitted_at',
@@ -31,6 +32,7 @@ class SelfAssessment extends Model
     {
         return [
             'assessment_month' => 'date',
+            'due_date'         => 'date',
             'submitted_at'     => 'datetime',
             'reviewed_at'      => 'datetime',
         ];
@@ -79,6 +81,38 @@ class SelfAssessment extends Model
     public function monthLabel(): string
     {
         return $this->assessment_month ? $this->assessment_month->format('F Y') : '-';
+    }
+
+    public function isOverdue(): bool
+    {
+        if (!$this->due_date || $this->status === 'reviewed' || $this->status === 'submitted') {
+            return false;
+        }
+
+        return $this->due_date->isPast() && !$this->due_date->isToday();
+    }
+
+    public function deadlineBadgeHtml(): string
+    {
+        if (!$this->due_date) {
+            return '<span class="badge bg-secondary">-</span>';
+        }
+
+        $dateStr = $this->due_date->format('d M Y');
+
+        if ($this->status === 'reviewed' || $this->status === 'submitted') {
+            return '<span class="badge bg-light-primary text-primary" data-bs-toggle="tooltip" title="' . __('Due Date') . '"><i class="ti ti-calendar me-1"></i>' . $dateStr . '</span>';
+        }
+
+        if ($this->isOverdue()) {
+            return '<span class="badge bg-danger" data-bs-toggle="tooltip" title="' . __('Overdue Submission') . '"><i class="ti ti-alert-triangle me-1"></i>' . $dateStr . ' (' . __('Overdue') . ')</span>';
+        }
+
+        if ($this->due_date->isToday()) {
+            return '<span class="badge bg-warning text-dark" data-bs-toggle="tooltip" title="' . __('Due Today') . '"><i class="ti ti-clock me-1"></i>' . $dateStr . ' (' . __('Due Today') . ')</span>';
+        }
+
+        return '<span class="badge bg-info text-white" data-bs-toggle="tooltip" title="' . __('Due Date') . '"><i class="ti ti-calendar me-1"></i>' . $dateStr . '</span>';
     }
 
     public function seedRatingRows(): void
