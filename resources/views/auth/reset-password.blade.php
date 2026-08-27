@@ -28,8 +28,13 @@
                 </div>
                 <div class="form-group mb-3 pss-field">
                     <label class="form-label">{{ __('Password') }}</label>
-                    <input id="password" type="password" class="form-control  @error('password') is-invalid @enderror"
-                        name="password" placeholder="{{ __('Password') }}" required autocomplete="password" autofocus>
+                    <div class="position-relative">
+                        <input id="password" type="password" class="form-control  @error('password') is-invalid @enderror"
+                            name="password" placeholder="{{ __('Password') }}" required autocomplete="password" autofocus>
+                        <span class="toggle-password-btn">
+                            <i class="ti ti-eye"></i>
+                        </span>
+                    </div>
                     @error('password')
                         <span class="error invalid-password text-danger" role="alert">
                             <small>{{ $message }}</small>
@@ -38,9 +43,14 @@
                 </div>
                 <div class="form-group mb-3 pss-field">
                     <label class="form-label">{{ __('Confirm password') }}</label>
-                    <input id="password-confirm" type="password"
-                        class="form-control  @error('password') is-invalid @enderror" name="password_confirmation"
-                        placeholder="{{ __('Password') }}" required autocomplete="password" autofocus>
+                    <div class="position-relative">
+                        <input id="password-confirm" type="password"
+                            class="form-control  @error('password') is-invalid @enderror" name="password_confirmation"
+                            placeholder="{{ __('Password') }}" required autocomplete="password" autofocus>
+                        <span class="toggle-password-btn">
+                            <i class="ti ti-eye"></i>
+                        </span>
+                    </div>
                     @error('password_confirmation')
                         <span class="error invalid-password_confirmation text-danger" role="alert">
                             <small>{{ $message }}</small>

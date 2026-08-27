@@ -81,8 +81,13 @@
                 </div>
                 <div class="form-group mb-3 pss-field">
                     <label class="form-label">{{ __('Password') }}</label>
-                    <input id="password" type="password" class="form-control @error('password') is-invalid @enderror"
-                        name="password" placeholder="{{ __('Password') }}" required>
+                    <div class="position-relative">
+                        <input id="password" type="password" class="form-control @error('password') is-invalid @enderror"
+                            name="password" placeholder="{{ __('Password') }}" required>
+                        <span class="toggle-password-btn" id="togglePassword">
+                            <i class="ti ti-eye" id="togglePasswordIcon"></i>
+                        </span>
+                    </div>
                     @error('password')
                         <span class="error invalid-password text-danger" role="alert">
                             <small>{{ $message }}</small>

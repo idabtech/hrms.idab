@@ -71,7 +71,7 @@
                                     <div class="form-group">
                                         {!! Form::label('dob', __('Date of Birth'), ['class' => 'form-label']) !!}<span class="text-danger pl-1">*</span>
 
-                                        {{ Form::date('dob', null,
+                                        {{ Form::date('dob', old('dob'),
                                             [
                                                 'class' => 'form-control w-100',
                                                 'required',
@@ -87,13 +87,13 @@
                                         <div class="d-flex radio-check">
                                             <div class="custom-control custom-radio custom-control-inline">
                                                 <input type="radio" id="g_male" value="Male" name="gender"
-                                                    class="form-check-input" required>
+                                                    class="form-check-input" required {{ old('gender') == 'Male' ? 'checked' : '' }}>
                                                 <label class="form-check-label"
                                                     for="g_male">{{ __('Male') }}</label>
                                             </div>
                                             <div class="custom-control custom-radio ms-1 custom-control-inline">
                                                 <input type="radio" id="g_female" value="Female" name="gender"
-                                                    class="form-check-input">
+                                                    class="form-check-input" {{ old('gender') == 'Female' ? 'checked' : '' }}>
                                                 <label class="form-check-label"
                                                     for="g_female">{{ __('Female') }}</label>
                                             </div>
@@ -144,7 +144,7 @@
                                 </div>
                                 <div class="form-group col-md-6">
                                     {!! Form::label('company_doj', __('Date Of Joining'), ['class'=> 'form-label']) !!}<span class="text-danger pl-1">*</span>
-                                    {{ Form::date('company_doj', null, [
+                                    {{ Form::date('company_doj', old('company_doj'), [
                                         'class' => 'form-control w-100',
                                         'required',
                                         'autocomplete' => 'off',
@@ -162,7 +162,7 @@
                                         <i class="ti ti-plus"></i>
                                     </a>
                                     <div class="form-icon-user">
-                                        {{ Form::select('branch_id', $branches, null, ['class' => 'form-control branch_id', 'required' => 'required', 'placeholder' => 'Select Branch']) }}
+                                        {{ Form::select('branch_id', $branches, old('branch_id'), ['class' => 'form-control branch_id', 'required' => 'required', 'placeholder' => 'Select Branch']) }}
                                     </div>
                                 </div>
 
@@ -177,7 +177,7 @@
                                         <i class="ti ti-plus"></i>
                                     </a>
                                     <div class="form-icon-user">
-                                        {{ Form::select('department_id', $departments, null, ['class' => 'form-control department_id', 'id' => 'department_id', 'required' => 'required', 'placeholder' => 'Select Department']) }}
+                                        {{ Form::select('department_id', $departments, old('department_id'), ['class' => 'form-control department_id', 'id' => 'department_id', 'required' => 'required', 'placeholder' => 'Select Department']) }}
                                     </div>
                                 </div>
 
@@ -192,7 +192,7 @@
                                         <i class="ti ti-plus"></i>
                                     </a>
                                     <div class="form-icon-user">
-                                        {{ Form::select('subdepartment_id', $subdepartments, null, ['class' => 'form-control subdepartment_id', 'id' => 'subdepartment_id', 'required' => 'required', 'placeholder' => 'Select Sub Department']) }}
+                                        {{ Form::select('subdepartment_id', $subdepartments, old('subdepartment_id'), ['class' => 'form-control subdepartment_id', 'id' => 'subdepartment_id', 'required' => 'required', 'placeholder' => 'Select Sub Department']) }}
                                     </div>
                                 </div>
 
@@ -206,7 +206,7 @@
                                         <i class="ti ti-plus"></i>
                                     </a>
                                     <div class="form-icon-user">
-                                        {{ Form::select('designation_id', $designations, null, ['class' => 'form-control designation_id', 'id' => 'designation_id', 'required' => 'required', 'placeholder' => 'Select Designation']) }}
+                                        {{ Form::select('designation_id', $designations, old('designation_id'), ['class' => 'form-control designation_id', 'id' => 'designation_id', 'required' => 'required', 'placeholder' => 'Select Designation']) }}
 
                                     </div>
                                 </div>
@@ -237,7 +237,7 @@
                                     </a>
 
                                     <div class="form-icon-user">
-                                        {{ Form::select('shift_id', $shift, null, ['class' => 'form-control shift_id', 'id' => 'shift_id', 'required' => 'required', 'placeholder' => 'Select Shift']) }}
+                                        {{ Form::select('shift_id', $shift, old('shift_id'), ['class' => 'form-control shift_id', 'id' => 'shift_id', 'required' => 'required', 'placeholder' => 'Select Shift']) }}
 
                                     </div>
                                 </div>
@@ -284,8 +284,8 @@
 
                                 <!--- Refresh Break Time --->
                                 <div class="form-group col-md-6">
-                                    {{ Form::label('refresh_type', __('Refresh Break Time'), ['class' => 'form-label']) }}
-                                    {{ Form::select('refresh_type', ['fixed' => 'Fixed Time', 'flexible' => 'Flexible Time'], null, ['class' => 'form-control', 'id' => 'refresh_break_type', 'placeholder' => 'Select Refresh Break Time', 'onchange' => 'toggleShiftBreakType()', 'required' => 'required']) }}
+                                    {{ Form::label('refresh_type', __('Refresh Break Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
+                                    {{ Form::select('refresh_type', ['fixed' => 'Fixed Time', 'flexible' => 'Flexible Time'], old('refresh_type'), ['class' => 'form-control', 'id' => 'refresh_break_type', 'placeholder' => 'Select Refresh Break Time', 'onchange' => 'toggleShiftBreakType()', 'required' => 'required']) }}
                                 </div>
 
                                 <!-- Refresh Break Fixed Time Fields -->
@@ -301,33 +301,33 @@
 
                                 <!-- Lunch Time Fields -->
                                 <div class="form-group col-md-6" id="lunchTimeDiv" style="display:none;">
-                                    {{ Form::label('lunch_start', __('Lunch Start Time'), ['class' => 'form-label']) }}
+                                    {{ Form::label('lunch_start', __('Lunch Start Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                     {{ Form::time('lunch_start', old('lunch_start',null), ['class' => 'form-control', 'id' => 'lunch_start']) }}
                                 </div>
 
                                 <div class="form-group col-md-6" id="lunchEndDiv" style="display:none;">
-                                    {{ Form::label('lunch_end', __('Lunch End Time'), ['class' => 'form-label']) }}
+                                    {{ Form::label('lunch_end', __('Lunch End Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                     {{ Form::time('lunch_end', old('lunch_end', null), ['class' => 'form-control', 'id' => 'lunch_end']) }}
                                 </div>
 
                                 <div class="form-group col-md-6" id="lunchMinDiv" style="display:none;">
-                                    {{ Form::label('lunch_minutes', __('Lunch Minutes'), ['class' => 'form-label']) }}
+                                    {{ Form::label('lunch_minutes', __('Lunch Minutes'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                     {{ Form::number('lunch_minutes', null, ['class' => 'form-control', 'id' => 'lunch_minutes', 'min' => 0]) }}
                                 </div>
 
                                 <!-- Tea Time Fields -->
                                 <div class="form-group col-md-6" id="teaTimeDiv" style="display:none;">
-                                    {{ Form::label('tea_start', __('Tea Start Time'), ['class' => 'form-label']) }}
+                                    {{ Form::label('tea_start', __('Tea Start Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                     {{ Form::time('tea_start', old('tea_start', null), ['class' => 'form-control', 'id' => 'tea_start']) }}
                                 </div>
 
                                 <div class="form-group col-md-6" id="teaEndDiv" style="display:none;">
-                                    {{ Form::label('tea_end', __('Tea End Time'), ['class' => 'form-label']) }}
+                                    {{ Form::label('tea_end', __('Tea End Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                     {{ Form::time('tea_end', old('tea_end', null), ['class' => 'form-control', 'id' => 'tea_end']) }}
                                 </div>
 
                                 <div class="form-group col-md-6" id="teaMinDiv" style="display:none;">
-                                    {{ Form::label('tea_minutes', __('Tea Minutes'), ['class' => 'form-label']) }}
+                                    {{ Form::label('tea_minutes', __('Tea Minutes'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                     {{ Form::number('tea_minutes', null, ['class' => 'form-control', 'id' => 'tea_minutes', 'min' => 0]) }}
                                 </div>
 
