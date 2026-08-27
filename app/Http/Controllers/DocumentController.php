@@ -40,7 +40,7 @@ class DocumentController extends Controller
         {
             $validator = \Validator::make(
                 $request->all(), [
-                                   'name' => 'required|max:20',
+                                   'name' => 'required|max:255',
                                    'is_required' => 'required',
                                    'document_type' => 'required|in:file,text,both',
                                ]
@@ -101,7 +101,7 @@ class DocumentController extends Controller
             {
                 $validator = \Validator::make(
                     $request->all(), [
-                                       'name' => 'required|max:20',
+                                       'name' => 'required|max:255',
                                        'document_type' => 'required|in:file,text,both',
                                    ]
                 );

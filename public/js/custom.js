@@ -46,6 +46,23 @@ function validation() {
 }
 
 $(document).ready(function () {
+    $(document).on('click', '.toggle-password-btn', function (e) {
+        e.preventDefault();
+        var $btn = $(this);
+        var $input = $btn.siblings('input');
+        if ($input.length === 0) {
+            $input = $btn.closest('.position-relative, .form-icon-user, .pss-field').find('input');
+        }
+        var $icon = $btn.find('i');
+        if ($input.attr('type') === 'password') {
+            $input.attr('type', 'text').addClass('password-toggled');
+            $icon.removeClass('ti-eye').addClass('ti-eye-off');
+        } else {
+            $input.attr('type', 'password').removeClass('password-toggled');
+            $icon.removeClass('ti-eye-off').addClass('ti-eye');
+        }
+    });
+
     if ($(".datatable").length > 0) {
         new simpleDatatables.DataTable(".datatable");
     }

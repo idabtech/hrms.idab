@@ -1910,3 +1910,90 @@ body.global-career-body {
     background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
     color: var(--bs-primary) !important;
 }
+
+/* Password Toggle Button */
+.position-relative,
+.form-icon-user {
+    position: relative !important;
+}
+
+.toggle-password-btn {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    z-index: 10;
+    color: #6c757d;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 0;
+    line-height: 1;
+    font-size: 18px;
+    transition: color 0.2s ease;
+}
+
+.toggle-password-btn:hover {
+    color: #333333;
+}
+
+[dir="rtl"] .toggle-password-btn {
+    right: auto;
+    left: 12px;
+}
+
+.position-relative input[type="password"],
+.position-relative input[type="text"].password-toggled,
+.form-icon-user input[type="password"],
+.form-icon-user input[type="text"].password-toggled,
+.pss-field input[type="password"],
+.pss-field input[type="text"].password-toggled {
+    padding-right: 40px !important;
+}
+
+[dir="rtl"] .position-relative input[type="password"],
+[dir="rtl"] .position-relative input[type="text"].password-toggled,
+[dir="rtl"] .form-icon-user input[type="password"],
+[dir="rtl"] .form-icon-user input[type="text"].password-toggled,
+[dir="rtl"] .pss-field input[type="password"],
+[dir="rtl"] .pss-field input[type="text"].password-toggled {
+    padding-right: 14px !important;
+    padding-left: 40px !important;
+}
+
+.toggle-password-btn i,
+.toggle-password-btn i.ti,
+.custom-login i.ti {
+    font-family: 'tabler-icons' !important;
+}
+
+.toggle-password-btn i.feather,
+.custom-login i.feather {
+    font-family: 'feather' !important;
+}
+
+/* Ensure dropdown select options and Choices items have visible dark text */
+select option,
+select.form-control option,
+select.form-select option,
+.form-control select option {
+    background-color: #ffffff !important;
+    color: #293240 !important;
+}
+
+.choices__list--dropdown,
+.choices__list--dropdown .choices__item,
+.choices__list[aria-expanded] .choices__item {
+    background-color: #ffffff !important;
+    color: #293240 !important;
+}
+
+.choices__list--dropdown .choices__item--selectable.is-highlighted {
+    background-color: #f0f2f5 !important;
+    color: #51459d !important;
+}
+
+

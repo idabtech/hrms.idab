@@ -1,12 +1,12 @@
 @php
-    // Retrieve model bound value or old input if $value is null
-    $rawVal = $value;
+    // Retrieve old input first, then model bound value or $value
+    $rawVal = old($name);
+    if (is_null($rawVal)) {
+        $rawVal = $value;
+    }
     if (is_null($rawVal) && class_exists('\Form') && \Form::getModel()) {
         $model = \Form::getModel();
         $rawVal = is_object($model) ? ($model->{$name} ?? null) : null;
-    }
-    if (is_null($rawVal)) {
-        $rawVal = old($name);
     }
 
     $selectedCountryCode = '+91';

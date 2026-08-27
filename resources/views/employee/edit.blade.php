@@ -129,11 +129,11 @@
                             <div class="row">
                                 <div class="form-group col-md-6">
                                     {!! Form::label('name', __('First Name'), ['class' => 'form-label']) !!}<span class="text-danger pl-1">*</span>
-                                    {!! Form::text('name', null, ['class' => 'form-control', 'required' => 'required']) !!}
+                                    {!! Form::text('name', old('name', $employee->name), ['class' => 'form-control', 'required' => 'required']) !!}
                                 </div>
                                 <div class="form-group col-md-6">
                                     {!! Form::label('last_name', __('Last Name'), ['class' => 'form-label']) !!}<span class="text-danger pl-1">*</span>
-                                    {!! Form::text('last_name', null, ['class' => 'form-control', 'required' => 'required']) !!}
+                                    {!! Form::text('last_name', old('last_name', $employee->last_name), ['class' => 'form-control', 'required' => 'required']) !!}
                                 </div>
                                 <x-mobile divClass="col-md-6" name="phone" label="{{ __('Phone') }}"
                                     placeholder="{{ __('Enter employee phone') }}" id="phone" required="true">
@@ -142,9 +142,9 @@
                                     <div class="form-group">
                                         {!! Form::label('dob', __('Date of Birth'), ['class' => 'form-label']) !!}<span class="text-danger pl-1">*</span>
                                         {!! Form::date('dob',
-                                        !empty($employee->dob)
-                                        ? \Carbon\Carbon::parse($employee->dob)
-                                        : null,
+                                        old('dob', !empty($employee->dob)
+                                        ? \Carbon\Carbon::parse($employee->dob)->format('Y-m-d')
+                                        : null),
                                         [
                                         'class' => 'form-control w-100',
                                         'required',
@@ -162,14 +162,14 @@
                                             <div class="custom-control custom-radio custom-control-inline">
                                                 <input type="radio" id="g_male" value="Male" name="gender"
                                                     class="form-check-input" required
-                                                    {{ $employee->gender == 'Male' ? 'checked' : '' }}>
+                                                    {{ old('gender', $employee->gender) == 'Male' ? 'checked' : '' }}>
                                                 <label class="form-check-label"
                                                     for="g_male">{{ __('Male') }}</label>
                                             </div>
                                             <div class="custom-control custom-radio ms-1 custom-control-inline">
                                                 <input type="radio" id="g_female" value="Female" name="gender"
                                                     class="form-check-input"
-                                                    {{ $employee->gender == 'Female' ? 'checked' : '' }}>
+                                                    {{ old('gender', $employee->gender) == 'Female' ? 'checked' : '' }}>
                                                 <label class="form-check-label"
                                                     for="g_female">{{ __('Female') }}</label>
                                             </div>
@@ -179,7 +179,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group ">
                                         {!! Form::label('email', __('Email'), ['class' => 'form-label']) !!}<span class="text-danger pl-1">*</span>
-                                        {!! Form::email('email', old('email'), [
+                                        {!! Form::email('email', old('email', $employee->email), [
                                         'class' => 'form-control',
                                         'required' => 'required',
                                         'placeholder' => 'Enter employee email',
@@ -197,7 +197,7 @@
                                 </div>
                                 <div class="form-group col-md-12">
                                     {{ Form::label('address', __('Address'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
-                                    {{ Form::textarea('address', null, ['class' => 'form-control' ,'placeholder'=>__('Enter address'),'rows'=>'3']) }}
+                                    {{ Form::textarea('address', old('address', $employee->address), ['class' => 'form-control' ,'placeholder'=>__('Enter address'),'rows'=>'3']) }}
                                 </div>
                                  <!-- <div class="col-md-6">
                                     <div class="form-group ">
@@ -228,7 +228,7 @@
                                     </div>
                                     <div class=" form-group col-md-6">
                                         {!! Form::label('company_doj', __('Date Of Joining'), ['class'=> 'form-label']) !!}<span class="text-danger pl-1">*</span>
-                                        {{ Form::date('company_doj', null, [
+                                        {{ Form::date('company_doj', old('company_doj', !empty($employee->company_doj) ? \Carbon\Carbon::parse($employee->company_doj)->format('Y-m-d') : null), [
                                             'class' => 'form-control w-100',
                                             'required',
                                             'autocomplete' => 'off',
@@ -245,7 +245,7 @@
                                             data-bs-original-title="{{ __('Create') }}">
                                             <i class="ti ti-plus"></i>
                                         </a>
-                                        {{ Form::select('branch_id', $branches, null, ['class' => 'form-control branch_id', 'required' => 'required', 'placeholder' => 'Select Branch']) }}
+                                        {{ Form::select('branch_id', $branches, old('branch_id', $employee->branch_id), ['class' => 'form-control branch_id', 'required' => 'required', 'placeholder' => 'Select Branch']) }}
                                     </div>
                                     <div class="form-group col-md-6">
                                         {{ Form::label('department_id', __('Select Department'), ['class' => 'form-label']) }}<span
@@ -257,7 +257,7 @@
                                             data-bs-original-title="{{ __('Create') }}">
                                             <i class="ti ti-plus"></i>
                                         </a>
-                                        {{ Form::select('department_id', $departments, null, ['class' => 'form-control department_id', 'id' => 'department_id', 'required' => 'required']) }}
+                                        {{ Form::select('department_id', $departments, old('department_id', $employee->department_id), ['class' => 'form-control department_id', 'id' => 'department_id', 'required' => 'required']) }}
                                     </div>
                                     <div class="form-group col-md-6">
                                         {{ Form::label('subdepartment_id', __('Select Sub Department'), ['class' => 'form-label']) }}<span
@@ -269,7 +269,7 @@
                                             data-bs-original-title="{{ __('Create') }}">
                                             <i class="ti ti-plus"></i>
                                         </a>
-                                        {{ Form::select('subdepartment_id', $subdepartments, $employee->subdepartment, ['class' => 'form-control subdepartment_id', 'id' => 'subdepartment_id', 'required' => 'required']) }}
+                                        {{ Form::select('subdepartment_id', $subdepartments, old('subdepartment_id', $employee->subdepartment_id), ['class' => 'form-control subdepartment_id', 'id' => 'subdepartment_id', 'required' => 'required', 'placeholder' => 'Select Sub Department']) }}
                                     </div>
                                     <div class="form-group col-md-6">
                                         {{ Form::label('designation_id', __('Select Designation'), ['class' => 'form-label']) }}
@@ -318,7 +318,7 @@
 
                                         <div class="form-icon-user">
                                             <div class="shift_div">
-                                                {{ Form::select('shift_id', $shift, $employee->shift_id, ['class' => 'form-control shift_id', 'required' => 'required', 'placeholder' => 'Select Shift']) }}
+                                                {{ Form::select('shift_id', $shift, old('shift_id', $employee->shift_id), ['class' => 'form-control shift_id', 'required' => 'required', 'placeholder' => 'Select Shift']) }}
                                             </div>
                                         </div>
                                     </div>
@@ -366,8 +366,8 @@
 
                                     <!--- Refresh Break Time --->
                                     <div class="form-group col-md-6">
-                                        {{ Form::label('refresh_type', __('Refresh Break Time'), ['class' => 'form-label']) }}
-                                        {{ Form::select('refresh_type', ['fixed' => 'Fixed Time', 'flexible' => 'Flexible Time'], $employee->refresh_type, ['class' => 'form-control', 'id' => 'refresh_break_type', 'placeholder' => 'Select Refresh Break Time', 'onchange' => 'toggleShiftBreakType()']) }}
+                                        {{ Form::label('refresh_type', __('Refresh Break Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
+                                        {{ Form::select('refresh_type', ['fixed' => 'Fixed Time', 'flexible' => 'Flexible Time'], old('refresh_type', $employee->refresh_type), ['class' => 'form-control', 'id' => 'refresh_break_type', 'placeholder' => 'Select Refresh Break Time', 'onchange' => 'toggleShiftBreakType()', 'required' => 'required']) }}
                                     </div>
 
                                     <!-- Refresh Break Fixed Time Fields -->
@@ -392,33 +392,33 @@
 
                                     <!-- Lunch Time Fields -->
                                     <div class="form-group col-md-6" id="lunchTimeDiv" style="{{ $initialBreakType === 'fixed' ? 'display:block;' : 'display:none;' }}">
-                                        {{ Form::label('lunch_start', __('Lunch Start Time'), ['class' => 'form-label']) }}
+                                        {{ Form::label('lunch_start', __('Lunch Start Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                         {{ Form::time('lunch_start', old('lunch_start', $employee->lunch_start), ['class' => 'form-control', 'id' => 'lunch_start']) }}
                                     </div>
 
                                     <div class="form-group col-md-6" id="lunchEndDiv" style="{{ $initialBreakType === 'fixed' ? 'display:block;' : 'display:none;' }}">
-                                        {{ Form::label('lunch_end', __('Lunch End Time'), ['class' => 'form-label']) }}
+                                        {{ Form::label('lunch_end', __('Lunch End Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                         {{ Form::time('lunch_end', old('lunch_end', $employee->lunch_end), ['class' => 'form-control', 'id' => 'lunch_end']) }}
                                     </div>
 
                                     <div class="form-group col-md-6" id="lunchMinDiv" style="{{ $initialBreakType === 'flexible' ? 'display:block;' : 'display:none;' }}">
-                                        {{ Form::label('lunch_minutes', __('Lunch Minutes'), ['class' => 'form-label']) }}
+                                        {{ Form::label('lunch_minutes', __('Lunch Minutes'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                         {{ Form::number('lunch_minutes', old('lunch_minutes', $employee->lunch_minutes ?? 0), ['class' => 'form-control', 'id' => 'lunch_minutes', 'min' => 0]) }}
                                     </div>
 
                                     <!-- Tea Time Fields -->
                                     <div class="form-group col-md-6" id="teaTimeDiv" style="{{ $initialBreakType === 'fixed' ? 'display:block;' : 'display:none;' }}">
-                                        {{ Form::label('tea_start', __('Tea Start Time'), ['class' => 'form-label']) }}
+                                        {{ Form::label('tea_start', __('Tea Start Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                         {{ Form::time('tea_start', old('tea_start', $employee->tea_start), ['class' => 'form-control', 'id' => 'tea_start']) }}
                                     </div>
 
                                     <div class="form-group col-md-6" id="teaEndDiv" style="{{ $initialBreakType === 'fixed' ? 'display:block;' : 'display:none;' }}">
-                                        {{ Form::label('tea_end', __('Tea End Time'), ['class' => 'form-label']) }}
+                                        {{ Form::label('tea_end', __('Tea End Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                         {{ Form::time('tea_end', old('tea_end', $employee->tea_end), ['class' => 'form-control', 'id' => 'tea_end']) }}
                                     </div>
 
                                     <div class="form-group col-md-6" id="teaMinDiv" style="{{ $initialBreakType === 'flexible' ? 'display:block;' : 'display:none;' }}">
-                                        {{ Form::label('tea_minutes', __('Tea Minutes'), ['class' => 'form-label']) }}
+                                        {{ Form::label('tea_minutes', __('Tea Minutes'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                         {{ Form::number('tea_minutes', old('tea_minutes', $employee->tea_minutes ?? 0), ['class' => 'form-control', 'id' => 'tea_minutes', 'min' => 0]) }}
                                     </div>
 
@@ -624,34 +624,34 @@
                                 <div class="row">
                                     <div class="form-group col-md-6">
                                         {!! Form::label('account_holder_name', __('Account Holder Name'), ['class' => 'form-label']) !!}
-                                        {!! Form::text('account_holder_name', !empty($employee->account_holder_name)?$employee->account_holder_name:'', ['class' => 'form-control',
+                                        {!! Form::text('account_holder_name', old('account_holder_name', !empty($employee->account_holder_name)?$employee->account_holder_name:''), ['class' => 'form-control',
                                     'placeholder' => 'Enter account holder name']) !!}
                                     </div>
                                     <div class="form-group col-md-6">
                                         {!! Form::label('account_number', __('Account Number'), ['class' => 'form-label']) !!}
-                                        {!! Form::number('account_number', !empty($employee->account_number)?$employee->account_number:'', ['class' => 'form-control',
+                                        {!! Form::number('account_number', old('account_number', !empty($employee->account_number)?$employee->account_number:''), ['class' => 'form-control',
                                     'placeholder' => 'Enter account number']) !!}
 
                                     </div>
                                     <div class="form-group col-md-6">
                                         {!! Form::label('bank_name', __('Bank Name'), ['class' => 'form-label']) !!}
-                                        {!! Form::text('bank_name', !empty($employee->bank_name)?$employee->bank_name:'', ['class' => 'form-control',
+                                        {!! Form::text('bank_name', old('bank_name', !empty($employee->bank_name)?$employee->bank_name:''), ['class' => 'form-control',
                                     'placeholder' => 'Enter bank name']) !!}
 
                                     </div>
                                     <div class="form-group col-md-6">
                                         {!! Form::label('bank_identifier_code', __(\App\Models\Utility::bankCodeLabel()), ['class' => 'form-label']) !!}
-                                        {!! Form::text('bank_identifier_code', !empty($employee->bank_identifier_code)?$employee->bank_identifier_code:'', ['class' => 'form-control',
+                                        {!! Form::text('bank_identifier_code', old('bank_identifier_code', !empty($employee->bank_identifier_code)?$employee->bank_identifier_code:''), ['class' => 'form-control',
                                     'placeholder' => 'Enter bank identifier code']) !!}
                                     </div>
                                     <div class="form-group col-md-6">
                                         {!! Form::label('branch_location', __('Branch Location'), ['class' => 'form-label']) !!}
-                                        {!! Form::text('branch_location', !empty($employee->branch_location)?$employee->branch_location:'', ['class' => 'form-control',
+                                        {!! Form::text('branch_location', old('branch_location', !empty($employee->branch_location)?$employee->branch_location:''), ['class' => 'form-control',
                                     'placeholder' => 'Enter branch location']) !!}
                                     </div>
                                     <div class="form-group col-md-6">
                                         {!! Form::label('tax_payer_id', __('Tax Payer Id'), ['class' => 'form-label']) !!}
-                                        {!! Form::text('tax_payer_id', !empty($employee->tax_payer_id)?$employee->tax_payer_id:'', ['class' => 'form-control',
+                                        {!! Form::text('tax_payer_id', old('tax_payer_id', !empty($employee->tax_payer_id)?$employee->tax_payer_id:''), ['class' => 'form-control',
                                     'placeholder' => 'Enter tax payer id']) !!}
                                     </div>
                                 </div>
@@ -917,9 +917,13 @@
                                         <tbody>
                                             @foreach ($leaveTypes as $leaveType)
                                                 @php
-                                                    $isAssigned = array_key_exists($leaveType->id, $assignedLeaveTypes ?? []);
-                                                    $assignedDays = $isAssigned ? ($assignedLeaveTypes[$leaveType->id]['total_days'] ?? $leaveType->days) : $leaveType->days;
-                                                    $isPaid = $isAssigned ? ($assignedLeaveTypes[$leaveType->id]['is_paid'] ?? $leaveType->is_paid) : $leaveType->is_paid;
+                                                    $oldChecked = old('leave_types.' . $leaveType->id . '.checked');
+                                                    $oldDays = old('leave_types.' . $leaveType->id . '.days');
+                                                    $oldIsPaid = old('leave_types.' . $leaveType->id . '.is_paid');
+
+                                                    $isAssigned = $oldChecked !== null ? (bool)$oldChecked : array_key_exists($leaveType->id, $assignedLeaveTypes ?? []);
+                                                    $assignedDays = $oldDays !== null ? $oldDays : ($isAssigned ? ($assignedLeaveTypes[$leaveType->id]['total_days'] ?? $leaveType->days) : $leaveType->days);
+                                                    $isPaid = $oldIsPaid !== null ? (bool)$oldIsPaid : ($isAssigned ? ($assignedLeaveTypes[$leaveType->id]['is_paid'] ?? $leaveType->is_paid) : $leaveType->is_paid);
                                                 @endphp
                                                 <tr>
                                                     <td>
@@ -1035,9 +1039,10 @@
                                             </select>`;
                     $('.designation_div').html(emp_selct);
                     $('.designation_id').append('<option value="">Select any Designation</option>');
+                    var selectedDesignation = '{{ old('designation_id', $employee->designation_id) }}';
                     $.each(data, function(key, value) {
                         var select = '';
-                        if (key == '{{ $employee->designation_id }}') {
+                        if (key == selectedDesignation) {
                             select = 'selected';
                         }
 
@@ -1065,10 +1070,6 @@
         $(document).on('change', 'select[name=department_id]', function() {
             var department_id = $(this).val();
             getDesignation(department_id);
-        });
-        $(document).on('change', 'select[name=shift_id]', function() {
-            var shift_id = $(this).val();
-            getDesignation(shift_id);
         });
     </script>
     <script>
