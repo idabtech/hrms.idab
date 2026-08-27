@@ -16,17 +16,24 @@ class SelfAssessmentRequest extends FormRequest
 
     public function rules(): array
     {
-        $assessment = $this->route('self_assessment');
+        $assessmentParam = $this->route('self_assessment') ?? $this->route('id');
+        $currentId = 0;
+        if ($assessmentParam instanceof SelfAssessment) {
+            $currentId = $assessmentParam->id;
+        } elseif (is_numeric($assessmentParam)) {
+            $currentId = (int) $assessmentParam;
+        }
 
         return [
             'employee_name'     => ['required', 'string', 'max:120'],
-            'designation'       => ['required', 'string', 'max:120'],
-            'department'        => ['required', 'string', 'max:120'],
-            'reporting_manager' => ['required', 'string', 'max:120'],
+            'designation'       => ['nullable', 'string', 'max:120'],
+            'department'        => ['nullable', 'string', 'max:120'],
+            'reporting_manager' => ['nullable', 'string', 'max:120'],
+            'due_date'          => ['nullable', 'date'],
             'assessment_month'  => [
                 'required',
                 'date_format:Y-m',
-                function (string $attribute, mixed $value, Closure $fail) use ($assessment) {
+                function (string $attribute, mixed $value, Closure $fail) use ($currentId) {
                     $empId = $this->input('employee_id');
                     if (!$empId && \Auth::user()->type == 'employee') {
                         $emp = \App\Models\Employee::where('user_id', \Auth::id())->first();
@@ -37,7 +44,7 @@ class SelfAssessmentRequest extends FormRequest
                         $clash = SelfAssessment::query()
                             ->where('employee_id', $empId)
                             ->whereDate('assessment_month', $value . '-01')
-                            ->when($assessment, fn ($q) => $q->whereKeyNot($assessment->id ?? 0))
+                            ->when($currentId > 0, fn ($q) => $q->where('id', '!=', $currentId))
                             ->exists();
 
                         if ($clash) {
@@ -59,6 +66,15 @@ class SelfAssessmentRequest extends FormRequest
     {
         $tasks = collect($this->input('tasks', []))
             ->reject(fn ($task) => blank($task['title'] ?? null) && blank($task['responsibilities'] ?? null))
+            ->map(function ($task) {
+                if (blank($task['status'] ?? null)) {
+                    $task['status'] = 'pending';
+                }
+                if (blank($task['priority'] ?? null)) {
+                    $task['priority'] = 'medium';
+                }
+                return $task;
+            })
             ->values()
             ->all();
 
@@ -86,11 +102,12 @@ class SelfAssessmentRequest extends FormRequest
     public function headerData(): array
     {
         return [
-            'employee_name'     => $this->string('employee_name')->toString(),
-            'designation'       => $this->string('designation')->toString(),
-            'department'        => $this->string('department')->toString(),
-            'reporting_manager' => $this->string('reporting_manager')->toString(),
+            'employee_name'     => $this->string('employee_name')->toString() ?: 'Employee',
+            'designation'       => $this->string('designation')->toString() ?: '-',
+            'department'        => $this->string('department')->toString() ?: '-',
+            'reporting_manager' => $this->string('reporting_manager')->toString() ?: '-',
             'assessment_month'  => $this->string('assessment_month') . '-01',
+            'due_date'          => $this->filled('due_date') ? $this->input('due_date') : null,
         ];
     }
 }

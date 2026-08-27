@@ -8,6 +8,7 @@ use App\Models\Department;
 use App\Models\Designation;
 use App\Models\Employee;
 use App\Models\SelfAssessment;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,8 +40,9 @@ class SelfAssessmentController extends Controller
                 $query->where('status', $request->status);
             }
 
-            if ($request->filled('month')) {
-                $query->whereDate('assessment_month', $request->month . '-01');
+            $selectedMonth = $request->has('month') ? $request->month : date('Y-m');
+            if (!empty($selectedMonth)) {
+                $query->whereDate('assessment_month', $selectedMonth . '-01');
             }
 
             $assessments = $query->latest('assessment_month')->get();
@@ -51,7 +53,7 @@ class SelfAssessmentController extends Controller
                 $employees->prepend(__('All Employees'), '');
             }
 
-            return view('self-assessments.index', compact('assessments', 'employees'));
+            return view('self-assessments.index', compact('assessments', 'employees', 'selectedMonth'));
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
@@ -133,6 +135,10 @@ class SelfAssessmentController extends Controller
                 $empId = $emp ? $emp->id : null;
             }
 
+            if (!$empId && $userType == 'employee') {
+                return redirect()->back()->withInput()->with('error', __('Employee profile record not found for this user account.'));
+            }
+
             $assessment = DB::transaction(function () use ($request, $empId, $creatorId) {
                 $assessment = SelfAssessment::create($request->headerData() + [
                     'employee_id' => $empId,
@@ -150,6 +156,83 @@ class SelfAssessmentController extends Controller
             return redirect()
                 ->route('self-assessments.show', $assessment->id)
                 ->with('success', __('Self assessment saved as draft successfully.'));
+        } else {
+            return redirect()->back()->with('error', __('Permission denied.'));
+        }
+    }
+
+    public function bulkStore(Request $request): RedirectResponse
+    {
+        if (Auth::user()->can('Bulk Generate Self Assessment') || Auth::user()->can('Create Self Assessment') || in_array(Auth::user()->type, ['company', 'hr', 'super admin'])) {
+            $request->validate([
+                'employee_ids'     => 'required|array|min:1',
+                'assessment_month' => 'required|date_format:Y-m',
+                'due_date'         => 'required|date',
+            ]);
+
+            $creatorId = Auth::user()->creatorId();
+            $empIds    = $request->employee_ids;
+
+            if (in_array('all', $empIds)) {
+                $targetEmployees = Employee::with(['designation', 'department'])->where('created_by', $creatorId)->get();
+            } else {
+                $targetEmployees = Employee::with(['designation', 'department'])->whereIn('id', $empIds)->get();
+            }
+
+            if ($targetEmployees->isEmpty()) {
+                return redirect()->back()->with('error', __('No valid employees selected for bulk generation.'));
+            }
+
+            $monthDate    = $request->assessment_month . '-01';
+            $createdCount = 0;
+            $skippedCount = 0;
+
+            DB::transaction(function () use ($targetEmployees, $monthDate, $request, $creatorId, &$createdCount, &$skippedCount) {
+                foreach ($targetEmployees as $emp) {
+                    $exists = SelfAssessment::where('employee_id', $emp->id)
+                        ->whereDate('assessment_month', $monthDate)
+                        ->exists();
+
+                    if ($exists) {
+                        $skippedCount++;
+                        continue;
+                    }
+
+                    $fullName  = trim(($emp->name ?? '') . ' ' . ($emp->last_name ?? '')) ?: $emp->name;
+                    $desigName = $emp->designation ? $emp->designation->name : ($emp->designation_id ? optional(Designation::find($emp->designation_id))->name : '-');
+                    $deptName  = $emp->department ? $emp->department->name : ($emp->department_id ? optional(Department::find($emp->department_id))->name : '-');
+
+                    $targetUserId = null;
+                    if (!empty($emp->user_id) && $emp->user_id > 0) {
+                        if (User::where('id', $emp->user_id)->exists()) {
+                            $targetUserId = $emp->user_id;
+                        }
+                    }
+
+                    $assessment = SelfAssessment::create([
+                        'employee_id'       => $emp->id,
+                        'user_id'          => $targetUserId,
+                        'employee_name'     => $fullName,
+                        'designation'       => $desigName ?: '-',
+                        'department'        => $deptName ?: '-',
+                        'reporting_manager' => '-',
+                        'assessment_month'  => $monthDate,
+                        'due_date'          => $request->due_date,
+                        'status'            => 'draft',
+                        'created_by'        => $creatorId,
+                    ]);
+
+                    $assessment->seedRatingRows();
+                    $createdCount++;
+                }
+            });
+
+            $msg = __(':count Self Assessment sheet(s) generated successfully.', ['count' => $createdCount]);
+            if ($skippedCount > 0) {
+                $msg .= ' ' . __(':skipped sheet(s) already existed and were skipped.', ['skipped' => $skippedCount]);
+            }
+
+            return redirect()->route('self-assessments.index')->with('success', $msg);
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
