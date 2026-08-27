@@ -860,7 +860,7 @@
                                             <div class="col-md-6">
                                                 <a href="javascript:void(0)"
                                                     class="btn btn-print-invoice  btn-primary m-r-10 send_email"
-                                                    data-ajax-popup="true" data-title="{{ __('Send Test Mail') }}"
+                                                    data-title="{{ __('Send Test Mail') }}"
                                                     data-url="{{ route('test.mail') }}">
                                                     {{ __('Send Test Mail') }}
                                                 </a>

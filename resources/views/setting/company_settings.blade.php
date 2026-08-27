@@ -1113,7 +1113,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                     <div class="row">
                                         <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                             {{ Form::label('mail_driver', __('Mail Driver'), ['class' => 'col-form-label mail_driver']) }}
-                                            {{ Form::text('mail_driver', isset($settings['mail_driver']) ? $settings['mail_driver'] : '', ['class' => 'form-control ', 'placeholder' => __('Enter Mail Driver')]) }}
+                                            {{ Form::text('mail_driver', isset($settings['mail_driver']) ? $settings['mail_driver'] : '', ['class' => 'form-control', 'id' => 'mail_driver', 'placeholder' => __('Enter Mail Driver')]) }}
                                             @error('mail_driver')
                                             <span class="text-xs text-danger invalid-mail_driver"
                                                 role="alert">{{ $message }}</span>
@@ -1121,7 +1121,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         </div>
                                         <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                             {{ Form::label('mail_host', __('Mail Host'), ['class' => 'col-form-label']) }}
-                                            {{ Form::text('mail_host', isset($settings['mail_host']) ? $settings['mail_host'] : '', ['class' => 'form-control ', 'placeholder' => __('Enter Mail Host')]) }}
+                                            {{ Form::text('mail_host', isset($settings['mail_host']) ? $settings['mail_host'] : '', ['class' => 'form-control', 'id' => 'mail_host', 'placeholder' => __('Enter Mail Host')]) }}
                                             @error('mail_host')
                                             <span class="text-xs text-danger invalid-mail_host"
                                                 role="alert">{{ $message }}</span>
@@ -1129,7 +1129,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         </div>
                                         <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                             {{ Form::label('mail_port', __('Mail Port'), ['class' => 'col-form-label']) }}
-                                            {{ Form::text('mail_port', isset($settings['mail_port']) ? $settings['mail_port'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Mail Port')]) }}
+                                            {{ Form::text('mail_port', isset($settings['mail_port']) ? $settings['mail_port'] : '', ['class' => 'form-control', 'id' => 'mail_port', 'placeholder' => __('Enter Mail Port')]) }}
                                             @error('mail_port')
                                             <span class="text-xs text-danger invalid-mail_port"
                                                 role="alert">{{ $message }}</span>
@@ -1137,7 +1137,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         </div>
                                         <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                             {{ Form::label('mail_username', __('Mail Username'), ['class' => 'col-form-label']) }}
-                                            {{ Form::text('mail_username', isset($settings['mail_username']) ? $settings['mail_username'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Mail Username')]) }}
+                                            {{ Form::text('mail_username', isset($settings['mail_username']) ? $settings['mail_username'] : '', ['class' => 'form-control', 'id' => 'mail_username', 'placeholder' => __('Enter Mail Username')]) }}
                                             @error('mail_username')
                                             <span class="text-xs text-danger invalid-mail_username"
                                                 role="alert">{{ $message }}</span>
@@ -1145,7 +1145,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         </div>
                                         <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                             {{ Form::label('mail_password', __('Mail Password'), ['class' => 'col-form-label']) }}
-                                            {{ Form::text('mail_password', isset($settings['mail_password']) ? $settings['mail_password'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Mail Password')]) }}
+                                            {{ Form::text('mail_password', isset($settings['mail_password']) ? $settings['mail_password'] : '', ['class' => 'form-control', 'id' => 'mail_password', 'placeholder' => __('Enter Mail Password')]) }}
                                             @error('mail_password')
                                             <span class="text-xs text-danger invalid-mail_password"
                                                 role="alert">{{ $message }}</span>
@@ -1153,7 +1153,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         </div>
                                         <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                             {{ Form::label('mail_encryption', __('Mail Encryption'), ['class' => 'col-form-label']) }}
-                                            {{ Form::text('mail_encryption', isset($settings['mail_encryption']) ? $settings['mail_encryption'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Mail Encryption')]) }}
+                                            {{ Form::text('mail_encryption', isset($settings['mail_encryption']) ? $settings['mail_encryption'] : '', ['class' => 'form-control', 'id' => 'mail_encryption', 'placeholder' => __('Enter Mail Encryption')]) }}
                                             @error('mail_encryption')
                                             <span class="text-xs text-danger invalid-mail_encryption"
                                                 role="alert">{{ $message }}</span>
@@ -1161,7 +1161,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         </div>
                                         <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                             {{ Form::label('mail_from_address', __('Mail From Address'), ['class' => 'col-form-label']) }}
-                                            {{ Form::text('mail_from_address', isset($settings['mail_from_address']) ? $settings['mail_from_address'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Mail From Address')]) }}
+                                            {{ Form::text('mail_from_address', isset($settings['mail_from_address']) ? $settings['mail_from_address'] : '', ['class' => 'form-control', 'id' => 'mail_from_address', 'placeholder' => __('Enter Mail From Address')]) }}
                                             @error('mail_from_address')
                                             <span class="text-xs text-danger invalid-mail_from_address"
                                                 role="alert">{{ $message }}</span>
@@ -1169,7 +1169,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         </div>
                                         <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                             {{ Form::label('mail_from_name', __('Mail From Name'), ['class' => 'col-form-label']) }}
-                                            {{ Form::text('mail_from_name', isset($settings['mail_from_name']) ? $settings['mail_from_name'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Mail From Name')]) }}
+                                            {{ Form::text('mail_from_name', isset($settings['mail_from_name']) ? $settings['mail_from_name'] : '', ['class' => 'form-control', 'id' => 'mail_from_name', 'placeholder' => __('Enter Mail From Name')]) }}
                                             @error('mail_from_name')
                                             <span class="text-xs text-danger invalid-mail_from_name"
                                                 role="alert">{{ $message }}</span>
@@ -1182,7 +1182,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         <div class="col-md-6">
                                             <a href="javascript:void(0)"
                                                 class="btn btn-print-invoice  btn-primary m-r-10 send_email"
-                                                data-ajax-popup="true" data-title="{{ __('Send Test Mail') }}"
+                                                data-title="{{ __('Send Test Mail') }}"
                                                 data-url="{{ route('test.mail') }}">
                                                 {{ __('Send Test Mail') }}
                                             </a>
