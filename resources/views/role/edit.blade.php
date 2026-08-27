@@ -187,6 +187,7 @@
                                 'View',
                                 'Download',
                                 'Review',
+                                'Bulk Generate',
                             ];
                             $rolePermissions = $role->permissions()->pluck('id')->toArray();
                         @endphp

@@ -19,7 +19,8 @@
         }
     }
 
-    $monthValue = old('assessment_month', isset($assessment) && $assessment->assessment_month ? $assessment->assessment_month->format('Y-m') : now()->format('Y-m'));
+    $monthValue   = old('assessment_month', isset($assessment) && $assessment->assessment_month ? $assessment->assessment_month->format('Y-m') : now()->format('Y-m'));
+    $dueDateValue = old('due_date', isset($assessment) && $assessment->due_date ? $assessment->due_date->format('Y-m-d') : '');
 @endphp
 
 <div class="row">
@@ -31,7 +32,13 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    @if(\Auth::user()->type != 'employee')
+                    @if(\Auth::user()->type == 'employee')
+                        @if(isset($emp) && $emp)
+                            <input type="hidden" name="employee_id" value="{{ $emp->id }}">
+                        @elseif(isset($assessment) && $assessment->employee_id)
+                            <input type="hidden" name="employee_id" value="{{ $assessment->employee_id }}">
+                        @endif
+                    @else
                         <div class="form-group col-md-6">
                             {{ Form::label('employee_id', __('Select Employee'), ['class' => 'form-label']) }}<x-required></x-required>
                             {{ Form::select('employee_id', $employees, old('employee_id', $assessment->employee_id), ['class' => 'form-control select2', 'id' => 'emp_select_box', 'required' => 'required']) }}
@@ -73,6 +80,11 @@
                         @else
                             {{ Form::text('reporting_manager', old('reporting_manager', $assessment->reporting_manager), ['class' => 'form-control', 'id' => 'reporting_manager', 'required' => 'required', 'placeholder' => __('Enter Reporting Manager Name')]) }}
                         @endif
+                    </div>
+
+                    <div class="form-group col-md-6">
+                        {{ Form::label('due_date', __('Submission Deadline Date'), ['class' => 'form-label']) }}
+                        <input type="date" name="due_date" id="due_date" value="{{ $dueDateValue }}" class="form-control">
                     </div>
                 </div>
             </div>

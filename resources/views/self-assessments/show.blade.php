@@ -88,6 +88,9 @@
                             </div>
                             <div class="d-flex align-items-center gap-3 mt-3 text-muted small flex-wrap">
                                 <span class="badge bg-light text-dark border p-2 px-3"><i class="ti ti-calendar me-1 text-primary"></i>{{ __('Assessment Month:') }} <strong>{{ $assessment->monthLabel() }}</strong></span>
+                                @if($assessment->due_date)
+                                    <span class="badge bg-light text-dark border p-2 px-3"><i class="ti ti-clock me-1 text-primary"></i>{{ __('Submission Deadline:') }} {!! $assessment->deadlineBadgeHtml() !!}</span>
+                                @endif
                                 @if($assessment->submitted_at)
                                     <span><i class="ti ti-clock me-1 text-warning"></i>{{ __('Submitted:') }} <strong>{{ \Auth::user()->dateFormat($assessment->submitted_at) }}</strong></span>
                                 @endif

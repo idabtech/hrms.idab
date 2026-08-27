@@ -23,6 +23,7 @@ class SelfAssessmentPermissionSeeder extends Seeder
             'Edit Self Assessment',
             'Delete Self Assessment',
             'Review Self Assessment',
+            'Bulk Generate Self Assessment',
         ];
 
         foreach ($permissions as $permissionName) {

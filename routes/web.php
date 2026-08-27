@@ -1139,6 +1139,7 @@ Route::group(['middleware' => ['verified']], function () {
             'XSS',
         ]
     );
+    Route::post('self-assessments/bulk-store', [\App\Http\Controllers\SelfAssessmentController::class, 'bulkStore'])->name('self-assessments.bulk-store')->middleware(['auth', 'XSS']);
     Route::resource('self-assessments', \App\Http\Controllers\SelfAssessmentController::class)->middleware(
         [
             'auth',
