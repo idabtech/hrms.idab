@@ -638,7 +638,7 @@ class ReportController extends Controller
                 $resignedEmpIds
             ));
 
-            $employees = Employee::select('id', 'name')
+            $employees = Employee::select('id', 'name', 'employee_id')
                 ->whereIn('id', $validEmpIds)
                 ->where('created_by', $creatorId);
 
@@ -661,7 +661,12 @@ class ReportController extends Controller
                 $data['employees'] = !empty(Employee::find($request->employees)) ? Employee::find($request->employees)->name : '';
             }
 
-            $employees = $employees->get()->pluck('name', 'id');
+            $empList = $employees->get();
+            $employees = collect();
+            foreach ($empList as $e) {
+                $empCode = \Auth::user()->employeeIdFormat($e->employee_id);
+                $employees->put($e->id, $empCode . ' - ' . $e->name);
+            }
 
             $employeesAttendance = [];
             $totalPresent        = $totalLeave = 0;
@@ -1337,6 +1342,16 @@ class ReportController extends Controller
             $company_start_time = !empty($request->company_shift_time) ? (explode(' - ', $request->company_shift_time)[0] ?? null) : null;
             $company_end_time   = !empty($request->company_shift_time) ? (explode(' - ', $request->company_shift_time)[1] ?? null) : null;
 
+            if (empty($company_start_time) || empty($company_end_time)) {
+                $emp = \App\Models\Employee::find($request->employee_id);
+                if ($emp) {
+                    if (empty($company_start_time)) $company_start_time = $emp->company_start_time ?: '09:00:00';
+                    if (empty($company_end_time))   $company_end_time   = $emp->company_end_time   ?: '18:00:00';
+                }
+            }
+            if (empty($company_start_time)) $company_start_time = '09:00:00';
+            if (empty($company_end_time))   $company_end_time   = '18:00:00';
+
             $attendance->status = $status;
             $attendance->company_shift_time = $request->company_shift_time;
 
@@ -1377,11 +1392,11 @@ class ReportController extends Controller
             $attendance->is_manual_by = \Auth::user()->id;
 
             if ($statusVal === 'P') {
-                // Use manually entered clock_in/clock_out if provided, otherwise fall back to shift times
+                // Use manually entered clock_in/clock_out if provided, otherwise fall back to shift times or defaults
                 $clockIn  = !empty($request->clock_in)  ? $request->clock_in  : $company_start_time;
                 $clockOut = !empty($request->clock_out) ? $request->clock_out : $company_end_time;
-                $attendance->clock_in  = $clockIn  ? Carbon::parse($request->date . ' ' . $clockIn)->format('H:i:s')  : null;
-                $attendance->clock_out = $clockOut ? Carbon::parse($request->date . ' ' . $clockOut)->format('H:i:s') : null;
+                $attendance->clock_in  = Carbon::parse($request->date . ' ' . $clockIn)->format('H:i:s');
+                $attendance->clock_out = Carbon::parse($request->date . ' ' . $clockOut)->format('H:i:s');
             } elseif ($statusVal === 'HD') {
                 // Half Day: worked duration between 2h and 6h
                 $clockIn  = !empty($request->clock_in)  ? $request->clock_in  : ($company_start_time ?: '09:00');
@@ -1405,6 +1420,9 @@ class ReportController extends Controller
                 $attendance->clock_in  = '00:00:00';
                 $attendance->clock_out = '00:00:00';
             }
+
+            if (empty($attendance->clock_in))  $attendance->clock_in  = '00:00:00';
+            if (empty($attendance->clock_out)) $attendance->clock_out = '00:00:00';
 
             $attendance->late = '00:00:00';
             $attendance->early_leaving = '00:00:00';
@@ -2095,7 +2113,12 @@ class ReportController extends Controller
             $emp = Employee::where('created_by', \Auth::user()->creatorId());
         }
 
-        $employees = $emp->get()->pluck('name', 'id');
+        $empList = $emp->select('id', 'name', 'employee_id')->get();
+        $employees = collect();
+        foreach ($empList as $e) {
+            $empCode = \Auth::user()->employeeIdFormat($e->employee_id);
+            $employees->put($e->id, $empCode . ' - ' . $e->name);
+        }
 
         $currentdate = strtotime($filter_month);
         $month       = date('m', $currentdate);

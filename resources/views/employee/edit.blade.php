@@ -367,7 +367,7 @@
                                     <!--- Refresh Break Time --->
                                     <div class="form-group col-md-6">
                                         {{ Form::label('refresh_type', __('Refresh Break Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
-                                        {{ Form::select('refresh_type', ['fixed' => 'Fixed Time', 'flexible' => 'Flexible Time'], old('refresh_type', $employee->refresh_type), ['class' => 'form-control', 'id' => 'refresh_break_type', 'placeholder' => 'Select Refresh Break Time', 'onchange' => 'toggleShiftBreakType()', 'required' => 'required']) }}
+                                        {{ Form::select('refresh_type', ['fixed' => 'Fixed Time', 'flexible' => 'Flexible Time'], old('refresh_type', $employee->refresh_type ?? 'fixed'), ['class' => 'form-control', 'id' => 'refresh_break_type', 'onchange' => 'toggleShiftBreakType()', 'required' => 'required']) }}
                                     </div>
 
                                     <!-- Refresh Break Fixed Time Fields -->
@@ -387,7 +387,7 @@
                                         {{ Form::number('refresh_minutes', old('refresh_minutes', $employee->refresh_minutes ?? 0), ['class' => 'form-control', 'id' => 'refresh_minutes', 'min' => 0]) }}
                                     </div> -->
                                     @php
-                                        $initialBreakType = old('refresh_type', $employee->refresh_type ?? null);
+                                        $initialBreakType = old('refresh_type', $employee->refresh_type ?? 'fixed');
                                     @endphp
 
                                     <!-- Lunch Time Fields -->
@@ -1232,114 +1232,111 @@
 
         function loadShiftBreakTimes() {
             const selectElement = document.getElementById('company_shift_time');
+            if (!selectElement) return;
             const selectedIndex = selectElement.value;
 
             if (selectedIndex === '' || !companyShifts[selectedIndex]) {
-                // Hide all break time fields
-                document.getElementById('lunchTimeDiv').style.display = 'none';
-                document.getElementById('lunchEndDiv').style.display = 'none';
-                document.getElementById('lunchMinDiv').style.display = 'none';
-                document.getElementById('teaTimeDiv').style.display = 'none';
-                document.getElementById('teaEndDiv').style.display = 'none';
-                document.getElementById('teaMinDiv').style.display = 'none';
-                // Don't hide refresh break fields - they're independent
                 return;
             }
 
             const shift = companyShifts[selectedIndex];
 
             // Set hidden fields with shift times
-            document.getElementById('company_start_time').value = shift.start || '';
-            document.getElementById('company_end_time').value = shift.end || '';
+            const startTimeEl = document.getElementById('company_start_time');
+            const endTimeEl = document.getElementById('company_end_time');
+            if (startTimeEl) startTimeEl.value = shift.start || '';
+            if (endTimeEl) endTimeEl.value = shift.end || '';
 
-            // Load lunch times
-            if (shift.type === 'fixed') {
-                document.getElementById('lunchTimeDiv').style.display = 'block';
-                document.getElementById('lunchEndDiv').style.display = 'block';
-                document.getElementById('lunchMinDiv').style.display = 'none';
-
-                document.getElementById('lunch_start').value = shift.lunch_start || '';
-                document.getElementById('lunch_end').value = shift.lunch_end || '';
-            } else if (shift.type === 'flexible') {
-                document.getElementById('lunchTimeDiv').style.display = 'none';
-                document.getElementById('lunchEndDiv').style.display = 'none';
-                document.getElementById('lunchMinDiv').style.display = 'block';
-
-                document.getElementById('lunch_minutes').value = shift.lunch_minutes || 0;
-            } else {
-                document.getElementById('lunchTimeDiv').style.display = 'none';
-                document.getElementById('lunchEndDiv').style.display = 'none';
-                document.getElementById('lunchMinDiv').style.display = 'none';
+            // Populate times if available
+            if (shift.lunch_start && document.getElementById('lunch_start')) {
+                document.getElementById('lunch_start').value = shift.lunch_start;
             }
-
-            // Load tea times
-            if (shift.type === 'fixed') {
-                document.getElementById('teaTimeDiv').style.display = 'block';
-                document.getElementById('teaEndDiv').style.display = 'block';
-                document.getElementById('teaMinDiv').style.display = 'none';
-
-                document.getElementById('tea_start').value = shift.tea_start || '';
-                document.getElementById('tea_end').value = shift.tea_end || '';
-            } else if (shift.type === 'flexible') {
-                document.getElementById('teaTimeDiv').style.display = 'none';
-                document.getElementById('teaEndDiv').style.display = 'none';
-                document.getElementById('teaMinDiv').style.display = 'block';
-
-                document.getElementById('tea_minutes').value = shift.tea_minutes || 0;
-            } else {
-                document.getElementById('teaTimeDiv').style.display = 'none';
-                document.getElementById('teaEndDiv').style.display = 'none';
-                document.getElementById('teaMinDiv').style.display = 'none';
+            if (shift.lunch_end && document.getElementById('lunch_end')) {
+                document.getElementById('lunch_end').value = shift.lunch_end;
             }
+            if (shift.tea_start && document.getElementById('tea_start')) {
+                document.getElementById('tea_start').value = shift.tea_start;
+            }
+            if (shift.tea_end && document.getElementById('tea_end')) {
+                document.getElementById('tea_end').value = shift.tea_end;
+            }
+            if (shift.lunch_minutes && document.getElementById('lunch_minutes')) {
+                document.getElementById('lunch_minutes').value = shift.lunch_minutes;
+            }
+            if (shift.tea_minutes && document.getElementById('tea_minutes')) {
+                document.getElementById('tea_minutes').value = shift.tea_minutes;
+            }
+            
+            // Trigger UI update based on refresh_break_type
+            toggleShiftBreakType();
         }
 
         // Toggle shift break type fields (lunch and tea)
         function toggleShiftBreakType() {
-            const breakType = document.getElementById('refresh_break_type').value;
+            const breakTypeEl = document.getElementById('refresh_break_type');
+            if (!breakTypeEl) return;
+            let breakType = breakTypeEl.value;
+            if (!breakType) {
+                breakType = 'fixed';
+                breakTypeEl.value = 'fixed';
+            }
+
+            const lunchStart = document.getElementById('lunchTimeDiv');
+            const lunchEnd = document.getElementById('lunchEndDiv');
+            const lunchMin = document.getElementById('lunchMinDiv');
+            const teaStart = document.getElementById('teaTimeDiv');
+            const teaEnd = document.getElementById('teaEndDiv');
+            const teaMin = document.getElementById('teaMinDiv');
 
             if (breakType === 'fixed') {
                 // Show time fields, hide minute fields
-                document.getElementById('lunchTimeDiv').style.display = 'block';
-                document.getElementById('lunchEndDiv').style.display = 'block';
-                document.getElementById('lunchMinDiv').style.display = 'none';
-                document.getElementById('teaTimeDiv').style.display = 'block';
-                document.getElementById('teaEndDiv').style.display = 'block';
-                document.getElementById('teaMinDiv').style.display = 'none';
+                if (lunchStart) lunchStart.style.display = 'block';
+                if (lunchEnd) lunchEnd.style.display = 'block';
+                if (lunchMin) lunchMin.style.display = 'none';
+                if (teaStart) teaStart.style.display = 'block';
+                if (teaEnd) teaEnd.style.display = 'block';
+                if (teaMin) teaMin.style.display = 'none';
             } else if (breakType === 'flexible') {
                 // Show minute fields, hide time fields
-                document.getElementById('lunchTimeDiv').style.display = 'none';
-                document.getElementById('lunchEndDiv').style.display = 'none';
-                document.getElementById('lunchMinDiv').style.display = 'block';
-                document.getElementById('teaTimeDiv').style.display = 'none';
-                document.getElementById('teaEndDiv').style.display = 'none';
-                document.getElementById('teaMinDiv').style.display = 'block';
+                if (lunchStart) lunchStart.style.display = 'none';
+                if (lunchEnd) lunchEnd.style.display = 'none';
+                if (lunchMin) lunchMin.style.display = 'block';
+                if (teaStart) teaStart.style.display = 'none';
+                if (teaEnd) teaEnd.style.display = 'none';
+                if (teaMin) teaMin.style.display = 'block';
             } else {
                 // Hide all if not set
-                document.getElementById('lunchTimeDiv').style.display = 'none';
-                document.getElementById('lunchEndDiv').style.display = 'none';
-                document.getElementById('lunchMinDiv').style.display = 'none';
-                document.getElementById('teaTimeDiv').style.display = 'none';
-                document.getElementById('teaEndDiv').style.display = 'none';
-                document.getElementById('teaMinDiv').style.display = 'none';
+                if (lunchStart) lunchStart.style.display = 'none';
+                if (lunchEnd) lunchEnd.style.display = 'none';
+                if (lunchMin) lunchMin.style.display = 'none';
+                if (teaStart) teaStart.style.display = 'none';
+                if (teaEnd) teaEnd.style.display = 'none';
+                if (teaMin) teaMin.style.display = 'none';
             }
         }
 
-        // Toggle refresh break type fields
+        // Toggle refresh break type fields (with safe null checks)
         function toggleRefreshBreakType() {
-            const refreshType = document.getElementById('refresh_break_type').value;
+            const refreshTypeEl = document.getElementById('refresh_break_type');
+            if (!refreshTypeEl) return;
+            const refreshType = refreshTypeEl.value;
+
+            const refreshStart = document.getElementById('refreshStartDiv');
+            const refreshEnd = document.getElementById('refreshEndDiv');
+            const refreshMin = document.getElementById('refreshMinDiv');
 
             if (refreshType === 'fixed') {
-                document.getElementById('refreshStartDiv').style.display = 'block';
-                document.getElementById('refreshEndDiv').style.display = 'block';
-                document.getElementById('refreshMinDiv').style.display = 'none';
+                if (refreshStart) refreshStart.style.display = 'block';
+                if (refreshEnd) refreshEnd.style.display = 'block';
+                if (refreshMin) refreshMin.style.display = 'none';
             } else if (refreshType === 'flexible') {
-                document.getElementById('refreshStartDiv').style.display = 'none';
-                document.getElementById('refreshEndDiv').style.display = 'none';
-                document.getElementById('refreshMinDiv').style.display = 'block';
+                if (refreshStart) refreshStart.style.display = 'none';
+                if (refreshEnd) refreshEnd.style.display = 'none';
+                if (refreshMin) refreshMin.style.display = 'block';
             } else {
-                document.getElementById('refreshStartDiv').style.display = 'none';
-                document.getElementById('refreshEndDiv').style.display = 'none';
-                document.getElementById('refreshMinDiv').style.display = 'none';
+                if (refreshStart) refreshStart.style.display = 'none';
+                if (refreshEnd) refreshEnd.style.display = 'none';
+                if (refreshMin) refreshMin.style.display = 'none';
             }
         }
 
@@ -1348,6 +1345,10 @@
             loadShiftBreakTimes();
             toggleShiftBreakType();
             toggleRefreshBreakType();
+        });
+
+        $(document).on('change', '#refresh_break_type', function() {
+            toggleShiftBreakType();
         });
 
         // Document preview handler — shows uniform card previews for multiple selected files
