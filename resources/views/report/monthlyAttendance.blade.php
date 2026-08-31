@@ -710,11 +710,36 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                         @if(!empty($data['company_shifts']) && count($data['company_shifts']) > 0)
                             <select name="company_shift_time" id="company_shift_time" class="form-control">
                                 <option value="">{{ __('Select Shift Time') }}</option>
-                                @foreach ($data['company_shifts'] as $shift)
+                                @foreach ($data['company_shifts'] as $index => $shift)
+                                    @php
+                                        $name = !empty($shift['name']) ? $shift['name'] : (!empty($shift['title']) ? $shift['title'] : 'Shift ' . ($index + 1));
+                                        $start = $shift['start'] ?? '';
+                                        $end = $shift['end'] ?? '';
+                                        $timeStr = ($start && $end) ? " ({$start} - {$end})" : "";
+
+                                        $colorDot = '🟣 ';
+                                        if (!empty($shift['color'])) {
+                                            $c = strtolower(ltrim($shift['color'], '#'));
+                                            if (strlen($c) === 6) {
+                                                $r = hexdec(substr($c, 0, 2));
+                                                $g = hexdec(substr($c, 2, 2));
+                                                $b = hexdec(substr($c, 4, 2));
+                                                if ($r > 180 && $g < 100 && $b < 100) { $colorDot = '🔴 '; }
+                                                elseif ($g > 140 && $r < 140 && $b < 140) { $colorDot = '🟢 '; }
+                                                elseif ($b > 140 && $r < 140) { $colorDot = '🔵 '; }
+                                                elseif ($r > 200 && $g > 160 && $b < 100) { $colorDot = '🟡 '; }
+                                                elseif ($r > 200 && $g > 100 && $b < 80) { $colorDot = '🟠 '; }
+                                                elseif ($r > 100 && $b > 100 && $g < 120) { $colorDot = '🟣 '; }
+                                                elseif ($r < 80 && $g < 80 && $b < 80) { $colorDot = '⚫ '; }
+                                            }
+                                        }
+
+                                        $label = $colorDot . $name . $timeStr;
+                                    @endphp
                                     <option value="{{ $shift['start'] . ' - ' . $shift['end'] }}"
                                             data-start="{{ $shift['start'] }}"
                                             data-end="{{ $shift['end'] }}">
-                                        {{ $shift['start'] }} - {{ $shift['end'] }}
+                                        {{ $label }}
                                     </option>
                                 @endforeach
                             </select>

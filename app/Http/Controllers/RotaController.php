@@ -391,11 +391,31 @@ class RotaController extends Controller
                     if (strlen($start) == 5) $start .= ':00';
                     if (strlen($end) == 5)   $end .= ':00';
 
-                    $name = !empty($cShift['name']) ? $cShift['name'] : __('Shift') . ' ' . ($idx + 1);
+                    $rawName = !empty($cShift['name']) ? $cShift['name'] : __('Shift') . ' ' . ($idx + 1);
+
+                    $colorDot = '🟣 ';
+                    if (!empty($cShift['color'])) {
+                        $c = strtolower(ltrim($cShift['color'], '#'));
+                        if (strlen($c) === 6) {
+                            $r = hexdec(substr($c, 0, 2));
+                            $g = hexdec(substr($c, 2, 2));
+                            $b = hexdec(substr($c, 4, 2));
+                            if ($r > 180 && $g < 100 && $b < 100) { $colorDot = '🔴 '; }
+                            elseif ($g > 140 && $r < 140 && $b < 140) { $colorDot = '🟢 '; }
+                            elseif ($b > 140 && $r < 140) { $colorDot = '🔵 '; }
+                            elseif ($r > 200 && $g > 160 && $b < 100) { $colorDot = '🟡 '; }
+                            elseif ($r > 200 && $g > 100 && $b < 80) { $colorDot = '🟠 '; }
+                            elseif ($r > 100 && $b > 100 && $g < 120) { $colorDot = '🟣 '; }
+                            elseif ($r < 80 && $g < 80 && $b < 80) { $colorDot = '⚫ '; }
+                        }
+                    }
+
+                    $name = $colorDot . $rawName;
 
                     $templates[] = [
                         'id'                 => 'company_shift_' . $idx,
                         'name'               => $name,
+                        'raw_name'           => $rawName,
                         'company_start_time' => $start,
                         'company_end_time'   => $end,
                     ];
