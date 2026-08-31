@@ -250,9 +250,31 @@
                                         @php
                                             $shiftOptions = [];
 
-                                            if (!empty($company_shifts)) {
+                                            if (!empty($company_shifts) && is_array($company_shifts)) {
                                                 foreach ($company_shifts as $index => $shift) {
-                                                    $label = ($shift['start'] ?? '') . ' - ' . ($shift['end'] ?? '');
+                                                    $name = !empty($shift['name']) ? $shift['name'] : (!empty($shift['title']) ? $shift['title'] : 'Shift ' . ($index + 1));
+                                                    $start = $shift['start'] ?? '';
+                                                    $end = $shift['end'] ?? '';
+                                                    $timeStr = ($start && $end) ? " ({$start} - {$end})" : "";
+
+                                                    $colorDot = '🟣 ';
+                                                    if (!empty($shift['color'])) {
+                                                        $c = strtolower(ltrim($shift['color'], '#'));
+                                                        if (strlen($c) === 6) {
+                                                            $r = hexdec(substr($c, 0, 2));
+                                                            $g = hexdec(substr($c, 2, 2));
+                                                            $b = hexdec(substr($c, 4, 2));
+                                                            if ($r > 180 && $g < 100 && $b < 100) { $colorDot = '🔴 '; }
+                                                            elseif ($g > 140 && $r < 140 && $b < 140) { $colorDot = '🟢 '; }
+                                                            elseif ($b > 140 && $r < 140) { $colorDot = '🔵 '; }
+                                                            elseif ($r > 200 && $g > 160 && $b < 100) { $colorDot = '🟡 '; }
+                                                            elseif ($r > 200 && $g > 100 && $b < 80) { $colorDot = '🟠 '; }
+                                                            elseif ($r > 100 && $b > 100 && $g < 120) { $colorDot = '🟣 '; }
+                                                            elseif ($r < 80 && $g < 80 && $b < 80) { $colorDot = '⚫ '; }
+                                                        }
+                                                    }
+
+                                                    $label = $colorDot . $name . $timeStr;
                                                     $shiftOptions[$index] = $label;
                                                 }
                                             }
@@ -288,8 +310,8 @@
                                     {{ Form::select('refresh_type', ['fixed' => 'Fixed Time', 'flexible' => 'Flexible Time'], old('refresh_type', 'fixed'), ['class' => 'form-control', 'id' => 'refresh_break_type', 'onchange' => 'toggleShiftBreakType()', 'required' => 'required']) }}
                                 </div>
 
-                                <!-- Refresh Break Fixed Time Fields -->
-                                <div class="form-group col-md-6" id="refreshStartDiv" style="display:none;">
+                                <!-- Refresh Break Fixed Time Fields (Legacy) -->
+                                <!-- <div class="form-group col-md-6" id="refreshStartDiv" style="display:none;">
                                     {{ Form::label('refresh_start', __('Refresh Start Time'), ['class' => 'form-label']) }}
                                     {{ Form::time('refresh_start', old('refresh_start', null), ['class' => 'form-control', 'id' => 'refresh_start']) }}
                                 </div>
@@ -297,7 +319,7 @@
                                 <div class="form-group col-md-6" id="refreshEndDiv" style="display:none;">
                                     {{ Form::label('refresh_end', __('Refresh End Time'), ['class' => 'form-label']) }}
                                     {{ Form::time('refresh_end', old('refresh_end', null), ['class' => 'form-control', 'id' => 'refresh_end']) }}
-                                </div>
+                                </div> -->
 
                                 <!-- Lunch Time Fields -->
                                 <div class="form-group col-md-6" id="lunchTimeDiv" style="display:none;">
@@ -753,35 +775,10 @@
         }
 
         // Toggle refresh break type fields
-        function toggleRefreshBreakType() {
-            const refreshTypeEl = document.getElementById('refresh_break_type');
-            if (!refreshTypeEl) return;
-            const refreshType = refreshTypeEl.value;
-
-            const refreshStart = document.getElementById('refreshStartDiv');
-            const refreshEnd = document.getElementById('refreshEndDiv');
-            const refreshMin = document.getElementById('refreshMinDiv');
-
-            if (refreshType === 'fixed') {
-                if (refreshStart) refreshStart.style.display = 'block';
-                if (refreshEnd) refreshEnd.style.display = 'block';
-                if (refreshMin) refreshMin.style.display = 'none';
-            } else if (refreshType === 'flexible') {
-                if (refreshStart) refreshStart.style.display = 'none';
-                if (refreshEnd) refreshEnd.style.display = 'none';
-                if (refreshMin) refreshMin.style.display = 'block';
-            } else {
-                if (refreshStart) refreshStart.style.display = 'none';
-                if (refreshEnd) refreshEnd.style.display = 'none';
-                if (refreshMin) refreshMin.style.display = 'none';
-            }
-        }
-
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadShiftBreakTimes();
             toggleShiftBreakType();
-            toggleRefreshBreakType();
         });
 
         $(document).on('change', '#refresh_break_type', function() {

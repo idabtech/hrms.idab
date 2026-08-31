@@ -1424,7 +1424,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         <table class="table table-bordered text-center align-middle shift-table">
                                             <thead class="table-light">
                                                 <tr>
-                                                    <th rowspan="2">Shift</th>
+                                                    <th colspan="3">Shift</th>
                                                     <th colspan="2">Time</th>
                                                     <th rowspan="2">Break Type</th>
                                                     <th colspan="2">Lunch</th>
@@ -1433,6 +1433,9 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                                     <th rowspan="2">Action</th>
                                                 </tr>
                                                 <tr>
+                                                    <th>Name *</th>
+                                                    <th>Code</th>
+                                                    <th>Color</th>
                                                     <th>Start</th>
                                                     <th>End</th>
                                                     <th>Start</th>
@@ -3236,7 +3239,9 @@ function loadExistingShifts() {
 function addRowWithData(shiftData, existingIndex) {
     let row = `
     <tr id="row_${index}" class="align-middle">
-        <td>Shift ${index + 1}</td>
+        <td><input type="text" name="shifts[${index}][name]" class="form-control" placeholder="Shift Name *" value="${shiftData.name || shiftData.title || 'Shift ' + (index + 1)}" required></td>
+        <td><input type="text" name="shifts[${index}][code]" class="form-control" placeholder="Code" value="${shiftData.code || ''}"></td>
+        <td><input type="color" name="shifts[${index}][color]" class="form-control form-control-color" value="${shiftData.color || '#51459d'}" title="Choose Color" style="width: 40px; height: 36px; padding: 2px;"></td>
 
         <td><input type="time" name="shifts[${index}][start]" class="form-control" value="${shiftData.start || ''}"></td>
         <td><input type="time" name="shifts[${index}][end]" class="form-control" value="${shiftData.end || ''}"></td>
@@ -3253,23 +3258,23 @@ function addRowWithData(shiftData, existingIndex) {
         <!-- Lunch -->
         <td>
             <input type="time" id="lunch_start_${index}" name="shifts[${index}][lunch_start]" class="form-control" value="${shiftData.lunch_start || ''}">
-            <label for="lunch_min_${index}" class="form-label mt-1">Minutes</label>
+            <span id="lunch_min_label_${index}" class="text-secondary fw-semibold" style="display:none;">Minutes</span>
         </td>
 
         <td>
-            <input type="number" id="lunch_min_${index}" name="shifts[${index}][lunch_minutes]" class="form-control mt-1" style="display:none;" placeholder="Min" value="${shiftData.lunch_minutes || ''}">
             <input type="time" id="lunch_end_${index}" name="shifts[${index}][lunch_end]" class="form-control" value="${shiftData.lunch_end || ''}">
+            <input type="number" id="lunch_min_${index}" name="shifts[${index}][lunch_minutes]" class="form-control" placeholder="0" min="0" value="${shiftData.lunch_minutes || ''}" style="display:none;">
         </td>
 
         <!-- Tea -->
         <td>
             <input type="time" id="tea_start_${index}" name="shifts[${index}][tea_start]" class="form-control" value="${shiftData.tea_start || ''}">
-            <label for="tea_min_${index}" class="form-label mt-1">Minutes</label>
+            <span id="tea_min_label_${index}" class="text-secondary fw-semibold" style="display:none;">Minutes</span>
         </td>
 
         <td>
             <input type="time" id="tea_end_${index}" name="shifts[${index}][tea_end]" class="form-control" value="${shiftData.tea_end || ''}">
-            <input type="number" id="tea_min_${index}" name="shifts[${index}][tea_minutes]" class="form-control mt-1" style="display:none;" placeholder="Min" value="${shiftData.tea_minutes || ''}">
+            <input type="number" id="tea_min_${index}" name="shifts[${index}][tea_minutes]" class="form-control" placeholder="0" min="0" value="${shiftData.tea_minutes || ''}" style="display:none;">
         </td>
 
         <td class="text-center">
@@ -3299,7 +3304,9 @@ function addRow() {
 
     let row = `
     <tr id="row_${index}" class="align-middle">
-        <td>Shift ${index + 1}</td>
+        <td><input type="text" name="shifts[${index}][name]" class="form-control" placeholder="Shift Name *" value="Shift ${index + 1}" required></td>
+        <td><input type="text" name="shifts[${index}][code]" class="form-control" placeholder="Code"></td>
+        <td><input type="color" name="shifts[${index}][color]" class="form-control form-control-color" value="#51459d" title="Choose Color" style="width: 40px; height: 36px; padding: 2px;"></td>
 
         <td><input type="time" name="shifts[${index}][start]" class="form-control"></td>
         <td><input type="time" name="shifts[${index}][end]" class="form-control"></td>
@@ -3316,23 +3323,23 @@ function addRow() {
         <!-- Lunch -->
         <td>
             <input type="time" id="lunch_start_${index}" name="shifts[${index}][lunch_start]" class="form-control">
-            <label for="lunch_min_${index}" class="form-label mt-1">Minutes</label>
+            <span id="lunch_min_label_${index}" class="text-secondary fw-semibold" style="display:none;">Minutes</span>
         </td>
 
         <td>
-            <input type="number" id="lunch_min_${index}" name="shifts[${index}][lunch_minutes]" class="form-control mt-1" style="display:none;" placeholder="Min">
             <input type="time" id="lunch_end_${index}" name="shifts[${index}][lunch_end]" class="form-control">
+            <input type="number" id="lunch_min_${index}" name="shifts[${index}][lunch_minutes]" class="form-control" placeholder="0" min="0" style="display:none;">
         </td>
 
         <!-- Tea -->
         <td>
             <input type="time" id="tea_start_${index}" name="shifts[${index}][tea_start]" class="form-control">
-            <label for="tea_min_${index}" class="form-label mt-1">Minutes</label>
+            <span id="tea_min_label_${index}" class="text-secondary fw-semibold" style="display:none;">Minutes</span>
         </td>
 
         <td>
             <input type="time" id="tea_end_${index}" name="shifts[${index}][tea_end]" class="form-control">
-            <input type="number" id="tea_min_${index}" name="shifts[${index}][tea_minutes]" class="form-control mt-1" style="display:none;" placeholder="Min">
+            <input type="number" id="tea_min_${index}" name="shifts[${index}][tea_minutes]" class="form-control" placeholder="0" min="0" style="display:none;">
         </td>
 
         <td class="text-center">
@@ -3358,48 +3365,49 @@ function addRow() {
 
 // Toggle Fixed / Flexible
 function toggleType(select, i) {
+    if (!select) return;
     let type = select.value;
 
     let lunchStart = document.getElementById('lunch_start_' + i);
     let lunchEnd = document.getElementById('lunch_end_' + i);
+    let lunchMinLabel = document.getElementById('lunch_min_label_' + i);
     let lunchMin = document.getElementById('lunch_min_' + i);
 
     let teaStart = document.getElementById('tea_start_' + i);
     let teaEnd = document.getElementById('tea_end_' + i);
+    let teaMinLabel = document.getElementById('tea_min_label_' + i);
     let teaMin = document.getElementById('tea_min_' + i);
-    let lunchStartLabel = document.querySelector(`label[for="lunch_min_${i}"]`);
-    let teaStartLabel = document.querySelector(`label[for="tea_min_${i}"]`);
 
     if (type === 'fixed') {
-        lunchStart.style.display = 'block';
-        lunchEnd.style.display = 'block';
-        teaStart.style.display = 'block';
-        teaEnd.style.display = 'block';
+        if (lunchStart) lunchStart.style.display = 'block';
+        if (lunchEnd) lunchEnd.style.display = 'block';
+        if (lunchMinLabel) lunchMinLabel.style.display = 'none';
+        if (lunchMin) lunchMin.style.display = 'none';
 
-        lunchMin.style.display = 'none';
-        teaMin.style.display = 'none';
-        lunchStartLabel.style.display = 'none';
-        teaStartLabel.style.display = 'none';
+        if (teaStart) teaStart.style.display = 'block';
+        if (teaEnd) teaEnd.style.display = 'block';
+        if (teaMinLabel) teaMinLabel.style.display = 'none';
+        if (teaMin) teaMin.style.display = 'none';
     } else if (type === 'flexible') {
-        lunchStart.style.display = 'none';
-        lunchEnd.style.display = 'none';
-        teaStart.style.display = 'none';
-        teaEnd.style.display = 'none';
+        if (lunchStart) lunchStart.style.display = 'none';
+        if (lunchEnd) lunchEnd.style.display = 'none';
+        if (lunchMinLabel) lunchMinLabel.style.display = 'inline-block';
+        if (lunchMin) lunchMin.style.display = 'block';
 
-        lunchMin.style.display = 'block';
-        teaMin.style.display = 'block';
-        lunchStartLabel.style.display = 'block';
-        teaStartLabel.style.display = 'block';
-    }else{
-        lunchStart.style.display = 'none';
-        lunchEnd.style.display = 'none';
-        teaStart.style.display = 'none';
-        teaEnd.style.display = 'none';
+        if (teaStart) teaStart.style.display = 'none';
+        if (teaEnd) teaEnd.style.display = 'none';
+        if (teaMinLabel) teaMinLabel.style.display = 'inline-block';
+        if (teaMin) teaMin.style.display = 'block';
+    } else {
+        if (lunchStart) lunchStart.style.display = 'none';
+        if (lunchEnd) lunchEnd.style.display = 'none';
+        if (lunchMinLabel) lunchMinLabel.style.display = 'none';
+        if (lunchMin) lunchMin.style.display = 'none';
 
-        lunchMin.style.display = 'none';
-        teaMin.style.display = 'none';
-        lunchStartLabel.style.display = 'none';
-        teaStartLabel.style.display = 'none';
+        if (teaStart) teaStart.style.display = 'none';
+        if (teaEnd) teaEnd.style.display = 'none';
+        if (teaMinLabel) teaMinLabel.style.display = 'none';
+        if (teaMin) teaMin.style.display = 'none';
     }
 }
 

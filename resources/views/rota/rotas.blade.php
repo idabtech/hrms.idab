@@ -212,7 +212,8 @@ function populateShiftTemplateSelects() {
     if (addSel) {
         addSel.innerHTML = '<option value="">{{ __("— select to auto-fill times —") }}</option>';
         allShiftTemplates.forEach(t => {
-            addSel.innerHTML += `<option value="${t.id}" data-start="${t.company_start_time}" data-end="${t.company_end_time}" data-name="${t.name}">${t.name} (${t.company_start_time} – ${t.company_end_time})</option>`;
+            const templateName = t.raw_name || t.name;
+            addSel.innerHTML += `<option value="${t.id}" data-start="${t.company_start_time}" data-end="${t.company_end_time}" data-name="${templateName}">${t.name} (${t.company_start_time} – ${t.company_end_time})</option>`;
         });
         addSel.addEventListener('change', function () {
             const opt = this.options[this.selectedIndex];
@@ -228,7 +229,6 @@ function populateShiftTemplateSelects() {
         allShiftTemplates.forEach(t => {
             bulkSel.innerHTML += `<option value="${t.id}" data-start="${t.company_start_time}" data-end="${t.company_end_time}">${t.name} (${t.company_start_time} – ${t.company_end_time})</option>`;
         });
-        // preview is handled by the modal's own DOMContentLoaded listener
     }
 }
 
