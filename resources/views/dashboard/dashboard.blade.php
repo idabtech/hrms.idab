@@ -140,6 +140,11 @@
             @endif
         @endcan
 
+        {{-- Company Profile & Setup Completion Progress Widget --}}
+        @if (\Auth::user()->type == 'company')
+            @include('dashboard.company_setup_progress')
+        @endif
+
         @if (\Auth::user()->type == 'employee' || (\Auth::user()->type != 'company' && \Auth::user()->employee))
             <div class="col-xxl-12">
                 <div class="card" style="min-height: 230px;">

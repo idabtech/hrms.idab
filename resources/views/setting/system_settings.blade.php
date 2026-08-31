@@ -823,7 +823,12 @@
                                             </div>
                                             <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                                 {{ Form::label('mail_password', __('Mail Password'), ['class' => 'col-form-label']) }}
-                                                {{ Form::text('mail_password', isset($setting['mail_password']) ? $setting['mail_password'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Mail Password')]) }}
+                                                <div class="position-relative">
+                                                    {{ Form::input('password', 'mail_password', isset($setting['mail_password']) ? $setting['mail_password'] : '', ['class' => 'form-control', 'id' => 'mail_password', 'placeholder' => __('Enter Mail Password')]) }}
+                                                    <span class="toggle-password-btn">
+                                                        <i class="ti ti-eye"></i>
+                                                    </span>
+                                                </div>
                                                 @error('mail_password')
                                                     <span class="text-xs text-danger invalid-mail_password"
                                                         role="alert">{{ $message }}</span>

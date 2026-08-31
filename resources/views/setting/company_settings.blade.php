@@ -1145,7 +1145,12 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         </div>
                                         <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                             {{ Form::label('mail_password', __('Mail Password'), ['class' => 'col-form-label']) }}
-                                            {{ Form::text('mail_password', isset($settings['mail_password']) ? $settings['mail_password'] : '', ['class' => 'form-control', 'id' => 'mail_password', 'placeholder' => __('Enter Mail Password')]) }}
+                                            <div class="position-relative">
+                                                {{ Form::input('password', 'mail_password', isset($settings['mail_password']) ? $settings['mail_password'] : '', ['class' => 'form-control', 'id' => 'mail_password', 'placeholder' => __('Enter Mail Password')]) }}
+                                                <span class="toggle-password-btn">
+                                                    <i class="ti ti-eye"></i>
+                                                </span>
+                                            </div>
                                             @error('mail_password')
                                             <span class="text-xs text-danger invalid-mail_password"
                                                 role="alert">{{ $message }}</span>
@@ -3577,6 +3582,33 @@ $(document).on('click', '.placeholder-tag, #offer-letter-settings p, #joining-le
     if (!match) return;
     e.preventDefault();
     insertPlaceholderTag(match[0], this);
+});
+
+// ── Smooth Scroll & Sidebar Tab Activation Handler for URL Hash Navigation ──────
+function handleSettingsHashScroll() {
+    var hash = window.location.hash;
+    if (hash) {
+        var $tabLink = $('#useradd-sidenav a[href="' + hash + '"]');
+        if ($tabLink.length) {
+            $('#useradd-sidenav a').removeClass('active');
+            $tabLink.addClass('active');
+        }
+        var $targetSec = $(hash);
+        if ($targetSec.length) {
+            setTimeout(function() {
+                $('html, body').animate({
+                    scrollTop: $targetSec.offset().top - 75
+                }, 400);
+            }, 150);
+        }
+    }
+}
+
+$(document).ready(function() {
+    handleSettingsHashScroll();
+});
+$(window).on('hashchange', function() {
+    handleSettingsHashScroll();
 });
 </script>
 @endsection

@@ -131,18 +131,22 @@ class Utility extends Model
 
     public static function fetchSettings($user_id = null)
     {
+        $targetUserId = 1;
         if ($user_id != null) {
             // Explicit user_id passed — load that user's settings and return immediately.
             $user = User::where('id', $user_id)->first();
+            $targetUserId = $user ? $user->creatorId() : $user_id;
             $data = $user
-                ? DB::table('settings')->where('created_by', '=', $user_id)->get()
+                ? DB::table('settings')->where('created_by', '=', $targetUserId)->get()
                 : DB::table('settings')->where('created_by', '=', 1)->get();
         } elseif (\Auth::check()) {
-            $data = DB::table('settings')->where('created_by', '=', \Auth::user()->creatorId())->get();
+            $targetUserId = \Auth::user()->creatorId();
+            $data = DB::table('settings')->where('created_by', '=', $targetUserId)->get();
             if (count($data) == 0) {
                 $data = DB::table('settings')->where('created_by', '=', 1)->get();
             }
         } else {
+            $targetUserId = 1;
             $data = DB::table('settings')->where('created_by', '=', 1)->get();
         }
 
@@ -329,6 +333,29 @@ class Utility extends Model
 
         foreach ($data as $row) {
             $settings[$row->name] = $row->value;
+        }
+
+        if ($targetUserId != 1) {
+            $hasCompanyEmail = DB::table('settings')
+                ->where('created_by', '=', $targetUserId)
+                ->whereIn('name', ['mail_driver', 'mail_host', 'mail_username'])
+                ->exists();
+
+            if (!$hasCompanyEmail) {
+                $emailKeys = [
+                    'mail_driver',
+                    'mail_host',
+                    'mail_port',
+                    'mail_username',
+                    'mail_password',
+                    'mail_encryption',
+                    'mail_from_address',
+                    'mail_from_name',
+                ];
+                foreach ($emailKeys as $eKey) {
+                    $settings[$eKey] = '';
+                }
+            }
         }
 
         return $settings;
@@ -4644,5 +4671,148 @@ class Utility extends Model
         }
 
         return $totalAttUsed;
+    }
+
+    public static function getCompanyOnboardingProgress()
+    {
+        $creatorId = \Auth::check() ? \Auth::user()->creatorId() : 1;
+        $settings  = self::settings();
+
+        $hasCompanyInfo   = \DB::table('settings')->where('created_by', $creatorId)->where('name', 'company_name')->where('value', '!=', '')->where('value', '!=', 'My Company')->exists() || (!empty($settings['company_name']) && strtolower(trim($settings['company_name'])) !== 'my company' && (!empty($settings['company_address']) || !empty($settings['company_city'])));
+        $hasSalarySlip    = \DB::table('settings')->where('created_by', $creatorId)->whereIn('name', ['payslip_template', 'payslip_primary_color', 'payslip_show_employee_details'])->exists();
+        $hasEmailSetup    = \DB::table('settings')->where('created_by', $creatorId)->whereIn('name', ['mail_driver', 'mail_host', 'mail_username'])->exists();
+        
+        $hasBranch        = \App\Models\Branch::where('created_by', $creatorId)->exists();
+        $hasEmploymentType= \App\Models\EmploymentType::where('created_by', $creatorId)->exists();
+        $hasDepartment    = \App\Models\Department::where('created_by', $creatorId)->exists();
+        $hasSubdepartment = \App\Models\SubDepartment::where('created_by', $creatorId)->exists();
+        $hasDesignation   = \App\Models\Designation::where('created_by', $creatorId)->exists();
+        $hasShift         = \App\Models\Shift::where('created_by', $creatorId)->exists();
+        $hasLeaveType     = \App\Models\LeaveType::where('created_by', $creatorId)->exists();
+        $hasPayslipType   = \App\Models\PayslipType::where('created_by', $creatorId)->exists();
+        $hasEmployee      = \App\Models\Employee::where('created_by', $creatorId)->exists();
+
+        $steps = [
+            [
+                'id'           => 'company_info',
+                'title'        => __('Company Settings'),
+                'desc'         => __('Set company name, address, email & logo'),
+                'category'     => __('Company Settings'),
+                'icon'         => 'ti ti-settings',
+                'is_completed' => $hasCompanyInfo,
+                'url'          => route('settings.index') . '#company-settings',
+            ],
+            [
+                'id'           => 'salary_slip',
+                'title'        => __('Salary Slip Settings'),
+                'desc'         => __('Configure payslip template & field visibility'),
+                'category'     => __('Company Settings'),
+                'icon'         => 'ti ti-file-text',
+                'is_completed' => $hasSalarySlip,
+                'url'          => route('settings.index') . '#salary-slip-settings',
+            ],
+            [
+                'id'           => 'email_settings',
+                'title'        => __('Email / SMTP Settings'),
+                'desc'         => __('Configure outgoing email server credentials'),
+                'category'     => __('Company Settings'),
+                'icon'         => 'ti ti-mail',
+                'is_completed' => $hasEmailSetup,
+                'url'          => route('settings.index') . '#email-settings',
+            ],
+            [
+                'id'           => 'branch',
+                'title'        => __('Branch'),
+                'desc'         => __('Add company office branches'),
+                'category'     => __('HRM System Setup'),
+                'icon'         => 'ti ti-git-branch',
+                'is_completed' => $hasBranch,
+                'url'          => route('branch.index'),
+            ],
+            [
+                'id'           => 'employmenttype',
+                'title'        => __('Employment Type'),
+                'desc'         => __('Define employment categories (Full-time, Contract, etc.)'),
+                'category'     => __('HRM System Setup'),
+                'icon'         => 'ti ti-briefcase',
+                'is_completed' => $hasEmploymentType,
+                'url'          => route('employmenttype.index'),
+            ],
+            [
+                'id'           => 'department',
+                'title'        => __('Department'),
+                'desc'         => __('Create company departments'),
+                'category'     => __('HRM System Setup'),
+                'icon'         => 'ti ti-building',
+                'is_completed' => $hasDepartment,
+                'url'          => route('department.index'),
+            ],
+            [
+                'id'           => 'subdepartment',
+                'title'        => __('Sub Department'),
+                'desc'         => __('Create sub-departments under main departments'),
+                'category'     => __('HRM System Setup'),
+                'icon'         => 'ti ti-sitemap',
+                'is_completed' => $hasSubdepartment,
+                'url'          => route('subdepartment'),
+            ],
+            [
+                'id'           => 'designation',
+                'title'        => __('Designation'),
+                'desc'         => __('Define employee designations & job roles'),
+                'category'     => __('HRM System Setup'),
+                'icon'         => 'ti ti-user-check',
+                'is_completed' => $hasDesignation,
+                'url'          => route('designation.index'),
+            ],
+            [
+                'id'           => 'shift',
+                'title'        => __('Shift'),
+                'desc'         => __('Configure office work shift timings'),
+                'category'     => __('HRM System Setup'),
+                'icon'         => 'ti ti-clock',
+                'is_completed' => $hasShift,
+                'url'          => route('shift.index'),
+            ],
+            [
+                'id'           => 'leave_type',
+                'title'        => __('Leave Type'),
+                'desc'         => __('Set up paid/unpaid leave categories'),
+                'category'     => __('HRM System Setup'),
+                'icon'         => 'ti ti-calendar-event',
+                'is_completed' => $hasLeaveType,
+                'url'          => route('leavetype.index'),
+            ],
+            [
+                'id'           => 'paysliptype',
+                'title'        => __('Payslip Type'),
+                'desc'         => __('Define salary payslip types (Monthly, Hourly, etc.)'),
+                'category'     => __('HRM System Setup'),
+                'icon'         => 'ti ti-receipt-2',
+                'is_completed' => $hasPayslipType,
+                'url'          => route('paysliptype.index'),
+            ],
+            [
+                'id'           => 'employee',
+                'title'        => __('Add Employees'),
+                'desc'         => __('Register employees into the system'),
+                'category'     => __('Employee Management'),
+                'icon'         => 'ti ti-users',
+                'is_completed' => $hasEmployee,
+                'url'          => route('employee.index'),
+            ],
+        ];
+
+        $completedCount = count(array_filter($steps, fn($s) => $s['is_completed']));
+        $totalCount     = count($steps);
+        $percentage     = round(($completedCount / $totalCount) * 100);
+
+        return [
+            'steps'          => $steps,
+            'completedCount' => $completedCount,
+            'totalCount'     => $totalCount,
+            'percentage'     => $percentage,
+            'is_fully_done'  => ($percentage == 100),
+        ];
     }
 }
