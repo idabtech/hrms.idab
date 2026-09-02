@@ -519,15 +519,52 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                                 <th class="col-summary" title="{{ __('Working Days in Month (excl. holidays & day-offs)') }}" style="color:#0a5459;">{{ __('TWD') }}</th>
                                 <th class="col-summary" title="{{ __('Extra Days Worked beyond Working Days') }}" style="color:#856404;">{{ __('EXT') }}</th>
                                 <th class="col-summary" title="{{ __('Effective Present (half-day=0.5) / Working Days') }}" style="color:#0f9d58;min-width:70px;">{{ __('Score') }}</th>
+                                @php
+                                    $dateOverrides = $data['date_overrides'] ?? [];
+                                    $company_settings = \App\Models\Utility::settings();
+                                    $workingDaysRaw   = $company_settings['rota_working_days'] ?? '1,2,3,4,5,6,0';
+                                    $workingDays      = array_map('intval', array_filter(array_map('trim', explode(',', $workingDaysRaw)), 'strlen'));
+                                    $satPattern       = $company_settings['saturday_pattern'] ?? 'none';
+                                @endphp
                                 @foreach ($dates as $date)
                                     @php
                                         $dayCarbon = \Carbon\Carbon::parse($currentMonthForDate . '-' . $date);
+                                        $dayFormat = $dayCarbon->format('Y-m-d');
                                         $dayName   = $dayCarbon->format('D');
-                                        $isWeekend = $dayCarbon->isWeekend();
+                                        $dow       = (int) $dayCarbon->dayOfWeek;
+
+                                        $override  = $dateOverrides[$dayFormat] ?? null;
+
+                                        if ($override === 'working') {
+                                            $isDayOff = false;
+                                        } elseif ($override === 'off') {
+                                            $isDayOff = true;
+                                        } else {
+                                            $isH = false;
+                                            $isD = !empty($workingDays) && !in_array($dow, $workingDays);
+                                            if ($dow === 6 && in_array(6, $workingDays)) {
+                                                $isSaturdayWorking = ($satPattern === 'all') ||
+                                                    ($satPattern === 'odd'  && in_array(ceil($dayCarbon->day / 7), [1, 3, 5])) ||
+                                                    ($satPattern === 'even' && in_array(ceil($dayCarbon->day / 7), [2, 4]));
+                                                $isD = !$isSaturdayWorking;
+                                            }
+                                            $isDayOff = $isH || $isD;
+                                        }
                                     @endphp
-                                    <th class="date-col text-center" style="padding: 4px 2px; vertical-align: middle;">
-                                        <div style="font-size: 13px; font-weight: 700; line-height: 1.1;">{{ $date }}</div>
-                                        <div style="font-size: 10px; font-weight: 600; line-height: 1.1; margin-top: 2px; color: {{ $isWeekend ? '#d93025' : '#6c757d' }};">
+                                    <th class="date-col text-center toggle-date-override-header"
+                                        data-date="{{ $dayFormat }}"
+                                        data-date-label="{{ $date }} {{ $dayName }} ({{ $dayCarbon->format('M Y') }})"
+                                        data-current-type="{{ $override ?: ($isDayOff ? 'off' : 'working') }}"
+                                        data-is-override="{{ $override ? '1' : '0' }}"
+                                        style="padding: 4px 2px; vertical-align: middle; cursor: pointer;"
+                                        title="{{ __('Click to change Working Day / Day Off for') }} {{ $dayFormat }}">
+                                        <div style="font-size: 13px; font-weight: 700; line-height: 1.1;">
+                                            {{ $date }}
+                                            @if($override)
+                                                <i class="ti ti-star-filled text-warning" style="font-size: 9px;" title="{{ __('Custom Override Active') }}"></i>
+                                            @endif
+                                        </div>
+                                        <div style="font-size: 10px; font-weight: 600; line-height: 1.1; margin-top: 2px; color: {{ $isDayOff ? '#d93025' : '#0f9d58' }};">
                                             {{ $dayName }}
                                         </div>
                                     </th>
@@ -777,6 +814,65 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
         </div>
     </div>
 </div>
+
+{{-- Company Date Override Modal --}}
+<div class="modal fade" id="dateOverrideModal" tabindex="-1" aria-labelledby="dateOverrideModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title text-white" id="dateOverrideModalLabel">
+                    <i class="ti ti-calendar-event me-1"></i> {{ __('Change Date Working Status') }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" id="override-modal-date" value="">
+                <div class="mb-3 text-center bg-light p-3 rounded">
+                    <div class="text-muted small text-uppercase fw-bold mb-1">{{ __('Selected Date') }}</div>
+                    <div id="override-modal-date-label" class="fs-5 fw-bold text-dark"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">{{ __('Company Day Type for this Date') }}</label>
+
+                    <div class="form-check p-3 border rounded mb-2 bg-light">
+                        <input class="form-check-input" type="radio" name="override_type_choice" id="override_working" value="working">
+                        <label class="form-check-label fw-bold text-success" for="override_working">
+                            <i class="ti ti-circle-check-filled me-1"></i> {{ __('Working Day (Day ON)') }}
+                        </label>
+                        <div class="text-muted small ms-4">{{ __('Treat this date as a regular working day for all company employees.') }}</div>
+                    </div>
+
+                    <div class="form-check p-3 border rounded mb-2 bg-light">
+                        <input class="form-check-input" type="radio" name="override_type_choice" id="override_off" value="off">
+                        <label class="form-check-label fw-bold text-danger" for="override_off">
+                            <i class="ti ti-circle-minus-filled me-1"></i> {{ __('Day Off (Day OFF / Holiday)') }}
+                        </label>
+                        <div class="text-muted small ms-4">{{ __('Treat this date as a non-working day / day off for all company employees.') }}</div>
+                    </div>
+
+                    <div class="form-check p-3 border rounded bg-light">
+                        <input class="form-check-input" type="radio" name="override_type_choice" id="override_default" value="default">
+                        <label class="form-check-label fw-bold text-secondary" for="override_default">
+                            <i class="ti ti-rotate-clockwise me-1"></i> {{ __('Use System Default') }}
+                        </label>
+                        <div class="text-muted small ms-4">{{ __('Follow standard Saturday Pattern & Rota settings.') }}</div>
+                    </div>
+                </div>
+
+                <div class="alert alert-danger mb-0" id="overrideErrorAlert" style="display: none;">
+                    <span id="overrideErrorMessage"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                <button type="button" class="btn btn-primary" id="saveDateOverrideBtn">
+                    <i class="ti ti-check me-1"></i> {{ __('Apply & Recalculate Report') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('script-page')
@@ -812,9 +908,11 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                     $('.department_id').append('<option value="' + key + '">' + value +
                         '</option>');
                 });
-                new Choices('#choices-multiple', {
-                    removeItemButton: true,
-                });
+                var choicesElem = document.querySelector('#choices-multiple');
+                if (choicesElem && typeof Choices !== 'undefined') {
+                    if (choicesElem.choices) { try { choicesElem.choices.destroy(); } catch(e){} }
+                    try { choicesElem.choices = new Choices(choicesElem, { removeItemButton: true }); } catch(e){}
+                }
             }
         });
     }
@@ -849,9 +947,11 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                     $('#employee_id').append('<option value="' + key + '">' + value + '</option>');
                 });
 
-                var multipleCancelButton = new Choices('#employee_id', {
-                    removeItemButton: true,
-                });
+                var empElem = document.querySelector('#employee_id');
+                if (empElem && typeof Choices !== 'undefined') {
+                    if (empElem.choices) { try { empElem.choices.destroy(); } catch(e){} }
+                    try { empElem.choices = new Choices(empElem, { removeItemButton: true }); } catch(e){}
+                }
             }
         });
     }
@@ -1114,6 +1214,9 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
                     }
 
                     $('#attendanceStatusModal').modal('hide');
+                    if (typeof show_toastr === 'function') {
+                        show_toastr('Success', response.message || '{{ __("Attendance status updated successfully.") }}', 'success');
+                    }
                 } else {
                     showAttendanceError(response.message || 'Failed to update attendance');
                 }
@@ -1148,6 +1251,88 @@ $currentMonthForDate = \Carbon\Carbon::createFromFormat('d-M-Y', '01-' . $data['
     function showAttendanceError(message) {
         $('#attendanceErrorMessage').text(message);
         $('#attendanceErrorAlert').addClass('show').show();
+        if (typeof show_toastr === 'function') {
+            show_toastr('Error', message, 'error');
+        }
     }
+
+    // Handler for clicking Date Header in Table to change Day Type
+    $(document).on('click', '.toggle-date-override-header', function () {
+        var dateStr   = $(this).data('date');
+        var dateLabel = $(this).data('date-label');
+        var isOverride= $(this).data('is-override');
+        var currentType = $(this).data('current-type');
+
+        $('#override-modal-date').val(dateStr);
+        $('#override-modal-date-label').text(dateLabel);
+
+        if (isOverride === '1' || isOverride === 1) {
+            $('input[name="override_type_choice"][value="' + currentType + '"]').prop('checked', true);
+        } else {
+            $('input[name="override_type_choice"][value="default"]').prop('checked', true);
+        }
+
+        $('#overrideErrorAlert').hide();
+
+        if (typeof $.fn.modal !== 'undefined') {
+            $('#dateOverrideModal').modal('show');
+        } else {
+            var bsModal = new bootstrap.Modal(document.getElementById('dateOverrideModal'));
+            bsModal.show();
+        }
+    });
+
+    $('#saveDateOverrideBtn').on('click', function () {
+        var $btn = $(this);
+        var date = $('#override-modal-date').val();
+        var overrideType = $('input[name="override_type_choice"]:checked').val() || 'default';
+
+        if (!date) return;
+
+        $btn.prop('disabled', true);
+        $('#overrideErrorAlert').hide();
+
+        $.ajax({
+            url: "{{ route('report.monthly.date.override') }}",
+            type: 'POST',
+            data: {
+                _token: "{{ csrf_token() }}",
+                date: date,
+                override_type: overrideType
+            },
+            success: function (response) {
+                if (response.success) {
+                    sessionStorage.setItem('toast_success', response.message || '{{ __("Date working status updated successfully.") }}');
+                    location.reload();
+                } else {
+                    $('#overrideErrorMessage').text(response.message || 'Failed to update date setting.');
+                    $('#overrideErrorAlert').show();
+                    if (typeof show_toastr === 'function') {
+                        show_toastr('Error', response.message || 'Failed to update date setting.', 'error');
+                    }
+                    $btn.prop('disabled', false);
+                }
+            },
+            error: function () {
+                var errText = 'An error occurred while updating date setting.';
+                $('#overrideErrorMessage').text(errText);
+                $('#overrideErrorAlert').show();
+                if (typeof show_toastr === 'function') {
+                    show_toastr('Error', errText, 'error');
+                }
+                $btn.prop('disabled', false);
+            }
+        });
+    });
+
+    $(document).ready(function() {
+        var toastSuccess = sessionStorage.getItem('toast_success');
+        if (toastSuccess) {
+            sessionStorage.removeItem('toast_success');
+            if (typeof show_toastr === 'function') {
+                show_toastr('Success', toastSuccess, 'success');
+            }
+        }
+    });
 </script>
 @endpush

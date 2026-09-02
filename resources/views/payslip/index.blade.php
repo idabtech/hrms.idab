@@ -41,9 +41,12 @@
 
                             <a href="javascript:void(0)" onclick="generatePayslip(); return false;"
                                 data-title="{{ __('Generate Payslip') }}" data-bs-toggle="tooltip"
-                                title="{{ __('Generate Payslip') }}" class="btn btn-sm btn-primary">
+                                title="{{ __('Generate Payslip') }}" class="btn btn-sm btn-primary me-1">
                                 <i class="ti ti-report-money"></i>
                             </a>
+                            <button type="button" class="btn btn-danger btn-sm" id="bulk_delete_payslip" data-bs-toggle="tooltip" title="{{ __('Bulk Delete Payslips') }}">
+                                <i class="ti ti-trash me-1"></i> {{ __('Bulk Delete') }}
+                            </button>
                         @endif
                         @can('Create Pay Slip')
                             <input type="button" value="{{ __('Bulk Payment') }}" class="btn btn-primary" id="bulk_payment">
@@ -56,6 +59,9 @@
                     <table class="table" id="pc-dt-render-column-cells">
                         <thead>
                             <tr>
+                                @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
+                                    <th style="width: 40px;"><input type="checkbox" class="form-check-input" id="select_all_payslips"></th>
+                                @endif
                                 <th>{{ __('Employee Id') }}</th>
                                 @if (\Auth::user()->type != 'employee')
                                     <th>{{ __('Name') }}</th>
@@ -164,7 +170,9 @@
                                 @endif
 
                                 @if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR')
+                                var chkTd = '<td><input type="checkbox" class="form-check-input payslip-checkbox" value="' + payslip_id + '"></td>';
                                 tr += '<tr>' +
+                                    chkTd +
                                     '<td><a class="btn btn-outline-primary btn-sm" href="' + url_employee + '">' + v[1] + '</a></td>' +
                                     '<td>' + v[2] + '</td>' +
                                     '<td>' + v[3] + '</td>' +
@@ -217,7 +225,7 @@
                             $('#payslip_summary_bar').show();
 
                             var tfootHtml = '<tfoot><tr class="fw-bold bg-light" style="border-top: 2px solid #dee2e6;">' +
-                                '<td colspan="{{ \Auth::user()->type != 'employee' ? 3 : 2 }}" class="text-end fw-bold fs-6">{{ __('Total:') }}</td>' +
+                                '<td colspan="{{ \Auth::user()->type != 'employee' ? 4 : 2 }}" class="text-end fw-bold fs-6">{{ __('Total:') }}</td>' +
                                 '<td class="fw-bold text-primary fs-6">' + (data.total_salary || '-') + '</td>' +
                                 '<td class="fw-bold text-success fs-6">' + (data.total_net_salary || '-') + '</td>' +
                                 '<td colspan="2"></td>' +
@@ -240,6 +248,54 @@
             }
 
             $(document).on("change", ".month_date,.year_date", function() { callback(); });
+
+            $(document).on("change", "#select_all_payslips", function() {
+                $(".payslip-checkbox").prop("checked", $(this).is(":checked"));
+            });
+
+            // Bulk Delete payslips
+            $(document).on("click", "#bulk_delete_payslip", function() {
+                var selectedIds = $(".payslip-checkbox:checked").map(function() {
+                    return $(this).val();
+                }).get().filter(function(id) {
+                    return id && id != '0';
+                });
+
+                var month = $(".month_date").val();
+                var year = $(".year_date").val();
+                var datePicker = year + '-' + month;
+
+                var confirmMsg = '';
+                if (selectedIds.length > 0) {
+                    confirmMsg = 'Are you sure you want to delete the ' + selectedIds.length + ' selected payslip(s)?';
+                } else {
+                    confirmMsg = 'No specific payslips checked. Are you sure you want to delete ALL generated payslips for ' + datePicker + '?';
+                }
+
+                if (confirm(confirmMsg)) {
+                    $.ajax({
+                        url: '{{ route('payslip.bulk_delete') }}',
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            ids: selectedIds,
+                            month: datePicker
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                show_toastr('success', response.message, 'success');
+                                setTimeout(function() { location.reload(); }, 800);
+                            } else {
+                                show_toastr('error', response.message, 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to delete payslips.';
+                            show_toastr('error', msg, 'error');
+                        }
+                    });
+                }
+            });
 
             // Bulk payment
             $(document).on("click", "#bulk_payment", function() {

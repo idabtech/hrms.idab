@@ -1083,6 +1083,13 @@ Route::group(['middleware' => ['verified']], function () {
         ]
     );
 
+    Route::post('payslip/bulk-delete', [PaySlipController::class, 'bulkDelete'])->name('payslip.bulk_delete')->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+
     Route::resource('payslip', PaySlipController::class)->middleware(
         [
             'auth',
@@ -1656,6 +1663,13 @@ Route::group(['middleware' => ['verified']], function () {
     );
 
     Route::post('report/monthly/attendance/status', [ReportController::class, 'updateMonthlyAttendanceStatus'])->name('report.monthly.attendance.status')->middleware(
+        [
+            'auth',
+            'XSS',
+        ]
+    );
+
+    Route::post('report/monthly/attendance/date-override', [ReportController::class, 'updateDateOverride'])->name('report.monthly.date.override')->middleware(
         [
             'auth',
             'XSS',
