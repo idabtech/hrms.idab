@@ -141,7 +141,12 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             {{ Form::label('current_password', __('Current Password'), ['class' => 'col-form-label text-dark']) }}<x-required></x-required>
-                                            {{ Form::password('current_password', ['class' => 'form-control', 'required' => 'required', 'placeholder' => __('Enter Current Password')]) }}
+                                            <div class="position-relative">
+                                                {{ Form::password('current_password', ['class' => 'form-control', 'required' => 'required', 'placeholder' => __('Enter Current Password')]) }}
+                                                <span class="toggle-password-btn">
+                                                    <i class="ti ti-eye"></i>
+                                                </span>
+                                            </div>
                                             @error('current_password')
                                                 <span class="invalid-current_password" role="alert">
                                                     <strong class="text-danger">{{ $message }}</strong>
@@ -154,7 +159,12 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             {{ Form::label('new_password', __('New Password'), ['class' => 'col-form-label text-dark']) }}<x-required></x-required>
-                                            {{ Form::password('new_password', ['class' => 'form-control', 'required' => 'required', 'placeholder' => __('Enter New Password')]) }}
+                                            <div class="position-relative">
+                                                {{ Form::password('new_password', ['class' => 'form-control', 'required' => 'required', 'placeholder' => __('Enter New Password')]) }}
+                                                <span class="toggle-password-btn">
+                                                    <i class="ti ti-eye"></i>
+                                                </span>
+                                            </div>
                                             @error('new_password')
                                                 <span class="invalid-new_password" role="alert">
                                                     <strong class="text-danger">{{ $message }}</strong>
@@ -165,7 +175,12 @@
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             {{ Form::label('confirm_password', __('Re-type New Password'), ['class' => 'col-form-label text-dark']) }}<x-required></x-required>
-                                            {{ Form::password('confirm_password', ['class' => 'form-control', 'required' => 'required', 'placeholder' => __('Enter Re-type New Password')]) }}
+                                            <div class="position-relative">
+                                                {{ Form::password('confirm_password', ['class' => 'form-control', 'required' => 'required', 'placeholder' => __('Enter Re-type New Password')]) }}
+                                                <span class="toggle-password-btn">
+                                                    <i class="ti ti-eye"></i>
+                                                </span>
+                                            </div>
                                             @error('confirm_password')
                                                 <span class="invalid-confirm_password" role="alert">
                                                     <strong class="text-danger">{{ $message }}</strong>
@@ -255,8 +270,13 @@
                                         <div class="form-group">
                                             <label for="password"
                                                 class="col-form-label">{{ __('Current Password') }}</label>
-                                            <input id="password" type="password" name="password" class="form-control"
-                                                placeholder="{{ __('Enter Your Current Password') }}" required>
+                                            <div class="position-relative">
+                                                <input id="password" type="password" name="password" class="form-control"
+                                                    placeholder="{{ __('Enter Your Current Password') }}" required>
+                                                <span class="toggle-password-btn">
+                                                    <i class="ti ti-eye"></i>
+                                                </span>
+                                            </div>
                                         </div>
                                         <div class=" text-center">
                                             <button type="submit" class="btn btn-primary mt-3">

@@ -129,11 +129,11 @@
                             <div class="row">
                                 <div class="form-group col-md-6">
                                     {!! Form::label('name', __('First Name'), ['class' => 'form-label']) !!}<span class="text-danger pl-1">*</span>
-                                    {!! Form::text('name', null, ['class' => 'form-control', 'required' => 'required']) !!}
+                                    {!! Form::text('name', old('name', $employee->name), ['class' => 'form-control', 'required' => 'required']) !!}
                                 </div>
                                 <div class="form-group col-md-6">
                                     {!! Form::label('last_name', __('Last Name'), ['class' => 'form-label']) !!}<span class="text-danger pl-1">*</span>
-                                    {!! Form::text('last_name', null, ['class' => 'form-control', 'required' => 'required']) !!}
+                                    {!! Form::text('last_name', old('last_name', $employee->last_name), ['class' => 'form-control', 'required' => 'required']) !!}
                                 </div>
                                 <x-mobile divClass="col-md-6" name="phone" label="{{ __('Phone') }}"
                                     placeholder="{{ __('Enter employee phone') }}" id="phone" required="true">
@@ -142,9 +142,9 @@
                                     <div class="form-group">
                                         {!! Form::label('dob', __('Date of Birth'), ['class' => 'form-label']) !!}<span class="text-danger pl-1">*</span>
                                         {!! Form::date('dob',
-                                        !empty($employee->dob)
-                                        ? \Carbon\Carbon::parse($employee->dob)
-                                        : null,
+                                        old('dob', !empty($employee->dob)
+                                        ? \Carbon\Carbon::parse($employee->dob)->format('Y-m-d')
+                                        : null),
                                         [
                                         'class' => 'form-control w-100',
                                         'required',
@@ -162,14 +162,14 @@
                                             <div class="custom-control custom-radio custom-control-inline">
                                                 <input type="radio" id="g_male" value="Male" name="gender"
                                                     class="form-check-input" required
-                                                    {{ $employee->gender == 'Male' ? 'checked' : '' }}>
+                                                    {{ old('gender', $employee->gender) == 'Male' ? 'checked' : '' }}>
                                                 <label class="form-check-label"
                                                     for="g_male">{{ __('Male') }}</label>
                                             </div>
                                             <div class="custom-control custom-radio ms-1 custom-control-inline">
                                                 <input type="radio" id="g_female" value="Female" name="gender"
                                                     class="form-check-input"
-                                                    {{ $employee->gender == 'Female' ? 'checked' : '' }}>
+                                                    {{ old('gender', $employee->gender) == 'Female' ? 'checked' : '' }}>
                                                 <label class="form-check-label"
                                                     for="g_female">{{ __('Female') }}</label>
                                             </div>
@@ -179,7 +179,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group ">
                                         {!! Form::label('email', __('Email'), ['class' => 'form-label']) !!}<span class="text-danger pl-1">*</span>
-                                        {!! Form::email('email', old('email'), [
+                                        {!! Form::email('email', old('email', $employee->email), [
                                         'class' => 'form-control',
                                         'required' => 'required',
                                         'placeholder' => 'Enter employee email',
@@ -197,7 +197,7 @@
                                 </div>
                                 <div class="form-group col-md-12">
                                     {{ Form::label('address', __('Address'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
-                                    {{ Form::textarea('address', null, ['class' => 'form-control' ,'placeholder'=>__('Enter address'),'rows'=>'3']) }}
+                                    {{ Form::textarea('address', old('address', $employee->address), ['class' => 'form-control' ,'placeholder'=>__('Enter address'),'rows'=>'3']) }}
                                 </div>
                                  <!-- <div class="col-md-6">
                                     <div class="form-group ">
@@ -228,7 +228,7 @@
                                     </div>
                                     <div class=" form-group col-md-6">
                                         {!! Form::label('company_doj', __('Date Of Joining'), ['class'=> 'form-label']) !!}<span class="text-danger pl-1">*</span>
-                                        {{ Form::date('company_doj', null, [
+                                        {{ Form::date('company_doj', old('company_doj', !empty($employee->company_doj) ? \Carbon\Carbon::parse($employee->company_doj)->format('Y-m-d') : null), [
                                             'class' => 'form-control w-100',
                                             'required',
                                             'autocomplete' => 'off',
@@ -245,7 +245,7 @@
                                             data-bs-original-title="{{ __('Create') }}">
                                             <i class="ti ti-plus"></i>
                                         </a>
-                                        {{ Form::select('branch_id', $branches, null, ['class' => 'form-control branch_id', 'required' => 'required', 'placeholder' => 'Select Branch']) }}
+                                        {{ Form::select('branch_id', $branches, old('branch_id', $employee->branch_id), ['class' => 'form-control branch_id', 'required' => 'required', 'placeholder' => 'Select Branch']) }}
                                     </div>
                                     <div class="form-group col-md-6">
                                         {{ Form::label('department_id', __('Select Department'), ['class' => 'form-label']) }}<span
@@ -257,7 +257,7 @@
                                             data-bs-original-title="{{ __('Create') }}">
                                             <i class="ti ti-plus"></i>
                                         </a>
-                                        {{ Form::select('department_id', $departments, null, ['class' => 'form-control department_id', 'id' => 'department_id', 'required' => 'required']) }}
+                                        {{ Form::select('department_id', $departments, old('department_id', $employee->department_id), ['class' => 'form-control department_id', 'id' => 'department_id', 'required' => 'required']) }}
                                     </div>
                                     <div class="form-group col-md-6">
                                         {{ Form::label('subdepartment_id', __('Select Sub Department'), ['class' => 'form-label']) }}<span
@@ -269,7 +269,7 @@
                                             data-bs-original-title="{{ __('Create') }}">
                                             <i class="ti ti-plus"></i>
                                         </a>
-                                        {{ Form::select('subdepartment_id', $subdepartments, $employee->subdepartment, ['class' => 'form-control subdepartment_id', 'id' => 'subdepartment_id', 'required' => 'required']) }}
+                                        {{ Form::select('subdepartment_id', $subdepartments, old('subdepartment_id', $employee->subdepartment_id), ['class' => 'form-control subdepartment_id', 'id' => 'subdepartment_id', 'required' => 'required', 'placeholder' => 'Select Sub Department']) }}
                                     </div>
                                     <div class="form-group col-md-6">
                                         {{ Form::label('designation_id', __('Select Designation'), ['class' => 'form-label']) }}
@@ -318,7 +318,7 @@
 
                                         <div class="form-icon-user">
                                             <div class="shift_div">
-                                                {{ Form::select('shift_id', $shift, $employee->shift_id, ['class' => 'form-control shift_id', 'required' => 'required', 'placeholder' => 'Select Shift']) }}
+                                                {{ Form::select('shift_id', $shift, old('shift_id', $employee->shift_id), ['class' => 'form-control shift_id', 'required' => 'required', 'placeholder' => 'Select Shift']) }}
                                             </div>
                                         </div>
                                     </div>
@@ -332,7 +332,29 @@
                                                 $shiftOptions = [];
                                                 if (!empty($company_shifts) && is_array($company_shifts)) {
                                                     foreach ($company_shifts as $index => $shift) {
-                                                        $label = $shift['start'] . ' - ' . $shift['end'];
+                                                        $name = !empty($shift['name']) ? $shift['name'] : (!empty($shift['title']) ? $shift['title'] : 'Shift ' . ($index + 1));
+                                                        $start = $shift['start'] ?? '';
+                                                        $end = $shift['end'] ?? '';
+                                                        $timeStr = ($start && $end) ? " ({$start} - {$end})" : "";
+
+                                                        $colorDot = '🟣 ';
+                                                        if (!empty($shift['color'])) {
+                                                            $c = strtolower(ltrim($shift['color'], '#'));
+                                                            if (strlen($c) === 6) {
+                                                                $r = hexdec(substr($c, 0, 2));
+                                                                $g = hexdec(substr($c, 2, 2));
+                                                                $b = hexdec(substr($c, 4, 2));
+                                                                if ($r > 180 && $g < 100 && $b < 100) { $colorDot = '🔴 '; }
+                                                                elseif ($g > 140 && $r < 140 && $b < 140) { $colorDot = '🟢 '; }
+                                                                elseif ($b > 140 && $r < 140) { $colorDot = '🔵 '; }
+                                                                elseif ($r > 200 && $g > 160 && $b < 100) { $colorDot = '🟡 '; }
+                                                                elseif ($r > 200 && $g > 100 && $b < 80) { $colorDot = '🟠 '; }
+                                                                elseif ($r > 100 && $b > 100 && $g < 120) { $colorDot = '🟣 '; }
+                                                                elseif ($r < 80 && $g < 80 && $b < 80) { $colorDot = '⚫ '; }
+                                                            }
+                                                        }
+
+                                                        $label = $colorDot . $name . $timeStr;
                                                         $shiftOptions[$index] = $label;
                                                     }
                                                 }
@@ -366,8 +388,8 @@
 
                                     <!--- Refresh Break Time --->
                                     <div class="form-group col-md-6">
-                                        {{ Form::label('refresh_type', __('Refresh Break Time'), ['class' => 'form-label']) }}
-                                        {{ Form::select('refresh_type', ['fixed' => 'Fixed Time', 'flexible' => 'Flexible Time'], $employee->refresh_type, ['class' => 'form-control', 'id' => 'refresh_break_type', 'placeholder' => 'Select Refresh Break Time', 'onchange' => 'toggleShiftBreakType()']) }}
+                                        {{ Form::label('refresh_type', __('Refresh Break Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
+                                        {{ Form::select('refresh_type', ['fixed' => 'Fixed Time', 'flexible' => 'Flexible Time'], old('refresh_type', $employee->refresh_type ?? 'fixed'), ['class' => 'form-control', 'id' => 'refresh_break_type', 'onchange' => 'toggleShiftBreakType()', 'required' => 'required']) }}
                                     </div>
 
                                     <!-- Refresh Break Fixed Time Fields -->
@@ -387,38 +409,38 @@
                                         {{ Form::number('refresh_minutes', old('refresh_minutes', $employee->refresh_minutes ?? 0), ['class' => 'form-control', 'id' => 'refresh_minutes', 'min' => 0]) }}
                                     </div> -->
                                     @php
-                                        $initialBreakType = old('refresh_type', $employee->refresh_type ?? null);
+                                        $initialBreakType = old('refresh_type', $employee->refresh_type ?? 'fixed');
                                     @endphp
 
                                     <!-- Lunch Time Fields -->
                                     <div class="form-group col-md-6" id="lunchTimeDiv" style="{{ $initialBreakType === 'fixed' ? 'display:block;' : 'display:none;' }}">
-                                        {{ Form::label('lunch_start', __('Lunch Start Time'), ['class' => 'form-label']) }}
+                                        {{ Form::label('lunch_start', __('Lunch Start Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                         {{ Form::time('lunch_start', old('lunch_start', $employee->lunch_start), ['class' => 'form-control', 'id' => 'lunch_start']) }}
                                     </div>
 
                                     <div class="form-group col-md-6" id="lunchEndDiv" style="{{ $initialBreakType === 'fixed' ? 'display:block;' : 'display:none;' }}">
-                                        {{ Form::label('lunch_end', __('Lunch End Time'), ['class' => 'form-label']) }}
+                                        {{ Form::label('lunch_end', __('Lunch End Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                         {{ Form::time('lunch_end', old('lunch_end', $employee->lunch_end), ['class' => 'form-control', 'id' => 'lunch_end']) }}
                                     </div>
 
                                     <div class="form-group col-md-6" id="lunchMinDiv" style="{{ $initialBreakType === 'flexible' ? 'display:block;' : 'display:none;' }}">
-                                        {{ Form::label('lunch_minutes', __('Lunch Minutes'), ['class' => 'form-label']) }}
+                                        {{ Form::label('lunch_minutes', __('Lunch Minutes'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                         {{ Form::number('lunch_minutes', old('lunch_minutes', $employee->lunch_minutes ?? 0), ['class' => 'form-control', 'id' => 'lunch_minutes', 'min' => 0]) }}
                                     </div>
 
                                     <!-- Tea Time Fields -->
                                     <div class="form-group col-md-6" id="teaTimeDiv" style="{{ $initialBreakType === 'fixed' ? 'display:block;' : 'display:none;' }}">
-                                        {{ Form::label('tea_start', __('Tea Start Time'), ['class' => 'form-label']) }}
+                                        {{ Form::label('tea_start', __('Tea Start Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                         {{ Form::time('tea_start', old('tea_start', $employee->tea_start), ['class' => 'form-control', 'id' => 'tea_start']) }}
                                     </div>
 
                                     <div class="form-group col-md-6" id="teaEndDiv" style="{{ $initialBreakType === 'fixed' ? 'display:block;' : 'display:none;' }}">
-                                        {{ Form::label('tea_end', __('Tea End Time'), ['class' => 'form-label']) }}
+                                        {{ Form::label('tea_end', __('Tea End Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                         {{ Form::time('tea_end', old('tea_end', $employee->tea_end), ['class' => 'form-control', 'id' => 'tea_end']) }}
                                     </div>
 
                                     <div class="form-group col-md-6" id="teaMinDiv" style="{{ $initialBreakType === 'flexible' ? 'display:block;' : 'display:none;' }}">
-                                        {{ Form::label('tea_minutes', __('Tea Minutes'), ['class' => 'form-label']) }}
+                                        {{ Form::label('tea_minutes', __('Tea Minutes'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                         {{ Form::number('tea_minutes', old('tea_minutes', $employee->tea_minutes ?? 0), ['class' => 'form-control', 'id' => 'tea_minutes', 'min' => 0]) }}
                                     </div>
 
@@ -624,34 +646,34 @@
                                 <div class="row">
                                     <div class="form-group col-md-6">
                                         {!! Form::label('account_holder_name', __('Account Holder Name'), ['class' => 'form-label']) !!}
-                                        {!! Form::text('account_holder_name', !empty($employee->account_holder_name)?$employee->account_holder_name:'', ['class' => 'form-control',
+                                        {!! Form::text('account_holder_name', old('account_holder_name', !empty($employee->account_holder_name)?$employee->account_holder_name:''), ['class' => 'form-control',
                                     'placeholder' => 'Enter account holder name']) !!}
                                     </div>
                                     <div class="form-group col-md-6">
                                         {!! Form::label('account_number', __('Account Number'), ['class' => 'form-label']) !!}
-                                        {!! Form::number('account_number', !empty($employee->account_number)?$employee->account_number:'', ['class' => 'form-control',
+                                        {!! Form::number('account_number', old('account_number', !empty($employee->account_number)?$employee->account_number:''), ['class' => 'form-control',
                                     'placeholder' => 'Enter account number']) !!}
 
                                     </div>
                                     <div class="form-group col-md-6">
                                         {!! Form::label('bank_name', __('Bank Name'), ['class' => 'form-label']) !!}
-                                        {!! Form::text('bank_name', !empty($employee->bank_name)?$employee->bank_name:'', ['class' => 'form-control',
+                                        {!! Form::text('bank_name', old('bank_name', !empty($employee->bank_name)?$employee->bank_name:''), ['class' => 'form-control',
                                     'placeholder' => 'Enter bank name']) !!}
 
                                     </div>
                                     <div class="form-group col-md-6">
                                         {!! Form::label('bank_identifier_code', __(\App\Models\Utility::bankCodeLabel()), ['class' => 'form-label']) !!}
-                                        {!! Form::text('bank_identifier_code', !empty($employee->bank_identifier_code)?$employee->bank_identifier_code:'', ['class' => 'form-control',
+                                        {!! Form::text('bank_identifier_code', old('bank_identifier_code', !empty($employee->bank_identifier_code)?$employee->bank_identifier_code:''), ['class' => 'form-control',
                                     'placeholder' => 'Enter bank identifier code']) !!}
                                     </div>
                                     <div class="form-group col-md-6">
                                         {!! Form::label('branch_location', __('Branch Location'), ['class' => 'form-label']) !!}
-                                        {!! Form::text('branch_location', !empty($employee->branch_location)?$employee->branch_location:'', ['class' => 'form-control',
+                                        {!! Form::text('branch_location', old('branch_location', !empty($employee->branch_location)?$employee->branch_location:''), ['class' => 'form-control',
                                     'placeholder' => 'Enter branch location']) !!}
                                     </div>
                                     <div class="form-group col-md-6">
                                         {!! Form::label('tax_payer_id', __('Tax Payer Id'), ['class' => 'form-label']) !!}
-                                        {!! Form::text('tax_payer_id', !empty($employee->tax_payer_id)?$employee->tax_payer_id:'', ['class' => 'form-control',
+                                        {!! Form::text('tax_payer_id', old('tax_payer_id', !empty($employee->tax_payer_id)?$employee->tax_payer_id:''), ['class' => 'form-control',
                                     'placeholder' => 'Enter tax payer id']) !!}
                                     </div>
                                 </div>
@@ -917,9 +939,13 @@
                                         <tbody>
                                             @foreach ($leaveTypes as $leaveType)
                                                 @php
-                                                    $isAssigned = array_key_exists($leaveType->id, $assignedLeaveTypes ?? []);
-                                                    $assignedDays = $isAssigned ? ($assignedLeaveTypes[$leaveType->id]['total_days'] ?? $leaveType->days) : $leaveType->days;
-                                                    $isPaid = $isAssigned ? ($assignedLeaveTypes[$leaveType->id]['is_paid'] ?? $leaveType->is_paid) : $leaveType->is_paid;
+                                                    $oldChecked = old('leave_types.' . $leaveType->id . '.checked');
+                                                    $oldDays = old('leave_types.' . $leaveType->id . '.days');
+                                                    $oldIsPaid = old('leave_types.' . $leaveType->id . '.is_paid');
+
+                                                    $isAssigned = $oldChecked !== null ? (bool)$oldChecked : array_key_exists($leaveType->id, $assignedLeaveTypes ?? []);
+                                                    $assignedDays = $oldDays !== null ? $oldDays : ($isAssigned ? ($assignedLeaveTypes[$leaveType->id]['total_days'] ?? $leaveType->days) : $leaveType->days);
+                                                    $isPaid = $oldIsPaid !== null ? (bool)$oldIsPaid : ($isAssigned ? ($assignedLeaveTypes[$leaveType->id]['is_paid'] ?? $leaveType->is_paid) : $leaveType->is_paid);
                                                 @endphp
                                                 <tr>
                                                     <td>
@@ -1035,9 +1061,10 @@
                                             </select>`;
                     $('.designation_div').html(emp_selct);
                     $('.designation_id').append('<option value="">Select any Designation</option>');
+                    var selectedDesignation = '{{ old('designation_id', $employee->designation_id) }}';
                     $.each(data, function(key, value) {
                         var select = '';
-                        if (key == '{{ $employee->designation_id }}') {
+                        if (key == selectedDesignation) {
                             select = 'selected';
                         }
 
@@ -1065,10 +1092,6 @@
         $(document).on('change', 'select[name=department_id]', function() {
             var department_id = $(this).val();
             getDesignation(department_id);
-        });
-        $(document).on('change', 'select[name=shift_id]', function() {
-            var shift_id = $(this).val();
-            getDesignation(shift_id);
         });
     </script>
     <script>
@@ -1231,114 +1254,86 @@
 
         function loadShiftBreakTimes() {
             const selectElement = document.getElementById('company_shift_time');
+            if (!selectElement) return;
             const selectedIndex = selectElement.value;
 
             if (selectedIndex === '' || !companyShifts[selectedIndex]) {
-                // Hide all break time fields
-                document.getElementById('lunchTimeDiv').style.display = 'none';
-                document.getElementById('lunchEndDiv').style.display = 'none';
-                document.getElementById('lunchMinDiv').style.display = 'none';
-                document.getElementById('teaTimeDiv').style.display = 'none';
-                document.getElementById('teaEndDiv').style.display = 'none';
-                document.getElementById('teaMinDiv').style.display = 'none';
-                // Don't hide refresh break fields - they're independent
                 return;
             }
 
             const shift = companyShifts[selectedIndex];
 
             // Set hidden fields with shift times
-            document.getElementById('company_start_time').value = shift.start || '';
-            document.getElementById('company_end_time').value = shift.end || '';
+            const startTimeEl = document.getElementById('company_start_time');
+            const endTimeEl = document.getElementById('company_end_time');
+            if (startTimeEl) startTimeEl.value = shift.start || '';
+            if (endTimeEl) endTimeEl.value = shift.end || '';
 
-            // Load lunch times
-            if (shift.type === 'fixed') {
-                document.getElementById('lunchTimeDiv').style.display = 'block';
-                document.getElementById('lunchEndDiv').style.display = 'block';
-                document.getElementById('lunchMinDiv').style.display = 'none';
-
-                document.getElementById('lunch_start').value = shift.lunch_start || '';
-                document.getElementById('lunch_end').value = shift.lunch_end || '';
-            } else if (shift.type === 'flexible') {
-                document.getElementById('lunchTimeDiv').style.display = 'none';
-                document.getElementById('lunchEndDiv').style.display = 'none';
-                document.getElementById('lunchMinDiv').style.display = 'block';
-
-                document.getElementById('lunch_minutes').value = shift.lunch_minutes || 0;
-            } else {
-                document.getElementById('lunchTimeDiv').style.display = 'none';
-                document.getElementById('lunchEndDiv').style.display = 'none';
-                document.getElementById('lunchMinDiv').style.display = 'none';
+            // Populate times if available
+            if (shift.lunch_start && document.getElementById('lunch_start')) {
+                document.getElementById('lunch_start').value = shift.lunch_start;
             }
-
-            // Load tea times
-            if (shift.type === 'fixed') {
-                document.getElementById('teaTimeDiv').style.display = 'block';
-                document.getElementById('teaEndDiv').style.display = 'block';
-                document.getElementById('teaMinDiv').style.display = 'none';
-
-                document.getElementById('tea_start').value = shift.tea_start || '';
-                document.getElementById('tea_end').value = shift.tea_end || '';
-            } else if (shift.type === 'flexible') {
-                document.getElementById('teaTimeDiv').style.display = 'none';
-                document.getElementById('teaEndDiv').style.display = 'none';
-                document.getElementById('teaMinDiv').style.display = 'block';
-
-                document.getElementById('tea_minutes').value = shift.tea_minutes || 0;
-            } else {
-                document.getElementById('teaTimeDiv').style.display = 'none';
-                document.getElementById('teaEndDiv').style.display = 'none';
-                document.getElementById('teaMinDiv').style.display = 'none';
+            if (shift.lunch_end && document.getElementById('lunch_end')) {
+                document.getElementById('lunch_end').value = shift.lunch_end;
             }
+            if (shift.tea_start && document.getElementById('tea_start')) {
+                document.getElementById('tea_start').value = shift.tea_start;
+            }
+            if (shift.tea_end && document.getElementById('tea_end')) {
+                document.getElementById('tea_end').value = shift.tea_end;
+            }
+            if (shift.lunch_minutes && document.getElementById('lunch_minutes')) {
+                document.getElementById('lunch_minutes').value = shift.lunch_minutes;
+            }
+            if (shift.tea_minutes && document.getElementById('tea_minutes')) {
+                document.getElementById('tea_minutes').value = shift.tea_minutes;
+            }
+            
+            // Trigger UI update based on refresh_break_type
+            toggleShiftBreakType();
         }
 
         // Toggle shift break type fields (lunch and tea)
         function toggleShiftBreakType() {
-            const breakType = document.getElementById('refresh_break_type').value;
+            const breakTypeEl = document.getElementById('refresh_break_type');
+            if (!breakTypeEl) return;
+            let breakType = breakTypeEl.value;
+            if (!breakType) {
+                breakType = 'fixed';
+                breakTypeEl.value = 'fixed';
+            }
+
+            const lunchStart = document.getElementById('lunchTimeDiv');
+            const lunchEnd = document.getElementById('lunchEndDiv');
+            const lunchMin = document.getElementById('lunchMinDiv');
+            const teaStart = document.getElementById('teaTimeDiv');
+            const teaEnd = document.getElementById('teaEndDiv');
+            const teaMin = document.getElementById('teaMinDiv');
 
             if (breakType === 'fixed') {
                 // Show time fields, hide minute fields
-                document.getElementById('lunchTimeDiv').style.display = 'block';
-                document.getElementById('lunchEndDiv').style.display = 'block';
-                document.getElementById('lunchMinDiv').style.display = 'none';
-                document.getElementById('teaTimeDiv').style.display = 'block';
-                document.getElementById('teaEndDiv').style.display = 'block';
-                document.getElementById('teaMinDiv').style.display = 'none';
+                if (lunchStart) lunchStart.style.display = 'block';
+                if (lunchEnd) lunchEnd.style.display = 'block';
+                if (lunchMin) lunchMin.style.display = 'none';
+                if (teaStart) teaStart.style.display = 'block';
+                if (teaEnd) teaEnd.style.display = 'block';
+                if (teaMin) teaMin.style.display = 'none';
             } else if (breakType === 'flexible') {
                 // Show minute fields, hide time fields
-                document.getElementById('lunchTimeDiv').style.display = 'none';
-                document.getElementById('lunchEndDiv').style.display = 'none';
-                document.getElementById('lunchMinDiv').style.display = 'block';
-                document.getElementById('teaTimeDiv').style.display = 'none';
-                document.getElementById('teaEndDiv').style.display = 'none';
-                document.getElementById('teaMinDiv').style.display = 'block';
+                if (lunchStart) lunchStart.style.display = 'none';
+                if (lunchEnd) lunchEnd.style.display = 'none';
+                if (lunchMin) lunchMin.style.display = 'block';
+                if (teaStart) teaStart.style.display = 'none';
+                if (teaEnd) teaEnd.style.display = 'none';
+                if (teaMin) teaMin.style.display = 'block';
             } else {
                 // Hide all if not set
-                document.getElementById('lunchTimeDiv').style.display = 'none';
-                document.getElementById('lunchEndDiv').style.display = 'none';
-                document.getElementById('lunchMinDiv').style.display = 'none';
-                document.getElementById('teaTimeDiv').style.display = 'none';
-                document.getElementById('teaEndDiv').style.display = 'none';
-                document.getElementById('teaMinDiv').style.display = 'none';
-            }
-        }
-
-        // Toggle refresh break type fields
-        function toggleRefreshBreakType() {
-            const refreshType = document.getElementById('refresh_break_type').value;
-
-            if (refreshType === 'fixed') {
-                document.getElementById('refreshStartDiv').style.display = 'block';
-                document.getElementById('refreshEndDiv').style.display = 'block';
-                document.getElementById('refreshMinDiv').style.display = 'none';
-            } else if (refreshType === 'flexible') {
-                document.getElementById('refreshStartDiv').style.display = 'none';
-                document.getElementById('refreshEndDiv').style.display = 'none';
-                document.getElementById('refreshMinDiv').style.display = 'block';
-            } else {
-                document.getElementById('refreshStartDiv').style.display = 'none';
-                document.getElementById('refreshEndDiv').style.display = 'none';
-                document.getElementById('refreshMinDiv').style.display = 'none';
+                if (lunchStart) lunchStart.style.display = 'none';
+                if (lunchEnd) lunchEnd.style.display = 'none';
+                if (lunchMin) lunchMin.style.display = 'none';
+                if (teaStart) teaStart.style.display = 'none';
+                if (teaEnd) teaEnd.style.display = 'none';
+                if (teaMin) teaMin.style.display = 'none';
             }
         }
 
@@ -1346,7 +1341,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadShiftBreakTimes();
             toggleShiftBreakType();
-            toggleRefreshBreakType();
+        });
+
+        $(document).on('change', '#refresh_break_type', function() {
+            toggleShiftBreakType();
         });
 
         // Document preview handler — shows uniform card previews for multiple selected files

@@ -1113,7 +1113,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                     <div class="row">
                                         <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                             {{ Form::label('mail_driver', __('Mail Driver'), ['class' => 'col-form-label mail_driver']) }}
-                                            {{ Form::text('mail_driver', isset($settings['mail_driver']) ? $settings['mail_driver'] : '', ['class' => 'form-control ', 'placeholder' => __('Enter Mail Driver')]) }}
+                                            {{ Form::text('mail_driver', isset($settings['mail_driver']) ? $settings['mail_driver'] : '', ['class' => 'form-control', 'id' => 'mail_driver', 'placeholder' => __('Enter Mail Driver')]) }}
                                             @error('mail_driver')
                                             <span class="text-xs text-danger invalid-mail_driver"
                                                 role="alert">{{ $message }}</span>
@@ -1121,7 +1121,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         </div>
                                         <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                             {{ Form::label('mail_host', __('Mail Host'), ['class' => 'col-form-label']) }}
-                                            {{ Form::text('mail_host', isset($settings['mail_host']) ? $settings['mail_host'] : '', ['class' => 'form-control ', 'placeholder' => __('Enter Mail Host')]) }}
+                                            {{ Form::text('mail_host', isset($settings['mail_host']) ? $settings['mail_host'] : '', ['class' => 'form-control', 'id' => 'mail_host', 'placeholder' => __('Enter Mail Host')]) }}
                                             @error('mail_host')
                                             <span class="text-xs text-danger invalid-mail_host"
                                                 role="alert">{{ $message }}</span>
@@ -1129,7 +1129,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         </div>
                                         <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                             {{ Form::label('mail_port', __('Mail Port'), ['class' => 'col-form-label']) }}
-                                            {{ Form::text('mail_port', isset($settings['mail_port']) ? $settings['mail_port'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Mail Port')]) }}
+                                            {{ Form::text('mail_port', isset($settings['mail_port']) ? $settings['mail_port'] : '', ['class' => 'form-control', 'id' => 'mail_port', 'placeholder' => __('Enter Mail Port')]) }}
                                             @error('mail_port')
                                             <span class="text-xs text-danger invalid-mail_port"
                                                 role="alert">{{ $message }}</span>
@@ -1137,7 +1137,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         </div>
                                         <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                             {{ Form::label('mail_username', __('Mail Username'), ['class' => 'col-form-label']) }}
-                                            {{ Form::text('mail_username', isset($settings['mail_username']) ? $settings['mail_username'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Mail Username')]) }}
+                                            {{ Form::text('mail_username', isset($settings['mail_username']) ? $settings['mail_username'] : '', ['class' => 'form-control', 'id' => 'mail_username', 'placeholder' => __('Enter Mail Username')]) }}
                                             @error('mail_username')
                                             <span class="text-xs text-danger invalid-mail_username"
                                                 role="alert">{{ $message }}</span>
@@ -1145,7 +1145,12 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         </div>
                                         <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                             {{ Form::label('mail_password', __('Mail Password'), ['class' => 'col-form-label']) }}
-                                            {{ Form::text('mail_password', isset($settings['mail_password']) ? $settings['mail_password'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Mail Password')]) }}
+                                            <div class="position-relative">
+                                                {{ Form::input('password', 'mail_password', isset($settings['mail_password']) ? $settings['mail_password'] : '', ['class' => 'form-control', 'id' => 'mail_password', 'placeholder' => __('Enter Mail Password')]) }}
+                                                <span class="toggle-password-btn">
+                                                    <i class="ti ti-eye"></i>
+                                                </span>
+                                            </div>
                                             @error('mail_password')
                                             <span class="text-xs text-danger invalid-mail_password"
                                                 role="alert">{{ $message }}</span>
@@ -1153,7 +1158,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         </div>
                                         <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                             {{ Form::label('mail_encryption', __('Mail Encryption'), ['class' => 'col-form-label']) }}
-                                            {{ Form::text('mail_encryption', isset($settings['mail_encryption']) ? $settings['mail_encryption'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Mail Encryption')]) }}
+                                            {{ Form::text('mail_encryption', isset($settings['mail_encryption']) ? $settings['mail_encryption'] : '', ['class' => 'form-control', 'id' => 'mail_encryption', 'placeholder' => __('Enter Mail Encryption')]) }}
                                             @error('mail_encryption')
                                             <span class="text-xs text-danger invalid-mail_encryption"
                                                 role="alert">{{ $message }}</span>
@@ -1161,7 +1166,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         </div>
                                         <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                             {{ Form::label('mail_from_address', __('Mail From Address'), ['class' => 'col-form-label']) }}
-                                            {{ Form::text('mail_from_address', isset($settings['mail_from_address']) ? $settings['mail_from_address'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Mail From Address')]) }}
+                                            {{ Form::text('mail_from_address', isset($settings['mail_from_address']) ? $settings['mail_from_address'] : '', ['class' => 'form-control', 'id' => 'mail_from_address', 'placeholder' => __('Enter Mail From Address')]) }}
                                             @error('mail_from_address')
                                             <span class="text-xs text-danger invalid-mail_from_address"
                                                 role="alert">{{ $message }}</span>
@@ -1169,7 +1174,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         </div>
                                         <div class="col-lg-4 col-md-6 col-sm-6 form-group">
                                             {{ Form::label('mail_from_name', __('Mail From Name'), ['class' => 'col-form-label']) }}
-                                            {{ Form::text('mail_from_name', isset($settings['mail_from_name']) ? $settings['mail_from_name'] : '', ['class' => 'form-control', 'placeholder' => __('Enter Mail From Name')]) }}
+                                            {{ Form::text('mail_from_name', isset($settings['mail_from_name']) ? $settings['mail_from_name'] : '', ['class' => 'form-control', 'id' => 'mail_from_name', 'placeholder' => __('Enter Mail From Name')]) }}
                                             @error('mail_from_name')
                                             <span class="text-xs text-danger invalid-mail_from_name"
                                                 role="alert">{{ $message }}</span>
@@ -1182,7 +1187,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         <div class="col-md-6">
                                             <a href="javascript:void(0)"
                                                 class="btn btn-print-invoice  btn-primary m-r-10 send_email"
-                                                data-ajax-popup="true" data-title="{{ __('Send Test Mail') }}"
+                                                data-title="{{ __('Send Test Mail') }}"
                                                 data-url="{{ route('test.mail') }}">
                                                 {{ __('Send Test Mail') }}
                                             </a>
@@ -1419,7 +1424,7 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                         <table class="table table-bordered text-center align-middle shift-table">
                                             <thead class="table-light">
                                                 <tr>
-                                                    <th rowspan="2">Shift</th>
+                                                    <th colspan="3">Shift</th>
                                                     <th colspan="2">Time</th>
                                                     <th rowspan="2">Break Type</th>
                                                     <th colspan="2">Lunch</th>
@@ -1428,6 +1433,9 @@ $lang = \App\Models\Utility::getValByName('default_language');
                                                     <th rowspan="2">Action</th>
                                                 </tr>
                                                 <tr>
+                                                    <th>Name *</th>
+                                                    <th>Code</th>
+                                                    <th>Color</th>
                                                     <th>Start</th>
                                                     <th>End</th>
                                                     <th>Start</th>
@@ -3231,7 +3239,9 @@ function loadExistingShifts() {
 function addRowWithData(shiftData, existingIndex) {
     let row = `
     <tr id="row_${index}" class="align-middle">
-        <td>Shift ${index + 1}</td>
+        <td><input type="text" name="shifts[${index}][name]" class="form-control" placeholder="Shift Name *" value="${shiftData.name || shiftData.title || 'Shift ' + (index + 1)}" required></td>
+        <td><input type="text" name="shifts[${index}][code]" class="form-control" placeholder="Code" value="${shiftData.code || ''}"></td>
+        <td><input type="color" name="shifts[${index}][color]" class="form-control form-control-color" value="${shiftData.color || '#51459d'}" title="Choose Color" style="width: 40px; height: 36px; padding: 2px;"></td>
 
         <td><input type="time" name="shifts[${index}][start]" class="form-control" value="${shiftData.start || ''}"></td>
         <td><input type="time" name="shifts[${index}][end]" class="form-control" value="${shiftData.end || ''}"></td>
@@ -3248,23 +3258,23 @@ function addRowWithData(shiftData, existingIndex) {
         <!-- Lunch -->
         <td>
             <input type="time" id="lunch_start_${index}" name="shifts[${index}][lunch_start]" class="form-control" value="${shiftData.lunch_start || ''}">
-            <label for="lunch_min_${index}" class="form-label mt-1">Minutes</label>
+            <span id="lunch_min_label_${index}" class="text-secondary fw-semibold" style="display:none;">Minutes</span>
         </td>
 
         <td>
-            <input type="number" id="lunch_min_${index}" name="shifts[${index}][lunch_minutes]" class="form-control mt-1" style="display:none;" placeholder="Min" value="${shiftData.lunch_minutes || ''}">
             <input type="time" id="lunch_end_${index}" name="shifts[${index}][lunch_end]" class="form-control" value="${shiftData.lunch_end || ''}">
+            <input type="number" id="lunch_min_${index}" name="shifts[${index}][lunch_minutes]" class="form-control" placeholder="0" min="0" value="${shiftData.lunch_minutes || ''}" style="display:none;">
         </td>
 
         <!-- Tea -->
         <td>
             <input type="time" id="tea_start_${index}" name="shifts[${index}][tea_start]" class="form-control" value="${shiftData.tea_start || ''}">
-            <label for="tea_min_${index}" class="form-label mt-1">Minutes</label>
+            <span id="tea_min_label_${index}" class="text-secondary fw-semibold" style="display:none;">Minutes</span>
         </td>
 
         <td>
             <input type="time" id="tea_end_${index}" name="shifts[${index}][tea_end]" class="form-control" value="${shiftData.tea_end || ''}">
-            <input type="number" id="tea_min_${index}" name="shifts[${index}][tea_minutes]" class="form-control mt-1" style="display:none;" placeholder="Min" value="${shiftData.tea_minutes || ''}">
+            <input type="number" id="tea_min_${index}" name="shifts[${index}][tea_minutes]" class="form-control" placeholder="0" min="0" value="${shiftData.tea_minutes || ''}" style="display:none;">
         </td>
 
         <td class="text-center">
@@ -3294,7 +3304,9 @@ function addRow() {
 
     let row = `
     <tr id="row_${index}" class="align-middle">
-        <td>Shift ${index + 1}</td>
+        <td><input type="text" name="shifts[${index}][name]" class="form-control" placeholder="Shift Name *" value="Shift ${index + 1}" required></td>
+        <td><input type="text" name="shifts[${index}][code]" class="form-control" placeholder="Code"></td>
+        <td><input type="color" name="shifts[${index}][color]" class="form-control form-control-color" value="#51459d" title="Choose Color" style="width: 40px; height: 36px; padding: 2px;"></td>
 
         <td><input type="time" name="shifts[${index}][start]" class="form-control"></td>
         <td><input type="time" name="shifts[${index}][end]" class="form-control"></td>
@@ -3311,23 +3323,23 @@ function addRow() {
         <!-- Lunch -->
         <td>
             <input type="time" id="lunch_start_${index}" name="shifts[${index}][lunch_start]" class="form-control">
-            <label for="lunch_min_${index}" class="form-label mt-1">Minutes</label>
+            <span id="lunch_min_label_${index}" class="text-secondary fw-semibold" style="display:none;">Minutes</span>
         </td>
 
         <td>
-            <input type="number" id="lunch_min_${index}" name="shifts[${index}][lunch_minutes]" class="form-control mt-1" style="display:none;" placeholder="Min">
             <input type="time" id="lunch_end_${index}" name="shifts[${index}][lunch_end]" class="form-control">
+            <input type="number" id="lunch_min_${index}" name="shifts[${index}][lunch_minutes]" class="form-control" placeholder="0" min="0" style="display:none;">
         </td>
 
         <!-- Tea -->
         <td>
             <input type="time" id="tea_start_${index}" name="shifts[${index}][tea_start]" class="form-control">
-            <label for="tea_min_${index}" class="form-label mt-1">Minutes</label>
+            <span id="tea_min_label_${index}" class="text-secondary fw-semibold" style="display:none;">Minutes</span>
         </td>
 
         <td>
             <input type="time" id="tea_end_${index}" name="shifts[${index}][tea_end]" class="form-control">
-            <input type="number" id="tea_min_${index}" name="shifts[${index}][tea_minutes]" class="form-control mt-1" style="display:none;" placeholder="Min">
+            <input type="number" id="tea_min_${index}" name="shifts[${index}][tea_minutes]" class="form-control" placeholder="0" min="0" style="display:none;">
         </td>
 
         <td class="text-center">
@@ -3353,48 +3365,49 @@ function addRow() {
 
 // Toggle Fixed / Flexible
 function toggleType(select, i) {
+    if (!select) return;
     let type = select.value;
 
     let lunchStart = document.getElementById('lunch_start_' + i);
     let lunchEnd = document.getElementById('lunch_end_' + i);
+    let lunchMinLabel = document.getElementById('lunch_min_label_' + i);
     let lunchMin = document.getElementById('lunch_min_' + i);
 
     let teaStart = document.getElementById('tea_start_' + i);
     let teaEnd = document.getElementById('tea_end_' + i);
+    let teaMinLabel = document.getElementById('tea_min_label_' + i);
     let teaMin = document.getElementById('tea_min_' + i);
-    let lunchStartLabel = document.querySelector(`label[for="lunch_min_${i}"]`);
-    let teaStartLabel = document.querySelector(`label[for="tea_min_${i}"]`);
 
     if (type === 'fixed') {
-        lunchStart.style.display = 'block';
-        lunchEnd.style.display = 'block';
-        teaStart.style.display = 'block';
-        teaEnd.style.display = 'block';
+        if (lunchStart) lunchStart.style.display = 'block';
+        if (lunchEnd) lunchEnd.style.display = 'block';
+        if (lunchMinLabel) lunchMinLabel.style.display = 'none';
+        if (lunchMin) lunchMin.style.display = 'none';
 
-        lunchMin.style.display = 'none';
-        teaMin.style.display = 'none';
-        lunchStartLabel.style.display = 'none';
-        teaStartLabel.style.display = 'none';
+        if (teaStart) teaStart.style.display = 'block';
+        if (teaEnd) teaEnd.style.display = 'block';
+        if (teaMinLabel) teaMinLabel.style.display = 'none';
+        if (teaMin) teaMin.style.display = 'none';
     } else if (type === 'flexible') {
-        lunchStart.style.display = 'none';
-        lunchEnd.style.display = 'none';
-        teaStart.style.display = 'none';
-        teaEnd.style.display = 'none';
+        if (lunchStart) lunchStart.style.display = 'none';
+        if (lunchEnd) lunchEnd.style.display = 'none';
+        if (lunchMinLabel) lunchMinLabel.style.display = 'inline-block';
+        if (lunchMin) lunchMin.style.display = 'block';
 
-        lunchMin.style.display = 'block';
-        teaMin.style.display = 'block';
-        lunchStartLabel.style.display = 'block';
-        teaStartLabel.style.display = 'block';
-    }else{
-        lunchStart.style.display = 'none';
-        lunchEnd.style.display = 'none';
-        teaStart.style.display = 'none';
-        teaEnd.style.display = 'none';
+        if (teaStart) teaStart.style.display = 'none';
+        if (teaEnd) teaEnd.style.display = 'none';
+        if (teaMinLabel) teaMinLabel.style.display = 'inline-block';
+        if (teaMin) teaMin.style.display = 'block';
+    } else {
+        if (lunchStart) lunchStart.style.display = 'none';
+        if (lunchEnd) lunchEnd.style.display = 'none';
+        if (lunchMinLabel) lunchMinLabel.style.display = 'none';
+        if (lunchMin) lunchMin.style.display = 'none';
 
-        lunchMin.style.display = 'none';
-        teaMin.style.display = 'none';
-        lunchStartLabel.style.display = 'none';
-        teaStartLabel.style.display = 'none';
+        if (teaStart) teaStart.style.display = 'none';
+        if (teaEnd) teaEnd.style.display = 'none';
+        if (teaMinLabel) teaMinLabel.style.display = 'none';
+        if (teaMin) teaMin.style.display = 'none';
     }
 }
 
@@ -3577,6 +3590,33 @@ $(document).on('click', '.placeholder-tag, #offer-letter-settings p, #joining-le
     if (!match) return;
     e.preventDefault();
     insertPlaceholderTag(match[0], this);
+});
+
+// ── Smooth Scroll & Sidebar Tab Activation Handler for URL Hash Navigation ──────
+function handleSettingsHashScroll() {
+    var hash = window.location.hash;
+    if (hash) {
+        var $tabLink = $('#useradd-sidenav a[href="' + hash + '"]');
+        if ($tabLink.length) {
+            $('#useradd-sidenav a').removeClass('active');
+            $tabLink.addClass('active');
+        }
+        var $targetSec = $(hash);
+        if ($targetSec.length) {
+            setTimeout(function() {
+                $('html, body').animate({
+                    scrollTop: $targetSec.offset().top - 75
+                }, 400);
+            }, 150);
+        }
+    }
+}
+
+$(document).ready(function() {
+    handleSettingsHashScroll();
+});
+$(window).on('hashchange', function() {
+    handleSettingsHashScroll();
 });
 </script>
 @endsection

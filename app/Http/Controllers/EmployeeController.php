@@ -412,7 +412,12 @@ class EmployeeController extends Controller
             $employeeDocuments = EmployeeDocument::where('employee_id', $employee->id)->get()->keyBy('document_id');
             $branches = Branch::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
             $departments = Department::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
-            $subdepartments = SubDepartment::where(['department' => $employee->department_id, 'created_by' => Auth::user()->creatorId()])->get()->pluck('name', 'id');
+            $selectedDeptId = old('department_id', $employee->department_id);
+            if (!empty($selectedDeptId)) {
+                $subdepartments = SubDepartment::where(['department' => $selectedDeptId, 'created_by' => Auth::user()->creatorId()])->get()->pluck('name', 'id');
+            } else {
+                $subdepartments = SubDepartment::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
+            }
             $designations = Designation::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
             $shift = Shift::where('created_by', Auth::user()->creatorId())->whereNull('date')->get()->pluck('name', 'id');
             $employeesId = Auth::user()->employeeIdFormat($employee->employee_id);
@@ -524,7 +529,7 @@ class EmployeeController extends Controller
             if ($validator->fails()) {
                 $messages = $validator->getMessageBag();
 
-                return redirect()->back()->with('error', $messages->first());
+                return redirect()->back()->withInput()->withErrors($validator)->with('error', $messages->first());
             }
 
             $employee = Employee::findOrFail($empId);

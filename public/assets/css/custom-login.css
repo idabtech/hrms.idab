@@ -11,7 +11,7 @@
 
 body.custom-login,
 .custom-login,
-.custom-login * {
+.custom-login *:not(i):not([class*="ti"]):not([class*="feather"]):not([class*="fa"]) {
     font-family: 'Comfortaa', cursive, sans-serif !important;
 }
 

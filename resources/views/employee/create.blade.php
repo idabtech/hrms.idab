@@ -71,7 +71,7 @@
                                     <div class="form-group">
                                         {!! Form::label('dob', __('Date of Birth'), ['class' => 'form-label']) !!}<span class="text-danger pl-1">*</span>
 
-                                        {{ Form::date('dob', null,
+                                        {{ Form::date('dob', old('dob'),
                                             [
                                                 'class' => 'form-control w-100',
                                                 'required',
@@ -87,13 +87,13 @@
                                         <div class="d-flex radio-check">
                                             <div class="custom-control custom-radio custom-control-inline">
                                                 <input type="radio" id="g_male" value="Male" name="gender"
-                                                    class="form-check-input" required>
+                                                    class="form-check-input" required {{ old('gender') == 'Male' ? 'checked' : '' }}>
                                                 <label class="form-check-label"
                                                     for="g_male">{{ __('Male') }}</label>
                                             </div>
                                             <div class="custom-control custom-radio ms-1 custom-control-inline">
                                                 <input type="radio" id="g_female" value="Female" name="gender"
-                                                    class="form-check-input">
+                                                    class="form-check-input" {{ old('gender') == 'Female' ? 'checked' : '' }}>
                                                 <label class="form-check-label"
                                                     for="g_female">{{ __('Female') }}</label>
                                             </div>
@@ -144,7 +144,7 @@
                                 </div>
                                 <div class="form-group col-md-6">
                                     {!! Form::label('company_doj', __('Date Of Joining'), ['class'=> 'form-label']) !!}<span class="text-danger pl-1">*</span>
-                                    {{ Form::date('company_doj', null, [
+                                    {{ Form::date('company_doj', old('company_doj'), [
                                         'class' => 'form-control w-100',
                                         'required',
                                         'autocomplete' => 'off',
@@ -162,7 +162,7 @@
                                         <i class="ti ti-plus"></i>
                                     </a>
                                     <div class="form-icon-user">
-                                        {{ Form::select('branch_id', $branches, null, ['class' => 'form-control branch_id', 'required' => 'required', 'placeholder' => 'Select Branch']) }}
+                                        {{ Form::select('branch_id', $branches, old('branch_id'), ['class' => 'form-control branch_id', 'required' => 'required', 'placeholder' => 'Select Branch']) }}
                                     </div>
                                 </div>
 
@@ -177,7 +177,7 @@
                                         <i class="ti ti-plus"></i>
                                     </a>
                                     <div class="form-icon-user">
-                                        {{ Form::select('department_id', $departments, null, ['class' => 'form-control department_id', 'id' => 'department_id', 'required' => 'required', 'placeholder' => 'Select Department']) }}
+                                        {{ Form::select('department_id', $departments, old('department_id'), ['class' => 'form-control department_id', 'id' => 'department_id', 'required' => 'required', 'placeholder' => 'Select Department']) }}
                                     </div>
                                 </div>
 
@@ -192,7 +192,7 @@
                                         <i class="ti ti-plus"></i>
                                     </a>
                                     <div class="form-icon-user">
-                                        {{ Form::select('subdepartment_id', $subdepartments, null, ['class' => 'form-control subdepartment_id', 'id' => 'subdepartment_id', 'required' => 'required', 'placeholder' => 'Select Sub Department']) }}
+                                        {{ Form::select('subdepartment_id', $subdepartments, old('subdepartment_id'), ['class' => 'form-control subdepartment_id', 'id' => 'subdepartment_id', 'required' => 'required', 'placeholder' => 'Select Sub Department']) }}
                                     </div>
                                 </div>
 
@@ -206,7 +206,7 @@
                                         <i class="ti ti-plus"></i>
                                     </a>
                                     <div class="form-icon-user">
-                                        {{ Form::select('designation_id', $designations, null, ['class' => 'form-control designation_id', 'id' => 'designation_id', 'required' => 'required', 'placeholder' => 'Select Designation']) }}
+                                        {{ Form::select('designation_id', $designations, old('designation_id'), ['class' => 'form-control designation_id', 'id' => 'designation_id', 'required' => 'required', 'placeholder' => 'Select Designation']) }}
 
                                     </div>
                                 </div>
@@ -237,7 +237,7 @@
                                     </a>
 
                                     <div class="form-icon-user">
-                                        {{ Form::select('shift_id', $shift, null, ['class' => 'form-control shift_id', 'id' => 'shift_id', 'required' => 'required', 'placeholder' => 'Select Shift']) }}
+                                        {{ Form::select('shift_id', $shift, old('shift_id'), ['class' => 'form-control shift_id', 'id' => 'shift_id', 'required' => 'required', 'placeholder' => 'Select Shift']) }}
 
                                     </div>
                                 </div>
@@ -250,9 +250,31 @@
                                         @php
                                             $shiftOptions = [];
 
-                                            if (!empty($company_shifts)) {
+                                            if (!empty($company_shifts) && is_array($company_shifts)) {
                                                 foreach ($company_shifts as $index => $shift) {
-                                                    $label = ($shift['start'] ?? '') . ' - ' . ($shift['end'] ?? '');
+                                                    $name = !empty($shift['name']) ? $shift['name'] : (!empty($shift['title']) ? $shift['title'] : 'Shift ' . ($index + 1));
+                                                    $start = $shift['start'] ?? '';
+                                                    $end = $shift['end'] ?? '';
+                                                    $timeStr = ($start && $end) ? " ({$start} - {$end})" : "";
+
+                                                    $colorDot = '🟣 ';
+                                                    if (!empty($shift['color'])) {
+                                                        $c = strtolower(ltrim($shift['color'], '#'));
+                                                        if (strlen($c) === 6) {
+                                                            $r = hexdec(substr($c, 0, 2));
+                                                            $g = hexdec(substr($c, 2, 2));
+                                                            $b = hexdec(substr($c, 4, 2));
+                                                            if ($r > 180 && $g < 100 && $b < 100) { $colorDot = '🔴 '; }
+                                                            elseif ($g > 140 && $r < 140 && $b < 140) { $colorDot = '🟢 '; }
+                                                            elseif ($b > 140 && $r < 140) { $colorDot = '🔵 '; }
+                                                            elseif ($r > 200 && $g > 160 && $b < 100) { $colorDot = '🟡 '; }
+                                                            elseif ($r > 200 && $g > 100 && $b < 80) { $colorDot = '🟠 '; }
+                                                            elseif ($r > 100 && $b > 100 && $g < 120) { $colorDot = '🟣 '; }
+                                                            elseif ($r < 80 && $g < 80 && $b < 80) { $colorDot = '⚫ '; }
+                                                        }
+                                                    }
+
+                                                    $label = $colorDot . $name . $timeStr;
                                                     $shiftOptions[$index] = $label;
                                                 }
                                             }
@@ -284,12 +306,12 @@
 
                                 <!--- Refresh Break Time --->
                                 <div class="form-group col-md-6">
-                                    {{ Form::label('refresh_type', __('Refresh Break Time'), ['class' => 'form-label']) }}
-                                    {{ Form::select('refresh_type', ['fixed' => 'Fixed Time', 'flexible' => 'Flexible Time'], null, ['class' => 'form-control', 'id' => 'refresh_break_type', 'placeholder' => 'Select Refresh Break Time', 'onchange' => 'toggleShiftBreakType()', 'required' => 'required']) }}
+                                    {{ Form::label('refresh_type', __('Refresh Break Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
+                                    {{ Form::select('refresh_type', ['fixed' => 'Fixed Time', 'flexible' => 'Flexible Time'], old('refresh_type', 'fixed'), ['class' => 'form-control', 'id' => 'refresh_break_type', 'onchange' => 'toggleShiftBreakType()', 'required' => 'required']) }}
                                 </div>
 
-                                <!-- Refresh Break Fixed Time Fields -->
-                                <div class="form-group col-md-6" id="refreshStartDiv" style="display:none;">
+                                <!-- Refresh Break Fixed Time Fields (Legacy) -->
+                                <!-- <div class="form-group col-md-6" id="refreshStartDiv" style="display:none;">
                                     {{ Form::label('refresh_start', __('Refresh Start Time'), ['class' => 'form-label']) }}
                                     {{ Form::time('refresh_start', old('refresh_start', null), ['class' => 'form-control', 'id' => 'refresh_start']) }}
                                 </div>
@@ -297,37 +319,37 @@
                                 <div class="form-group col-md-6" id="refreshEndDiv" style="display:none;">
                                     {{ Form::label('refresh_end', __('Refresh End Time'), ['class' => 'form-label']) }}
                                     {{ Form::time('refresh_end', old('refresh_end', null), ['class' => 'form-control', 'id' => 'refresh_end']) }}
-                                </div>
+                                </div> -->
 
                                 <!-- Lunch Time Fields -->
                                 <div class="form-group col-md-6" id="lunchTimeDiv" style="display:none;">
-                                    {{ Form::label('lunch_start', __('Lunch Start Time'), ['class' => 'form-label']) }}
+                                    {{ Form::label('lunch_start', __('Lunch Start Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                     {{ Form::time('lunch_start', old('lunch_start',null), ['class' => 'form-control', 'id' => 'lunch_start']) }}
                                 </div>
 
                                 <div class="form-group col-md-6" id="lunchEndDiv" style="display:none;">
-                                    {{ Form::label('lunch_end', __('Lunch End Time'), ['class' => 'form-label']) }}
+                                    {{ Form::label('lunch_end', __('Lunch End Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                     {{ Form::time('lunch_end', old('lunch_end', null), ['class' => 'form-control', 'id' => 'lunch_end']) }}
                                 </div>
 
                                 <div class="form-group col-md-6" id="lunchMinDiv" style="display:none;">
-                                    {{ Form::label('lunch_minutes', __('Lunch Minutes'), ['class' => 'form-label']) }}
+                                    {{ Form::label('lunch_minutes', __('Lunch Minutes'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                     {{ Form::number('lunch_minutes', null, ['class' => 'form-control', 'id' => 'lunch_minutes', 'min' => 0]) }}
                                 </div>
 
                                 <!-- Tea Time Fields -->
                                 <div class="form-group col-md-6" id="teaTimeDiv" style="display:none;">
-                                    {{ Form::label('tea_start', __('Tea Start Time'), ['class' => 'form-label']) }}
+                                    {{ Form::label('tea_start', __('Tea Start Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                     {{ Form::time('tea_start', old('tea_start', null), ['class' => 'form-control', 'id' => 'tea_start']) }}
                                 </div>
 
                                 <div class="form-group col-md-6" id="teaEndDiv" style="display:none;">
-                                    {{ Form::label('tea_end', __('Tea End Time'), ['class' => 'form-label']) }}
+                                    {{ Form::label('tea_end', __('Tea End Time'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                     {{ Form::time('tea_end', old('tea_end', null), ['class' => 'form-control', 'id' => 'tea_end']) }}
                                 </div>
 
                                 <div class="form-group col-md-6" id="teaMinDiv" style="display:none;">
-                                    {{ Form::label('tea_minutes', __('Tea Minutes'), ['class' => 'form-label']) }}
+                                    {{ Form::label('tea_minutes', __('Tea Minutes'), ['class' => 'form-label']) }}<span class="text-danger pl-1">*</span>
                                     {{ Form::number('tea_minutes', null, ['class' => 'form-control', 'id' => 'tea_minutes', 'min' => 0]) }}
                                 </div>
 
@@ -670,123 +692,97 @@
 
         function loadShiftBreakTimes() {
             const selectElement = document.getElementById('company_shift_time');
+            if (!selectElement) return;
             const selectedIndex = selectElement.value;
 
             if (selectedIndex === '' || !companyShifts[selectedIndex]) {
-                // Hide all break time fields
-                document.getElementById('lunchTimeDiv').style.display = 'none';
-                document.getElementById('lunchEndDiv').style.display = 'none';
-                document.getElementById('lunchMinDiv').style.display = 'none';
-                document.getElementById('teaTimeDiv').style.display = 'none';
-                document.getElementById('teaEndDiv').style.display = 'none';
-                document.getElementById('teaMinDiv').style.display = 'none';
-                // Don't hide refresh break fields - they're independent
                 return;
             }
 
             const shift = companyShifts[selectedIndex];
 
-            // // Set hidden fields with shift times
-            // document.getElementById('company_start_time').value = shift.start || '';
-            // document.getElementById('company_end_time').value = shift.end || '';
-
-            document.getElementById('refresh_break_type').value = shift.type;
-            // Load lunch times
-            if (shift.type === 'fixed') {
-                document.getElementById('lunchTimeDiv').style.display = 'block';
-                document.getElementById('lunchEndDiv').style.display = 'block';
-                document.getElementById('lunchMinDiv').style.display = 'none';
-
-                document.getElementById('lunch_start').value = shift.lunch_start || '';
-                document.getElementById('lunch_end').value = shift.lunch_end || '';
-            } else if (shift.type === 'flexible') {
-                document.getElementById('lunchTimeDiv').style.display = 'none';
-                document.getElementById('lunchEndDiv').style.display = 'none';
-                document.getElementById('lunchMinDiv').style.display = 'block';
-
-                document.getElementById('lunch_minutes').value = shift.lunch_minutes || 0;
-            } else {
-                document.getElementById('lunchTimeDiv').style.display = 'none';
-                document.getElementById('lunchEndDiv').style.display = 'none';
-                document.getElementById('lunchMinDiv').style.display = 'none';
+            if (shift.type) {
+                const refreshBreakType = document.getElementById('refresh_break_type');
+                if (refreshBreakType) {
+                    refreshBreakType.value = shift.type;
+                }
             }
 
-            // Load tea times
-            if (shift.type === 'fixed') {
-                document.getElementById('teaTimeDiv').style.display = 'block';
-                document.getElementById('teaEndDiv').style.display = 'block';
-                document.getElementById('teaMinDiv').style.display = 'none';
-
-                document.getElementById('tea_start').value = shift.tea_start || '';
-                document.getElementById('tea_end').value = shift.tea_end || '';
-            } else if (shift.type === 'flexible') {
-                document.getElementById('teaTimeDiv').style.display = 'none';
-                document.getElementById('teaEndDiv').style.display = 'none';
-                document.getElementById('teaMinDiv').style.display = 'block';
-
-                document.getElementById('tea_minutes').value = shift.tea_minutes || 0;
-            } else {
-                document.getElementById('teaTimeDiv').style.display = 'none';
-                document.getElementById('teaEndDiv').style.display = 'none';
-                document.getElementById('teaMinDiv').style.display = 'none';
+            if (shift.lunch_start && document.getElementById('lunch_start')) {
+                document.getElementById('lunch_start').value = shift.lunch_start;
             }
+            if (shift.lunch_end && document.getElementById('lunch_end')) {
+                document.getElementById('lunch_end').value = shift.lunch_end;
+            }
+            if (shift.tea_start && document.getElementById('tea_start')) {
+                document.getElementById('tea_start').value = shift.tea_start;
+            }
+            if (shift.tea_end && document.getElementById('tea_end')) {
+                document.getElementById('tea_end').value = shift.tea_end;
+            }
+            if (shift.lunch_minutes && document.getElementById('lunch_minutes')) {
+                document.getElementById('lunch_minutes').value = shift.lunch_minutes;
+            }
+            if (shift.tea_minutes && document.getElementById('tea_minutes')) {
+                document.getElementById('tea_minutes').value = shift.tea_minutes;
+            }
+
+            toggleShiftBreakType();
         }
 
         // Toggle shift break type fields (lunch and tea)
         function toggleShiftBreakType() {
-            const breakType = document.getElementById('refresh_break_type').value;
+            const breakTypeEl = document.getElementById('refresh_break_type');
+            if (!breakTypeEl) return;
+            let breakType = breakTypeEl.value;
+            if (!breakType) {
+                breakType = 'fixed';
+                breakTypeEl.value = 'fixed';
+            }
+
+            const lunchStart = document.getElementById('lunchTimeDiv');
+            const lunchEnd = document.getElementById('lunchEndDiv');
+            const lunchMin = document.getElementById('lunchMinDiv');
+            const teaStart = document.getElementById('teaTimeDiv');
+            const teaEnd = document.getElementById('teaEndDiv');
+            const teaMin = document.getElementById('teaMinDiv');
 
             if (breakType === 'fixed') {
                 // Show time fields, hide minute fields
-                document.getElementById('lunchTimeDiv').style.display = 'block';
-                document.getElementById('lunchEndDiv').style.display = 'block';
-                document.getElementById('lunchMinDiv').style.display = 'none';
-                document.getElementById('teaTimeDiv').style.display = 'block';
-                document.getElementById('teaEndDiv').style.display = 'block';
-                document.getElementById('teaMinDiv').style.display = 'none';
+                if (lunchStart) lunchStart.style.display = 'block';
+                if (lunchEnd) lunchEnd.style.display = 'block';
+                if (lunchMin) lunchMin.style.display = 'none';
+                if (teaStart) teaStart.style.display = 'block';
+                if (teaEnd) teaEnd.style.display = 'block';
+                if (teaMin) teaMin.style.display = 'none';
             } else if (breakType === 'flexible') {
                 // Show minute fields, hide time fields
-                document.getElementById('lunchTimeDiv').style.display = 'none';
-                document.getElementById('lunchEndDiv').style.display = 'none';
-                document.getElementById('lunchMinDiv').style.display = 'block';
-                document.getElementById('teaTimeDiv').style.display = 'none';
-                document.getElementById('teaEndDiv').style.display = 'none';
-                document.getElementById('teaMinDiv').style.display = 'block';
+                if (lunchStart) lunchStart.style.display = 'none';
+                if (lunchEnd) lunchEnd.style.display = 'none';
+                if (lunchMin) lunchMin.style.display = 'block';
+                if (teaStart) teaStart.style.display = 'none';
+                if (teaEnd) teaEnd.style.display = 'none';
+                if (teaMin) teaMin.style.display = 'block';
             } else {
                 // Hide all if not set
-                document.getElementById('lunchTimeDiv').style.display = 'none';
-                document.getElementById('lunchEndDiv').style.display = 'none';
-                document.getElementById('lunchMinDiv').style.display = 'none';
-                document.getElementById('teaTimeDiv').style.display = 'none';
-                document.getElementById('teaEndDiv').style.display = 'none';
-                document.getElementById('teaMinDiv').style.display = 'none';
+                if (lunchStart) lunchStart.style.display = 'none';
+                if (lunchEnd) lunchEnd.style.display = 'none';
+                if (lunchMin) lunchMin.style.display = 'none';
+                if (teaStart) teaStart.style.display = 'none';
+                if (teaEnd) teaEnd.style.display = 'none';
+                if (teaMin) teaMin.style.display = 'none';
             }
         }
 
         // Toggle refresh break type fields
-        function toggleRefreshBreakType() {
-            const refreshType = document.getElementById('refresh_break_type').value;
-
-            if (refreshType === 'fixed') {
-                document.getElementById('refreshStartDiv').style.display = 'block';
-                document.getElementById('refreshEndDiv').style.display = 'block';
-                document.getElementById('refreshMinDiv').style.display = 'none';
-            } else if (refreshType === 'flexible') {
-                document.getElementById('refreshStartDiv').style.display = 'none';
-                document.getElementById('refreshEndDiv').style.display = 'none';
-                document.getElementById('refreshMinDiv').style.display = 'block';
-            } else {
-                document.getElementById('refreshStartDiv').style.display = 'none';
-                document.getElementById('refreshEndDiv').style.display = 'none';
-                document.getElementById('refreshMinDiv').style.display = 'none';
-            }
-        }
-
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadShiftBreakTimes();
-            // toggleShiftBreakType();
-            // toggleRefreshBreakType();
+            toggleShiftBreakType();
+        });
+
+        $(document).on('change', '#refresh_break_type', function() {
+            toggleShiftBreakType();
         });
     // }
 </script>

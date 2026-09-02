@@ -3,9 +3,12 @@
     <div class="row">
         <div class="form-group col-12">
             {{ Form::label('password', __('Password'), ['class' => 'form-label']) }}<x-required></x-required>
-            <div class="form-icon-user">
+            <div class="form-icon-user position-relative">
                 <input id="password" type="password" class="form-control @error('password') is-invalid @enderror"
                     name="password" required autocomplete="new-password" placeholder="{{ __('Enter Password') }}">
+                <span class="toggle-password-btn">
+                    <i class="ti ti-eye"></i>
+                </span>
             </div>
             @error('password')
                 <span class="invalid-feedback" role="alert">
@@ -15,9 +18,12 @@
         </div>
         <div class="form-group col-12">
             {{ Form::label('password_confirmation', __('Confirm Password'), ['class' => 'form-label']) }}<x-required></x-required>
-            <div class="form-icon-user">
+            <div class="form-icon-user position-relative">
                 <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required
                     autocomplete="new-password" placeholder="{{ __('Enter Confirm Password') }}">
+                <span class="toggle-password-btn">
+                    <i class="ti ti-eye"></i>
+                </span>
             </div>
         </div>
     </div>

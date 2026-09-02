@@ -1030,15 +1030,16 @@ class SettingsController extends Controller
     public function testMail(Request $request)
     {
         $user = Auth::user();
+        $settings = Utility::settings();
         $data = [];
-        $data['mail_driver'] = $request->mail_driver;
-        $data['mail_host'] = $request->mail_host;
-        $data['mail_port'] = $request->mail_port;
-        $data['mail_username'] = $request->mail_username;
-        $data['mail_password'] = $request->mail_password;
-        $data['mail_encryption'] = $request->mail_encryption;
-        $data['mail_from_address'] = $request->mail_from_address;
-        $data['mail_from_name'] = $request->mail_from_name;
+        $data['mail_driver']       = !empty($request->mail_driver) ? $request->mail_driver : ($settings['mail_driver'] ?? 'smtp');
+        $data['mail_host']         = !empty($request->mail_host) ? $request->mail_host : ($settings['mail_host'] ?? '');
+        $data['mail_port']         = !empty($request->mail_port) ? $request->mail_port : ($settings['mail_port'] ?? '');
+        $data['mail_username']     = !empty($request->mail_username) ? $request->mail_username : ($settings['mail_username'] ?? '');
+        $data['mail_password']     = !empty($request->mail_password) ? $request->mail_password : ($settings['mail_password'] ?? '');
+        $data['mail_encryption']   = !empty($request->mail_encryption) ? $request->mail_encryption : ($settings['mail_encryption'] ?? '');
+        $data['mail_from_address'] = !empty($request->mail_from_address) ? $request->mail_from_address : ($settings['mail_from_address'] ?? '');
+        $data['mail_from_name']    = !empty($request->mail_from_name) ? $request->mail_from_name : ($settings['mail_from_name'] ?? '');
 
         return view('setting.test_mail', compact('data'));
     }
@@ -1046,17 +1047,38 @@ class SettingsController extends Controller
 
     public function testSendMail(Request $request)
     {
+        $settings = Utility::settings();
+        $driver       = !empty($request->mail_driver) ? $request->mail_driver : ($settings['mail_driver'] ?? 'smtp');
+        $host         = !empty($request->mail_host) ? $request->mail_host : ($settings['mail_host'] ?? '');
+        $port         = !empty($request->mail_port) ? $request->mail_port : ($settings['mail_port'] ?? '');
+        $username     = !empty($request->mail_username) ? $request->mail_username : ($settings['mail_username'] ?? '');
+        $password     = !empty($request->mail_password) ? $request->mail_password : ($settings['mail_password'] ?? '');
+        $encryption   = !empty($request->mail_encryption) ? $request->mail_encryption : ($settings['mail_encryption'] ?? '');
+        $from_address = !empty($request->mail_from_address) ? $request->mail_from_address : ($settings['mail_from_address'] ?? '');
+        $from_name    = !empty($request->mail_from_name) ? $request->mail_from_name : ($settings['mail_from_name'] ?? '');
+
+        $request->merge([
+            'mail_driver'       => $driver,
+            'mail_host'         => $host,
+            'mail_port'         => $port,
+            'mail_username'     => $username,
+            'mail_password'     => $password,
+            'mail_encryption'   => $encryption,
+            'mail_from_address' => $from_address,
+            'mail_from_name'    => $from_name,
+        ]);
+
         $validator = Validator::make(
             $request->all(),
             [
-                'email' => 'required|email',
-                'mail_driver' => 'required',
-                'mail_host' => 'required',
-                'mail_port' => 'required',
-                'mail_username' => 'required',
-                'mail_password' => 'required',
+                'email'             => 'required|email',
+                'mail_driver'       => 'required',
+                'mail_host'         => 'required',
+                'mail_port'         => 'required',
+                'mail_username'     => 'required',
+                'mail_password'     => 'required',
                 'mail_from_address' => 'required',
-                'mail_from_name' => 'required',
+                'mail_from_name'    => 'required',
             ]
         );
         if ($validator->fails()) {

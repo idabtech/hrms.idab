@@ -41,7 +41,7 @@ class DepartmentController extends Controller
                 $request->all(),
                 [
                     'branch_id' => 'required',
-                    'name' => 'required|max:20',
+                    'name' => 'required|max:255',
                     'slug' => 'required',
                 ]
             );
@@ -93,7 +93,7 @@ class DepartmentController extends Controller
                     $request->all(),
                     [
                         'branch_id' => 'required',
-                        'name' => 'required|max:20',
+                        'name' => 'required|max:255',
                     ]
                 );
                 if ($validator->fails()) {
