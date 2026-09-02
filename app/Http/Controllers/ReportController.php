@@ -683,6 +683,10 @@ class ReportController extends Controller
             $workingDays    = array_map('intval', array_filter(array_map('trim', explode(',', $workingDaysRaw)), 'strlen'));
             $satPattern     = $company_settings['saturday_pattern'] ?? 'none';
 
+            // Load custom company date overrides (e.g. specific Saturdays set to working/off)
+            $overrideSetting = \DB::table('settings')->where('created_by', \Auth::user()->creatorId())->where('name', 'company_date_overrides')->first();
+            $dateOverrides   = $overrideSetting ? (json_decode($overrideSetting->value, true) ?: []) : [];
+
             $monthStart = $year . '-' . $month . '-01';
             $monthEnd   = $year . '-' . $month . '-' . $num_of_days;
 
@@ -796,6 +800,17 @@ class ReportController extends Controller
                     // Saturday may be off depending on the pattern.
                     if (!$isDayOff && $dayOfWeek === 6 && in_array(6, $workingDays)) {
                         $isDayOff = !$this->isSaturdayWorking(\Carbon\Carbon::parse($dateFormat), $satPattern);
+                    }
+
+                    // Apply custom company date override if set
+                    if (isset($dateOverrides[$dateFormat])) {
+                        if ($dateOverrides[$dateFormat] === 'working') {
+                            $isDayOff  = false;
+                            $isHoliday = false;
+                        } elseif ($dateOverrides[$dateFormat] === 'off') {
+                            $isDayOff  = true;
+                            $isHoliday = false;
+                        }
                     }
 
                     $isOnLeave  = isset($leaveDateMap[$id][$dateFormat]);
@@ -1219,6 +1234,17 @@ class ReportController extends Controller
                         }
                     }
 
+                    // Apply custom company date override
+                    if (isset($dateOverrides[$df])) {
+                        if ($dateOverrides[$df] === 'working') {
+                            $isD = false;
+                            $isH = false;
+                        } elseif ($dateOverrides[$df] === 'off') {
+                            $isD = true;
+                            $isH = false;
+                        }
+                    }
+
                     if (!$isH && !$isD) $workingDayCount++;
                 }
 
@@ -1275,8 +1301,8 @@ class ReportController extends Controller
             $data['curMonth']        = $curMonth;
 
             $data['company_shifts'] = isset($company_settings['company_shifts']) ? json_decode($company_settings['company_shifts'], true) : [];
+            $data['date_overrides'] = $dateOverrides;
 
-            // dd($employeesAttendance, $branch, $department, $employees, $dates, $data);
             return view('report.monthlyAttendance', compact('employeesAttendance', 'branch', 'department', 'employees', 'dates', 'data'));
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
@@ -2214,5 +2240,56 @@ class ReportController extends Controller
         }
 
         return response()->json($employees);
+    }
+
+    public function updateDateOverride(Request $request)
+    {
+        try {
+            if (!\Auth::user()->can('Manage Report')) {
+                return response()->json(['error' => __('Permission denied.')], 403);
+            }
+
+            $request->validate([
+                'date' => 'required|date',
+                'override_type' => 'required|in:working,off,default',
+            ]);
+
+            $date = Carbon::parse($request->date)->format('Y-m-d');
+            $type = $request->override_type;
+            $creatorId = \Auth::user()->creatorId();
+
+            $setting = \DB::table('settings')->where('created_by', $creatorId)->where('name', 'company_date_overrides')->first();
+            $overrides = $setting ? (json_decode($setting->value, true) ?: []) : [];
+
+            if ($type === 'default') {
+                unset($overrides[$date]);
+            } else {
+                $overrides[$date] = $type;
+            }
+
+            if ($setting) {
+                \DB::table('settings')->where('id', $setting->id)->update([
+                    'value' => json_encode($overrides),
+                    'updated_at' => now(),
+                ]);
+            } else {
+                \DB::table('settings')->insert([
+                    'name' => 'company_date_overrides',
+                    'value' => json_encode($overrides),
+                    'created_by' => $creatorId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => __('Date override updated successfully.'),
+                'date' => $date,
+                'override_type' => $type,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 }
