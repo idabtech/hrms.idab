@@ -214,6 +214,42 @@ class PaySlipController extends Controller
         return true;
     }
 
+    public function bulkDelete(Request $request)
+    {
+        if (\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR') {
+            $ids = array_filter(array_map('intval', (array) $request->ids));
+            $month = $request->month;
+
+            if (!empty($ids)) {
+                $count = PaySlip::whereIn('id', $ids)
+                    ->where('created_by', \Auth::user()->creatorId())
+                    ->delete();
+                return response()->json([
+                    'success' => true,
+                    'message' => __(':count selected payslips successfully deleted.', ['count' => $count])
+                ]);
+            } elseif (!empty($month)) {
+                $count = PaySlip::where('salary_month', $month)
+                    ->where('created_by', \Auth::user()->creatorId())
+                    ->delete();
+                return response()->json([
+                    'success' => true,
+                    'message' => __(':count payslips successfully deleted for :month.', ['count' => $count, 'month' => $month])
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => __('No payslips selected or found for deletion.')
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => __('Permission denied.')
+        ], 403);
+    }
+
     public function showemployee($paySlip)
     {
 
