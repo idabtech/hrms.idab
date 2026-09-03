@@ -15,9 +15,39 @@
 
     if (isset($setting['color_flag']) && $setting['color_flag'] == 'true') {
         $themeColor = 'custom-color';
+        $activeColorHex = !empty($color) ? $color : '#584ed2';
     } else {
         $themeColor = $color;
+        $themeHexMap = [
+            'theme-1'  => '#0CAF60',
+            'theme-2'  => '#584ED2',
+            'theme-3'  => '#6FD943',
+            'theme-4'  => '#145388',
+            'theme-5'  => '#B94065',
+            'theme-6'  => '#008ECB',
+            'theme-7'  => '#7A3F93',
+            'theme-8'  => '#C6A44E',
+            'theme-9'  => '#42474C',
+            'theme-10' => '#127384',
+        ];
+        $activeColorHex = isset($themeHexMap[$color]) ? $themeHexMap[$color] : '#584ed2';
     }
+
+    // Convert hex color string to RGB values for CSS rgba() functions
+    $hex = ltrim($activeColorHex, '#');
+    if (strlen($hex) == 3) {
+        $r = hexdec(substr($hex, 0, 1) . substr($hex, 0, 1));
+        $g = hexdec(substr($hex, 1, 1) . substr($hex, 1, 1));
+        $b = hexdec(substr($hex, 2, 1) . substr($hex, 2, 1));
+    } else if (strlen($hex) == 6) {
+        $r = hexdec(substr($hex, 0, 2));
+        $g = hexdec(substr($hex, 2, 2));
+        $b = hexdec(substr($hex, 4, 2));
+    } else {
+        $r = 88; $g = 78; $b = 210;
+    }
+    $activeColorRgb = "$r, $g, $b";
+
     $company_settings = \App\Models\Utility::settings();
 @endphp
 
@@ -180,12 +210,72 @@
             .truncate-5lines { -webkit-line-clamp: 4; max-height: calc(1.25em * 4); }
         }
 
-        /* ── Sidebar Collapse Button Base Styling ── */
+        /* ── Dynamic Decoupled CSS Variable Architecture ── */
+        :root {
+            /* 1. Global Application Primary Color Scope (Dynamic Output) */
+            --color-customColor: <?= $activeColorHex ?>;
+            --bs-primary: <?= $activeColorHex ?>;
+            --bs-primary-rgb: <?= $activeColorRgb ?>;
+
+            /* 2. Dedicated Sidebar Menu Color Scope */
+            --sidebar-bg: #ffffff;
+            --sidebar-menu-color: var(--bs-primary);
+            --sidebar-menu-rgb: var(--bs-primary-rgb);
+            --sidebar-menu-hover-color: var(--bs-primary);
+            --sidebar-menu-hover-bg: rgba(var(--bs-primary-rgb), 0.1);
+            --sidebar-menu-active-color: var(--bs-primary);
+            --sidebar-menu-active-bg: rgba(var(--bs-primary-rgb), 0.12);
+
+            /* 3. Dedicated Collapse / Expand Button Scope */
+            --sidebar-collapse-bg: rgba(var(--bs-primary-rgb), 0.1);
+            --sidebar-collapse-color: var(--bs-primary);
+            --sidebar-collapse-border: rgba(var(--bs-primary-rgb), 0.2);
+            --sidebar-collapse-hover-bg: var(--bs-primary);
+            --sidebar-collapse-hover-color: #ffffff;
+            --sidebar-collapse-hover-border: var(--bs-primary);
+        }
+
+        /* ── System Header & Toggle Button Theme Color Overrides (Consumes Global --bs-primary) ── */
+        .dash-header .dash-head-link > i,
+        .dash-header .dash-head-link > i:not(.nocolor) {
+            color: var(--bs-primary) !important;
+        }
+
+        .dash-header .dash-head-link:hover > i,
+        .dash-header .dash-head-link.active > i,
+        .dash-header .dash-head-link:focus > i {
+            color: var(--bs-primary) !important;
+        }
+
+        .dash-header .dash-head-link.active,
+        .dash-header .dash-head-link:active,
+        .dash-header .dash-head-link:focus,
+        .dash-header .dash-head-link:hover {
+            color: var(--bs-primary) !important;
+            background: rgba(var(--bs-primary-rgb), 0.08) !important;
+        }
+
+        .dash-header .dash-head-link.active .hamburger .hamburger-inner,
+        .dash-header .dash-head-link:active .hamburger .hamburger-inner,
+        .dash-header .dash-head-link:focus .hamburger .hamburger-inner,
+        .dash-header .dash-head-link:hover .hamburger .hamburger-inner,
+        .dash-header .dash-head-link.active .hamburger .hamburger-inner::after,
+        .dash-header .dash-head-link.active .hamburger .hamburger-inner::before,
+        .dash-header .dash-head-link:active .hamburger .hamburger-inner::after,
+        .dash-header .dash-head-link:active .hamburger .hamburger-inner::before,
+        .dash-header .dash-head-link:focus .hamburger .hamburger-inner::after,
+        .dash-header .dash-head-link:focus .hamburger .hamburger-inner::before,
+        .dash-header .dash-head-link:hover .hamburger .hamburger-inner::after,
+        .dash-header .dash-head-link:hover .hamburger .hamburger-inner::before {
+            background-color: var(--bs-primary) !important;
+        }
+
+        /* ── Sidebar Collapse Button Base Styling (Consumes Dedicated --sidebar-collapse-* Variables) ── */
         .sidebar-collapse-btn,
         #collapseBtnNew {
-            background: rgba(var(--bs-primary-rgb), 0.1) !important;
-            color: var(--bs-primary) !important;
-            border: 1px solid rgba(var(--bs-primary-rgb), 0.2) !important;
+            background: var(--sidebar-collapse-bg) !important;
+            color: var(--sidebar-collapse-color) !important;
+            border: 1px solid var(--sidebar-collapse-border) !important;
             outline: none !important;
             width: 38px !important;
             height: 38px !important;
@@ -205,9 +295,9 @@
 
         .sidebar-collapse-btn:hover,
         #collapseBtnNew:hover {
-            background: var(--bs-primary) !important;
-            color: #ffffff !important;
-            border-color: var(--bs-primary) !important;
+            background: var(--sidebar-collapse-hover-bg) !important;
+            color: var(--sidebar-collapse-hover-color) !important;
+            border-color: var(--sidebar-collapse-hover-border) !important;
             transform: scale(1.05) !important;
         }
 
@@ -291,18 +381,18 @@
             transform: translate(-50%, -50%) !important;
             margin: 0 !important;
             z-index: 1051 !important;
-            background: rgba(var(--bs-primary-rgb), 0.1) !important;
-            color: var(--bs-primary) !important;
-            border: 1px solid rgba(var(--bs-primary-rgb), 0.2) !important;
+            background: var(--sidebar-collapse-bg) !important;
+            color: var(--sidebar-collapse-color) !important;
+            border: 1px solid var(--sidebar-collapse-border) !important;
             visibility: visible !important;
             opacity: 1 !important;
             pointer-events: auto !important;
         }
 
         body.minimenu .dash-sidebar .m-header #collapseBtnNew:hover {
-            background: var(--bs-primary) !important;
-            color: #ffffff !important;
-            border-color: var(--bs-primary) !important;
+            background: var(--sidebar-collapse-hover-bg) !important;
+            color: var(--sidebar-collapse-hover-color) !important;
+            border-color: var(--sidebar-collapse-hover-border) !important;
             transform: translate(-50%, -50%) scale(1.05) !important;
         }
 
@@ -341,7 +431,7 @@
             min-width: 38px !important;
             border-radius: 10px !important;
             transition: all 0.2s ease !important;
-            color: var(--bs-primary) !important;
+            color: var(--sidebar-menu-color) !important;
             font-size: 1.25rem !important;
         }
 
@@ -354,8 +444,8 @@
         /* Active Menu Item in Collapsed Sidebar */
         body.minimenu .dash-sidebar .dash-navbar > .dash-item.active > .dash-link .dash-micon,
         body.minimenu .dash-sidebar .dash-navbar > .dash-item:hover > .dash-link .dash-micon {
-            background: rgba(var(--bs-primary-rgb), 0.12) !important;
-            color: var(--bs-primary) !important;
+            background: var(--sidebar-menu-active-bg) !important;
+            color: var(--sidebar-menu-active-color) !important;
         }
 
         /* Desktop vs Mobile Hamburger Visibility Controls */
@@ -395,7 +485,8 @@
 
         body.minimenu .dash-sidebar .dash-hasmenu:hover > .dash-submenu,
         body.minimenu .dash-sidebar .dash-hasmenu > .dash-submenu:hover,
-        body.minimenu .dash-sidebar .dash-hasmenu > .dash-submenu.show-floating {
+        body.minimenu .dash-sidebar .dash-hasmenu > .dash-submenu.show-floating,
+        body.minimenu .dash-sidebar .dash-hasmenu.dash-trigger > .dash-submenu {
             display: block !important;
             position: fixed !important;
             width: 240px !important;
@@ -455,8 +546,8 @@
         body.minimenu .dash-sidebar .dash-submenu .dash-link:hover *,
         body.minimenu .dash-sidebar .dash-submenu .dash-item.active > .dash-link,
         body.minimenu .dash-sidebar .dash-submenu .dash-item.active > .dash-link * {
-            background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
-            color: var(--bs-primary) !important;
+            background-color: var(--sidebar-menu-hover-bg) !important;
+            color: var(--sidebar-menu-hover-color) !important;
             font-weight: 600 !important;
         }
 
@@ -545,8 +636,8 @@
         body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu > .dash-submenu .dash-link:hover *,
         body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu > .dash-submenu .dash-item.active > .dash-link,
         body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu > .dash-submenu .dash-item.active > .dash-link * {
-            background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
-            color: var(--bs-primary) !important;
+            background-color: var(--sidebar-menu-hover-bg) !important;
+            color: var(--sidebar-menu-hover-color) !important;
             font-weight: 600 !important;
         }
 
@@ -847,7 +938,7 @@
 
                 var parentTitle = $li.find('> .dash-link .dash-mtext').text().trim();
                 if (parentTitle && !$submenu.find('.dash-floating-header').length) {
-                    $submenu.prepend('<div class="dash-floating-header text-uppercase font-weight-bold mb-2 pb-2 border-bottom" style="font-size: 0.75rem; letter-spacing: 0.8px; color: var(--bs-primary); padding-left: 6px;">' + parentTitle + '</div>');
+                    $submenu.prepend('<div class="dash-floating-header text-uppercase font-weight-bold mb-2 pb-2 border-bottom" style="font-size: 0.75rem; letter-spacing: 0.8px; color: var(--sidebar-menu-color); padding-left: 6px;">' + parentTitle + '</div>');
                 }
 
                 el.style.setProperty('display', 'block', 'important');
@@ -972,6 +1063,24 @@
                 if (currentHoveredMenu) {
                     calculateAndPositionSubmenu(currentHoveredMenu);
                 }
+            });
+
+            // Intercept click & double-click on top-level parent menu links in collapsed mode to prevent dash.js style stripping
+            $(document).on('click dblclick', 'body.minimenu .dash-sidebar .dash-navbar > .dash-hasmenu > .dash-link', function(e) {
+                if (!document.body.classList.contains('minimenu')) return;
+
+                var $link = $(this);
+                var href = $link.attr('href');
+
+                // Stop dash.js from executing removeAttribute("style") on .dash-submenu
+                e.stopPropagation();
+
+                if (!href || href === '#' || href.indexOf('javascript:') === 0) {
+                    e.preventDefault();
+                }
+
+                var $li = $link.closest('.dash-hasmenu');
+                calculateAndPositionSubmenu($li);
             });
 
             // Click handler for 2nd-level nested submenus inside floating card (Fix for Screenshot 11)
