@@ -58,8 +58,11 @@ class HomeController extends Controller
                 $emp = Employee::where('user_id', '=', $user->id)->first();
                 $hasRequestedDocs = false;
                 if ($emp) {
-                    $hasRequestedDocs = EmployeeDocument::where('employee_id', $emp->employee_id)
+                    $hasRequestedDocs = EmployeeDocument::where('employee_id', $emp->id)
                         ->where('is_requested', 1)
+                        ->where(function($q) {
+                            $q->whereNull('document_value')->orWhere('document_value', '');
+                        })
                         ->exists();
                 }
                 $today = (date('Y-m-d', time()));

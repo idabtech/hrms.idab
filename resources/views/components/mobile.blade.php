@@ -9,7 +9,7 @@
         $rawVal = is_object($model) ? ($model->{$name} ?? null) : null;
     }
 
-    $selectedCountryCode = '+91';
+    $selectedCountryCode = \App\Models\Utility::getDefaultCountryCode();
     $displayValue = $rawVal;
 
     if (!empty($rawVal)) {
@@ -60,8 +60,8 @@
         <div class="phone-number-wrapper">
             <div class="input-group">
                 <select name="country_code" class="form-select input-group-text-select" id="country_code_select">
-                    <option value="+91"  {{ $selectedCountryCode == '+91'  ? 'selected' : '' }}>IN +91</option>
                     <option value="+44"  {{ $selectedCountryCode == '+44'  ? 'selected' : '' }}>UK +44</option>
+                    <option value="+91"  {{ $selectedCountryCode == '+91'  ? 'selected' : '' }}>IN +91</option>
                     <option value="+1"   {{ $selectedCountryCode == '+1'   ? 'selected' : '' }}>US +1</option>
                     <option value="+61"  {{ $selectedCountryCode == '+61'  ? 'selected' : '' }}>AU +61</option>
                     <option value="+971" {{ $selectedCountryCode == '+971' ? 'selected' : '' }}>AE +971</option>
@@ -86,7 +86,7 @@
                        autocomplete="tel" />
             </div>
             <div id="phone-mobile-help" class="phone-input-help">
-                {{ __('Please use with country code. (ex. +91)') }}
+                {{ __('Please use with country code.') }} (ex. {{ $selectedCountryCode }})
             </div>
         </div>
     </div>

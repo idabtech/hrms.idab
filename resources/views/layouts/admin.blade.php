@@ -180,6 +180,415 @@
             .truncate-5lines { -webkit-line-clamp: 4; max-height: calc(1.25em * 4); }
         }
 
+        /* ── Sidebar Collapse Button Base Styling ── */
+        .sidebar-collapse-btn,
+        #collapseBtnNew {
+            background: rgba(var(--bs-primary-rgb), 0.1) !important;
+            color: var(--bs-primary) !important;
+            border: 1px solid rgba(var(--bs-primary-rgb), 0.2) !important;
+            outline: none !important;
+            width: 38px !important;
+            height: 38px !important;
+            min-width: 38px !important;
+            min-height: 38px !important;
+            border-radius: 10px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease-in-out !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            z-index: 1051 !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        .sidebar-collapse-btn:hover,
+        #collapseBtnNew:hover {
+            background: var(--bs-primary) !important;
+            color: #ffffff !important;
+            border-color: var(--bs-primary) !important;
+            transform: scale(1.05) !important;
+        }
+
+        .sidebar-collapse-btn *,
+        #collapseBtnNew * {
+            color: inherit !important;
+            fill: currentColor !important;
+        }
+
+        .dash-sidebar .m-header {
+            position: relative !important;
+            z-index: 1050 !important;
+            height: 70px !important;
+            min-height: 70px !important;
+            background: #ffffff !important;
+            box-sizing: border-box !important;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+        }
+
+        .dash-sidebar .navbar-content {
+            position: relative !important;
+            z-index: 1040 !important;
+        }
+
+        /* ── Collapsed Sidebar (.minimenu) Rules ── */
+        body.minimenu .dash-sidebar {
+            width: 70px !important;
+            min-width: 70px !important;
+            max-width: 70px !important;
+            z-index: 1045 !important;
+        }
+
+        body.minimenu .dash-sidebar .navbar-wrapper {
+            height: 100% !important;
+        }
+
+        body.minimenu .dash-sidebar .navbar-content {
+            height: calc(100vh - 70px) !important;
+            max-height: calc(100vh - 70px) !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+        }
+
+        body.minimenu .dash-sidebar .navbar-content::-webkit-scrollbar {
+            width: 3px;
+        }
+        body.minimenu .dash-sidebar .navbar-content::-webkit-scrollbar-thumb {
+            background: rgba(81, 69, 157, 0.25);
+            border-radius: 4px;
+        }
+
+        body.minimenu .dash-sidebar .m-header {
+            padding: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            margin: 0 !important;
+            width: 70px !important;
+            min-width: 70px !important;
+            max-width: 70px !important;
+            height: 70px !important;
+            min-height: 70px !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+
+        body.minimenu .dash-sidebar .m-header .b-brand {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+        }
+
+        body.minimenu .dash-sidebar .m-header #collapseBtnNew {
+            display: inline-flex !important;
+            position: absolute !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            margin: 0 !important;
+            z-index: 1051 !important;
+            background: rgba(var(--bs-primary-rgb), 0.1) !important;
+            color: var(--bs-primary) !important;
+            border: 1px solid rgba(var(--bs-primary-rgb), 0.2) !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+
+        body.minimenu .dash-sidebar .m-header #collapseBtnNew:hover {
+            background: var(--bs-primary) !important;
+            color: #ffffff !important;
+            border-color: var(--bs-primary) !important;
+            transform: translate(-50%, -50%) scale(1.05) !important;
+        }
+
+        body.minimenu .dash-sidebar .dash-navbar {
+            padding: 10px 0 !important;
+        }
+
+        body.minimenu .dash-sidebar .dash-navbar > .dash-item {
+            width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            padding: 0 !important;
+            margin: 4px 0 !important;
+            position: relative !important;
+        }
+
+        body.minimenu .dash-sidebar .dash-navbar > .dash-item > .dash-link {
+            width: 100% !important;
+            padding: 8px 0 !important;
+            margin: 0 !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+        }
+
+        body.minimenu .dash-sidebar .dash-navbar > .dash-item > .dash-link .dash-micon {
+            margin: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 38px !important;
+            height: 38px !important;
+            min-width: 38px !important;
+            border-radius: 10px !important;
+            transition: all 0.2s ease !important;
+            color: var(--bs-primary) !important;
+            font-size: 1.25rem !important;
+        }
+
+        body.minimenu .dash-sidebar .dash-navbar > .dash-item > .dash-link .dash-mtext,
+        body.minimenu .dash-sidebar .dash-navbar > .dash-item > .dash-link .dash-arrow,
+        body.minimenu .dash-sidebar .dash-navbar > .dash-caption {
+            display: none !important;
+        }
+
+        /* Active Menu Item in Collapsed Sidebar */
+        body.minimenu .dash-sidebar .dash-navbar > .dash-item.active > .dash-link .dash-micon,
+        body.minimenu .dash-sidebar .dash-navbar > .dash-item:hover > .dash-link .dash-micon {
+            background: rgba(var(--bs-primary-rgb), 0.12) !important;
+            color: var(--bs-primary) !important;
+        }
+
+        /* Desktop vs Mobile Hamburger Visibility Controls */
+        @media (min-width: 1025px) {
+            .dash-header .mob-hamburger,
+            .dash-header #mobile-collapse {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .dash-header .mob-hamburger,
+            .dash-header #mobile-collapse {
+                display: inline-flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+
+            .dash-header .mob-hamburger .dash-head-link {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+
+            #collapseBtnNew {
+                display: none !important;
+            }
+        }
+
+        /* ── Floating Submenu Card in Collapsed Mode (High Specificity) ── */
+        body.minimenu .dash-sidebar .dash-hasmenu > .dash-submenu {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+
+        body.minimenu .dash-sidebar .dash-hasmenu:hover > .dash-submenu,
+        body.minimenu .dash-sidebar .dash-hasmenu > .dash-submenu:hover,
+        body.minimenu .dash-sidebar .dash-hasmenu > .dash-submenu.show-floating {
+            display: block !important;
+            position: fixed !important;
+            width: 240px !important;
+            min-width: 240px !important;
+            background: #ffffff !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+            padding: 14px 16px !important;
+            z-index: 999999 !important;
+            border: 1px solid rgba(81, 69, 157, 0.15) !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+        }
+
+        body.minimenu .dash-sidebar .dash-submenu.show-floating::-webkit-scrollbar {
+            width: 4px;
+        }
+        body.minimenu .dash-sidebar .dash-submenu.show-floating::-webkit-scrollbar-thumb {
+            background: rgba(81, 69, 157, 0.25);
+            border-radius: 4px;
+        }
+
+        /* Bridge hover buffer to prevent flicker when moving cursor */
+        body.minimenu .dash-sidebar .dash-hasmenu > .dash-submenu::before {
+            content: '';
+            position: absolute;
+            left: -35px;
+            top: -20px;
+            width: 45px;
+            height: calc(100% + 40px);
+            background: transparent;
+            z-index: 999999;
+        }
+
+        body.minimenu .dash-sidebar .dash-submenu .dash-item {
+            width: 100% !important;
+            margin: 2px 0 !important;
+        }
+
+        body.minimenu .dash-sidebar .dash-submenu .dash-link,
+        body.minimenu .dash-sidebar .dash-submenu .dash-link * {
+            color: #293240 !important;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        body.minimenu .dash-sidebar .dash-submenu .dash-link {
+            padding: 6px 10px !important;
+            border-radius: 6px !important;
+            display: block !important;
+            width: 100% !important;
+            transition: all 0.2s ease !important;
+        }
+
+        body.minimenu .dash-sidebar .dash-submenu .dash-link:hover,
+        body.minimenu .dash-sidebar .dash-submenu .dash-link:hover *,
+        body.minimenu .dash-sidebar .dash-submenu .dash-item.active > .dash-link,
+        body.minimenu .dash-sidebar .dash-submenu .dash-item.active > .dash-link * {
+            background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
+            color: var(--bs-primary) !important;
+            font-weight: 600 !important;
+        }
+
+        /* ── 2nd-Level Submenus Inside Floating Card (Fix for Screenshot 12 & 11) ── */
+        body.minimenu .dash-sidebar .dash-submenu .dash-mtext {
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu {
+            position: relative !important;
+            width: 100% !important;
+        }
+
+        body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu > .dash-link {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+            padding: 6px 10px !important;
+        }
+
+        /* Chevron indicator for 2nd level parent inside card */
+        body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu > .dash-link .dash-arrow {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin-left: auto !important;
+            transition: transform 0.2s ease !important;
+        }
+
+        body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu.dash-trigger > .dash-link .dash-arrow {
+            transform: rotate(90deg) !important;
+        }
+
+        /* 2nd-level submenu container inside card: relative inline accordion list */
+        body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu > .dash-submenu {
+            display: none !important;
+            position: relative !important;
+            left: 0 !important;
+            top: 0 !important;
+            right: auto !important;
+            bottom: auto !important;
+            width: 100% !important;
+            min-width: 100% !important;
+            box-shadow: none !important;
+            border: none !important;
+            border-left: 2px solid rgba(0, 0, 0, 0.1) !important;
+            background: #f8f9fa !important;
+            border-radius: 6px !important;
+            padding: 4px 0 4px 10px !important;
+            margin: 4px 0 4px 6px !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+            z-index: 1 !important;
+        }
+
+        /* Show 2nd-level submenu when parent item is hovered or triggered */
+        body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu:hover > .dash-submenu,
+        body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu.dash-trigger > .dash-submenu {
+            display: block !important;
+        }
+
+        /* 2nd-level child links inside floating card */
+        body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu > .dash-submenu .dash-item {
+            margin: 2px 0 !important;
+            width: 100% !important;
+        }
+
+        body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu > .dash-submenu .dash-link,
+        body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu > .dash-submenu .dash-link * {
+            font-size: 0.8125rem !important;
+            color: #293240 !important;
+            font-weight: 500;
+        }
+
+        body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu > .dash-submenu .dash-link {
+            padding: 4px 8px !important;
+            border-radius: 4px !important;
+            display: block !important;
+        }
+
+        body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu > .dash-submenu .dash-link:hover,
+        body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu > .dash-submenu .dash-link:hover *,
+        body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu > .dash-submenu .dash-item.active > .dash-link,
+        body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu > .dash-submenu .dash-item.active > .dash-link * {
+            background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
+            color: var(--bs-primary) !important;
+            font-weight: 600 !important;
+        }
+
+        /* Hide floating header in expanded mode */
+        body:not(.minimenu) .dash-floating-header {
+            display: none !important;
+        }
+
+        /* ── Expanded Sidebar Rules (Hide all submenus except active triggered one) ── */
+        body:not(.minimenu) .dash-sidebar .dash-hasmenu:not(.dash-trigger) > .dash-submenu {
+            display: none !important;
+        }
+
+        body:not(.minimenu) .dash-sidebar .dash-hasmenu > .dash-submenu .dash-link {
+            color: inherit !important;
+        }
+
+        /* ── Main Content Expansion Rules ── */
+        .minimenu .dash-header:not(.dash-mob-header) {
+            left: 70px !important;
+            width: calc(100% - 70px) !important;
+        }
+
+        .minimenu .dash-container {
+            margin-left: 70px !important;
+            width: calc(100% - 70px) !important;
+            max-width: calc(100% - 70px) !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+        .minimenu .page-header {
+            left: 70px !important;
+        }
+
+        /* Responsive Table Container Safeguards */
+        .table-responsive {
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+
     </style>
     <link rel="stylesheet" href="{{ asset('css/custom-color.css') }}">
 
@@ -409,7 +818,206 @@
     </script> --}}
 
     <script>
-        const dataTable = new simpleDatatables.DataTable("#pc-dt-simple");
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('sidebar_collapsed') === '1' && window.innerWidth > 1024) {
+                document.body.classList.add("minimenu");
+                var btn = document.getElementById('collapseBtnNew');
+                if (btn) btn.setAttribute('aria-pressed', 'true');
+            }
+
+            var submenuHideTimer = null;
+            var currentHoveredMenu = null;
+
+            function calculateAndPositionSubmenu($li) {
+                if (!$li || !$li.length) return;
+                var $submenu = $li.find('> .dash-submenu');
+                if (!$submenu.length) return;
+
+                var liEl = $li[0];
+                var el = $submenu[0];
+                var rect = liEl.getBoundingClientRect();
+                var winH = window.innerHeight || document.documentElement.clientHeight;
+                var winW = window.innerWidth || document.documentElement.clientWidth;
+
+                if (winW <= 1024 || !document.body.classList.contains("minimenu")) {
+                    return;
+                }
+
+                var isCollapsed = true;
+
+                var parentTitle = $li.find('> .dash-link .dash-mtext').text().trim();
+                if (parentTitle && !$submenu.find('.dash-floating-header').length) {
+                    $submenu.prepend('<div class="dash-floating-header text-uppercase font-weight-bold mb-2 pb-2 border-bottom" style="font-size: 0.75rem; letter-spacing: 0.8px; color: var(--bs-primary); padding-left: 6px;">' + parentTitle + '</div>');
+                }
+
+                el.style.setProperty('display', 'block', 'important');
+                el.style.setProperty('visibility', 'hidden', 'important');
+
+                var prevMaxH = el.style.maxHeight;
+                el.style.maxHeight = 'none';
+                var submenuHeight = Math.max(el.scrollHeight, $submenu.outerHeight());
+                el.style.maxHeight = prevMaxH;
+
+                var margin = 15;
+                var availableSpaceBelow = winH - rect.top - margin;
+                var availableSpaceAbove = rect.bottom - margin;
+
+                var finalTop = 0;
+                var maxAllowedH = 0;
+
+                // 1. If availableSpaceBelow >= submenuHeight -> open BELOW item (starting at rect.top)
+                if (availableSpaceBelow >= submenuHeight) {
+                    finalTop = rect.top;
+                    maxAllowedH = availableSpaceBelow;
+                }
+                // 2. If availableSpaceBelow < submenuHeight AND availableSpaceAbove >= submenuHeight -> open ABOVE item (ending at rect.bottom)
+                else if (availableSpaceAbove >= submenuHeight) {
+                    finalTop = rect.bottom - submenuHeight;
+                    if (finalTop < margin) {
+                        finalTop = margin;
+                    }
+                    maxAllowedH = rect.bottom - finalTop;
+                }
+                // 3. Not enough space either above or below -> choose side with more available space and make internally scrollable
+                else {
+                    if (availableSpaceBelow >= availableSpaceAbove) {
+                        finalTop = Math.max(margin, rect.top);
+                        maxAllowedH = winH - finalTop - margin;
+                    } else {
+                        maxAllowedH = Math.min(submenuHeight, rect.bottom - margin);
+                        finalTop = Math.max(margin, rect.bottom - maxAllowedH);
+                    }
+                }
+
+                var sidebarW = $('.dash-sidebar').outerWidth() || (isCollapsed ? 70 : 250);
+                var finalLeft = isCollapsed ? 70 : sidebarW;
+
+                el.style.setProperty('position', 'fixed', 'important');
+                el.style.setProperty('top', finalTop + 'px', 'important');
+                el.style.setProperty('left', finalLeft + 'px', 'important');
+                el.style.setProperty('max-height', maxAllowedH + 'px', 'important');
+                el.style.setProperty('overflow-y', 'auto', 'important');
+                el.style.setProperty('z-index', '999999', 'important');
+                el.style.setProperty('display', 'block', 'important');
+                el.style.setProperty('visibility', 'visible', 'important');
+                el.style.setProperty('opacity', '1', 'important');
+                el.style.setProperty('pointer-events', 'auto', 'important');
+
+                $submenu.addClass('show-floating');
+            }
+
+            function resetSubmenuStyles($submenu) {
+                if ($submenu && $submenu.length) {
+                    $submenu.removeClass('show-floating');
+                    if ($submenu[0]) {
+                        $submenu[0].style.removeProperty('top');
+                        $submenu[0].style.removeProperty('left');
+                        $submenu[0].style.removeProperty('max-height');
+                        $submenu[0].style.removeProperty('display');
+                        $submenu[0].style.removeProperty('position');
+                        $submenu[0].style.removeProperty('z-index');
+                        $submenu[0].style.removeProperty('visibility');
+                        $submenu[0].style.removeProperty('opacity');
+                        $submenu[0].style.removeProperty('pointer-events');
+                    }
+                }
+            }
+
+            $(document).on('mouseenter', 'body.minimenu .dash-sidebar .dash-hasmenu', function() {
+                if (!document.body.classList.contains("minimenu")) return;
+                clearTimeout(submenuHideTimer);
+                var $li = $(this);
+                currentHoveredMenu = $li;
+                $('.dash-submenu.show-floating').not($li.find('> .dash-submenu')).each(function() {
+                    resetSubmenuStyles($(this));
+                });
+                calculateAndPositionSubmenu($li);
+            });
+
+            $(document).on('mouseleave', 'body.minimenu .dash-sidebar .dash-hasmenu', function() {
+                if (!document.body.classList.contains("minimenu")) return;
+                var $li = $(this);
+                var $submenu = $li.find('> .dash-submenu');
+                submenuHideTimer = setTimeout(function() {
+                    if (!$submenu.is(':hover') && !$li.is(':hover')) {
+                        if (currentHoveredMenu && currentHoveredMenu[0] === $li[0]) {
+                            currentHoveredMenu = null;
+                        }
+                        resetSubmenuStyles($submenu);
+                    }
+                }, 150);
+            });
+
+            $(document).on('mouseleave', 'body.minimenu .dash-sidebar .dash-submenu', function() {
+                if (!document.body.classList.contains("minimenu")) return;
+                var $submenu = $(this);
+                var $li = $submenu.parent('.dash-hasmenu');
+                submenuHideTimer = setTimeout(function() {
+                    if (!$li.is(':hover') && !$submenu.is(':hover')) {
+                        if (currentHoveredMenu && currentHoveredMenu[0] === $li[0]) {
+                            currentHoveredMenu = null;
+                        }
+                        resetSubmenuStyles($submenu);
+                    }
+                }, 150);
+            });
+
+            $(window).on('resize scroll', function() {
+                if (currentHoveredMenu) {
+                    calculateAndPositionSubmenu(currentHoveredMenu);
+                }
+            });
+
+            $('.dash-sidebar .navbar-content').on('scroll', function() {
+                if (currentHoveredMenu) {
+                    calculateAndPositionSubmenu(currentHoveredMenu);
+                }
+            });
+
+            // Click handler for 2nd-level nested submenus inside floating card (Fix for Screenshot 11)
+            $(document).on('click', 'body.minimenu .dash-sidebar .dash-submenu .dash-hasmenu > .dash-link', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var $parent = $(this).closest('.dash-hasmenu');
+                $parent.toggleClass('dash-trigger');
+            });
+
+            document.addEventListener('click', function(e) {
+                var btn = e.target.closest('#collapseBtnNew, .sidebar-collapse-btn');
+                if (btn) {
+                    e.preventDefault();
+                    var isMini = document.body.classList.contains("minimenu");
+                    if (isMini) {
+                        document.body.classList.remove("minimenu");
+                        localStorage.setItem('sidebar_collapsed', '0');
+                        btn.setAttribute('aria-pressed', 'false');
+
+                        // Reset all submenus when expanding: close all except active page route
+                        $('.dash-navbar .dash-hasmenu').each(function() {
+                            var $item = $(this);
+                            var isActive = $item.hasClass('active');
+                            if (isActive) {
+                                $item.addClass('dash-trigger');
+                                $item.find('> .dash-submenu').removeAttr('style').show();
+                            } else {
+                                $item.removeClass('dash-trigger');
+                                $item.find('> .dash-submenu').removeAttr('style').hide();
+                            }
+                        });
+                    } else {
+                        document.body.classList.add("minimenu");
+                        localStorage.setItem('sidebar_collapsed', '1');
+                        btn.setAttribute('aria-pressed', 'true');
+                        $('.dash-navbar .dash-submenu').removeAttr('style').removeClass('show-floating');
+                    }
+
+                    if (window.innerWidth <= 1024) {
+                        var sidebar = document.querySelector('.dash-sidebar');
+                        if (sidebar) sidebar.classList.toggle('mob-sidebar-active');
+                    }
+                }
+            });
+        });
     </script>
 
     <script>

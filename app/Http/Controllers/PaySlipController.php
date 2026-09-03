@@ -608,7 +608,7 @@ class PaySlipController extends Controller
         $salaryRate           = (float) ($payslipDetail['salary_rate'] ?? $_storedSalary);
         $isPaid               = ($payslip->status ?? 0) == 1;
         $payslipTypeName      = optional(\App\Models\PayslipType::find($employee->salary_type ?? null))->name ?? 'Monthly';
-        $usedLeaves           = $approvedLeaves;
+        $usedLeaves           = (int) ($payslipDetail['total_used_ever'] ?? ($totalLeaveAlloc - $remainingLeaves));
 
         $salaryDayCalc        = $payslipDetail['salary_day_calculation'] ?? 'working_days';
         $isMonthWise          = in_array($salaryDayCalc, ['month_wise', 'calendar_month']);
