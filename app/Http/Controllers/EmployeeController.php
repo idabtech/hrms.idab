@@ -248,7 +248,7 @@ class EmployeeController extends Controller
                     }
                 }
             }
-            $countryCode = trim($request->country_code ?? '+91');
+            $countryCode = trim($request->country_code ?? Utility::getDefaultCountryCode());
             $phonePayload = !empty($rawPhone) ? ($countryCode . ' ' . $rawPhone) : null;
 
             $employee = Employee::create(
@@ -605,7 +605,7 @@ class EmployeeController extends Controller
                         break;
                     }
                 }
-                $countryCode = trim($request->country_code ?? '+91');
+                $countryCode = trim($request->country_code ?? Utility::getDefaultCountryCode());
                 $input['phone'] = !empty($rawPhone) ? ($countryCode . ' ' . $rawPhone) : null;
             }
 

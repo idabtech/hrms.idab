@@ -14,6 +14,10 @@ class TravelExpenseController extends Controller
 {
     public function index(Request $request)
     {
+        if (Auth::user()->type == 'super admin') {
+            return redirect()->back()->with('error', __('Permission denied.'));
+        }
+
         if (Auth::user()->can('Manage Travel Expense')) {
             if (Auth::user()->type == 'employee') {
                 $emp = Employee::where('user_id', Auth::user()->id)->first();
@@ -289,7 +293,7 @@ class TravelExpenseController extends Controller
         }
 
         $canDelete = false;
-        if (Auth::user()->can('Edit Travel Expense') || Auth::user()->can('Manage Travel Expense') || Auth::user()->type == 'company' || Auth::user()->type == 'super admin') {
+        if (Auth::user()->can('Edit Travel Expense') || Auth::user()->can('Manage Travel Expense') || Auth::user()->type == 'company') {
             $canDelete = true;
         } else if (Auth::user()->type == 'employee') {
             $emp = Employee::where('user_id', Auth::user()->id)->first();
@@ -320,7 +324,7 @@ class TravelExpenseController extends Controller
 
     public function requestDocument($id)
     {
-        if (Auth::user()->type == 'company' || Auth::user()->type == 'hr' || Auth::user()->type == 'HR' || Auth::user()->type == 'super admin') {
+        if (Auth::user()->type == 'company' || Auth::user()->type == 'hr' || Auth::user()->type == 'HR') {
             $travelExpense = TravelExpense::find($id);
             if ($travelExpense) {
                 $travelExpense->document_requested = 1;
@@ -402,7 +406,7 @@ class TravelExpenseController extends Controller
 
     public function cancelDocumentRequest($id)
     {
-        if (Auth::user()->type == 'company' || Auth::user()->type == 'hr' || Auth::user()->type == 'HR' || Auth::user()->type == 'super admin') {
+        if (Auth::user()->type == 'company' || Auth::user()->type == 'hr' || Auth::user()->type == 'HR') {
             $travelExpense = TravelExpense::find($id);
             if ($travelExpense) {
                 $travelExpense->document_requested = 0;
