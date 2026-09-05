@@ -2475,7 +2475,7 @@ class SettingsController extends Controller
         ];
 
         foreach ($fields as $field) {
-            $value = $request->input($field, '');
+            $value = (string)($request->input($field) ?? '');
             DB::table('settings')->updateOrInsert(
                 ['name' => $field, 'created_by' => Auth::user()->creatorId()],
                 ['value' => $value, 'created_at' => now(), 'updated_at' => now()]
@@ -2602,15 +2602,11 @@ class SettingsController extends Controller
                 }
 
                 if ($existingUser) {
-                    // Update User
+                    // Update User basic details (DO NOT overwrite existing user type or roles)
                     $userUpdated = false;
 
                     if ($existingUser->name !== $name && !empty($name)) {
                         $existingUser->name = $name;
-                        $userUpdated = true;
-                    }
-                    if ($existingUser->type !== $targetUserType) {
-                        $existingUser->type = $targetUserType;
                         $userUpdated = true;
                     }
                     if ($existingUser->is_login_enable != $isLogin) {
@@ -2624,13 +2620,6 @@ class SettingsController extends Controller
 
                     if ($userUpdated) {
                         $existingUser->save();
-                    }
-
-                    // Role handling: Employee gets 'Employee' role, Admin Staff gets NO role currently
-                    if ($isWorkingStaff) {
-                        $existingUser->syncRoles(['Employee']);
-                    } else {
-                        $existingUser->syncRoles([]);
                     }
 
                     if ($existingEmployee) {
