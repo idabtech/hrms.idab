@@ -1351,7 +1351,6 @@
             });
         }
     </script>
-    // ── HMRC NI Number Verification ──────────────────────────────────────
     @if(\App\Services\HmrcService::isEnabled())
         <script type="text/javascript">
         $('#btn-verify-nino').on('click', function() {
