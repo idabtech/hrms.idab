@@ -160,42 +160,44 @@ class SetSalaryController extends Controller
             $overtimes = Overtime::where('employee_id', $id)->get();
             $employee = Employee::find($id);
 
+            if (!$employee) {
+                return redirect()->back()->with('error', __('Employee not found.'));
+            }
+
+            $basicSalary = (float)($employee->basic_salary ?? 0);
             $empsal = 0;
 
             foreach ($allowances as $value) {
                 if ($value->type == 'percentage') {
-                    $employee = Employee::find($value->employee_id);
-                    $empsal = $value->amount * $employee->basic_salary / 100;
+                    $empsal = $value->amount * $basicSalary / 100;
                     $value->tota_allow = $empsal;
                 }
             }
 
             foreach ($commissions as $value) {
                 if ($value->type == 'percentage') {
-                    $employee = Employee::find($value->employee_id);
-                    $empsal = $value->amount * $employee->basic_salary / 100;
+                    $empsal = $value->amount * $basicSalary / 100;
                     $value->tota_allow = $empsal;
                 }
             }
 
             foreach ($loans as $value) {
                 if ($value->type == 'percentage') {
-                    $employee = Employee::find($value->employee_id);
-                    $empsal = $value->amount * $employee->basic_salary / 100;
+                    $empsal = $value->amount * $basicSalary / 100;
                     $value->tota_allow = $empsal;
                 }
             }
 
             foreach ($saturationdeductions as $value) {
                 if ($value->type == 'percentage') {
-                    $employee = Employee::find($value->employee_id);
                     $deduction_options = DeductionOption::where('id', $value->deduction_option)->first();
-                    if (strtolower($deduction_options->name) == 'epf') {
-                        $empsal = $employee->basic_salary * 12 / 100;
-                    } elseif (strtolower($deduction_options->name) == 'gpf') {
-                        $empsal = $employee->basic_salary * 6 / 100;
+                    $deductionName = $deduction_options ? strtolower($deduction_options->name) : '';
+                    if ($deductionName == 'epf') {
+                        $empsal = $basicSalary * 12 / 100;
+                    } elseif ($deductionName == 'gpf') {
+                        $empsal = $basicSalary * 6 / 100;
                     } else {
-                        $empsal = $value->amount * $employee->basic_salary / 100;
+                        $empsal = $value->amount * $basicSalary / 100;
                     }
                     $value->tota_allow = $empsal;
                 }
@@ -203,8 +205,7 @@ class SetSalaryController extends Controller
 
             foreach ($otherpayments as $value) {
                 if ($value->type == 'percentage') {
-                    $employee = Employee::find($value->employee_id);
-                    $empsal = $value->amount * $employee->basic_salary / 100;
+                    $empsal = $value->amount * $basicSalary / 100;
                     $value->tota_allow = $empsal;
                 }
             }
@@ -215,7 +216,7 @@ class SetSalaryController extends Controller
 
             foreach ($allowances as $item) {
                 if ($item->type == 'percentage') {
-                    $allow = ($item->amount * $employee->basic_salary) / 100;
+                    $allow = ($item->amount * $basicSalary) / 100;
                     $gross_salary = $gross_salary + $allow;
                 } else {
                     $gross_salary = $gross_salary + $item->amount;
@@ -224,7 +225,7 @@ class SetSalaryController extends Controller
 
             foreach ($commissions as $item) {
                 if ($item->type == 'percentage') {
-                    $comm = ($item->amount * $employee->basic_salary) / 100;
+                    $comm = ($item->amount * $basicSalary) / 100;
                     $gross_salary = $gross_salary + $comm;
                 } else {
                     $gross_salary = $gross_salary + $item->amount;
@@ -233,7 +234,7 @@ class SetSalaryController extends Controller
 
             foreach ($bonous as $item) {
                 if ($item->type == 'percentage') {
-                    $bon = ($item->amount * $employee->basic_salary) / 100;
+                    $bon = ($item->amount * $basicSalary) / 100;
                     $gross_salary = $gross_salary + $bon;
                 } else {
                     $gross_salary = $gross_salary + $item->amount;
@@ -242,14 +243,14 @@ class SetSalaryController extends Controller
 
             foreach ($overtimes as $item) {
                 if ($item->type == 'percentage') {
-                    $over = ($item->rate * $employee->basic_salary) / 100;
+                    $over = ($item->rate * $basicSalary) / 100;
                     $gross_salary = $gross_salary + $over;
                 } else {
                     $gross_salary = $gross_salary + $item->rate;
                 }
             }
 
-            $gross_salary = $gross_salary + $employee->basic_salary;
+            $gross_salary = $gross_salary + $basicSalary;
 
             $salaryRevisions = SalaryRevision::where('employee_id', $employee->id)
                 ->orderBy('effective_from', 'desc')

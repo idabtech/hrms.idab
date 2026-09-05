@@ -409,7 +409,7 @@ class EmployeeController extends Controller
                 return redirect()->back()->with('error', __('Employee Not Found.'));
             }
             $documents = Document::where('created_by', Auth::user()->creatorId())->get();
-            $employeeDocuments = EmployeeDocument::where('employee_id', $employee->id)->get()->keyBy('document_id');
+            $employeeDocuments = EmployeeDocument::where('employee_id', $employee->id)->get()->sortByDesc('document_value')->keyBy('document_id');
             $branches = Branch::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
             $departments = Department::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
             $selectedDeptId = old('department_id', $employee->department_id);

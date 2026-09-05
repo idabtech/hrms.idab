@@ -396,6 +396,9 @@ class PaySlipController extends Controller
                 $tmp[] = $employee->status == 1 ? 'Paid' : 'UnPaid';
                 $tmp[] = !empty($employee->pay_slip_id) ? $employee->pay_slip_id : 0;
                 $tmp['url'] = route('employee.show', Crypt::encrypt($employee->id));
+                $hmrcSub = \DB::table('hmrc_rti_submissions')->where('employee_id', $employee->id)->where('salary_month', $formate_month_year)->latest()->first();
+                $tmp['hmrc_ref'] = $hmrcSub ? $hmrcSub->reference : null;
+                $tmp['hmrc_status'] = $hmrcSub ? $hmrcSub->status : null;
                 $data[] = $tmp;
             }
         }

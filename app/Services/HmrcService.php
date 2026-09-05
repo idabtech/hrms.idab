@@ -82,6 +82,12 @@ class HmrcService
 
         return Cache::remember($cacheKey, 14000, function () {
             try {
+                Log::info('🔑 [HMRC OAuth Token Request] Requesting token...', [
+                    'url'         => $this->baseUrl . '/oauth/token',
+                    'environment' => $this->environment,
+                    'client_id'   => !empty($this->clientId) ? (substr($this->clientId, 0, 6) . '...') : 'MISSING',
+                ]);
+
                 $response = Http::asForm()->post($this->baseUrl . '/oauth/token', [
                     'client_id'     => $this->clientId,
                     'client_secret' => $this->clientSecret,
@@ -90,17 +96,18 @@ class HmrcService
 
                 if ($response->successful()) {
                     $data = $response->json();
+                    Log::info('✅ [HMRC OAuth Token SUCCESS] Access token received successfully.');
                     return $data['access_token'] ?? null;
                 }
 
-                Log::error('HMRC OAuth token request failed', [
+                Log::error('❌ [HMRC OAuth Token FAILED]', [
                     'status' => $response->status(),
                     'body'   => $response->body(),
                 ]);
 
                 return null;
             } catch (\Throwable $e) {
-                Log::error('HMRC OAuth token exception', ['error' => $e->getMessage()]);
+                Log::error('💥 [HMRC OAuth Token EXCEPTION]', ['error' => $e->getMessage()]);
                 return null;
             }
         });
