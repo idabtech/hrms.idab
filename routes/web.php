@@ -335,7 +335,9 @@ Route::group(['middleware' => ['verified']], function () {
             Route::get('hmrc/test-connection', [HmrcController::class, 'testConnection'])->name('hmrc.test.connection');
             Route::get('hmrc/bulk-verify-nino', [HmrcController::class, 'bulkVerifyNino'])->name('hmrc.bulk.verify.nino');
             Route::post('hmrc/submit-fps/{employeeId}/{salaryMonth}', [HmrcController::class, 'submitFps'])->name('hmrc.submit.fps');
+            Route::post('hmrc/bulk-submit-fps', [HmrcController::class, 'bulkSubmitFps'])->name('hmrc.bulk.submit.fps');
             Route::get('hmrc/fps-status/{employeeId}/{salaryMonth?}', [HmrcController::class, 'fpsStatus'])->name('hmrc.fps.status');
+            Route::get('hmrc/submission-detail/{employeeId}/{salaryMonth}', [HmrcController::class, 'submissionDetailModal'])->name('hmrc.submission.detail.modal');
             Route::post('system-settings', [SettingsController::class, 'saveSystemSettings'])->name('system.settings');
 
             // Google Calendar

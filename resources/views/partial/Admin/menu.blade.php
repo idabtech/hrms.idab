@@ -18,12 +18,19 @@
 {{-- <nav class="dash-sidebar light-sidebar {{ isset($cust_theme_bg) && $cust_theme_bg == 'on' ? 'transprent-bg' : '' }}"> --}}
 
 <div class="navbar-wrapper">
-    <div class="m-header main-logo">
+    <div class="m-header main-logo d-flex align-items-center justify-content-between">
         <a href="{{ route('dashboard') }}" class="b-brand">
             <!-- ========   change your logo hear   ============ -->
             <img src="{{ $logo . (isset($company_logo) && !empty($company_logo) ? $company_logo . '?' . time() : 'logo-dark.png' . '?' . time()) }}"
                 alt="{{ config('app.name', 'HRMGo') }}" class="logo logo-lg" style="height: 40px;">
         </a>
+        <button class="sidebar-collapse-btn" id="collapseBtnNew" aria-label="Collapse sidebar" aria-pressed="false" title="Collapse / expand">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
     </div>
     <div class="navbar-content">
         <ul class="dash-navbar">
@@ -196,11 +203,13 @@
                                 <a class="dash-link" href="{{ route('payslip.index') }}">{{ __('Payslip') }}</a>
                             </li>
                         @endcan
-                        @can('Manage Travel Expense')
-                            <li class="dash-item {{ Request::segment(1) == 'travel-expenses' ? 'active' : '-' }}">
-                                <a class="dash-link" href="{{ route('travel-expenses.index') }}">{{ __('Travel Expenses & Vouchers') }}</a>
-                            </li>
-                        @endcan
+                        @if (\Auth::user()->type != 'super admin' && !\Auth::user()->isSuperAdminSideUser())
+                            @can('Manage Travel Expense')
+                                <li class="dash-item {{ Request::segment(1) == 'travel-expenses' ? 'active' : '-' }}">
+                                    <a class="dash-link" href="{{ route('travel-expenses.index') }}">{{ __('Travel Expenses & Vouchers') }}</a>
+                                </li>
+                            @endcan
+                        @endif
                     </ul>
                 </li>
             @endif

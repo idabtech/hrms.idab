@@ -3205,6 +3205,9 @@ $lang = \App\Models\Utility::getValByName('default_language');
 </div>
 </div>
 
+@endsection
+
+@push('script-page')
 <script>
 let index = 0;
 
@@ -3426,12 +3429,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ── HMRC Test Connection (Company Settings) ──────────────────────────
-@if(\App\Services\HmrcService::isEnabled())
 $(document).on('click', '#btn-hmrc-test-company', function() {
     var $btn = $(this);
     var $result = $('#hmrc-company-result');
 
-    $btn.prop('disabled', true).html('<i class="ti ti-loader"></i> {{ __("Testing...") }}');
+    $btn.prop('disabled', true).html('<i class="ti ti-loader ti-spin me-1"></i> {{ __("Testing...") }}');
     $result.hide();
 
     $.ajax({
@@ -3440,21 +3442,29 @@ $(document).on('click', '#btn-hmrc-test-company', function() {
         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
         success: function(res) {
             if (res.success) {
-                $result.html('<span class="text-success"><i class="ti ti-check"></i> ' + res.message + '</span>').show();
+                if (typeof show_toastr === 'function') {
+                    show_toastr('Success', res.message, 'success');
+                }
+                $result.html('<span class="text-success fw-bold me-2"><i class="ti ti-circle-check-filled text-success me-1"></i> ' + res.message + '</span>').show();
             } else {
-                $result.html('<span class="text-danger"><i class="ti ti-x"></i> ' + res.message + '</span>').show();
+                if (typeof show_toastr === 'function') {
+                    show_toastr('Error', res.message, 'error');
+                }
+                $result.html('<span class="text-danger fw-bold me-2"><i class="ti ti-circle-x-filled text-danger me-1"></i> ' + res.message + '</span>').show();
             }
         },
         error: function(xhr) {
             var msg = xhr.responseJSON ? xhr.responseJSON.message : '{{ __("Connection test failed.") }}';
-            $result.html('<span class="text-danger"><i class="ti ti-x"></i> ' + msg + '</span>').show();
+            if (typeof show_toastr === 'function') {
+                show_toastr('Error', msg, 'error');
+            }
+            $result.html('<span class="text-danger fw-bold me-2"><i class="ti ti-circle-x-filled text-danger me-1"></i> ' + msg + '</span>').show();
         },
         complete: function() {
-            $btn.prop('disabled', false).html('<i class="ti ti-plug"></i> {{ __("Test HMRC Connection") }}');
+            $btn.prop('disabled', false).html('<i class="ti ti-plug me-1"></i> {{ __("Test HMRC Connection") }}');
         }
     });
 });
-@endif
 
 // ── iDAB Employee Sync Handler ────────────────────────────────────────
 function syncIdabEmployeesNow(btn) {
@@ -3619,4 +3629,4 @@ $(window).on('hashchange', function() {
     handleSettingsHashScroll();
 });
 </script>
-@endsection
+@endpush

@@ -31,10 +31,16 @@ class TravelExpensePermissionSeeder extends Seeder
             ]);
         }
 
-        $roles = Role::whereIn('name', ['company', 'super admin'])->get();
+        $roles = Role::whereIn('name', ['company'])->get();
 
         foreach ($roles as $role) {
             $role->givePermissionTo($permissions);
+        }
+
+        // Explicitly revoke Travel Expense permissions from super admin role
+        $superAdminRole = Role::where('name', 'super admin')->first();
+        if ($superAdminRole) {
+            $superAdminRole->revokePermissionTo($permissions);
         }
     }
 }

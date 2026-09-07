@@ -625,6 +625,48 @@ class Utility extends Model
     }
 
     /**
+     * Get default phone country code (+44 for UK, +91 for India, +1 for US/CA, etc.)
+     * based on system country setting, company country setting, or UK IP request detection.
+     */
+    public static function getDefaultCountryCode(): string
+    {
+        try {
+            if (self::isUkRequest()) {
+                return '+44';
+            }
+
+            $settings = self::settings();
+            $country = strtolower($settings['defult_country'] ?? $settings['company_country'] ?? '');
+
+            if (in_array($country, ['uk', 'gb', 'united kingdom', 'united kingdom (uk)'], true)) {
+                return '+44';
+            }
+            if (in_array($country, ['us', 'usa', 'united states', 'canada', 'ca'], true)) {
+                return '+1';
+            }
+            if (in_array($country, ['au', 'australia'], true)) {
+                return '+61';
+            }
+            if (in_array($country, ['ae', 'uae', 'united arab emirates'], true)) {
+                return '+971';
+            }
+            if (in_array($country, ['de', 'germany'], true)) {
+                return '+49';
+            }
+            if (in_array($country, ['fr', 'france'], true)) {
+                return '+33';
+            }
+            if (in_array($country, ['in', 'india'], true)) {
+                return '+91';
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        return '+44';
+    }
+
+    /**
      * Returns a complete list of countries with top priority countries placed at the top.
      * Used for Country Base Setting and matching with SSO Hub.
      */
@@ -4628,10 +4670,27 @@ class Utility extends Model
 
     public static function getAttendanceLeaveUsedForType($employeeId, $leaveTypeId, $isPaid, $startDate, $endDate, $isPrimaryPaid = false)
     {
+        // 1. Find all dates covered by approved Leave applications to avoid double counting
+        $approvedLeaves = Leave::where('employee_id', $employeeId)
+            ->where('status', 'Approved')
+            ->get(['start_date', 'end_date']);
+
+        $coveredDates = [];
+        foreach ($approvedLeaves as $al) {
+            if (!empty($al->start_date) && !empty($al->end_date)) {
+                try {
+                    $period = \Carbon\CarbonPeriod::create($al->start_date, $al->end_date);
+                    foreach ($period as $dt) {
+                        $coveredDates[$dt->format('Y-m-d')] = true;
+                    }
+                } catch (\Exception $e) {}
+            }
+        }
+
         $attRows = AttendanceEmployee::where('employee_id', $employeeId)
             ->where('use_leave_balance', 1)
             ->whereBetween('date', [$startDate, $endDate])
-            ->get(['status', 'leave_pay_type', 'leave_type_id']);
+            ->get(['date', 'status', 'leave_pay_type', 'leave_type_id']);
 
         if ($attRows->isEmpty()) {
             return 0.0;
@@ -4639,6 +4698,11 @@ class Utility extends Model
 
         $totalAttUsed = 0.0;
         foreach ($attRows as $r) {
+            // Skip if this attendance date is ALREADY counted via an approved Leave application
+            if (!empty($r->date) && isset($coveredDates[$r->date])) {
+                continue;
+            }
+
             // 1) If explicit leave_type_id is selected on this attendance record:
             if (!empty($r->leave_type_id)) {
                 if ($r->leave_type_id == $leaveTypeId) {

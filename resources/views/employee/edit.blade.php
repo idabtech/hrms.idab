@@ -608,25 +608,22 @@
                                                         $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
                                                         $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
                                                         $fUrl = $logo . '/' . $fName;
-                                                        $fExists = file_exists(storage_path('app/public/uploads/document/' . $fName)) || file_exists(public_path('uploads/document/' . $fName));
                                                     @endphp
-                                                    @if ($fExists)
-                                                        <div class="doc-card-item">
-                                                            <button type="button" class="doc-card-remove-btn" title="{{ __('Remove file') }}" onclick="deleteDocFile({{ $employee->id }}, {{ $document->id }}, '{{ $fName }}', this)">
-                                                                &times;
-                                                            </button>
-                                                            @if ($fIsImg)
-                                                                <a href="{{ $fUrl }}" target="_blank" class="doc-card-img-wrapper" title="{{ $fName }}">
-                                                                    <img src="{{ $fUrl }}" alt="{{ $document->name }}">
-                                                                </a>
-                                                            @else
-                                                                <a href="{{ $fUrl }}" target="_blank" class="doc-card-file-wrapper text-decoration-none" title="{{ $fName }}">
-                                                                    <i class="ti ti-file-description doc-card-file-icon text-primary"></i>
-                                                                    <span class="doc-card-file-name">{{ $fName }}</span>
-                                                                </a>
-                                                            @endif
-                                                        </div>
-                                                    @endif
+                                                    <div class="doc-card-item">
+                                                        <button type="button" class="doc-card-remove-btn" title="{{ __('Remove file') }}" onclick="deleteDocFile({{ $employee->id }}, {{ $document->id }}, '{{ $fName }}', this)">
+                                                            &times;
+                                                        </button>
+                                                        @if ($fIsImg)
+                                                            <a href="{{ $fUrl }}" target="_blank" class="doc-card-img-wrapper" title="{{ $fName }}">
+                                                                <img src="{{ $fUrl }}" alt="{{ $document->name }}">
+                                                            </a>
+                                                        @else
+                                                            <a href="{{ $fUrl }}" target="_blank" class="doc-card-file-wrapper text-decoration-none" title="{{ $fName }}">
+                                                                <i class="ti ti-file-description doc-card-file-icon text-primary"></i>
+                                                                <span class="doc-card-file-name">{{ $fName }}</span>
+                                                            </a>
+                                                        @endif
+                                                    </div>
                                                 @endforeach
                                             @endif
                                         </div>
@@ -755,25 +752,22 @@
                                                                         $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
                                                                         $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
                                                                         $fUrl = $logo . '/' . $fName;
-                                                                        $fExists = file_exists(storage_path('app/public/uploads/document/' . $fName)) || file_exists(public_path('uploads/document/' . $fName));
                                                                     @endphp
-                                                                    @if ($fExists)
-                                                                        <div class="doc-card-item">
-                                                                            <button type="button" class="doc-card-remove-btn" title="{{ __('Remove file') }}" onclick="deleteDocFile({{ $employee->id }}, {{ $document->id }}, '{{ $fName }}', this)">
-                                                                                &times;
-                                                                            </button>
-                                                                            @if ($fIsImg)
-                                                                                <a href="{{ $fUrl }}" target="_blank" class="doc-card-img-wrapper" title="{{ $fName }}">
-                                                                                    <img src="{{ $fUrl }}" alt="{{ $document->name }}">
-                                                                                </a>
-                                                                            @else
-                                                                                <a href="{{ $fUrl }}" target="_blank" class="doc-card-file-wrapper text-decoration-none" title="{{ $fName }}">
-                                                                                    <i class="ti ti-file-description doc-card-file-icon text-primary"></i>
-                                                                                    <span class="doc-card-file-name">{{ $fName }}</span>
-                                                                                </a>
-                                                                            @endif
-                                                                        </div>
-                                                                    @endif
+                                                                    <div class="doc-card-item">
+                                                                        <button type="button" class="doc-card-remove-btn" title="{{ __('Remove file') }}" onclick="deleteDocFile({{ $employee->id }}, {{ $document->id }}, '{{ $fName }}', this)">
+                                                                            &times;
+                                                                        </button>
+                                                                        @if ($fIsImg)
+                                                                            <a href="{{ $fUrl }}" target="_blank" class="doc-card-img-wrapper" title="{{ $fName }}">
+                                                                                <img src="{{ $fUrl }}" alt="{{ $document->name }}">
+                                                                            </a>
+                                                                        @else
+                                                                            <a href="{{ $fUrl }}" target="_blank" class="doc-card-file-wrapper text-decoration-none" title="{{ $fName }}">
+                                                                                <i class="ti ti-file-description doc-card-file-icon text-primary"></i>
+                                                                                <span class="doc-card-file-name">{{ $fName }}</span>
+                                                                            </a>
+                                                                        @endif
+                                                                    </div>
                                                                 @endforeach
                                                             @endif
                                                         </div>

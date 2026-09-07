@@ -188,7 +188,7 @@
                             <hr>
                             <div class="row g-3">
                                 @php
-                                    $employeedoc = \App\Models\EmployeeDocument::where('employee_id', $employee->id)->get()->keyBy('document_id');
+                                    $employeedoc = \App\Models\EmployeeDocument::where('employee_id', $employee->id)->get()->sortByDesc('document_value')->keyBy('document_id');
                                     $logo = \App\Models\Utility::get_file('uploads/document');
                                 @endphp
                                 @if (!$documents->isEmpty())

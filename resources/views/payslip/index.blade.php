@@ -47,6 +47,11 @@
                             <button type="button" class="btn btn-danger btn-sm" id="bulk_delete_payslip" data-bs-toggle="tooltip" title="{{ __('Bulk Delete Payslips') }}">
                                 <i class="ti ti-trash me-1"></i> {{ __('Bulk Delete') }}
                             </button>
+                            @if ((\App\Models\Utility::isUkRequest() || request()->boolean('uk_preview')) && \App\Services\HmrcService::isEnabled())
+                                <button type="button" class="btn btn-success btn-sm me-1" id="bulk_hmrc_submit" data-bs-toggle="tooltip" title="{{ __('Submit Selected Payslips to HMRC') }}">
+                                    <i class="ti ti-send me-1"></i> {{ __('Bulk HMRC Submit') }}
+                                </button>
+                            @endif
                         @endif
                         @can('Create Pay Slip')
                             <input type="button" value="{{ __('Bulk Payment') }}" class="btn btn-primary" id="bulk_payment">
@@ -158,7 +163,11 @@
                                 }
                                 @if ((\Auth::user()->type == 'company' || \Auth::user()->type == 'hr' || \Auth::user()->type == 'HR') && (\App\Models\Utility::isUkRequest() || request()->boolean('uk_preview')) && \App\Services\HmrcService::isEnabled())
                                 if (v[15] == "Paid" && payslip_id != 0) {
-                                    actions += '<button type="button" class="btn-sm btn btn-outline-success me-1 btn-hmrc-fps" data-employee-id="' + id + '" data-month="' + datePicker + '" data-bs-toggle="tooltip" title="{{ __('Submit to HMRC') }}"><i class="ti ti-send"></i></button>';
+                                    if (v.hmrc_ref) {
+                                        actions += '<a href="javascript:void(0)" data-url="{{ url('hmrc/submission-detail') }}/' + id + '/' + datePicker + '" data-ajax-popup="true" data-size="md" data-title="{{ __('HMRC RTI Submission Details') }}" class="btn-sm btn btn-success me-1" data-bs-toggle="tooltip" title="{{ __('HMRC Submitted - Click for Details') }}"><i class="ti ti-check"></i></a>';
+                                    } else {
+                                        actions += '<button type="button" class="btn-sm btn btn-outline-success me-1 btn-hmrc-fps" data-employee-id="' + id + '" data-month="' + datePicker + '" data-bs-toggle="tooltip" title="{{ __('Submit to HMRC') }}"><i class="ti ti-send"></i></button>';
+                                    }
                                 }
                                 @endif
                                 if (payslip_id != 0 && v[15] == "UnPaid") {
@@ -385,7 +394,16 @@
                 success: function(res) {
                     if (res.success) {
                         show_toastr('Success', res.message, 'success');
-                        $btn.removeClass('btn-outline-success').addClass('btn-success').html('<i class="ti ti-check"></i>').attr('title', '{{ __("Submitted") }}');
+                        var detailUrl = '{{ url("hmrc/submission-detail") }}/' + employeeId + '/' + month;
+                        $btn.removeClass('btn-hmrc-fps btn-outline-success')
+                            .addClass('btn-success btn-hmrc-details')
+                            .prop('disabled', false)
+                            .html('<i class="ti ti-check"></i>')
+                            .attr('data-url', detailUrl)
+                            .attr('data-ajax-popup', 'true')
+                            .attr('data-title', '{{ __("HMRC RTI Submission Details") }}')
+                            .attr('data-size', 'md')
+                            .attr('title', '{{ __("HMRC Submitted - Click for Details") }}');
                     } else {
                         show_toastr('Error', res.message, 'error');
                         $btn.prop('disabled', false).html('<i class="ti ti-send"></i>');
@@ -395,6 +413,59 @@
                     var msg = xhr.responseJSON ? xhr.responseJSON.message : '{{ __("HMRC submission failed.") }}';
                     show_toastr('Error', msg, 'error');
                     $btn.prop('disabled', false).html('<i class="ti ti-send"></i>');
+                }
+            });
+        });
+
+        // Bulk Submit HMRC FPS
+        $(document).on("click", "#bulk_hmrc_submit", function() {
+            var $btn = $(this);
+            var selectedIds = $(".payslip-checkbox:checked").map(function() {
+                return $(this).val();
+            }).get().filter(function(id) {
+                return id && id != '0';
+            });
+
+            var month = $(".month_date").val();
+            var year = $(".year_date").val();
+            var datePicker = year + '-' + month;
+
+            var confirmMsg = '';
+            if (selectedIds.length > 0) {
+                confirmMsg = 'Submit the ' + selectedIds.length + ' selected payslip(s) for ' + datePicker + ' to HMRC (FPS)?';
+            } else {
+                confirmMsg = 'No specific payslips checked. Submit ALL paid payslips for ' + datePicker + ' to HMRC (FPS)?';
+            }
+
+            if (!confirm(confirmMsg)) return;
+
+            var origHtml = $btn.html();
+            $btn.prop('disabled', true).html('<i class="ti ti-loader ti-spin me-1"></i> Submitting...');
+
+            $.ajax({
+                url: '{{ route("hmrc.bulk.submit.fps") }}',
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    employee_ids: selectedIds,
+                    month: datePicker
+                },
+                success: function(response) {
+                    $btn.prop('disabled', false).html(origHtml);
+                    if (response.success) {
+                        show_toastr('Success', response.message, 'success');
+                        if (response.errors && response.errors.length > 0) {
+                            alert('Submission Warnings / Errors:\n• ' + response.errors.join('\n• '));
+                        }
+                        setTimeout(function() { location.reload(); }, 1200);
+                    } else {
+                        show_toastr('Error', response.message, 'error');
+                    }
+                },
+                error: function(xhr) {
+                    $btn.prop('disabled', false).html(origHtml);
+                    var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'HMRC bulk submission failed.';
+                    show_toastr('Error', msg, 'error');
                 }
             });
         });
