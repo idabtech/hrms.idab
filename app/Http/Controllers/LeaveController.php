@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Exports\LeaveExport;
+use App\Models\Notification;
 use App\Models\User;
 use Maatwebsite\Excel\Facades\Excel;
 use Spatie\GoogleCalendar\Event as GoogleEvent;
@@ -328,11 +329,20 @@ class LeaveController extends Controller
         // }
 
         // ── Save leave ─────────────────────────────────────────────────────
+        $sRuleId = $request->sandwich_leave_rule_id;
+        if (is_array($sRuleId)) {
+            $sRuleId = reset($sRuleId) ?: null;
+        }
+        $sDeductionRate = $request->sandwich_deduction_rate;
+        if (is_array($sDeductionRate)) {
+            $sDeductionRate = reset($sDeductionRate) ?: null;
+        }
+
         $leave                   = new LocalLeave();
         $leave->employee_id      = $request->employee_id;
         $leave->leave_type_id    = $request->leave_type_id;
-        $leave->sandwich_leave_rule_id  = $request->sandwich_leave_rule_id ?: null;
-        $leave->sandwich_deduction_rate = $request->sandwich_deduction_rate ?: null;
+        $leave->sandwich_leave_rule_id  = $sRuleId ?: null;
+        $leave->sandwich_deduction_rate = $sDeductionRate ?: null;
         $leave->applied_on       = date('Y-m-d');
         $leave->start_date       = $request->start_date;
         $leave->end_date         = $request->end_date;
@@ -374,6 +384,38 @@ class LeaveController extends Controller
             $request1->start_date = $request->start_date;
             $request1->end_date   = $request->end_date;
             Utility::addCalendarData($request1, $type);
+        }
+
+        // ── Dashboard Notification ───────────────────────────────────────────
+        if ($request->filled('send_notification') || $request->send_notification == '1') {
+            $targetEmp = Employee::find($leave->employee_id);
+            if ($targetEmp && $targetEmp->user_id) {
+                $lType = LeaveType::find($leave->leave_type_id);
+                $typeName = $lType ? $lType->title : 'Leave';
+                $sDate = $leave->start_date instanceof \Carbon\Carbon ? $leave->start_date->format('Y-m-d') : $leave->start_date;
+                $eDate = $leave->end_date instanceof \Carbon\Carbon ? $leave->end_date->format('Y-m-d') : $leave->end_date;
+
+                Notification::create([
+                    'user_id'     => $targetEmp->user_id,
+                    'type'        => 'leave',
+                    'title'       => 'Leave Created: ' . $typeName,
+                    'message'     => 'Leave scheduled from ' . $sDate . ' to ' . $eDate,
+                    'icon'        => 'ti ti-calendar-event',
+                    'badge_text'  => 'LEAVE UPDATE',
+                    'badge_color' => 'purple',
+                    'action_url'  => route('leave.index'),
+                    'extra_data'  => [
+                        'employee_name' => $targetEmp->name . ' ' . $targetEmp->last_name,
+                        'email'         => $targetEmp->email,
+                        'title'         => $typeName,
+                        'start_date'    => $sDate,
+                        'end_date'      => $eDate,
+                        'reason'        => $leave->leave_reason ?? '',
+                        'status'        => $leave->status ?? 'Pending',
+                    ],
+                    'is_read'     => 0,
+                ]);
+            }
         }
 
         return redirect()->route('leave.index')->with(
@@ -513,10 +555,19 @@ class LeaveController extends Controller
         // }
 
         // ── Save ───────────────────────────────────────────────────────────
+        $sRuleIdUpdate = $request->sandwich_leave_rule_id;
+        if (is_array($sRuleIdUpdate)) {
+            $sRuleIdUpdate = reset($sRuleIdUpdate) ?: null;
+        }
+        $sDeductionRateUpdate = $request->sandwich_deduction_rate;
+        if (is_array($sDeductionRateUpdate)) {
+            $sDeductionRateUpdate = reset($sDeductionRateUpdate) ?: null;
+        }
+
         $leave->employee_id      = $request->employee_id;
         $leave->leave_type_id    = $request->leave_type_id;
-        $leave->sandwich_leave_rule_id  = $request->sandwich_leave_rule_id ?: null;
-        $leave->sandwich_deduction_rate = $request->sandwich_deduction_rate ?: null;
+        $leave->sandwich_leave_rule_id  = $sRuleIdUpdate ?: null;
+        $leave->sandwich_deduction_rate = $sDeductionRateUpdate ?: null;
         $leave->start_date       = $request->start_date;
         $leave->end_date         = $request->end_date;
         $leave->total_leave_days = $totalDays;
@@ -641,6 +692,38 @@ class LeaveController extends Controller
                     ];
                     Utility::sendEmailTemplate('leave_status', [$empForEmail->email], $uArr);
                 }
+            }
+        }
+
+        // ── Dashboard Notification ───────────────────────────────────────────
+        if ($request->filled('send_notification') || $request->send_notification == '1') {
+            $targetEmp = Employee::find($leave->employee_id);
+            if ($targetEmp && $targetEmp->user_id) {
+                $lType = LeaveType::find($leave->leave_type_id);
+                $typeName = $lType ? $lType->title : 'Leave';
+                $sDate = $leave->start_date instanceof \Carbon\Carbon ? $leave->start_date->format('Y-m-d') : $leave->start_date;
+                $eDate = $leave->end_date instanceof \Carbon\Carbon ? $leave->end_date->format('Y-m-d') : $leave->end_date;
+
+                Notification::create([
+                    'user_id'     => $targetEmp->user_id,
+                    'type'        => 'leave',
+                    'title'       => 'Leave Updated: ' . $typeName,
+                    'message'     => 'Leave details updated for ' . $sDate . ' to ' . $eDate . ' (Status: ' . ($leave->status ?? 'Pending') . ')',
+                    'icon'        => 'ti ti-calendar-event',
+                    'badge_text'  => 'LEAVE UPDATE',
+                    'badge_color' => 'purple',
+                    'action_url'  => route('leave.index'),
+                    'extra_data'  => [
+                        'employee_name' => $targetEmp->name . ' ' . $targetEmp->last_name,
+                        'email'         => $targetEmp->email,
+                        'title'         => $typeName,
+                        'start_date'    => $sDate,
+                        'end_date'      => $eDate,
+                        'reason'        => $leave->leave_reason ?? '',
+                        'status'        => $leave->status ?? 'Pending',
+                    ],
+                    'is_read'     => 0,
+                ]);
             }
         }
 

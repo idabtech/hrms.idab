@@ -1426,6 +1426,208 @@
     @include('layouts.pwa_styles')
     @include('layouts.dateformat')
 
+    <!-- Dashboard Popup Notifications Floating Widget -->
+    <div id="hrms-dashboard-notification-container" style="position: fixed; top: 80px; right: 25px; z-index: 99999; display: flex; flex-direction: column; gap: 15px; max-width: 380px; width: calc(100% - 40px); pointer-events: none;">
+    </div>
+
+    <style>
+        .hrms-popup-card {
+            pointer-events: auto;
+            background: #ffffff;
+            border-radius: 18px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+            border-left: 6px solid var(--bs-primary, <?= $activeColorHex ?>);
+            padding: 16px 20px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            animation: slideInNotification 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            position: relative;
+        }
+        @keyframes slideInNotification {
+            from {
+                opacity: 0;
+                transform: translateY(-30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        .hrms-popup-card.fade-out {
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.3s ease;
+        }
+        .hrms-popup-badge {
+            background-color: rgba(<?= $activeColorRgb ?>, 0.12);
+            color: var(--bs-primary, <?= $activeColorHex ?>);
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-weight: 700;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+        }
+        .hrms-popup-close-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 18px;
+            cursor: pointer;
+            line-height: 1;
+            padding: 2px 6px;
+            border-radius: 50%;
+            transition: color 0.2s, background 0.2s;
+        }
+        .hrms-popup-close-btn:hover {
+            color: #1e293b;
+            background: #f1f5f9;
+        }
+        .hrms-popup-btn-primary {
+            background-color: var(--bs-primary, <?= $activeColorHex ?>);
+            color: #ffffff !important;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: opacity 0.2s, background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .hrms-popup-btn-primary:hover {
+            opacity: 0.88;
+        }
+        .hrms-popup-btn-secondary {
+            background-color: #f1f5f9;
+            color: #475569 !important;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .hrms-popup-btn-secondary:hover {
+            background-color: #e2e8f0;
+            color: #1e293b !important;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            @if(Auth::check())
+            fetchDashboardNotifications();
+            @endif
+        });
+
+        function fetchDashboardNotifications() {
+            fetch("{{ route('notifications.get') }}", {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.is_success && data.notifications && data.notifications.length > 0) {
+                    const container = document.getElementById('hrms-dashboard-notification-container');
+                    if (!container) return;
+
+                    data.notifications.forEach(n => {
+                        if (document.getElementById(`notif-card-${n.id}`)) return;
+
+                        let badgeText = n.badge_text || 'NOTIFICATION';
+                        let badgeColorClass = 'var(--bs-primary, <?= $activeColorHex ?>)';
+                        let badgeBg = 'rgba(<?= $activeColorRgb ?>, 0.12)';
+
+                        if (n.type === 'holiday') {
+                            badgeBg = '#dcfce7';
+                            badgeColorClass = '#166534';
+                        } else if (n.type === 'event') {
+                            badgeBg = '#e0f2fe';
+                            badgeColorClass = '#0369a1';
+                        }
+
+                        let extra = n.extra_data || {};
+                        let subDetails = extra.email || extra.description || extra.reason || '';
+                        let datesText = '';
+                        if (extra.start_date) {
+                            datesText = extra.start_date;
+                            if (extra.end_date && extra.end_date !== extra.start_date) {
+                                datesText += ' - ' + extra.end_date;
+                            }
+                        }
+
+                        const cardHtml = `
+                            <div class="hrms-popup-card" id="notif-card-${n.id}">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="hrms-popup-badge" style="background-color: ${badgeBg}; color: ${badgeColorClass};">
+                                        <i class="${n.icon || 'ti ti-bell'} me-1"></i> ${badgeText}
+                                    </span>
+                                    <button class="hrms-popup-close-btn" onclick="dismissNotifCard(${n.id}, true)" title="Dismiss">&times;</button>
+                                </div>
+                                <div class="d-flex align-items-start mt-2">
+                                    <div class="me-2 text-muted fs-4">
+                                        <i class="${n.icon || 'ti ti-info-circle'}"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-bold" style="color: #0f172a; font-size: 15px;">${n.title}</div>
+                                        ${subDetails ? `<div class="text-muted small mt-1" style="font-size: 12px; line-height: 1.3;">${subDetails}</div>` : ''}
+                                        ${datesText ? `<div class="text-muted small mt-2 d-flex align-items-center" style="font-size: 12px;"><i class="ti ti-calendar me-1 text-primary"></i> ${datesText}</div>` : ''}
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2 mt-3">
+                                    <button class="hrms-popup-btn-primary flex-grow-1" onclick="markReadAndRedirect(${n.id}, '${n.action_url || ''}')">
+                                        <i class="ti ti-check me-1"></i> View / OK
+                                    </button>
+                                    <button class="hrms-popup-btn-secondary flex-grow-1" onclick="dismissNotifCard(${n.id}, false)">
+                                        Later
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        container.insertAdjacentHTML('beforeend', cardHtml);
+                    });
+                }
+            })
+            .catch(err => console.error('Error fetching dashboard notifications:', err));
+        }
+
+        function dismissNotifCard(id, markRead = true) {
+            const card = document.getElementById(`notif-card-${id}`);
+            if (card) {
+                card.classList.add('fade-out');
+                setTimeout(() => card.remove(), 300);
+            }
+            if (markRead) {
+                fetch(`{{ url('mark-notification-read') }}/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                });
+            }
+        }
+
+        function markReadAndRedirect(id, url) {
+            dismissNotifCard(id, true);
+            if (url && url !== '' && url !== 'null') {
+                window.location.href = url;
+            }
+        }
+    </script>
+
 </body>
 
 </html>

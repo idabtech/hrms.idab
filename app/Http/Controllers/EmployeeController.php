@@ -1553,8 +1553,9 @@ class EmployeeController extends Controller
                     if (!empty($fileObj) && $fileObj->isValid()) {
                         $filenameWithExt = $fileObj->getClientOriginalName();
                         $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
+                        $cleanFilename = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $filename);
                         $extension = $fileObj->getClientOriginalExtension();
-                        $fileNameToStore = $filename . '_' . time() . '_' . rand(10, 99) . '.' . $extension;
+                        $fileNameToStore = $cleanFilename . '_' . time() . '_' . rand(10, 99) . '.' . $extension;
 
                         // Save to storage/app/public/uploads/document/
                         $fileObj->move($storagePath, $fileNameToStore);

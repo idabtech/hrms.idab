@@ -252,8 +252,9 @@ class UserController extends Controller
     {
         if (\Auth::user()->can('Delete User')) {
             $user = User::findOrFail($id);
-            $sub_employee = Employee::where('created_by', $user->id)->delete();
-            $sub_user = User::where('created_by', $user->id)->delete();
+            Employee::where('user_id', $user->id)->delete();
+            Employee::where('created_by', $user->id)->delete();
+            User::where('created_by', $user->id)->delete();
             $user->delete();
 
             return redirect()->route('user.index')->with('success', 'User successfully deleted.');
@@ -279,6 +280,7 @@ class UserController extends Controller
             foreach ($ids as $id) {
                 $user = User::find($id);
                 if ($user && $user->id != \Auth::id()) {
+                    Employee::where('user_id', $user->id)->delete();
                     Employee::where('created_by', $user->id)->delete();
                     User::where('created_by', $user->id)->delete();
                     $user->delete();
@@ -531,6 +533,35 @@ class UserController extends Controller
         Notification::where('user_id', '=', $user_id)->update(['is_read' => 1]);
 
         return response()->json(['is_success' => true], 200);
+    }
+
+    public function getDashboardNotifications()
+    {
+        if (!Auth::check()) {
+            return response()->json(['is_success' => false, 'notifications' => []]);
+        }
+
+        $notifications = Notification::where('user_id', Auth::id())
+            ->where('is_read', 0)
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        return response()->json([
+            'is_success' => true,
+            'notifications' => $notifications,
+        ]);
+    }
+
+    public function markNotificationRead(Request $request, $id = null)
+    {
+        if ($id) {
+            Notification::where('id', $id)->where('user_id', Auth::id())->update(['is_read' => 1]);
+        } else {
+            Notification::where('user_id', Auth::id())->update(['is_read' => 1]);
+        }
+
+        return response()->json(['is_success' => true]);
     }
 
     public function LoginWithCompany(Request $request, User $user, $id)

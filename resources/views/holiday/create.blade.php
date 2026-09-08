@@ -28,6 +28,13 @@
             {{ Form::label('end_date', __('End Date'), ['class' => 'col-form-label']) }}
             {{ Form::date('end_date', null, ['class' => 'form-control current_date', 'autocomplete' => 'off']) }}
         </div>
+        <div class="form-group col-md-6">
+            {{ Form::label('send_notification', __('Show Notification on Dashboard ?'), ['class' => 'form-label']) }}
+            <div class="form-switch">
+                <input type="checkbox" class="form-check-input mt-2" name="send_notification" id="send_notification_holiday_create" value="1" checked>
+                <label class="form-check-label" for="send_notification_holiday_create"></label>
+            </div>
+        </div>
         @if(isset($setting['is_enabled']) && $setting['is_enabled'] =='on')
         <div class="form-group col-md-6">
             {{ Form::label('synchronize_type', __('Synchroniz in Google Calendar ?'), ['class' => 'form-label']) }}

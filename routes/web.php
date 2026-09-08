@@ -1506,7 +1506,8 @@ Route::group(['middleware' => ['verified']], function () {
 
     Route::post('change-passcode', [UserController::class, 'updatePasscode'])->name('update.passcode');
 
-    Route::post('change-passcode', [UserController::class, 'updatePasscode'])->name('update.passcode');
+    Route::get('get-dashboard-notifications', [UserController::class, 'getDashboardNotifications'])->name('notifications.get')->middleware(['auth', 'XSS']);
+    Route::post('mark-notification-read/{id?}', [UserController::class, 'markNotificationRead'])->name('notifications.mark-read')->middleware(['auth', 'XSS']);
 
     Route::get('lunch-break-old-data-for-employees', [OldDataManageController::class, 'OldDataManage'])->name('update.lunch.break');
 
