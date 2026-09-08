@@ -58,7 +58,8 @@ class HomeController extends Controller
                 $emp = Employee::where('user_id', '=', $user->id)->first();
                 $hasRequestedDocs = false;
                 if ($emp) {
-                    $hasRequestedDocs = EmployeeDocument::where('employee_id', $emp->id)
+                    $empIds = array_values(array_unique(array_filter([$emp->id, $emp->employee_id])));
+                    $hasRequestedDocs = EmployeeDocument::whereIn('employee_id', $empIds)
                         ->where('is_requested', 1)
                         ->where(function($q) {
                             $q->whereNull('document_value')->orWhere('document_value', '');

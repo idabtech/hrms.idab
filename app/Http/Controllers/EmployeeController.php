@@ -409,7 +409,8 @@ class EmployeeController extends Controller
                 return redirect()->back()->with('error', __('Employee Not Found.'));
             }
             $documents = Document::where('created_by', Auth::user()->creatorId())->get();
-            $employeeDocuments = EmployeeDocument::where('employee_id', $employee->id)->get()->sortByDesc('document_value')->keyBy('document_id');
+            $empIds = array_values(array_unique(array_filter([$employee->id, $employee->employee_id])));
+            $employeeDocuments = EmployeeDocument::whereIn('employee_id', $empIds)->get()->sortByDesc('document_value')->keyBy('document_id');
             $branches = Branch::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
             $departments = Department::where('created_by', Auth::user()->creatorId())->get()->pluck('name', 'id');
             $selectedDeptId = old('department_id', $employee->department_id);
@@ -445,7 +446,10 @@ class EmployeeController extends Controller
             $document_id = $request->input('document_id');
             $is_requested = $request->input('is_requested', 1);
 
-            $empDoc = EmployeeDocument::where('employee_id', $employee_id)
+            $emp = Employee::find($employee_id);
+            $empIds = $emp ? array_values(array_unique(array_filter([$emp->id, $emp->employee_id]))) : [$employee_id];
+
+            $empDoc = EmployeeDocument::whereIn('employee_id', $empIds)
                 ->where('document_id', $document_id)
                 ->first();
 
@@ -1487,7 +1491,10 @@ class EmployeeController extends Controller
         $document_id = $request->input('document_id');
         $file_name   = $request->input('file_name');
 
-        $empDoc = EmployeeDocument::where('employee_id', $employee_id)
+        $emp = Employee::find($employee_id);
+        $empIds = $emp ? array_values(array_unique(array_filter([$emp->id, $emp->employee_id]))) : [$employee_id];
+
+        $empDoc = EmployeeDocument::whereIn('employee_id', $empIds)
             ->where('document_id', $document_id)
             ->first();
 
@@ -1535,11 +1542,15 @@ class EmployeeController extends Controller
             @mkdir($publicPath, 0777, true);
         }
 
+        $emp = Employee::find($employeeId);
+        $empTargetId = ($emp && !empty($emp->id)) ? $emp->id : $employeeId;
+        $empIds = $emp ? array_values(array_unique(array_filter([$emp->id, $emp->employee_id]))) : [$employeeId];
+
         if ($request->file('document') || $request->hasFile('document')) {
             foreach ($request->file('document') as $docId => $fileOrArray) {
                 if (empty($fileOrArray)) continue;
 
-                $empDoc = EmployeeDocument::where('employee_id', $employeeId)
+                $empDoc = EmployeeDocument::whereIn('employee_id', $empIds)
                     ->where('document_id', $docId)
                     ->first();
 
@@ -1597,7 +1608,7 @@ class EmployeeController extends Controller
                     continue;
                 }
                 if (!is_null($textValue) && $textValue !== '') {
-                    $empDoc = EmployeeDocument::where('employee_id', $employeeId)->where('document_id', $docId)->first();
+                    $empDoc = EmployeeDocument::whereIn('employee_id', $empIds)->where('document_id', $docId)->first();
                     if ($empDoc) {
                         $parsed = $empDoc->getParsedValue();
                         $files = $parsed['files'];
