@@ -29,6 +29,13 @@
             {{ Form::label('end_date', __('End Date'), ['class' => 'col-form-label']) }}
             {{ Form::date('end_date', null, ['class' => 'form-control ']) }}
         </div>
+        <div class="form-group col-md-6">
+            {{ Form::label('send_notification', __('Show Notification on Dashboard ?'), ['class' => 'form-label']) }}
+            <div class="form-switch">
+                <input type="checkbox" class="form-check-input mt-2" name="send_notification" id="send_notification_holiday_edit_{{ $holiday->id }}" value="1" checked>
+                <label class="form-check-label" for="send_notification_holiday_edit_{{ $holiday->id }}"></label>
+            </div>
+        </div>
         </div>
     </div>
 </div>

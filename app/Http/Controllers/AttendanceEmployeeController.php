@@ -1523,14 +1523,22 @@ class AttendanceEmployeeController extends Controller
    public function passcodeVerify(Request $request)
     {
         try {
-            $passcode = $request->passcode;
+            $passcode = trim((string)$request->passcode);
             $user = Auth::user();
-            if ($user->type == 'company') {
-                $userPasscord = $user->passcode;
-            } else {
-                $userPasscord = $user->creatorUser?->passcode;
-            }
-            if ($userPasscord == $passcode || $passcode == $user->passcode) {
+            $companyId = ($user->type == 'company') ? $user->id : $user->creatorId();
+
+            $companyPasscodes = \App\Models\User::where(function($q) use ($companyId) {
+                $q->where('id', $companyId)
+                  ->orWhere('created_by', $companyId);
+            })
+            ->whereNotNull('passcode')
+            ->where('passcode', '!=', '')
+            ->pluck('passcode')
+            ->toArray();
+
+            $validPasscodes = array_values(array_unique(array_map('strval', array_filter($companyPasscodes))));
+
+            if (in_array($passcode, $validPasscodes)) {
                 return response()->json([
                     'success' => true,
                     'message' => "passcode verify succesfully"

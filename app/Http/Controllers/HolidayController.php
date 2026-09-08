@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Exports\HolidayExport;
 use App\Imports\HolidayImport;
 use App\Models\Holiday as LocalHoliday;
+use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\Utility;
 use Illuminate\Support\Facades\Auth;
@@ -122,6 +124,34 @@ class HolidayController extends Controller
                 }
             }
 
+            // Dashboard Notification
+            if ($request->filled('send_notification') || $request->send_notification == '1') {
+                $creatorId = \Auth::user()->creatorId();
+                $userIds = User::where('created_by', $creatorId)->pluck('id')->toArray();
+                $userIds[] = \Auth::user()->id;
+                $userIds = array_unique($userIds);
+
+                foreach ($userIds as $uId) {
+                    Notification::create([
+                        'user_id'     => $uId,
+                        'type'        => 'holiday',
+                        'title'       => 'New Holiday: ' . $holiday->occasion,
+                        'message'     => 'Holiday scheduled from ' . $holiday->start_date . ' to ' . $holiday->end_date,
+                        'icon'        => 'ti ti-calendar-stats',
+                        'badge_text'  => 'NEW HOLIDAY',
+                        'badge_color' => 'success',
+                        'action_url'  => route('holiday.index'),
+                        'extra_data'  => [
+                            'occasion'   => $holiday->occasion,
+                            'title'      => $holiday->occasion,
+                            'start_date' => $holiday->start_date,
+                            'end_date'   => $holiday->end_date,
+                        ],
+                        'is_read'     => 0,
+                    ]);
+                }
+            }
+
             return redirect()->route('holiday.index')->with('success', 'Holiday successfully created.');
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
@@ -172,6 +202,34 @@ class HolidayController extends Controller
             $holiday->start_date        = $request->start_date;
             $holiday->end_date          = $request->end_date;
             $holiday->save();
+
+            // Dashboard Notification
+            if ($request->filled('send_notification') || $request->send_notification == '1') {
+                $creatorId = \Auth::user()->creatorId();
+                $userIds = User::where('created_by', $creatorId)->pluck('id')->toArray();
+                $userIds[] = \Auth::user()->id;
+                $userIds = array_unique($userIds);
+
+                foreach ($userIds as $uId) {
+                    Notification::create([
+                        'user_id'     => $uId,
+                        'type'        => 'holiday',
+                        'title'       => 'Holiday Updated: ' . $holiday->occasion,
+                        'message'     => 'Holiday updated for ' . $holiday->start_date . ' to ' . $holiday->end_date,
+                        'icon'        => 'ti ti-calendar-stats',
+                        'badge_text'  => 'HOLIDAY UPDATE',
+                        'badge_color' => 'success',
+                        'action_url'  => route('holiday.index'),
+                        'extra_data'  => [
+                            'occasion'   => $holiday->occasion,
+                            'title'      => $holiday->occasion,
+                            'start_date' => $holiday->start_date,
+                            'end_date'   => $holiday->end_date,
+                        ],
+                        'is_read'     => 0,
+                    ]);
+                }
+            }
 
             return redirect()->route('holiday.index')->with(
                 'success',

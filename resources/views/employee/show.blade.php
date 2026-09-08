@@ -213,7 +213,7 @@
                                                                 @php
                                                                     $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
                                                                     $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
-                                                                    $fUrl = $logo . '/' . $fName;
+                                                                    $fUrl = $logo . '/' . rawurlencode($fName);
                                                                 @endphp
                                                                 @if ($fIsImg)
                                                                     <a href="{{ $fUrl }}" target="_blank"><img src="{{ $fUrl }}" class="img-thumbnail" style="max-height:70px; max-width:100px; object-fit:cover;"></a>
@@ -232,7 +232,7 @@
                                                                 @php
                                                                     $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
                                                                     $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
-                                                                    $fUrl = $logo . '/' . $fName;
+                                                                    $fUrl = $logo . '/' . rawurlencode($fName);
                                                                 @endphp
                                                                 @if ($fIsImg)
                                                                     <a href="{{ $fUrl }}" target="_blank"><img src="{{ $fUrl }}" class="img-thumbnail" style="max-height:70px; max-width:100px; object-fit:cover;"></a>
