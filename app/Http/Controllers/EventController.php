@@ -17,6 +17,7 @@ use App\Exports\EventExport;
 use App\Models\Holiday;
 use App\Models\Leave;
 use App\Models\InterviewSchedule as LocalInterviewSchedule;
+use App\Models\Notification;
 use App\Models\User;
 use App\Models\Webhook;
 use Carbon\Carbon;
@@ -233,6 +234,32 @@ if (Auth::user()->type == 'employee') {
                 }
             }
 
+            // Dashboard Notification
+            if ($request->filled('send_notification') || $request->send_notification == '1') {
+                if (!empty($departmentEmployee)) {
+                    $userMap = Employee::whereIn('id', $departmentEmployee)->whereNotNull('user_id')->pluck('user_id', 'id');
+                    foreach ($userMap as $empId => $uId) {
+                        Notification::create([
+                            'user_id'     => $uId,
+                            'type'        => 'event',
+                            'title'       => 'New Event: ' . $event->title,
+                            'message'     => 'Event scheduled from ' . $event->start_date . ' to ' . $event->end_date,
+                            'icon'        => 'ti ti-calendar-event',
+                            'badge_text'  => 'EVENT UPDATE',
+                            'badge_color' => 'info',
+                            'action_url'  => route('event.index'),
+                            'extra_data'  => [
+                                'title'       => $event->title,
+                                'start_date'  => $event->start_date,
+                                'end_date'    => $event->end_date,
+                                'description' => $event->description,
+                            ],
+                            'is_read'     => 0,
+                        ]);
+                    }
+                }
+            }
+
             return redirect()->route('event.index')->with('success', __('Event successfully created.'));
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
@@ -278,6 +305,33 @@ if (Auth::user()->type == 'employee') {
                 $event->color       = $request->color;
                 $event->description = $request->description;
                 $event->save();
+
+                // Dashboard Notification
+                if ($request->filled('send_notification') || $request->send_notification == '1') {
+                    $empIds = EventEmployee::where('event_id', $event->id)->pluck('employee_id')->toArray();
+                    if (!empty($empIds)) {
+                        $userMap = Employee::whereIn('id', $empIds)->whereNotNull('user_id')->pluck('user_id', 'id');
+                        foreach ($userMap as $empId => $uId) {
+                            Notification::create([
+                                'user_id'     => $uId,
+                                'type'        => 'event',
+                                'title'       => 'Event Updated: ' . $event->title,
+                                'message'     => 'Event updated for ' . $event->start_date . ' to ' . $event->end_date,
+                                'icon'        => 'ti ti-calendar-event',
+                                'badge_text'  => 'EVENT UPDATE',
+                                'badge_color' => 'info',
+                                'action_url'  => route('event.index'),
+                                'extra_data'  => [
+                                    'title'       => $event->title,
+                                    'start_date'  => $event->start_date,
+                                    'end_date'    => $event->end_date,
+                                    'description' => $event->description,
+                                ],
+                                'is_read'     => 0,
+                            ]);
+                        }
+                    }
+                }
 
                 // return redirect()->route('event.index')->with('success', __('Event successfully updated.'));
                 return redirect()->back()->with('success', __('Event successfully updated.'));

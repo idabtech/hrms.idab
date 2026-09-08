@@ -607,7 +607,7 @@
                                                     @php
                                                         $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
                                                         $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
-                                                        $fUrl = $logo . '/' . $fName;
+                                                        $fUrl = $logo . '/' . rawurlencode($fName);
                                                     @endphp
                                                     <div class="doc-card-item">
                                                         <button type="button" class="doc-card-remove-btn" title="{{ __('Remove file') }}" onclick="deleteDocFile({{ $employee->id }}, {{ $document->id }}, '{{ $fName }}', this)">
@@ -751,7 +751,7 @@
                                                                     @php
                                                                         $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
                                                                         $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
-                                                                        $fUrl = $logo . '/' . $fName;
+                                                                        $fUrl = $logo . '/' . rawurlencode($fName);
                                                                     @endphp
                                                                     <div class="doc-card-item">
                                                                         <button type="button" class="doc-card-remove-btn" title="{{ __('Remove file') }}" onclick="deleteDocFile({{ $employee->id }}, {{ $document->id }}, '{{ $fName }}', this)">
@@ -784,7 +784,7 @@
                                                                     @php
                                                                         $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
                                                                         $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
-                                                                        $fUrl = $logo . '/' . $fName;
+                                                                        $fUrl = $logo . '/' . rawurlencode($fName);
                                                                     @endphp
                                                                     <div class="doc-card-item">
                                                                         @if ($fIsImg)
@@ -808,7 +808,7 @@
                                                                     @php
                                                                         $fExt = strtolower(pathinfo($fName, PATHINFO_EXTENSION));
                                                                         $fIsImg = in_array($fExt, ['jpg','jpeg','png','gif','webp','bmp','svg']);
-                                                                        $fUrl = $logo . '/' . $fName;
+                                                                        $fUrl = $logo . '/' . rawurlencode($fName);
                                                                     @endphp
                                                                     <div class="doc-card-item">
                                                                         @if ($fIsImg)

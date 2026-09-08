@@ -256,6 +256,16 @@
     </div>
     @endif
 
+    <div class="row">
+        <div class="form-group col-md-6">
+            {{ Form::label('send_notification', __('Show Notification on Dashboard ?'), ['class' => 'form-label']) }}
+            <div class="form-switch">
+                <input type="checkbox" class="form-check-input mt-2" name="send_notification" id="send_notification_leave_edit_{{ $leave->id }}" value="1" checked>
+                <label class="form-check-label" for="send_notification_leave_edit_{{ $leave->id }}"></label>
+            </div>
+        </div>
+    </div>
+
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('Cancel') }}</button>

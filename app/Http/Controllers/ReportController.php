@@ -1328,17 +1328,25 @@ class ReportController extends Controller
             $employee = Employee::find($request->employee_id);
 
             $passcode = trim((string)$request->passcode);
+            $companyId = Auth::user()->creatorId();
 
-            $empPasscode      = $employee?->user?->passcode;
-            $authUserPasscode = Auth::user()->passcode;
-            $creatorUser      = \App\Models\User::find(Auth::user()->creatorId());
-            $creatorPasscode  = $creatorUser?->passcode;
+            // Fetch all valid passcodes belonging to the company, company creator, and admin staff (including HR/staff)
+            $companyPasscodes = \App\Models\User::where(function($q) use ($companyId) {
+                $q->where('id', $companyId)
+                  ->orWhere('created_by', $companyId);
+            })
+            ->whereNotNull('passcode')
+            ->where('passcode', '!=', '')
+            ->pluck('passcode')
+            ->toArray();
 
-            $validPasscodes = array_map('strval', array_filter([
-                $empPasscode,
-                $authUserPasscode,
-                $creatorPasscode,
-            ]));
+            // Also include target employee's passcode if set
+            $empPasscode = $employee?->user?->passcode;
+            if (!empty($empPasscode)) {
+                $companyPasscodes[] = $empPasscode;
+            }
+
+            $validPasscodes = array_values(array_unique(array_map('strval', array_filter($companyPasscodes))));
 
             if (!$employee || !in_array($passcode, $validPasscodes)) {
                 return response()->json([

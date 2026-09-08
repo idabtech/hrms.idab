@@ -27,7 +27,7 @@ class EmployeeDocument extends Model
      */
     public function getParsedValue(string $docType = 'file'): array
     {
-        $raw = $this->document_value;
+        $raw = trim((string)$this->document_value);
 
         if (empty($raw)) {
             return ['text' => null, 'file' => null, 'files' => []];
@@ -39,12 +39,12 @@ class EmployeeDocument extends Model
         if ($raw[0] === '{' || $raw[0] === '[') {
             $decoded = json_decode($raw, true);
             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                $text = $decoded['text'] ?? null;
+                $text = isset($decoded['text']) ? trim((string)$decoded['text']) : null;
 
                 if (isset($decoded['files']) && is_array($decoded['files'])) {
-                    $files = array_values(array_filter($decoded['files']));
+                    $files = array_values(array_filter(array_map('trim', $decoded['files'])));
                 } elseif (isset($decoded['file']) && !empty($decoded['file'])) {
-                    $files = [$decoded['file']];
+                    $files = [trim((string)$decoded['file'])];
                 }
             }
         }
@@ -54,13 +54,14 @@ class EmployeeDocument extends Model
                 $text = $raw;
             } else {
                 if (str_contains($raw, ',')) {
-                    $files = array_map('trim', explode(',', $raw));
+                    $files = array_values(array_filter(array_map('trim', explode(',', $raw))));
                 } else {
-                    $files = [$raw];
+                    $files = [trim($raw)];
                 }
             }
         }
 
+        $files = array_values(array_filter(array_map('trim', $files)));
         $primaryFile = !empty($files) ? $files[0] : null;
 
         return [
